@@ -3,6 +3,7 @@
 module.exports.ScreenPoint = ScreenPoint;
 module.exports.CubePoint = CubePoint;
 module.exports.OddQOffset = OddQOffset;
+module.exports.OddQBox = OddQBox;
 
 function ScreenPoint(x, y) {
     if (!(this instanceof ScreenPoint)) {
@@ -122,4 +123,36 @@ OddQOffset.prototype.toCube = function toCube() {
     var z = this.r - (this.q - (this.q & 1)) / 2;
     var y = -x - z;
     return CubePoint(x, y, z);
+};
+
+function OddQBox(topLeft, bottomRight) {
+    if (!(this instanceof OddQBox)) {
+        return new OddQBox(topLeft, bottomRight);
+    }
+    this.topLeft = topLeft.toOddQOffset();
+    this.bottomRight = bottomRight.toOddQOffset();
+}
+
+OddQBox.prototype.screenCount = function screenCount(pointArg) {
+    var W = this.bottomRight.q - this.topLeft.q;
+    var H = this.bottomRight.r - this.topLeft.r;
+
+    // return the count number of hexes needed in screen x space and screen y
+    // space
+
+    // first one is a unit, each successive column backs 1/4 with the last
+    // var x = 1 + 3 / 4 * (W - 1);
+    var x = (3 * W + 1) / 4;
+
+    // height backs directly, but we need an extra half cell except when we
+    // have only one column
+    var y = H + (W > 1 ? 0.5 : 0);
+
+    return ScreenPoint(x, y);
+};
+
+OddQBox.prototype.contains = function contains(pointArg) {
+    var point = pointArg.toOddQOffset();
+    return point.q >= this.topLeft.q && point.q < this.bottomRight.q &&
+           point.r >= this.topLeft.r && point.r < this.bottomRight.r;
 };
