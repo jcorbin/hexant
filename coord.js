@@ -2,6 +2,7 @@
 
 module.exports.ScreenPoint = ScreenPoint;
 module.exports.CubePoint = CubePoint;
+module.exports.OddQOffset = OddQOffset;
 
 function ScreenPoint(x, y) {
     if (!(this instanceof ScreenPoint)) {
@@ -71,4 +72,54 @@ CubePoint.prototype.toScreen = function toScreen() {
 };
 CubePoint.prototype.toCube = function toCube() {
     return this;
+};
+CubePoint.prototype.toOddQOffset = function toOddQOffset() {
+    var q = this.x;
+    var r = this.z + (this.x - (this.x & 1)) / 2;
+    return OddQOffset(q, r);
+};
+
+function OddQOffset(q, r) {
+    if (!(this instanceof OddQOffset)) {
+        return new OddQOffset(q, r);
+    }
+    this.q = q;
+    this.r = r;
+}
+OddQOffset.prototype.type = 'offset.odd-q';
+OddQOffset.prototype.toString = function toString() {
+    return 'OddQOffset(' + this.q + ', ' + this.r + ')';
+};
+OddQOffset.prototype.copy = function copy() {
+    return OddQOffset(this.q, this.r);
+};
+OddQOffset.prototype.add = function add(other) {
+    if (other.type !== this.type) {
+        other = other.toOddQOffset();
+    }
+    this.q += other.q;
+    this.r += other.r;
+    return this;
+};
+OddQOffset.prototype.sub = function sub(other) {
+    if (other.type !== this.type) {
+        other = other.toOddQOffset();
+    }
+    this.q -= other.q;
+    this.r -= other.r;
+    return this;
+};
+OddQOffset.prototype.toScreen = function toScreen() {
+    var x = 3 / 2 * this.q;
+    var y = Math.sqrt(3) * (this.r + 0.5 * (this.q & 1));
+    return ScreenPoint(x, y);
+};
+OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
+    return this;
+};
+OddQOffset.prototype.toCube = function toCube() {
+    var x = this.q;
+    var z = this.r - (this.q - (this.q & 1)) / 2;
+    var y = -x - z;
+    return CubePoint(x, y, z);
 };
