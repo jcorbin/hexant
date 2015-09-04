@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint no-inline-comments:0 */
+
 module.exports.ScreenPoint = ScreenPoint;
 module.exports.CubePoint = CubePoint;
 module.exports.OddQOffset = OddQOffset;
@@ -26,8 +28,11 @@ function CubePoint(x, y, z) {
     }
     if (x + y + z !== 0) {
         throw new Error(
-            'CubePoint invariant violated: ' + x + ' + ' + y + ' + ' + z + ' = ' + (x + y + z)
-        );
+            'CubePoint invariant violated: ' +
+            x + ' + ' +
+            y + ' + ' +
+            z + ' = ' +
+            (x + y + z));
     }
     this.x = x;
     this.y = y;
