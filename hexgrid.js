@@ -23,7 +23,7 @@ function HexGrid(canvas, ctxHex) {
     // TODO: support horizontal orientation
 }
 
-HexGrid.prototype.toScreen = function offsetCellPath(point) {
+HexGrid.prototype.toScreen = function toScreen(point) {
     if (this.hexOrigin) {
         point = point.copy().sub(this.hexOrigin.toCube());
     }
