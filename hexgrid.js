@@ -25,7 +25,8 @@ function HexGrid(canvas, ctxHex) {
 
 HexGrid.prototype.toScreen = function toScreen(point) {
     if (this.hexOrigin) {
-        point = point.copy().sub(this.hexOrigin.toCube());
+        point = point.copy();
+        point.sub(this.hexOrigin.toCube());
     }
     var screenPoint = point.toScreen();
     screenPoint.x *= this.cellSize;
