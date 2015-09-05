@@ -9,6 +9,20 @@ var OddQBox = Coord.OddQBox;
 
 module.exports = HexTileTree;
 
+var zoomPerm = [
+    3, // 0 --> 3
+    2, // 1 --> 2
+    1, // 2 --> 1
+    0  // 3 --> 0
+];
+
+var zoomShift = [
+    -1, -1, // 0 --> -1 -1
+    1, -1, // 1 -->  1 -1
+    -1, 1, // 2 --> -1  1
+    1, 1 // 3 -->  1  1
+];
+
 function HexTileTree(origin, tileWidth, tileHeight) {
     this.resized = false;
     this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
@@ -68,20 +82,6 @@ HexTileTree.prototype.get = function get(point) {
 
 HexTileTree.prototype.set = function set(point, c) {
     var offsetPoint = point.toOddQOffset();
-
-    var zoomPerm = [
-        3, // 0 --> 3
-        2, // 1 --> 2
-        1, // 2 --> 1
-        0  // 3 --> 0
-    ];
-
-    var zoomShift = [
-        -1, -1, // 0 --> -1 -1
-        1, -1, // 1 -->  1 -1
-        -1, 1, // 2 --> -1  1
-        1, 1 // 3 -->  1  1
-    ];
 
     while (!this.root.box.contains(offsetPoint)) {
         var old = this.root;
