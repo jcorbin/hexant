@@ -22,7 +22,7 @@ function setup() {
 
     var hexant = new HexAntWorld(el);
     hexant.addAnt();
-    el.addEventListener('click', stepit);
+    el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
 
