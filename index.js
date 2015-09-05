@@ -8,6 +8,8 @@ var document = require('global/document');
 var HexAntWorld = require('./world.js');
 var Hash = require('./hash.js');
 
+var BatchLimit = 256;
+
 domready(setup);
 
 function setup() {
@@ -97,7 +99,7 @@ function setup() {
             lastFrameTime = time;
         } else {
             var progress = time - lastFrameTime;
-            frames = progress / frameInterval;
+            frames = Math.min(BatchLimit, progress / frameInterval);
         }
 
         for (var i = 0; i < frames; i++) {
