@@ -31,6 +31,9 @@ function HexAntWorld(canvas) {
     this.ants = [];
 
     this.labeled = false;
+
+    this.availWidth = 0;
+    this.availHeight = 0;
 }
 
 HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
@@ -55,13 +58,14 @@ HexAntWorld.prototype.stepDraw = function stepDraw() {
     if (this.tile.resized) {
         this.tile.resized = false;
         this.hexGrid.hexOrigin = this.tile.boundingBox().topLeft;
-
-        // TODO: stash original available width/height, use it here
-        this.resize(this.canvas.width, this.canvas.height);
+        this.resize(this.availWidth, this.availHeight);
     }
 };
 
 HexAntWorld.prototype.resize = function resize(width, height) {
+    this.availWidth = width;
+    this.availHeight = height;
+
     // TODO: need this?
     // this.canvas.width = width;
     // this.canvas.height = height;
