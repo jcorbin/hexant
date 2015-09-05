@@ -26,7 +26,7 @@ function setup() {
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
 
-    setFrameRate(hash.get('frameRate', 10));
+    setFrameRate(hash.get('frameRate', 4));
     hexant.setLabeled(hash.get('labeled', false));
 
     function onKeyPress(e) {
@@ -39,6 +39,14 @@ function setup() {
             break;
         case 0x23: // #
             toggleLabeled();
+            break;
+        case 0x2b: // +
+            setFrameRate(frameRate * 2);
+            hash.set('frameRate', frameRate);
+            break;
+        case 0x2d: // -
+            setFrameRate(Math.max(1, Math.floor(frameRate / 2)));
+            hash.set('frameRate', frameRate);
             break;
         }
     }
