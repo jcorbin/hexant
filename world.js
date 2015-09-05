@@ -32,6 +32,7 @@ function HexAntWorld(canvas) {
 
     this.labeled = false;
 
+    this.defaultCellValue = 0;
     this.availWidth = 0;
     this.availHeight = 0;
 }
@@ -83,8 +84,10 @@ HexAntWorld.prototype.redraw = function redraw() {
     var self = this;
 
     self.tile.eachDataPoint(function each(point, c) {
-        c = c || 1;
-        self.drawCell(point, c);
+        c = c || self.defaultCellValue;
+        if (c) {
+            self.drawCell(point, c);
+        }
     });
 
     for (var i = 0; i < self.ants.length; i++) {

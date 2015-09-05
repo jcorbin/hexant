@@ -31,6 +31,8 @@ function setup() {
     setFrameRate(hash.get('frameRate', 4));
     hexant.setLabeled(hash.get('labeled', false));
 
+    hexant.defaultCellValue = hash.get('drawUnvisited', false) ? 1 : 0;
+
     function onKeyPress(e) {
         switch (e.keyCode) {
         case 0x20: // <Space>
