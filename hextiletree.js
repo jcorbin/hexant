@@ -158,7 +158,7 @@ HexTileTreeNode.prototype._fakeDataPoints = function _fakeDataPoints(i, each) {
     var hiR = loR + this.tileHeight;
 
     var point = OddQOffset(loQ, loR);
-    for (; point.r < hiR; point.r++) {
+    for (point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++) {
             each(point, 0);
         }
