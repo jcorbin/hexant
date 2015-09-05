@@ -93,13 +93,21 @@ function setup() {
             pause();
             return;
         }
-        frameId = animFrame.request(tick);
-
-        try {
-            hexant.stepDraw();
-        } catch(err) {
+        var err = step();
+        if (err) {
             pause();
             throw err;
+        }
+
+        frameId = animFrame.request(tick);
+    }
+
+    function step() {
+        try {
+            hexant.stepDraw();
+            return null;
+        } catch(err) {
+            return err;
         }
     }
 
