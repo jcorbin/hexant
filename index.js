@@ -20,11 +20,9 @@ function setup() {
 
     var hexant = new HexAntWorld(el);
     hexant.addAnt();
-    console.log(hexant.tile.dump());
     el.addEventListener('click', stepit);
     setFrameRate(10);
     window.hexant = hexant;
-
     window.addEventListener('keypress', onKeyPress);
 
     if (hash.get('labeled')) {
@@ -42,8 +40,6 @@ function setup() {
         case 0x23: // #
             toggleLabeled();
             break;
-        // default:
-        //     console.log(e.keyCode);
         }
     }
 
@@ -55,7 +51,6 @@ function setup() {
 
     function stepit() {
         hexant.stepDraw();
-        console.log(hexant.tile.dump());
     }
 
     function setFrameRate(frameRate) {
