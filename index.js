@@ -2,6 +2,9 @@
 
 var domready = require('domready');
 var AnimationFrame = require('animation-frame');
+var window = require('global/window');
+var document = require('global/document');
+
 var HexAntWorld = require('./world.js');
 var Hash = require('./hash.js');
 

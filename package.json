@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "animation-frame": "^0.2.5",
-    "domready": "^1.0.8"
+    "domready": "^1.0.8",
+    "global": "^4.3.0"
   }
 }
