@@ -16,6 +16,13 @@ var zoomPerm = [
     0  // 3 --> 0
 ];
 
+var tileOriginOffset = [
+    OddQOffset(0, 0),
+    OddQOffset(1, 0),
+    OddQOffset(0, 1),
+    OddQOffset(1, 1)
+];
+
 var nodeOriginOffset = [
     OddQOffset(-1, -1),
     OddQOffset(1, -1),
@@ -122,12 +129,26 @@ HexTileTreeNode.prototype.growTile = function growTile(i) {
     if (!tile) {
         return null;
     }
+    return tile.grow(i);
+};
+
+OddQHexTile.prototype.grow = function grow(i) {
+    var offset = tileOriginOffset[i].copy()
+        .mulBy(this.width, this.height);
+    var origin = this.origin.copy().add(offset);
+    var node = new HexTileTreeNode(
+        origin, 2 * this.width, 2 * this.height);
+    node.tiles[zoomPerm[i]] = this;
+    return node;
+};
+
+HexTileTreeNode.prototype.grow = function grow(i) {
     var offset = nodeOriginOffset[i].copy()
         .mulBy(this.tileWidth, this.tileHeight);
-    var origin = tile.origin.copy().add(offset);
+    var origin = this.origin.copy().add(offset);
     var node = new HexTileTreeNode(
-        origin, this.width, this.height);
-    node.tiles[zoomPerm[i]] = tile;
+        origin, 2 * this.width, 2 * this.height);
+    node.tiles[zoomPerm[i]] = this;
     return node;
 };
 
