@@ -8,7 +8,7 @@
     "test": "node test",
     "bundle": "bundle index.js >index-bundle.js && minify index-bundle.js >index-bundle-min.js",
     "inline": "npm run bundle && html-inline -i index-bundle-min.html -o index-inline-min.html",
-    "build-pages": "git checkout gh-pages && git merge --no-edit master && npm run inline && git commit -a -m 'gh-pages: update artifacts'"
+    "build-pages": "git checkout -f gh-pages && git merge --no-edit master && npm run inline && cp -f index-inline-min.html index.html && git commit  -a -m 'gh-pages: update build'"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "license": "MIT",
