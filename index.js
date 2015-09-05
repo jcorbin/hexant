@@ -3,12 +3,14 @@
 var domready = require('domready');
 var AnimationFrame = require('animation-frame');
 var HexAntWorld = require('./world.js');
+var Hash = require('./hash.js');
 
 domready(setup);
 
 function setup() {
     var el = document.querySelector('#view');
 
+    var hash = new Hash(window);
     var animFrame = null;
     var frameId = null;
     var lastFrameTime = null;
@@ -22,7 +24,7 @@ function setup() {
 
     window.addEventListener('keypress', onKeyPress);
 
-    if (getHash('labeled')) {
+    if (hash.get('labeled')) {
         hexant.setLabeled(true);
     }
 
@@ -45,7 +47,7 @@ function setup() {
     function toggleLabeled() {
         hexant.setLabeled(!hexant.labeled);
         hexant.redraw();
-        setHash('labeled', hexant.labeled);
+        hash.set('labeled', hexant.labeled);
     }
 
     function stepit() {
@@ -113,55 +115,4 @@ function setup() {
             window.innerHeight || 0);
         hexant.resize(width, height);
     }
-}
-
-function setHash(key, val) {
-    var parts = window.location.hash.slice(1).split('&');
-
-    var part = '' + escape(key);
-    if (val === false) {
-        part = '';
-    } else if (val !== true) {
-        part += '=' + escape(val);
-    }
-
-    var found = false;
-    for (var i = 0; i < parts.length; i++) {
-        var keyval = parts[i].split('=');
-        if (keyval[0] === key) {
-            found = true;
-            parts[i] = part;
-            break;
-        }
-    }
-
-    if (!found) {
-        parts.push(part);
-    }
-    parts = parts.filter(notEmptyString);
-    window.location.hash = parts.join('&');
-}
-
-function getHash(key) {
-    var parts = window.location.hash.slice(1).split('&');
-    for (var i = 0; i < parts.length; i++) {
-        var keyval = parts[i].split('=');
-        if (unescape(keyval[0]) === key) {
-            var val = unescape(keyval[1]);
-            if (val === undefined || val === 'true') {
-                return true;
-            } else if (val === 'false') {
-                return false;
-            } else if (val === 'null') {
-                return null;
-            } else {
-                return val;
-            }
-        }
-    }
-    return undefined;
-}
-
-function notEmptyString(val) {
-    return val !== '';
 }
