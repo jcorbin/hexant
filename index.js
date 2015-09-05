@@ -14,7 +14,7 @@ function setup() {
     var el = document.querySelector('#view');
 
     var hash = new Hash(window);
-    var animFrame = null;
+    var animFrame = new AnimationFrame();
     var frameId = null;
     var lastFrameTime = null;
     var frameRate = 0;
@@ -59,7 +59,6 @@ function setup() {
         if (frameId) {
             animFrame.cancel(frameId);
         }
-        animFrame = new AnimationFrame(frameRate);
         if (frameId) {
             play();
         }
