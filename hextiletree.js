@@ -91,19 +91,7 @@ HexTileTree.prototype.set = function set(point, c) {
             old.height * 2);
 
         for (var i = 0; i < old.tiles.length; i++) {
-            var tile = old.tiles[i];
-            if (tile) {
-                var qShift = zoomShift[2 * i];
-                var rShift = zoomShift[2 * i + 1];
-                var tileNode = new HexTileTreeNode(
-                    tile.origin.copy(),
-                    old.width,
-                    old.height);
-                tileNode.origin.q += qShift * old.tileWidth;
-                tileNode.origin.r += rShift * old.tileHeight;
-                tileNode.tiles[zoomPerm[i]] = tile;
-                node.tiles[i] = tileNode;
-            }
+            node.tiles[i] = old.expandTile(i);
         }
 
         this.root = node;
@@ -126,6 +114,22 @@ function HexTileTreeNode(origin, width, height) {
                                  this.origin.r + this.tileHeight);
     this.box = OddQBox(topLeft, bottomRight);
 }
+
+HexTileTreeNode.prototype.expandTile = function expandTile(i) {
+    var tile = this.tiles[i];
+    if (!tile) {
+        return null;
+    }
+    var origin = tile.origin.copy();
+    var node = new HexTileTreeNode(
+        origin, this.width, this.height);
+    var qShift = zoomShift[2 * i];
+    var rShift = zoomShift[2 * i + 1];
+    node.origin.q += qShift * this.tileWidth;
+    node.origin.r += rShift * this.tileHeight;
+    node.tiles[zoomPerm[i]] = tile;
+    return node;
+};
 
 HexTileTreeNode.prototype.boundingBox = function boundingBox() {
     return this.box;
