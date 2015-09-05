@@ -7,7 +7,8 @@
     "serve": "http-server -a 127.0.0.1 -p 8080 -c-1 -o",
     "test": "node test",
     "bundle": "bundle index.js >index-bundle.js && minify index-bundle.js >index-bundle-min.js",
-    "inline": "npm run bundle && html-inline -i index-bundle-min.html -o index-inline-min.html"
+    "inline": "npm run bundle && html-inline -i index-bundle-min.html -o index-inline-min.html",
+    "build-pages": "git checkout gh-pages && git merge --no-edit master && npm run inline && git commit -a -m 'gh-pages: update artifacts'"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "license": "MIT",
