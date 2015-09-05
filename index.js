@@ -24,7 +24,7 @@ function setup() {
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
 
-    setFrameRate(10);
+    setFrameRate(hash.get('frameRate', 10));
     hexant.setLabeled(hash.get('labeled', false));
 
     function onKeyPress(e) {
