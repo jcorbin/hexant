@@ -10,7 +10,7 @@ Hash.prototype.parse = function parse() {
     return this.window.location.hash.slice(1).split('&');
 };
 
-Hash.prototype.get = function get(key) {
+Hash.prototype.get = function get(key, def) {
     var parts = this.parse();
     for (var i = 0; i < parts.length; i++) {
         var keyval = parts[i].split('=');
@@ -29,7 +29,7 @@ Hash.prototype.get = function get(key) {
         }
     }
 
-    return undefined;
+    return def;
 };
 
 Hash.prototype.set = function set(key, val) {
