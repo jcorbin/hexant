@@ -1,0 +1,9 @@
+- fit view to explored area
+- rule changing
+- more rule options
+- compaction
+- optimistic pre-alloc under a threshold
+- support zomo and pan
+- multiple ants
+- frameRate vs lag adaptation
+- randomized starting cell values
