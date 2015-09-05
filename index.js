@@ -44,6 +44,9 @@ function setup() {
         case 0x23: // #
             toggleLabeled();
             break;
+        case 0x2a: // *
+            console.log(hexant.tile.dump());
+            break;
         case 0x2b: // +
             setFrameRate(frameRate * 2);
             hash.set('frameRate', frameRate);
