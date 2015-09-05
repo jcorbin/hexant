@@ -120,12 +120,12 @@ HexTileTreeNode.prototype.expandTile = function expandTile(i) {
         return null;
     }
     var origin = tile.origin.copy();
-    var node = new HexTileTreeNode(
-        origin, this.width, this.height);
     var qShift = zoomShift[2 * i];
     var rShift = zoomShift[2 * i + 1];
-    node.origin.q += qShift * this.tileWidth;
-    node.origin.r += rShift * this.tileHeight;
+    origin.q += qShift * this.tileWidth;
+    origin.r += rShift * this.tileHeight;
+    var node = new HexTileTreeNode(
+        origin, this.width, this.height);
     node.tiles[zoomPerm[i]] = tile;
     return node;
 };
