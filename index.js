@@ -17,6 +17,7 @@ function setup() {
     var animFrame = null;
     var frameId = null;
     var lastFrameTime = null;
+    var frameRate = 0;
 
     var hexant = new HexAntWorld(el);
     hexant.addAnt();
@@ -51,7 +52,8 @@ function setup() {
         hexant.stepDraw();
     }
 
-    function setFrameRate(frameRate) {
+    function setFrameRate(rate) {
+        frameRate = rate;
         if (frameId) {
             animFrame.cancel(frameId);
         }
