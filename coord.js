@@ -138,6 +138,12 @@ function OddQBox(topLeft, bottomRight) {
     this.bottomRight = bottomRight.toOddQOffset();
 }
 
+OddQBox.prototype.toString = function toString() {
+    return 'OddQBox(' +
+        this.topLeft.toString() + ', ' +
+        this.bottomRight.toString() + ')';
+};
+
 OddQBox.prototype.screenCount = function screenCount(pointArg) {
     var W = this.bottomRight.q - this.topLeft.q;
     var H = this.bottomRight.r - this.topLeft.r;
