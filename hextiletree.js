@@ -33,7 +33,10 @@ HexTileTree.prototype.dump = function dump() {
 };
 
 HexTileTreeNode.prototype.dump = function dump() {
-    var parts = ['TreeNode @' + this.origin.toString()];
+    var parts = [
+        'TreeNode @' + this.origin.toString(),
+        '  box: ' + this.box.toString()
+    ];
 
     for (var i = 0; i < this.tiles.length; i++) {
         var tileparts = ['null'];
