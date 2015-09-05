@@ -29,7 +29,7 @@ Hash.prototype.get = function get(key, def) {
         }
     }
 
-    return def;
+    return this.set(key, def);
 };
 
 Hash.prototype.set = function set(key, val) {
@@ -56,6 +56,8 @@ Hash.prototype.set = function set(key, val) {
 
     parts = parts.filter(notEmptyString);
     this.window.location.hash = parts.join('&');
+
+    return val;
 };
 
 function notEmptyString(val) {
