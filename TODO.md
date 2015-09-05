@@ -7,3 +7,5 @@
 - multiple ants
 - frameRate vs lag adaptation
 - randomized starting cell values
+- UI
+- generalize and borg github:jcorbin/ants
