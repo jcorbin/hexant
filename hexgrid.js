@@ -65,6 +65,6 @@ HexGrid.prototype.satisfySize = function satisfySize(width, height, box) {
     height = this.cellHeight * this.viewHeight;
     this.canvas.width = width;
     this.canvas.height = height;
-    this.canvas.style.width = width + 'px';
-    this.canvas.style.height = height + 'px';
+    this.canvas.style.width = Math.floor(width) + 'px';
+    this.canvas.style.height = Math.floor(height) + 'px';
 };
