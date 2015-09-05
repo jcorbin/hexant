@@ -1,1 +1,4 @@
 node_modules/
+index-bundle-min.js
+index-bundle.js
+index-inline-min.html
