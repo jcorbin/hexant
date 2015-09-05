@@ -6,12 +6,15 @@
   "scripts": {
     "serve": "http-server -a 127.0.0.1 -p 8080 -c-1 -o",
     "test": "node test",
-    "bundle": "bundle index.js >index-bundle.js"
+    "bundle": "bundle index.js >index-bundle.js && minify index-bundle.js >index-bundle-min.js",
+    "inline": "npm run bundle && html-inline -i index-bundle-min.html -o index-inline-min.html"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "license": "MIT",
   "devDependencies": {
+    "html-inline": "^1.1.1",
     "http-server": "^0.8.0",
+    "minify": "^1.4.20",
     "system": "^1.0.4",
     "tape": "^4.2.0",
     "uber-standard": "^4.0.1"
