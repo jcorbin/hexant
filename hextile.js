@@ -45,7 +45,8 @@ OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
     var hiQ = loQ + this.width;
     var hiR = loR + this.height;
     var point = OddQOffset(loQ, loR);
-    for (var i = 0; point.r < hiR; point.r++) {
+    var i;
+    for (i = 0, point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++, i++) {
             each(point, this.data[i]);
         }
