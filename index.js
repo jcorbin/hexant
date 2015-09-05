@@ -21,13 +21,11 @@ function setup() {
     var hexant = new HexAntWorld(el);
     hexant.addAnt();
     el.addEventListener('click', stepit);
-    setFrameRate(10);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
 
-    if (hash.get('labeled')) {
-        hexant.setLabeled(true);
-    }
+    setFrameRate(10);
+    hexant.setLabeled(hash.get('labeled', false));
 
     function onKeyPress(e) {
         switch (e.keyCode) {
