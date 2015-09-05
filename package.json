@@ -5,7 +5,8 @@
   "main": "hexant.js",
   "scripts": {
     "serve": "http-server -a 127.0.0.1 -p 8080 -c-1 -o",
-    "test": "node test"
+    "test": "node test",
+    "bundle": "bundle index.js >index-bundle.js"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "license": "MIT",
