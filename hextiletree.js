@@ -84,17 +84,7 @@ HexTileTree.prototype.set = function set(point, c) {
     var offsetPoint = point.toOddQOffset();
 
     while (!this.root.box.contains(offsetPoint)) {
-        var old = this.root;
-        var node = new HexTileTreeNode(
-            old.origin.copy(),
-            old.width * 2,
-            old.height * 2);
-
-        for (var i = 0; i < old.tiles.length; i++) {
-            node.tiles[i] = old.expandTile(i);
-        }
-
-        this.root = node;
+        this.root = this.root.expand();
         this.resized = true;
     }
 
@@ -114,6 +104,15 @@ function HexTileTreeNode(origin, width, height) {
                                  this.origin.r + this.tileHeight);
     this.box = OddQBox(topLeft, bottomRight);
 }
+
+HexTileTreeNode.prototype.expand = function expand() {
+    var node = new HexTileTreeNode(
+        this.origin.copy(), this.width * 2, this.height * 2);
+    for (var i = 0; i < this.tiles.length; i++) {
+        node.tiles[i] = this.expandTile(i);
+    }
+    return node;
+};
 
 HexTileTreeNode.prototype.expandTile = function expandTile(i) {
     var tile = this.tiles[i];
