@@ -85,18 +85,21 @@ function setup() {
     }
 
     function tick(time) {
+        var frames = 1;
         if (!lastFrameTime) {
             lastFrameTime = time;
+        } else {
+            var progress = time - lastFrameTime;
+            frames = progress / frameInterval;
         }
-        var progress = time - lastFrameTime;
-        if (progress >= 2000) {
-            pause();
-            return;
-        }
-        var err = step();
-        if (err) {
-            pause();
-            throw err;
+
+        for (var i = 0; i < frames; i++) {
+            lastFrameTime += frameInterval;
+            var err = step();
+            if (err) {
+                pause();
+                throw err;
+            }
         }
 
         frameId = animFrame.request(tick);
