@@ -142,6 +142,9 @@ function OddQBox(topLeft, bottomRight) {
     this.topLeft = topLeft.toOddQOffset();
     this.bottomRight = bottomRight.toOddQOffset();
 }
+OddQBox.prototype.copy = function copy() {
+    return new OddQBox(this.topLeft.copy(), this.bottomRight.copy());
+};
 OddQBox.prototype.toString = function toString() {
     return 'OddQBox(' +
         this.topLeft.toString() + ', ' +
