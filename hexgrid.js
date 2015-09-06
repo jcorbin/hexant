@@ -1,5 +1,8 @@
 'use strict';
 
+var Coord = require('./coord.js');
+var ScreenPoint = Coord.ScreenPoint;
+
 // TODO: perhaps this whole module would be better done as a thinner
 // NGonContext wrapper.  Essentially an equally-radius'd equally-spaced
 // NGonContext.  This would force us to explicate the vertical-orientation
@@ -19,8 +22,7 @@ function HexGrid(canvas, ctxHex) {
     this.cellWidth = 0;
     this.cellHeight = 0;
     this.hexOrigin = null;
-    this.originX = 0;
-    this.originY = 0;
+    this.origin = ScreenPoint();
     this.cellSize = 0;
 }
 
@@ -39,9 +41,8 @@ function toScreen(point) {
     var screenPoint = this.internalize(point).toScreen();
     screenPoint.x *= this.cellSize;
     screenPoint.y *= this.cellSize;
-    screenPoint.x += this.originX;
-    screenPoint.y += this.originY;
-    return screenPoint;
+    return screenPoint
+        .add(this.origin);
 };
 
 HexGrid.prototype.cellPath =
