@@ -48,18 +48,16 @@ function offsetCellPath(point) {
     return screenPoint;
 };
 
-HexGrid.prototype.satisfySize =
-function satisfySize(width, height, box) {
-    this.bounds = box;
-    this.resize(width, height);
-};
-
 HexGrid.prototype.resize =
 function resize(width, height) {
     this.avail.x = width;
     this.avail.y = height;
     this.updateSize();
 };
+
+// TODO: need this?
+// this.canvas.width = this.avail.x;
+// this.canvas.height = this.avail.y;
 
 HexGrid.prototype.updateSize =
 function updateSize() {

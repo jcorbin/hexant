@@ -34,8 +34,6 @@ function HexAntWorld(canvas) {
     this.labeled = false;
 
     this.defaultCellValue = 0;
-    this.availWidth = 0;
-    this.availHeight = 0;
 }
 
 HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
@@ -59,20 +57,14 @@ HexAntWorld.prototype.stepDraw = function stepDraw() {
     }
     if (this.tile.resized) {
         this.tile.resized = false;
-        this.resize(this.availWidth, this.availHeight);
+        this.hexGrid.bounds = this.tile.boundingBox().copy());
+        this.hexGrid.updateSize();
+        this.redraw();
     }
 };
 
 HexAntWorld.prototype.resize = function resize(width, height) {
-    this.availWidth = width;
-    this.availHeight = height;
-
-    // TODO: need this?
-    // this.canvas.width = width;
-    // this.canvas.height = height;
-
-    this.hexGrid.satisfySize(width, height, this.tile.boundingBox().copy());
-
+    this.hexGrid.resize(width, height);
     this.redraw();
 };
 
