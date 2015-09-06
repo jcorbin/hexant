@@ -109,6 +109,14 @@ OddQOffset.prototype.toString = function toString() {
 OddQOffset.prototype.copy = function copy() {
     return OddQOffset(this.q, this.r);
 };
+OddQOffset.prototype.copyFrom = function copyFrom(other) {
+    if (other.type !== this.type) {
+        return this.copyFrom(other.toOddQOffset());
+    }
+    this.q = other.q;
+    this.r = other.r;
+    return this;
+};
 OddQOffset.prototype.add = function add(other) {
     if (other.type !== this.type) {
         other = other.toOddQOffset();
@@ -154,6 +162,11 @@ function OddQBox(topLeft, bottomRight) {
 }
 OddQBox.prototype.copy = function copy() {
     return new OddQBox(this.topLeft.copy(), this.bottomRight.copy());
+};
+OddQBox.prototype.copyFrom = function copyFrom(other) {
+    this.topLeft.copy(other.topLeft);
+    this.bottomRight.copy(other.bottomRight);
+    return this;
 };
 OddQBox.prototype.toString = function toString() {
     return 'OddQBox(' +
