@@ -38,8 +38,8 @@ function internalize(point) {
 
 HexGrid.prototype.toScreen =
 function toScreen(point) {
-    var screenPoint = this.internalize(point).toScreen();
-    return screenPoint
+    return this.internalize(point)
+        .toScreen()
         .scale(this.cellSize)
         .add(this.origin);
 };
