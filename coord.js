@@ -195,3 +195,25 @@ OddQBox.prototype.contains = function contains(pointArg) {
     return point.q >= this.topLeft.q && point.q < this.bottomRight.q &&
            point.r >= this.topLeft.r && point.r < this.bottomRight.r;
 };
+OddQBox.prototype.expandTo = function expandTo(pointArg) {
+    var expanded = false;
+    var point = pointArg.toOddQOffset();
+
+    if (point.q < this.topLeft.q) {
+        this.topLeft.q = point.q;
+        expanded = true;
+    } else if (point.q >= this.bottomRight.q) {
+        this.bottomRight.q = point.q + 1;
+        expanded = true;
+    }
+
+    if (point.r < this.topLeft.r) {
+        this.topLeft.r = point.r;
+        expanded = true;
+    } else if (point.r >= this.bottomRight.r) {
+        this.bottomRight.r = point.r + 1;
+        expanded = true;
+    }
+
+    return expanded;
+};
