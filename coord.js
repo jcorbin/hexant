@@ -15,6 +15,14 @@ function ScreenPoint(x, y) {
     this.y = y;
 }
 ScreenPoint.prototype.type = 'point.screen';
+ScreenPoint.prototype.copy = function copy() {
+    return ScreenPoint(this.x, this.y);
+};
+ScreenPoint.prototype.copyFrom = function copyFrom(other) {
+    this.x = other.x;
+    this.y = other.y;
+    return this;
+};
 ScreenPoint.prototype.toString = function toString() {
     return 'ScreenPoint(' + this.x + ', ' + this.y + ')';
 };
