@@ -46,35 +46,46 @@ HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
 };
 
 HexAntWorld.prototype.step = function step() {
+    var i = 0;
+    var ant;
     var expanded = false;
-    for (var i = 0; i < this.ants.length; i++) {
-        var ant = this.ants[i];
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
         ant.step();
-        if (this.hexGrid.bounds.expandTo(ant.pos)) {
-            expanded = true;
+        expanded = this.hexGrid.bounds.expandTo(ant.pos);
+        if (expanded) {
+            break;
         }
     }
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.step();
+        this.hexGrid.bounds.expandTo(ant.pos);
+    }
+
     if (expanded) {
         this.hexGrid.updateSize();
     }
 };
 
 HexAntWorld.prototype.stepDraw = function stepDraw() {
-    var i;
+    var i = 0;
     var ant;
     var expanded = false;
 
-    for (i = 0; i < this.ants.length; i++) {
-        ant = this.ants[i];
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
         ant.stepDraw();
-        if (this.hexGrid.bounds.expandTo(ant.pos)) {
-            expanded = true;
+        expanded = this.hexGrid.bounds.expandTo(ant.pos);
+        if (expanded) {
             break;
         }
     }
 
-    for (; i < this.ants.length; i++) {
-        ant = this.ants[i];
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
         ant.step();
         this.hexGrid.bounds.expandTo(ant.pos);
     }
