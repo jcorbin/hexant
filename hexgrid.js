@@ -9,21 +9,23 @@ var HexAspect = Math.sqrt(3) / 2;
 
 module.exports = HexGrid;
 
+// TODO: support horizontal orientation
+
 function HexGrid(canvas, ctxHex) {
     this.canvas = canvas;
+    this.ctxHex = ctxHex;
     this.viewWidth = 0;
     this.viewHeight = 0;
-    this.ctxHex = ctxHex;
-    this.cellSize = 0;
     this.cellWidth = 0;
     this.cellHeight = 0;
     this.hexOrigin = null;
     this.originX = 0;
     this.originY = 0;
-    // TODO: support horizontal orientation
+    this.cellSize = 0;
 }
 
-HexGrid.prototype.toScreen = function toScreen(point) {
+HexGrid.prototype.toScreen =
+function toScreen(point) {
     if (this.hexOrigin) {
         point = point.copy();
         point = point.toOddQOffset();
@@ -37,13 +39,15 @@ HexGrid.prototype.toScreen = function toScreen(point) {
     return screenPoint;
 };
 
-HexGrid.prototype.cellPath = function offsetCellPath(point) {
+HexGrid.prototype.cellPath =
+function offsetCellPath(point) {
     var screenPoint = this.toScreen(point);
     this.ctxHex.full(screenPoint.x, screenPoint.y, this.cellSize);
     return screenPoint;
 };
 
-HexGrid.prototype.satisfySize = function satisfySize(width, height, box) {
+HexGrid.prototype.satisfySize =
+function satisfySize(width, height, box) {
     var numCells = box.screenCount();
     this.cellWidth = width / numCells.x;
     this.cellHeight = height / numCells.y;
