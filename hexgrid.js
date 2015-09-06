@@ -1,5 +1,9 @@
 'use strict';
 
+var Coord = require('./coord.js');
+var OddQBox = Coord.OddQBox;
+var ScreenPoint = Coord.ScreenPoint;
+
 // TODO: perhaps this whole module would be better done as a thinner
 // NGonContext wrapper.  Essentially an equally-radius'd equally-spaced
 // NGonContext.  This would force us to explicate the vertical-orientation
@@ -9,62 +13,72 @@ var HexAspect = Math.sqrt(3) / 2;
 
 module.exports = HexGrid;
 
-function HexGrid(canvas, ctxHex) {
+// TODO: support horizontal orientation
+
+function HexGrid(canvas, ctxHex, bounds) {
     this.canvas = canvas;
-    this.viewWidth = 0;
-    this.viewHeight = 0;
     this.ctxHex = ctxHex;
+    this.bounds = bounds || OddQBox();
+    this.cell = ScreenPoint();
+    this.origin = ScreenPoint();
+    this.avail = ScreenPoint();
     this.cellSize = 0;
-    this.cellWidth = 0;
-    this.cellHeight = 0;
-    this.hexOrigin = null;
-    this.originX = 0;
-    this.originY = 0;
-    // TODO: support horizontal orientation
 }
 
-HexGrid.prototype.toScreen = function toScreen(point) {
-    if (this.hexOrigin) {
-        point = point.copy();
-        point = point.toOddQOffset();
-        point.sub(this.hexOrigin);
-    }
-    var screenPoint = point.toScreen();
-    screenPoint.x *= this.cellSize;
-    screenPoint.y *= this.cellSize;
-    screenPoint.x += this.originX;
-    screenPoint.y += this.originY;
-    return screenPoint;
+HexGrid.prototype.internalize =
+function internalize(point) {
+    return point
+        .copy()
+        .toOddQOffset()
+        .sub(this.bounds.topLeft);
 };
 
-HexGrid.prototype.cellPath = function offsetCellPath(point) {
+HexGrid.prototype.toScreen =
+function toScreen(point) {
+    return this.internalize(point)
+        .toScreen()
+        .scale(this.cellSize)
+        .add(this.origin);
+};
+
+HexGrid.prototype.cellPath =
+function offsetCellPath(point) {
     var screenPoint = this.toScreen(point);
     this.ctxHex.full(screenPoint.x, screenPoint.y, this.cellSize);
     return screenPoint;
 };
 
-HexGrid.prototype.satisfySize = function satisfySize(width, height, box) {
-    var numCells = box.screenCount();
-    this.cellWidth = width / numCells.x;
-    this.cellHeight = height / numCells.y;
+HexGrid.prototype.resize =
+function resize(width, height) {
+    this.avail.x = width;
+    this.avail.y = height;
+    this.updateSize();
+};
 
-    var widthSize = this.cellWidth / 2;
-    var heightSize = this.cellHeight / 2 / HexAspect;
+// TODO: need this?
+// this.canvas.width = this.avail.x;
+// this.canvas.height = this.avail.y;
+
+HexGrid.prototype.updateSize =
+function updateSize() {
+    var view = this.bounds.screenCount();
+    this.cell.x = this.avail.x / view.x;
+    this.cell.y = this.avail.y / view.y;
+    var widthSize = this.cell.x / 2;
+    var heightSize = this.cell.y / 2 / HexAspect;
     if (widthSize < heightSize) {
         this.cellSize = widthSize;
-        this.cellHeight = this.cellWidth * HexAspect;
+        this.cell.y = this.cell.x * HexAspect;
     } else {
         this.cellSize = heightSize;
-        this.cellWidth = 2 * this.cellSize;
+        this.cell.x = 2 * this.cellSize;
     }
 
-    this.viewWidth = numCells.x;
-    this.viewHeight = numCells.y;
+    // align top-left
+    this.origin.copyFrom(this.cell).scale(0.5);
 
-    width = this.cellWidth * this.viewWidth;
-    height = this.cellHeight * this.viewHeight;
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.canvas.style.width = Math.floor(width) + 'px';
-    this.canvas.style.height = Math.floor(height) + 'px';
+    this.canvas.width = this.cell.x * view.x;
+    this.canvas.height = this.cell.y * view.y;
+    this.canvas.style.width = this.canvas.width + 'px';
+    this.canvas.style.height = this.canvas.height + 'px';
 };

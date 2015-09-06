@@ -16,6 +16,13 @@ function Ant(world) {
 }
 
 Ant.prototype.step = function step() {
+    var tile = this.world.tile;
+    var c = tile.get(this.pos) || 1;
+    var rule = this.rules[(c - 1) % this.rules.length];
+    c = tile.set(this.pos, 1 + c % this.world.cellColors.length);
+    this.dir = (CubePoint.basis.length + this.dir + rule
+               ) % CubePoint.basis.length;
+    this.pos.add(CubePoint.basis[this.dir]);
 };
 
 Ant.prototype.stepDraw = function stepDraw() {
@@ -25,16 +32,8 @@ Ant.prototype.stepDraw = function stepDraw() {
     c = tile.set(this.pos, 1 + c % this.world.cellColors.length);
     this.dir = (CubePoint.basis.length + this.dir + rule
                ) % CubePoint.basis.length;
-
     this.world.drawCell(this.pos, c);
     this.pos.add(CubePoint.basis[this.dir]);
-
-    c = tile.get(this.pos);
-    if (!c) {
-        tile.set(this.pos, 1);
-    }
-
-    // TODO: wall check
     this.redraw();
 };
 

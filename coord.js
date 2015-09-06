@@ -15,10 +15,44 @@ function ScreenPoint(x, y) {
     this.y = y;
 }
 ScreenPoint.prototype.type = 'point.screen';
+ScreenPoint.prototype.copy = function copy() {
+    return ScreenPoint(this.x, this.y);
+};
+ScreenPoint.prototype.copyFrom = function copyFrom(other) {
+    this.x = other.x;
+    this.y = other.y;
+    return this;
+};
 ScreenPoint.prototype.toString = function toString() {
     return 'ScreenPoint(' + this.x + ', ' + this.y + ')';
 };
 ScreenPoint.prototype.toScreen = function toScreen() {
+    return this;
+};
+ScreenPoint.prototype.scale = function scale(n) {
+    this.x *= n;
+    this.y *= n;
+    return this;
+};
+ScreenPoint.prototype.mulBy = function mulBy(x, y) {
+    this.x *= x;
+    this.y *= y;
+    return this;
+};
+ScreenPoint.prototype.add = function add(other) {
+    if (other.type !== this.type) {
+        other = other.toScreen();
+    }
+    this.x += other.x;
+    this.y += other.y;
+    return this;
+};
+ScreenPoint.prototype.sub = function sub(other) {
+    if (other.type !== this.type) {
+        other = other.toScreen();
+    }
+    this.x -= other.x;
+    this.y -= other.y;
     return this;
 };
 
@@ -99,6 +133,14 @@ OddQOffset.prototype.toString = function toString() {
 OddQOffset.prototype.copy = function copy() {
     return OddQOffset(this.q, this.r);
 };
+OddQOffset.prototype.copyFrom = function copyFrom(other) {
+    if (other.type !== this.type) {
+        return this.copyFrom(other.toOddQOffset());
+    }
+    this.q = other.q;
+    this.r = other.r;
+    return this;
+};
 OddQOffset.prototype.add = function add(other) {
     if (other.type !== this.type) {
         other = other.toOddQOffset();
@@ -139,17 +181,23 @@ function OddQBox(topLeft, bottomRight) {
     if (!(this instanceof OddQBox)) {
         return new OddQBox(topLeft, bottomRight);
     }
-    this.topLeft = topLeft.toOddQOffset();
-    this.bottomRight = bottomRight.toOddQOffset();
+    this.topLeft = topLeft ? topLeft.toOddQOffset() : OddQOffset();
+    this.bottomRight = bottomRight ? bottomRight.toOddQOffset() : OddQOffset();
 }
-
+OddQBox.prototype.copy = function copy() {
+    return new OddQBox(this.topLeft.copy(), this.bottomRight.copy());
+};
+OddQBox.prototype.copyFrom = function copyFrom(other) {
+    this.topLeft.copy(other.topLeft);
+    this.bottomRight.copy(other.bottomRight);
+    return this;
+};
 OddQBox.prototype.toString = function toString() {
     return 'OddQBox(' +
         this.topLeft.toString() + ', ' +
         this.bottomRight.toString() + ')';
 };
-
-OddQBox.prototype.screenCount = function screenCount(pointArg) {
+OddQBox.prototype.screenCount = function screenCount() {
     var W = this.bottomRight.q - this.topLeft.q;
     var H = this.bottomRight.r - this.topLeft.r;
 
@@ -166,9 +214,30 @@ OddQBox.prototype.screenCount = function screenCount(pointArg) {
 
     return ScreenPoint(x, y);
 };
-
 OddQBox.prototype.contains = function contains(pointArg) {
     var point = pointArg.toOddQOffset();
     return point.q >= this.topLeft.q && point.q < this.bottomRight.q &&
            point.r >= this.topLeft.r && point.r < this.bottomRight.r;
+};
+OddQBox.prototype.expandTo = function expandTo(pointArg) {
+    var expanded = false;
+    var point = pointArg.toOddQOffset();
+
+    if (point.q < this.topLeft.q) {
+        this.topLeft.q = point.q;
+        expanded = true;
+    } else if (point.q >= this.bottomRight.q) {
+        this.bottomRight.q = point.q + 1;
+        expanded = true;
+    }
+
+    if (point.r < this.topLeft.r) {
+        this.topLeft.r = point.r;
+        expanded = true;
+    } else if (point.r >= this.bottomRight.r) {
+        this.bottomRight.r = point.r + 1;
+        expanded = true;
+    }
+
+    return expanded;
 };

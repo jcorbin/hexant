@@ -26,15 +26,14 @@ function HexAntWorld(canvas) {
 
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
 
-    this.hexGrid = new HexGrid(this.canvas, this.ctxHex);
-    this.hexGrid.hexOrigin = this.tile.boundingBox().topLeft;
+    this.hexGrid = new HexGrid(
+        this.canvas, this.ctxHex,
+        this.tile.boundingBox().copy());
     this.ants = [];
 
     this.labeled = false;
 
     this.defaultCellValue = 0;
-    this.availWidth = 0;
-    this.availHeight = 0;
 }
 
 HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
@@ -46,37 +45,59 @@ HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
     }
 };
 
-HexAntWorld.prototype.step = function step(draw) {
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].step();
+HexAntWorld.prototype.step = function step() {
+    var i = 0;
+    var ant;
+    var expanded = false;
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.step();
+        expanded = this.hexGrid.bounds.expandTo(ant.pos);
+        if (expanded) {
+            break;
+        }
+    }
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.step();
+        this.hexGrid.bounds.expandTo(ant.pos);
+    }
+
+    if (expanded) {
+        this.hexGrid.updateSize();
     }
 };
 
 HexAntWorld.prototype.stepDraw = function stepDraw() {
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].stepDraw();
+    var i = 0;
+    var ant;
+    var expanded = false;
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.stepDraw();
+        expanded = this.hexGrid.bounds.expandTo(ant.pos);
+        if (expanded) {
+            break;
+        }
     }
-    if (this.tile.resized) {
-        this.tile.resized = false;
-        this.hexGrid.hexOrigin = this.tile.boundingBox().topLeft;
-        this.resize(this.availWidth, this.availHeight);
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.step();
+        this.hexGrid.bounds.expandTo(ant.pos);
+    }
+
+    if (expanded) {
+        this.hexGrid.updateSize();
+        this.redraw();
     }
 };
 
 HexAntWorld.prototype.resize = function resize(width, height) {
-    this.availWidth = width;
-    this.availHeight = height;
-
-    // TODO: need this?
-    // this.canvas.width = width;
-    // this.canvas.height = height;
-
-    this.hexGrid.satisfySize(width, height, this.tile.boundingBox());
-
-    // align top-left
-    this.hexGrid.originX = this.hexGrid.cellWidth / 2;
-    this.hexGrid.originY = this.hexGrid.cellHeight / 2;
-
+    this.hexGrid.resize(width, height);
     this.redraw();
 };
 

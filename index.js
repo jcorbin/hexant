@@ -39,6 +39,8 @@ function setup() {
             if (!frameId) {
                 stepit();
                 e.preventDefault();
+            } else {
+                pause();
             }
             break;
         case 0x23: // #
