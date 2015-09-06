@@ -69,11 +69,8 @@ function satisfySize(width, height, box) {
 
     this.viewWidth = numCells.x;
     this.viewHeight = numCells.y;
-
-    width = this.cellWidth * this.viewWidth;
-    height = this.cellHeight * this.viewHeight;
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.canvas.style.width = Math.floor(width) + 'px';
-    this.canvas.style.height = Math.floor(height) + 'px';
+    this.canvas.width = this.cellWidth * this.viewWidth;
+    this.canvas.height = this.cellHeight * this.viewHeight;
+    this.canvas.style.width = this.canvas.width + 'px';
+    this.canvas.style.height = this.canvas.height + 'px';
 };
