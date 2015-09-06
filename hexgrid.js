@@ -39,9 +39,8 @@ function internalize(point) {
 HexGrid.prototype.toScreen =
 function toScreen(point) {
     var screenPoint = this.internalize(point).toScreen();
-    screenPoint.x *= this.cellSize;
-    screenPoint.y *= this.cellSize;
     return screenPoint
+        .scale(this.cellSize)
         .add(this.origin);
 };
 
