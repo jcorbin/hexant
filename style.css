@@ -18,3 +18,17 @@ html, body {
     bottom: 0;
     left: 0;
 }
+
+a, a:visited {
+    text-decoration: none;
+    color: #aad;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #bbe;
+}
+
+a:active {
+    color: #ccf;
+}
