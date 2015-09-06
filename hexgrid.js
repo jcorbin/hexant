@@ -53,7 +53,11 @@ function satisfySize(width, height, box) {
     this.avail.x = width;
     this.avail.y = height;
     this.bounds = box;
+    this.updateSize();
+};
 
+HexGrid.prototype.updateSize =
+function updateSize() {
     var view = this.bounds.screenCount();
     this.cell.x = this.avail.x / view.x;
     this.cell.y = this.avail.y / view.y;
