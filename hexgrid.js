@@ -24,14 +24,19 @@ function HexGrid(canvas, ctxHex) {
     this.cellSize = 0;
 }
 
-HexGrid.prototype.toScreen =
-function toScreen(point) {
+HexGrid.prototype.internalize =
+function internalize(point) {
     if (this.hexOrigin) {
         point = point.copy();
         point = point.toOddQOffset();
         point.sub(this.hexOrigin);
     }
-    var screenPoint = point.toScreen();
+    return point;
+};
+
+HexGrid.prototype.toScreen =
+function toScreen(point) {
+    var screenPoint = this.internalize(point).toScreen();
     screenPoint.x *= this.cellSize;
     screenPoint.y *= this.cellSize;
     screenPoint.x += this.originX;
