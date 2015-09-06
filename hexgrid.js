@@ -1,6 +1,7 @@
 'use strict';
 
 var Coord = require('./coord.js');
+var OddQBox = Coord.OddQBox;
 var ScreenPoint = Coord.ScreenPoint;
 
 // TODO: perhaps this whole module would be better done as a thinner
@@ -14,9 +15,10 @@ module.exports = HexGrid;
 
 // TODO: support horizontal orientation
 
-function HexGrid(canvas, ctxHex) {
+function HexGrid(canvas, ctxHex, bounds) {
     this.canvas = canvas;
     this.ctxHex = ctxHex;
+    this.bounds = bounds || OddQBox();
     this.cell = ScreenPoint();
     this.hexOrigin = null;
     this.origin = ScreenPoint();
@@ -53,8 +55,9 @@ HexGrid.prototype.satisfySize =
 function satisfySize(width, height, box) {
     this.avail.x = width;
     this.avail.y = height;
+    this.bounds = box;
 
-    var view = box.screenCount();
+    var view = this.bounds.screenCount();
     this.cell.x = this.avail.x / view.x;
     this.cell.y = this.avail.y / view.y;
     var widthSize = this.cell.x / 2;
