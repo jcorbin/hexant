@@ -45,15 +45,17 @@ HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
     }
 };
 
-HexAntWorld.prototype.step = function step(draw) {
+HexAntWorld.prototype.step = function step() {
     for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].step();
+        var ant = this.ants[i];
+        ant.step();
     }
 };
 
 HexAntWorld.prototype.stepDraw = function stepDraw() {
     for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].stepDraw();
+        var ant = this.ants[i];
+        ant.stepDraw();
     }
     if (this.tile.resized) {
         this.tile.resized = false;
