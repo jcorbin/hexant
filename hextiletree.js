@@ -31,7 +31,6 @@ var nodeOriginOffset = [
 ];
 
 function HexTileTree(origin, tileWidth, tileHeight) {
-    this.resized = false;
     this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
 }
 
@@ -95,7 +94,6 @@ HexTileTree.prototype.set = function set(point, c) {
 
     while (!this.root.box.contains(offsetPoint)) {
         this.root = this.root.expand();
-        this.resized = true;
     }
 
     return this.root._set(offsetPoint, c);
