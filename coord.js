@@ -197,7 +197,7 @@ OddQBox.prototype.toString = function toString() {
         this.topLeft.toString() + ', ' +
         this.bottomRight.toString() + ')';
 };
-OddQBox.prototype.screenCount = function screenCount(pointArg) {
+OddQBox.prototype.screenCount = function screenCount() {
     var W = this.bottomRight.q - this.topLeft.q;
     var H = this.bottomRight.r - this.topLeft.r;
 
