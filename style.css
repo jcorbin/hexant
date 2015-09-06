@@ -5,6 +5,7 @@ html, body {
     color: #ddd;
     overflow: clip;
     height: 100%;
+    font-family: monospace;
 }
 
 #view {
@@ -16,4 +17,18 @@ html, body {
     right: 0;
     bottom: 0;
     left: 0;
+}
+
+a, a:visited {
+    text-decoration: none;
+    color: #aad;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #bbe;
+}
+
+a:active {
+    color: #ccf;
 }
