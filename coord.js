@@ -26,6 +26,11 @@ ScreenPoint.prototype.scale = function scale(n) {
     this.y *= n;
     return this;
 };
+ScreenPoint.prototype.mulBy = function mulBy(x, y) {
+    this.x *= x;
+    this.y *= y;
+    return this;
+};
 
 function CubePoint(x, y, z) {
     if (!(this instanceof CubePoint)) {
