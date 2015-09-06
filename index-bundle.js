@@ -385,6 +385,13 @@ function Ant(world) {
 }
 
 Ant.prototype.step = function step() {
+    var tile = this.world.tile;
+    var c = tile.get(this.pos) || 1;
+    var rule = this.rules[(c - 1) % this.rules.length];
+    c = tile.set(this.pos, 1 + c % this.world.cellColors.length);
+    this.dir = (CubePoint.basis.length + this.dir + rule
+               ) % CubePoint.basis.length;
+    this.pos.add(CubePoint.basis[this.dir]);
 };
 
 Ant.prototype.stepDraw = function stepDraw() {
@@ -394,16 +401,8 @@ Ant.prototype.stepDraw = function stepDraw() {
     c = tile.set(this.pos, 1 + c % this.world.cellColors.length);
     this.dir = (CubePoint.basis.length + this.dir + rule
                ) % CubePoint.basis.length;
-
     this.world.drawCell(this.pos, c);
     this.pos.add(CubePoint.basis[this.dir]);
-
-    c = tile.get(this.pos);
-    if (!c) {
-        tile.set(this.pos, 1);
-    }
-
-    // TODO: wall check
     this.redraw();
 };
 
@@ -485,10 +484,44 @@ function ScreenPoint(x, y) {
     this.y = y;
 }
 ScreenPoint.prototype.type = 'point.screen';
+ScreenPoint.prototype.copy = function copy() {
+    return ScreenPoint(this.x, this.y);
+};
+ScreenPoint.prototype.copyFrom = function copyFrom(other) {
+    this.x = other.x;
+    this.y = other.y;
+    return this;
+};
 ScreenPoint.prototype.toString = function toString() {
     return 'ScreenPoint(' + this.x + ', ' + this.y + ')';
 };
 ScreenPoint.prototype.toScreen = function toScreen() {
+    return this;
+};
+ScreenPoint.prototype.scale = function scale(n) {
+    this.x *= n;
+    this.y *= n;
+    return this;
+};
+ScreenPoint.prototype.mulBy = function mulBy(x, y) {
+    this.x *= x;
+    this.y *= y;
+    return this;
+};
+ScreenPoint.prototype.add = function add(other) {
+    if (other.type !== this.type) {
+        other = other.toScreen();
+    }
+    this.x += other.x;
+    this.y += other.y;
+    return this;
+};
+ScreenPoint.prototype.sub = function sub(other) {
+    if (other.type !== this.type) {
+        other = other.toScreen();
+    }
+    this.x -= other.x;
+    this.y -= other.y;
     return this;
 };
 
@@ -569,6 +602,14 @@ OddQOffset.prototype.toString = function toString() {
 OddQOffset.prototype.copy = function copy() {
     return OddQOffset(this.q, this.r);
 };
+OddQOffset.prototype.copyFrom = function copyFrom(other) {
+    if (other.type !== this.type) {
+        return this.copyFrom(other.toOddQOffset());
+    }
+    this.q = other.q;
+    this.r = other.r;
+    return this;
+};
 OddQOffset.prototype.add = function add(other) {
     if (other.type !== this.type) {
         other = other.toOddQOffset();
@@ -609,17 +650,23 @@ function OddQBox(topLeft, bottomRight) {
     if (!(this instanceof OddQBox)) {
         return new OddQBox(topLeft, bottomRight);
     }
-    this.topLeft = topLeft.toOddQOffset();
-    this.bottomRight = bottomRight.toOddQOffset();
+    this.topLeft = topLeft ? topLeft.toOddQOffset() : OddQOffset();
+    this.bottomRight = bottomRight ? bottomRight.toOddQOffset() : OddQOffset();
 }
-
+OddQBox.prototype.copy = function copy() {
+    return new OddQBox(this.topLeft.copy(), this.bottomRight.copy());
+};
+OddQBox.prototype.copyFrom = function copyFrom(other) {
+    this.topLeft.copy(other.topLeft);
+    this.bottomRight.copy(other.bottomRight);
+    return this;
+};
 OddQBox.prototype.toString = function toString() {
     return 'OddQBox(' +
         this.topLeft.toString() + ', ' +
         this.bottomRight.toString() + ')';
 };
-
-OddQBox.prototype.screenCount = function screenCount(pointArg) {
+OddQBox.prototype.screenCount = function screenCount() {
     var W = this.bottomRight.q - this.topLeft.q;
     var H = this.bottomRight.r - this.topLeft.r;
 
@@ -636,11 +683,32 @@ OddQBox.prototype.screenCount = function screenCount(pointArg) {
 
     return ScreenPoint(x, y);
 };
-
 OddQBox.prototype.contains = function contains(pointArg) {
     var point = pointArg.toOddQOffset();
     return point.q >= this.topLeft.q && point.q < this.bottomRight.q &&
            point.r >= this.topLeft.r && point.r < this.bottomRight.r;
+};
+OddQBox.prototype.expandTo = function expandTo(pointArg) {
+    var expanded = false;
+    var point = pointArg.toOddQOffset();
+
+    if (point.q < this.topLeft.q) {
+        this.topLeft.q = point.q;
+        expanded = true;
+    } else if (point.q >= this.bottomRight.q) {
+        this.bottomRight.q = point.q + 1;
+        expanded = true;
+    }
+
+    if (point.r < this.topLeft.r) {
+        this.topLeft.r = point.r;
+        expanded = true;
+    } else if (point.r >= this.bottomRight.r) {
+        this.bottomRight.r = point.r + 1;
+        expanded = true;
+    }
+
+    return expanded;
 };
 
 }],["hash.js","hexant","hash.js",{},function (require, exports, module, __filename, __dirname){
@@ -714,12 +782,16 @@ function notEmptyString(val) {
     return val !== '';
 }
 
-}],["hexgrid.js","hexant","hexgrid.js",{},function (require, exports, module, __filename, __dirname){
+}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexgrid.js
 // -----------------
 
 'use strict';
+
+var Coord = require('./coord.js');
+var OddQBox = Coord.OddQBox;
+var ScreenPoint = Coord.ScreenPoint;
 
 // TODO: perhaps this whole module would be better done as a thinner
 // NGonContext wrapper.  Essentially an equally-radius'd equally-spaced
@@ -730,64 +802,74 @@ var HexAspect = Math.sqrt(3) / 2;
 
 module.exports = HexGrid;
 
-function HexGrid(canvas, ctxHex) {
+// TODO: support horizontal orientation
+
+function HexGrid(canvas, ctxHex, bounds) {
     this.canvas = canvas;
-    this.viewWidth = 0;
-    this.viewHeight = 0;
     this.ctxHex = ctxHex;
+    this.bounds = bounds || OddQBox();
+    this.cell = ScreenPoint();
+    this.origin = ScreenPoint();
+    this.avail = ScreenPoint();
     this.cellSize = 0;
-    this.cellWidth = 0;
-    this.cellHeight = 0;
-    this.hexOrigin = null;
-    this.originX = 0;
-    this.originY = 0;
-    // TODO: support horizontal orientation
 }
 
-HexGrid.prototype.toScreen = function toScreen(point) {
-    if (this.hexOrigin) {
-        point = point.copy();
-        point = point.toOddQOffset();
-        point.sub(this.hexOrigin);
-    }
-    var screenPoint = point.toScreen();
-    screenPoint.x *= this.cellSize;
-    screenPoint.y *= this.cellSize;
-    screenPoint.x += this.originX;
-    screenPoint.y += this.originY;
-    return screenPoint;
+HexGrid.prototype.internalize =
+function internalize(point) {
+    return point
+        .copy()
+        .toOddQOffset()
+        .sub(this.bounds.topLeft);
 };
 
-HexGrid.prototype.cellPath = function offsetCellPath(point) {
+HexGrid.prototype.toScreen =
+function toScreen(point) {
+    return this.internalize(point)
+        .toScreen()
+        .scale(this.cellSize)
+        .add(this.origin);
+};
+
+HexGrid.prototype.cellPath =
+function offsetCellPath(point) {
     var screenPoint = this.toScreen(point);
     this.ctxHex.full(screenPoint.x, screenPoint.y, this.cellSize);
     return screenPoint;
 };
 
-HexGrid.prototype.satisfySize = function satisfySize(width, height, box) {
-    var numCells = box.screenCount();
-    this.cellWidth = width / numCells.x;
-    this.cellHeight = height / numCells.y;
+HexGrid.prototype.resize =
+function resize(width, height) {
+    this.avail.x = width;
+    this.avail.y = height;
+    this.updateSize();
+};
 
-    var widthSize = this.cellWidth / 2;
-    var heightSize = this.cellHeight / 2 / HexAspect;
+// TODO: need this?
+// this.canvas.width = this.avail.x;
+// this.canvas.height = this.avail.y;
+
+HexGrid.prototype.updateSize =
+function updateSize() {
+    var view = this.bounds.screenCount();
+    this.cell.x = this.avail.x / view.x;
+    this.cell.y = this.avail.y / view.y;
+    var widthSize = this.cell.x / 2;
+    var heightSize = this.cell.y / 2 / HexAspect;
     if (widthSize < heightSize) {
         this.cellSize = widthSize;
-        this.cellHeight = this.cellWidth * HexAspect;
+        this.cell.y = this.cell.x * HexAspect;
     } else {
         this.cellSize = heightSize;
-        this.cellWidth = 2 * this.cellSize;
+        this.cell.x = 2 * this.cellSize;
     }
 
-    this.viewWidth = numCells.x;
-    this.viewHeight = numCells.y;
+    // align top-left
+    this.origin.copyFrom(this.cell).scale(0.5);
 
-    width = this.cellWidth * this.viewWidth;
-    height = this.cellHeight * this.viewHeight;
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.canvas.style.width = Math.floor(width) + 'px';
-    this.canvas.style.height = Math.floor(height) + 'px';
+    this.canvas.width = this.cell.x * view.x;
+    this.canvas.height = this.cell.y * view.y;
+    this.canvas.style.width = this.canvas.width + 'px';
+    this.canvas.style.height = this.canvas.height + 'px';
 };
 
 }],["hextile.js","hexant","hextile.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
@@ -888,7 +970,6 @@ var nodeOriginOffset = [
 ];
 
 function HexTileTree(origin, tileWidth, tileHeight) {
-    this.resized = false;
     this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
 }
 
@@ -952,7 +1033,6 @@ HexTileTree.prototype.set = function set(point, c) {
 
     while (!this.root.box.contains(offsetPoint)) {
         this.root = this.root.expand();
-        this.resized = true;
     }
 
     return this.root._set(offsetPoint, c);
@@ -1147,6 +1227,8 @@ function setup() {
             if (!frameId) {
                 stepit();
                 e.preventDefault();
+            } else {
+                pause();
             }
             break;
         case 0x23: // #
@@ -1394,15 +1476,14 @@ function HexAntWorld(canvas) {
 
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
 
-    this.hexGrid = new HexGrid(this.canvas, this.ctxHex);
-    this.hexGrid.hexOrigin = this.tile.boundingBox().topLeft;
+    this.hexGrid = new HexGrid(
+        this.canvas, this.ctxHex,
+        this.tile.boundingBox().copy());
     this.ants = [];
 
     this.labeled = false;
 
     this.defaultCellValue = 0;
-    this.availWidth = 0;
-    this.availHeight = 0;
 }
 
 HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
@@ -1414,37 +1495,59 @@ HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
     }
 };
 
-HexAntWorld.prototype.step = function step(draw) {
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].step();
+HexAntWorld.prototype.step = function step() {
+    var i = 0;
+    var ant;
+    var expanded = false;
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.step();
+        expanded = this.hexGrid.bounds.expandTo(ant.pos);
+        if (expanded) {
+            break;
+        }
+    }
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.step();
+        this.hexGrid.bounds.expandTo(ant.pos);
+    }
+
+    if (expanded) {
+        this.hexGrid.updateSize();
     }
 };
 
 HexAntWorld.prototype.stepDraw = function stepDraw() {
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].stepDraw();
+    var i = 0;
+    var ant;
+    var expanded = false;
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.stepDraw();
+        expanded = this.hexGrid.bounds.expandTo(ant.pos);
+        if (expanded) {
+            break;
+        }
     }
-    if (this.tile.resized) {
-        this.tile.resized = false;
-        this.hexGrid.hexOrigin = this.tile.boundingBox().topLeft;
-        this.resize(this.availWidth, this.availHeight);
+
+    while (i < this.ants.length) {
+        ant = this.ants[i++];
+        ant.step();
+        this.hexGrid.bounds.expandTo(ant.pos);
+    }
+
+    if (expanded) {
+        this.hexGrid.updateSize();
+        this.redraw();
     }
 };
 
 HexAntWorld.prototype.resize = function resize(width, height) {
-    this.availWidth = width;
-    this.availHeight = height;
-
-    // TODO: need this?
-    // this.canvas.width = width;
-    // this.canvas.height = height;
-
-    this.hexGrid.satisfySize(width, height, this.tile.boundingBox());
-
-    // align top-left
-    this.hexGrid.originX = this.hexGrid.cellWidth / 2;
-    this.hexGrid.originY = this.hexGrid.cellHeight / 2;
-
+    this.hexGrid.resize(width, height);
     this.redraw();
 };
 
