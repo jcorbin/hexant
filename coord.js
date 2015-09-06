@@ -39,6 +39,22 @@ ScreenPoint.prototype.mulBy = function mulBy(x, y) {
     this.y *= y;
     return this;
 };
+ScreenPoint.prototype.add = function add(other) {
+    if (other.type !== this.type) {
+        other = other.toScreen();
+    }
+    this.x += other.x;
+    this.y += other.y;
+    return this;
+};
+ScreenPoint.prototype.sub = function sub(other) {
+    if (other.type !== this.type) {
+        other = other.toScreen();
+    }
+    this.x -= other.x;
+    this.y -= other.y;
+    return this;
+};
 
 function CubePoint(x, y, z) {
     if (!(this instanceof CubePoint)) {
