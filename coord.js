@@ -149,8 +149,8 @@ function OddQBox(topLeft, bottomRight) {
     if (!(this instanceof OddQBox)) {
         return new OddQBox(topLeft, bottomRight);
     }
-    this.topLeft = topLeft.toOddQOffset();
-    this.bottomRight = bottomRight.toOddQOffset();
+    this.topLeft = topLeft ? topLeft.toOddQOffset() : OddQOffset();
+    this.bottomRight = bottomRight ? bottomRight.toOddQOffset() : OddQOffset();
 }
 OddQBox.prototype.copy = function copy() {
     return new OddQBox(this.topLeft.copy(), this.bottomRight.copy());
