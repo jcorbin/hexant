@@ -76,6 +76,9 @@ function updateSize() {
         this.cell.x = 2 * this.cellSize;
     }
 
+    // align top-left
+    this.origin = this.cell.copy().scale(0.5);
+
     this.canvas.width = this.cell.x * view.x;
     this.canvas.height = this.cell.y * view.y;
     this.canvas.style.width = this.canvas.width + 'px';

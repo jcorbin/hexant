@@ -73,9 +73,6 @@ HexAntWorld.prototype.resize = function resize(width, height) {
 
     this.hexGrid.satisfySize(width, height, this.tile.boundingBox().copy());
 
-    // align top-left
-    this.hexGrid.origin = this.hexGrid.cell.copy().scale(0.5);
-
     this.redraw();
 };
 
