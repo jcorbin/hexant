@@ -21,6 +21,11 @@ ScreenPoint.prototype.toString = function toString() {
 ScreenPoint.prototype.toScreen = function toScreen() {
     return this;
 };
+ScreenPoint.prototype.scale = function scale(n) {
+    this.x *= n;
+    this.y *= n;
+    return this;
+};
 
 function CubePoint(x, y, z) {
     if (!(this instanceof CubePoint)) {
