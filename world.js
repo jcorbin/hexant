@@ -57,7 +57,7 @@ HexAntWorld.prototype.stepDraw = function stepDraw() {
     }
     if (this.tile.resized) {
         this.tile.resized = false;
-        this.hexGrid.bounds = this.tile.boundingBox().copy());
+        this.hexGrid.bounds.copyFrom(this.tile.boundingBox());
         this.hexGrid.updateSize();
         this.redraw();
     }
