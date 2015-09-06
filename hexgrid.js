@@ -17,8 +17,6 @@ module.exports = HexGrid;
 function HexGrid(canvas, ctxHex) {
     this.canvas = canvas;
     this.ctxHex = ctxHex;
-    this.viewWidth = 0;
-    this.viewHeight = 0;
     this.cellWidth = 0;
     this.cellHeight = 0;
     this.hexOrigin = null;
@@ -53,9 +51,9 @@ function offsetCellPath(point) {
 
 HexGrid.prototype.satisfySize =
 function satisfySize(width, height, box) {
-    var numCells = box.screenCount();
-    this.cellWidth = width / numCells.x;
-    this.cellHeight = height / numCells.y;
+    var view = box.screenCount();
+    this.cellWidth = width / view.x;
+    this.cellHeight = height / view.y;
 
     var widthSize = this.cellWidth / 2;
     var heightSize = this.cellHeight / 2 / HexAspect;
@@ -67,10 +65,8 @@ function satisfySize(width, height, box) {
         this.cellWidth = 2 * this.cellSize;
     }
 
-    this.viewWidth = numCells.x;
-    this.viewHeight = numCells.y;
-    this.canvas.width = this.cellWidth * this.viewWidth;
-    this.canvas.height = this.cellHeight * this.viewHeight;
+    this.canvas.width = this.cellWidth * view.x;
+    this.canvas.height = this.cellHeight * view.y;
     this.canvas.style.width = this.canvas.width + 'px';
     this.canvas.style.height = this.canvas.height + 'px';
 };
