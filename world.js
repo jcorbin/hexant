@@ -46,25 +46,40 @@ HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
 };
 
 HexAntWorld.prototype.step = function step() {
+    var expanded = false;
     for (var i = 0; i < this.ants.length; i++) {
         var ant = this.ants[i];
         ant.step();
+        if (this.hexGrid.bounds.expandTo(ant.pos)) {
+            expanded = true;
+        }
     }
-    if (this.tile.resized) {
-        this.tile.resized = false;
-        this.hexGrid.bounds.copyFrom(this.tile.boundingBox());
+    if (expanded) {
         this.hexGrid.updateSize();
     }
 };
 
 HexAntWorld.prototype.stepDraw = function stepDraw() {
-    for (var i = 0; i < this.ants.length; i++) {
-        var ant = this.ants[i];
+    var i;
+    var ant;
+    var expanded = false;
+
+    for (i = 0; i < this.ants.length; i++) {
+        ant = this.ants[i];
         ant.stepDraw();
+        if (this.hexGrid.bounds.expandTo(ant.pos)) {
+            expanded = true;
+            break;
+        }
     }
-    if (this.tile.resized) {
-        this.tile.resized = false;
-        this.hexGrid.bounds.copyFrom(this.tile.boundingBox());
+
+    for (; i < this.ants.length; i++) {
+        ant = this.ants[i];
+        ant.step();
+        this.hexGrid.bounds.expandTo(ant.pos);
+    }
+
+    if (expanded) {
         this.hexGrid.updateSize();
         this.redraw();
     }
