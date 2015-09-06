@@ -50,6 +50,11 @@ HexAntWorld.prototype.step = function step() {
         var ant = this.ants[i];
         ant.step();
     }
+    if (this.tile.resized) {
+        this.tile.resized = false;
+        this.hexGrid.bounds.copyFrom(this.tile.boundingBox());
+        this.hexGrid.updateSize();
+    }
 };
 
 HexAntWorld.prototype.stepDraw = function stepDraw() {
