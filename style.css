@@ -5,6 +5,7 @@ html, body {
     color: #ddd;
     overflow: clip;
     height: 100%;
+    font-family: monospace;
 }
 
 #view {
