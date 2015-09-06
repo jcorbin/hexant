@@ -26,8 +26,9 @@ function HexAntWorld(canvas) {
 
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
 
-    this.hexGrid = new HexGrid(this.canvas, this.ctxHex);
-    this.hexGrid.hexOrigin = this.tile.boundingBox().topLeft;
+    this.hexGrid = new HexGrid(
+        this.canvas, this.ctxHex,
+        this.tile.boundingBox().copy());
     this.ants = [];
 
     this.labeled = false;
@@ -58,7 +59,6 @@ HexAntWorld.prototype.stepDraw = function stepDraw() {
     }
     if (this.tile.resized) {
         this.tile.resized = false;
-        this.hexGrid.hexOrigin = this.tile.boundingBox().topLeft;
         this.resize(this.availWidth, this.availHeight);
     }
 };
@@ -71,7 +71,7 @@ HexAntWorld.prototype.resize = function resize(width, height) {
     // this.canvas.width = width;
     // this.canvas.height = height;
 
-    this.hexGrid.satisfySize(width, height, this.tile.boundingBox());
+    this.hexGrid.satisfySize(width, height, this.tile.boundingBox().copy());
 
     // align top-left
     this.hexGrid.origin = this.hexGrid.cell.copy().scale(0.5);

@@ -20,7 +20,6 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.ctxHex = ctxHex;
     this.bounds = bounds || OddQBox();
     this.cell = ScreenPoint();
-    this.hexOrigin = null;
     this.origin = ScreenPoint();
     this.avail = ScreenPoint();
     this.cellSize = 0;
@@ -28,12 +27,10 @@ function HexGrid(canvas, ctxHex, bounds) {
 
 HexGrid.prototype.internalize =
 function internalize(point) {
-    if (this.hexOrigin) {
-        point = point.copy();
-        point = point.toOddQOffset();
-        point.sub(this.hexOrigin);
-    }
-    return point;
+    return point
+        .copy()
+        .toOddQOffset()
+        .sub(this.bounds.topLeft);
 };
 
 HexGrid.prototype.toScreen =
