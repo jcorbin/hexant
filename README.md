@@ -1,6 +1,6 @@
-# Hexagonal Ants
+# [Hexagonal Ants](//jcorbin.github.io/hexant)
 
-A continuation of https://github.com/jcorbin/ants , now on hexagons.
+A continuation of [github:jcorbin/ants](//github.com/jcorbin/ants), now on hexagons.
 
 # UI
 
