@@ -20,6 +20,7 @@ function HexGrid(canvas, ctxHex) {
     this.cell = ScreenPoint();
     this.hexOrigin = null;
     this.origin = ScreenPoint();
+    this.avail = ScreenPoint();
     this.cellSize = 0;
 }
 
@@ -50,10 +51,12 @@ function offsetCellPath(point) {
 
 HexGrid.prototype.satisfySize =
 function satisfySize(width, height, box) {
-    var view = box.screenCount();
-    this.cell.x = width / view.x;
-    this.cell.y = height / view.y;
+    this.avail.x = width;
+    this.avail.y = height;
 
+    var view = box.screenCount();
+    this.cell.x = this.avail.x / view.x;
+    this.cell.y = this.avail.y / view.y;
     var widthSize = this.cell.x / 2;
     var heightSize = this.cell.y / 2 / HexAspect;
     if (widthSize < heightSize) {
