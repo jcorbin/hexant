@@ -6,11 +6,18 @@ var window = require('global/window');
 var document = window.document;
 
 var HexAntWorld = require('./world.js');
+var Ant = require('./ant.js');
 var Hash = require('./hash.js');
 
 var BatchLimit = 256;
 
 domready(setup);
+
+var Rules = {
+    L: -1,
+    R: 1,
+    F: 3
+};
 
 function setup() {
     var el = document.querySelector('#view');
@@ -23,7 +30,20 @@ function setup() {
     var frameInterval = 0;
 
     var hexant = new HexAntWorld(el);
-    hexant.addAnt();
+    var ant = new Ant(hexant);
+    ant.pos = hexant.tile.centerPoint().toCube();
+    var rule = hash.get('rule', 'LR');
+    ant.rules = rule
+        .split('')
+        .map(function each(part) {
+            return Rules[part];
+        })
+        .filter(function truthy(part) {
+            return !!part;
+        })
+        ;
+
+    hexant.addAnt(ant);
     el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
