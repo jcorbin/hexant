@@ -60,7 +60,6 @@ function Hexant() {
     this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
 
     this.el.addEventListener('click', playpause);
-    window.hexant = this.world;
     window.addEventListener('keypress', onKeyPress);
 
     setFrameRate(this.hash.get('frameRate', 4));
