@@ -2,7 +2,6 @@
 
 var Coord = require('./coord.js');
 var HexGrid = require('./hexgrid.js');
-var Ant = require('./ant.js');
 var colorGen = require('./colorgen.js');
 var HexTileTree = require('./hextiletree.js');
 var NGonContext = require('./ngoncontext.js');
