@@ -119,7 +119,7 @@ function Hexant(el) {
         var height = Math.max(
             document.documentElement.clientHeight,
             window.innerHeight || 0);
-        self.world.resize(width, height);
+        self.resize(width, height);
     }
 }
 
@@ -216,4 +216,9 @@ function toggleLabeled() {
     this.world.setLabeled(!this.world.labeled);
     this.world.redraw();
     this.hash.set('labeled', this.world.labeled);
+};
+
+Hexant.prototype.resize =
+function resize(width, height) {
+    this.world.resize(width, height);
 };
