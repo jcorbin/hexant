@@ -114,6 +114,7 @@ function setup() {
     function reset() {
         hexant.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
         hexant.hexGrid.bounds = hexant.tile.boundingBox().copy();
+        ant.dir = 0;
         ant.pos = hexant.tile.centerPoint().toCube();
         hexant.tile.set(ant.pos, 1);
         el.width = el.width;
