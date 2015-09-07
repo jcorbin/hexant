@@ -6,8 +6,6 @@
   "scripts": {
     "serve": "http-server -a 127.0.0.1 -p 8080 -c-1 -o",
     "test": "node test",
-    "bundle": "bundle index.js >index-bundle.js && minify index-bundle.js >index-bundle-min.js",
-    "inline": "npm run bundle && html-inline -i index-bundle-min.html -o index-inline-min.html",
     "build-pages": "bash build-pages.sh master"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",

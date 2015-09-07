@@ -11,7 +11,10 @@ tagit=
 
 git checkout -f gh-pages
 git merge --no-edit $branch
-npm run inline
+
+bundle index.js >index-bundle.js
+minify index-bundle.js >index-bundle-min.js
+html-inline -i index.html -o index.html
 
 desc=$(git describe --always $branch)
 if [ $(git cat-file -t $desc) == 'tag' ]; then
