@@ -4,7 +4,6 @@ module.exports = Hexant;
 
 var AnimationFrame = require('animation-frame');
 var window = require('global/window');
-var document = window.document;
 
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
@@ -77,19 +76,6 @@ function Hexant(el) {
 
     function tick(time) {
         self.tick(time);
-    }
-
-    window.addEventListener('resize', onResize);
-    onResize();
-
-    function onResize() {
-        var width = Math.max(
-            document.documentElement.clientWidth,
-            window.innerWidth || 0);
-        var height = Math.max(
-            document.documentElement.clientHeight,
-            window.innerHeight || 0);
-        self.resize(width, height);
     }
 }
 
