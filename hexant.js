@@ -171,17 +171,9 @@ Hexant.prototype.setup = function setup(el) {
         }
     }
 
-    window.addEventListener('resize', onResize);
-    onResize();
-
-    function onResize() {
-        var width = Math.max(
-            document.documentElement.clientWidth,
-            window.innerWidth || 0);
-        var height = Math.max(
-            document.documentElement.clientHeight,
-            window.innerHeight || 0);
-        hexant.resize(width, height);
+    self.resize = resize;
+    function resize(size) {
+        hexant.resize(size.x, size.y);
     }
 
 }
