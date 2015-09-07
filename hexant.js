@@ -4,8 +4,6 @@
 
 module.exports = Hexant;
 
-var AnimationFrame = require('animation-frame');
-
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
@@ -50,11 +48,11 @@ function Hexant(body, scope) {
     this.world = null;
 
     this.hash = new Hash(scope.window);
-    this.animFrame = new AnimationFrame();
-    this.frameId = null;
+    this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
     this.frameRate = 0;
     this.frameInterval = 0;
+    this.paused = true;
 
     this.boundOnKeyPress = onKeyPress;
     function onKeyPress(e) {
@@ -64,11 +62,6 @@ function Hexant(body, scope) {
     this.boundPlaypause = playpause;
     function playpause() {
         self.playpause();
-    }
-
-    this.boundTick = tick;
-    function tick(time) {
-        self.tick(time);
     }
 }
 
@@ -143,8 +136,8 @@ function reset() {
     this.world.redraw();
 };
 
-Hexant.prototype.tick =
-function tick(time) {
+Hexant.prototype.animate =
+function animate(time) {
     var frames = 1;
     if (!this.lastFrameTime) {
         this.lastFrameTime = time;
@@ -161,35 +154,34 @@ function tick(time) {
             throw err;
         }
     }
-
-    this.frameId = this.animFrame.request(this.boundTick);
 };
 
 Hexant.prototype.play =
 function play() {
     this.lastFrameTime = null;
-    this.frameId = this.animFrame.request(this.boundTick);
+    this.animator.requestAnimation();
+    this.paused = false;
 };
 
 Hexant.prototype.pause =
 function pause() {
-    this.animFrame.cancel(this.frameId);
     this.lastFrameTime = null;
-    this.frameId = null;
+    this.animator.cancelAnimation();
+    this.paused = true;
 };
 
 Hexant.prototype.playpause =
 function playpause() {
-    if (this.frameId) {
-        this.pause();
-    } else {
+    if (this.paused) {
         this.play();
+    } else {
+        this.pause();
     }
 };
 
 Hexant.prototype.stepit =
 function stepit() {
-    if (!this.frameId) {
+    if (this.paused) {
         this.world.stepDraw();
     } else {
         this.pause();
@@ -210,12 +202,6 @@ Hexant.prototype.setFrameRate =
 function setFrameRate(rate) {
     this.frameRate = rate;
     this.frameInterval = 1000 / this.frameRate;
-    if (this.frameId) {
-        this.animFrame.cancel(this.frameId);
-    }
-    if (this.frameId) {
-        this.play();
-    }
 };
 
 Hexant.prototype.toggleLabeled =
