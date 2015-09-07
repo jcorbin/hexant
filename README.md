@@ -9,7 +9,8 @@ only:
 
 ## Keyboard controls
 
-- `<Space>` -- single step when paused, pause when playing
+- `<Space>` -- play/pause
+- `.` -- single step when paused, pause when playing
 - `/` -- prompt and set new rule set
 - `+` -- double frame rate
 - `-` -- half frame rate

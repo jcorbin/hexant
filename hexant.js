@@ -50,7 +50,7 @@ function Hexant() {
     function onKeyPress(e) {
         switch (e.keyCode) {
         case 0x20: // <Space>
-            stepit();
+            playpause();
             break;
         case 0x23: // #
             toggleLabeled();
@@ -65,6 +65,9 @@ function Hexant() {
         case 0x2d: // -
             setFrameRate(Math.max(1, Math.floor(frameRate / 2)));
             hash.set('frameRate', frameRate);
+            break;
+        case 0x2e: // .
+            stepit();
             break;
         case 0x2f: // /
             pause();
