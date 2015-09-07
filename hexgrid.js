@@ -27,10 +27,14 @@ function HexGrid(canvas, ctxHex, bounds) {
 
 HexGrid.prototype.internalize =
 function internalize(point) {
+    // TODO: hack, better compromise than the broken-ness of doing the sub in
+    // odd-q space
     return point
-        .copy()
-        .toOddQOffset()
-        .sub(this.bounds.topLeft);
+        .toScreen()
+        // .copy()
+        // .toOddQOffset()
+        .sub(this.bounds.topLeft)
+        ;
 };
 
 HexGrid.prototype.toScreen =
