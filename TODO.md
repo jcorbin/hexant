@@ -1,5 +1,4 @@
-- fit view to explored area
-- rule changing
+- fix minor view clipping error
 - more rule options
 - compaction
 - optimistic pre-alloc under a threshold

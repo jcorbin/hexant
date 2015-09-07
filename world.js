@@ -153,11 +153,7 @@ function drawCellLabel(point, screenPoint) {
 
 HexAntWorld.prototype.drawCell = HexAntWorld.prototype.drawUnlabeledCell;
 
-HexAntWorld.prototype.addAnt = function addAnt() {
-    var ant = new Ant(this);
-    if (this.ants.length === 0) {
-        ant.pos = this.tile.centerPoint().toCube();
-    }
+HexAntWorld.prototype.addAnt = function addAnt(ant) {
     var c = this.tile.get(ant.pos);
     if (!c) {
         this.tile.set(ant.pos, 1);
