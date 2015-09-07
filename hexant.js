@@ -55,10 +55,9 @@ function Hexant() {
     this.frameInterval = 0;
     this.world = new HexAntWorld(this.el);
 
-    var ant = new Ant(this.world);
+    var ant = this.world.addAnt(new Ant(this.world));
     ant.pos = this.world.tile.centerPoint().toCube();
     this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
-    this.world.addAnt(ant);
 
     this.el.addEventListener('click', playpause);
     window.hexant = this.world;
@@ -91,6 +90,7 @@ function Hexant() {
             stepit();
             break;
         case 0x2f: // /
+            var ant = self.world.ants[0];
             pause();
             var rule = self.hash.get('rule');
             rule = prompt('New Rules: (' + RulesLegend + ')', rule);
@@ -132,6 +132,7 @@ function Hexant() {
     }
 
     function reset() {
+        var ant = self.world.ants[0];
         self.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
         self.world.hexGrid.bounds = self.world.tile.boundingBox().copy();
         ant.dir = 0;
