@@ -152,23 +152,24 @@ function drawCellLabel(point, screenPoint) {
 
 HexAntWorld.prototype.drawCell = HexAntWorld.prototype.drawUnlabeledCell;
 
+HexAntWorld.prototype.updateAntColors = function updateAntColors() {
+    this.antBodyColors = this.antBodyColorGen(this.ants.length);
+    this.antHeadColors = this.antHeadColorGen(this.ants.length);
+    var numStates = 0;
+    for (var i = 0; i < this.ants.length; i++) {
+        this.ants[i].bodyColor = this.antBodyColors[i];
+        this.ants[i].headColor = this.antHeadColors[i];
+        numStates = Math.max(numStates, this.ants[i].rules.length);
+    }
+    this.cellColors = this.cellColorGen(numStates);
+};
+
 HexAntWorld.prototype.addAnt = function addAnt(ant) {
     var c = this.tile.get(ant.pos);
     if (!c) {
         this.tile.set(ant.pos, 1);
     }
     this.ants.push(ant);
-
-    this.cellColors = this.cellColorGen(Math.max(
-        this.cellColors.length, ant.rules.length));
-
-    this.antBodyColors = this.antBodyColorGen(this.ants.length);
-    this.antHeadColors = this.antHeadColorGen(this.ants.length);
-
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].bodyColor = this.antBodyColors[i];
-        this.ants[i].headColor = this.antHeadColors[i];
-    }
-
+    this.updateAntColors();
     return ant;
 };
