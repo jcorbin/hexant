@@ -53,20 +53,20 @@ function Hexant() {
     this.lastFrameTime = null;
     this.frameRate = 0;
     this.frameInterval = 0;
+    this.world = new HexAntWorld(this.el);
 
-    var hexant = new HexAntWorld(this.el);
-    var ant = new Ant(hexant);
-    ant.pos = hexant.tile.centerPoint().toCube();
+    var ant = new Ant(this.world);
+    ant.pos = this.world.tile.centerPoint().toCube();
     this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
-    hexant.addAnt(ant);
+    this.world.addAnt(ant);
 
     this.el.addEventListener('click', playpause);
-    window.hexant = hexant;
+    window.hexant = this.world;
     window.addEventListener('keypress', onKeyPress);
 
     setFrameRate(this.hash.get('frameRate', 4));
-    hexant.setLabeled(this.hash.get('labeled', false));
-    hexant.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
+    this.world.setLabeled(this.hash.get('labeled', false));
+    this.world.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
 
     function onKeyPress(e) {
         switch (e.keyCode) {
@@ -77,7 +77,7 @@ function Hexant() {
             toggleLabeled();
             break;
         case 0x2a: // *
-            console.log(hexant.tile.dump());
+            console.log(self.world.tile.dump());
             break;
         case 0x2b: // +
             setFrameRate(self.frameRate * 2);
@@ -95,21 +95,21 @@ function Hexant() {
             var rule = self.hash.get('rule');
             rule = prompt('New Rules: (' + RulesLegend + ')', rule);
             self.hash.set('rule', parseRule(ant, rule));
-            hexant.updateAntColors();
+            self.world.updateAntColors();
             reset();
             break;
         }
     }
 
     function toggleLabeled() {
-        hexant.setLabeled(!hexant.labeled);
-        hexant.redraw();
-        self.hash.set('labeled', hexant.labeled);
+        self.world.setLabeled(!self.world.labeled);
+        self.world.redraw();
+        self.hash.set('labeled', self.world.labeled);
     }
 
     function stepit() {
         if (!self.frameId) {
-            hexant.stepDraw();
+            self.world.stepDraw();
         } else {
             pause();
         }
@@ -132,14 +132,14 @@ function Hexant() {
     }
 
     function reset() {
-        hexant.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-        hexant.hexGrid.bounds = hexant.tile.boundingBox().copy();
+        self.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+        self.world.hexGrid.bounds = self.world.tile.boundingBox().copy();
         ant.dir = 0;
-        ant.pos = hexant.tile.centerPoint().toCube();
-        hexant.tile.set(ant.pos, 1);
+        ant.pos = self.world.tile.centerPoint().toCube();
+        self.world.tile.set(ant.pos, 1);
         self.el.width = self.el.width;
-        hexant.hexGrid.updateSize();
-        hexant.redraw();
+        self.world.hexGrid.updateSize();
+        self.world.redraw();
     }
 
     function pause() {
@@ -179,7 +179,7 @@ function Hexant() {
 
     function step() {
         try {
-            hexant.stepDraw();
+            self.world.stepDraw();
             return null;
         } catch(err) {
             return err;
@@ -196,6 +196,6 @@ function Hexant() {
         var height = Math.max(
             document.documentElement.clientHeight,
             window.innerHeight || 0);
-        hexant.resize(width, height);
+        self.world.resize(width, height);
     }
 }
