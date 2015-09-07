@@ -73,7 +73,7 @@ function Hexant(el) {
             self.playpause();
             break;
         case 0x23: // #
-            toggleLabeled();
+            self.toggleLabeled();
             break;
         case 0x2a: // *
             console.log(self.world.tile.dump());
@@ -99,12 +99,6 @@ function Hexant(el) {
             self.reset();
             break;
         }
-    }
-
-    function toggleLabeled() {
-        self.world.setLabeled(!self.world.labeled);
-        self.world.redraw();
-        self.hash.set('labeled', self.world.labeled);
     }
 
     function playpause() {
@@ -215,4 +209,11 @@ function setFrameRate(rate) {
     if (this.frameId) {
         this.play();
     }
+};
+
+Hexant.prototype.toggleLabeled =
+function toggleLabeled() {
+    this.world.setLabeled(!this.world.labeled);
+    this.world.redraw();
+    this.hash.set('labeled', this.world.labeled);
 };
