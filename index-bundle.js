@@ -1185,7 +1185,7 @@ HexTileTreeNode.prototype._set = function _set(point, c) {
     return tile.set(point, c);
 };
 
-}],["index.js","hexant","index.js",{"domready":6,"animation-frame":0,"global/window":7,"./world.js":17,"./ant.js":8,"./hash.js":11},function (require, exports, module, __filename, __dirname){
+}],["index.js","hexant","index.js",{"domready":6,"animation-frame":0,"global/window":7,"./world.js":17,"./ant.js":8,"./hash.js":11,"./coord.js":10,"./hextiletree.js":14},function (require, exports, module, __filename, __dirname){
 
 // hexant/index.js
 // ---------------
@@ -1200,14 +1200,20 @@ var document = window.document;
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
+var OddQOffset = require('./coord.js').OddQOffset;
+var HexTileTree = require('./hextiletree.js');
 
 var BatchLimit = 256;
 
 domready(setup);
 
+var RulesLegend = 'W=West, L=Left, A=Ahead, R=Right, E=East, F=Flip';
 var Rules = {
+    W: -2,
     L: -1,
+    A: 0,
     R: 1,
+    E: 2,
     F: 3
 };
 
@@ -1224,18 +1230,9 @@ function setup() {
     var hexant = new HexAntWorld(el);
     var ant = new Ant(hexant);
     ant.pos = hexant.tile.centerPoint().toCube();
-    var rule = hash.get('rule', 'LR');
-    ant.rules = rule
-        .split('')
-        .map(function each(part) {
-            return Rules[part];
-        })
-        .filter(function truthy(part) {
-            return !!part;
-        })
-        ;
-
+    hash.set('rule', parseRule(ant, hash.get('rule', 'LR')));
     hexant.addAnt(ant);
+
     el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
@@ -1269,6 +1266,14 @@ function setup() {
             setFrameRate(Math.max(1, Math.floor(frameRate / 2)));
             hash.set('frameRate', frameRate);
             break;
+        case 0x2f: // /
+            pause();
+            var rule = hash.get('rule');
+            rule = prompt('New Rules: (' + RulesLegend + ')', rule);
+            hash.set('rule', parseRule(ant, rule));
+            hexant.updateAntColors();
+            reset();
+            break;
         }
     }
 
@@ -1296,6 +1301,16 @@ function setup() {
     function play() {
         lastFrameTime = null;
         frameId = animFrame.request(tick);
+    }
+
+    function reset() {
+        hexant.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+        hexant.hexGrid.bounds = hexant.tile.boundingBox().copy();
+        ant.pos = hexant.tile.centerPoint().toCube();
+        hexant.tile.set(ant.pos, 1);
+        el.width = el.width;
+        hexant.hexGrid.updateSize();
+        hexant.redraw();
     }
 
     function pause() {
@@ -1354,6 +1369,24 @@ function setup() {
             window.innerHeight || 0);
         hexant.resize(width, height);
     }
+}
+
+function parseRule(ant, rule) {
+    var rerule = '';
+    ant.rules = rule
+        .split('')
+        .map(function each(part) {
+            var r = Rules[part];
+            if (r !== undefined) {
+                rerule += part;
+            }
+            return r;
+        })
+        .filter(function truthy(part) {
+            return typeof(part) === 'number';
+        })
+        ;
+    return rerule;
 }
 
 }],["ngoncontext.js","hexant","ngoncontext.js",{},function (require, exports, module, __filename, __dirname){
@@ -1467,7 +1500,7 @@ NGonContext.prototype.wedge = function wedge(x, y, radius, startArg, endArg, com
 };
 
 
-}],["world.js","hexant","world.js",{"./coord.js":10,"./hexgrid.js":12,"./ant.js":8,"./colorgen.js":9,"./hextiletree.js":14,"./ngoncontext.js":16},function (require, exports, module, __filename, __dirname){
+}],["world.js","hexant","world.js",{"./coord.js":10,"./hexgrid.js":12,"./colorgen.js":9,"./hextiletree.js":14,"./ngoncontext.js":16},function (require, exports, module, __filename, __dirname){
 
 // hexant/world.js
 // ---------------
@@ -1476,7 +1509,6 @@ NGonContext.prototype.wedge = function wedge(x, y, radius, startArg, endArg, com
 
 var Coord = require('./coord.js');
 var HexGrid = require('./hexgrid.js');
-var Ant = require('./ant.js');
 var colorGen = require('./colorgen.js');
 var HexTileTree = require('./hextiletree.js');
 var NGonContext = require('./ngoncontext.js');
@@ -1627,24 +1659,25 @@ function drawCellLabel(point, screenPoint) {
 
 HexAntWorld.prototype.drawCell = HexAntWorld.prototype.drawUnlabeledCell;
 
+HexAntWorld.prototype.updateAntColors = function updateAntColors() {
+    this.antBodyColors = this.antBodyColorGen(this.ants.length);
+    this.antHeadColors = this.antHeadColorGen(this.ants.length);
+    var numStates = 0;
+    for (var i = 0; i < this.ants.length; i++) {
+        this.ants[i].bodyColor = this.antBodyColors[i];
+        this.ants[i].headColor = this.antHeadColors[i];
+        numStates = Math.max(numStates, this.ants[i].rules.length);
+    }
+    this.cellColors = this.cellColorGen(numStates);
+};
+
 HexAntWorld.prototype.addAnt = function addAnt(ant) {
     var c = this.tile.get(ant.pos);
     if (!c) {
         this.tile.set(ant.pos, 1);
     }
     this.ants.push(ant);
-
-    this.cellColors = this.cellColorGen(Math.max(
-        this.cellColors.length, ant.rules.length));
-
-    this.antBodyColors = this.antBodyColorGen(this.ants.length);
-    this.antHeadColors = this.antHeadColorGen(this.ants.length);
-
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].bodyColor = this.antBodyColors[i];
-        this.ants[i].headColor = this.antHeadColors[i];
-    }
-
+    this.updateAntColors();
     return ant;
 };
 
