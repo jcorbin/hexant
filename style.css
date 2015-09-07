@@ -8,6 +8,15 @@ html, body {
     font-family: monospace;
 }
 
+* {
+    line-height: 1.2;
+}
+
+#revision {
+    color: #666;
+    font-size: 0.6em;
+}
+
 #view {
     padding: 0;
     margin: auto;
@@ -31,4 +40,9 @@ a:hover {
 
 a:active {
     color: #ccf;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
 }
