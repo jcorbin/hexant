@@ -816,10 +816,14 @@ function HexGrid(canvas, ctxHex, bounds) {
 
 HexGrid.prototype.internalize =
 function internalize(point) {
+    // TODO: hack, better compromise than the broken-ness of doing the sub in
+    // odd-q space
     return point
-        .copy()
-        .toOddQOffset()
-        .sub(this.bounds.topLeft);
+        .toScreen()
+        // .copy()
+        // .toOddQOffset()
+        .sub(this.bounds.topLeft)
+        ;
 };
 
 HexGrid.prototype.toScreen =
@@ -1181,7 +1185,7 @@ HexTileTreeNode.prototype._set = function _set(point, c) {
     return tile.set(point, c);
 };
 
-}],["index.js","hexant","index.js",{"domready":6,"animation-frame":0,"global/window":7,"./world.js":17,"./hash.js":11},function (require, exports, module, __filename, __dirname){
+}],["index.js","hexant","index.js",{"domready":6,"animation-frame":0,"global/window":7,"./world.js":17,"./ant.js":8,"./hash.js":11},function (require, exports, module, __filename, __dirname){
 
 // hexant/index.js
 // ---------------
@@ -1194,11 +1198,18 @@ var window = require('global/window');
 var document = window.document;
 
 var HexAntWorld = require('./world.js');
+var Ant = require('./ant.js');
 var Hash = require('./hash.js');
 
 var BatchLimit = 256;
 
 domready(setup);
+
+var Rules = {
+    L: -1,
+    R: 1,
+    F: 3
+};
 
 function setup() {
     var el = document.querySelector('#view');
@@ -1211,7 +1222,20 @@ function setup() {
     var frameInterval = 0;
 
     var hexant = new HexAntWorld(el);
-    hexant.addAnt();
+    var ant = new Ant(hexant);
+    ant.pos = hexant.tile.centerPoint().toCube();
+    var rule = hash.get('rule', 'LR');
+    ant.rules = rule
+        .split('')
+        .map(function each(part) {
+            return Rules[part];
+        })
+        .filter(function truthy(part) {
+            return !!part;
+        })
+        ;
+
+    hexant.addAnt(ant);
     el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
@@ -1603,11 +1627,7 @@ function drawCellLabel(point, screenPoint) {
 
 HexAntWorld.prototype.drawCell = HexAntWorld.prototype.drawUnlabeledCell;
 
-HexAntWorld.prototype.addAnt = function addAnt() {
-    var ant = new Ant(this);
-    if (this.ants.length === 0) {
-        ant.pos = this.tile.centerPoint().toCube();
-    }
+HexAntWorld.prototype.addAnt = function addAnt(ant) {
     var c = this.tile.get(ant.pos);
     if (!c) {
         this.tile.set(ant.pos, 1);
