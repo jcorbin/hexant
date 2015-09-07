@@ -68,37 +68,7 @@ function Hexant(el) {
     this.world.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
 
     function onKeyPress(e) {
-        switch (e.keyCode) {
-        case 0x20: // <Space>
-            self.playpause();
-            break;
-        case 0x23: // #
-            self.toggleLabeled();
-            break;
-        case 0x2a: // *
-            console.log(self.world.tile.dump());
-            break;
-        case 0x2b: // +
-            self.setFrameRate(self.frameRate * 2);
-            self.hash.set('frameRate', self.frameRate);
-            break;
-        case 0x2d: // -
-            self.setFrameRate(Math.max(1, Math.floor(self.frameRate / 2)));
-            self.hash.set('frameRate', self.frameRate);
-            break;
-        case 0x2e: // .
-            self.stepit();
-            break;
-        case 0x2f: // /
-            var ant = self.world.ants[0];
-            self.pause();
-            var rule = self.hash.get('rule');
-            rule = prompt('New Rules: (' + RulesLegend + ')', rule);
-            self.hash.set('rule', parseRule(ant, rule));
-            self.world.updateAntColors();
-            self.reset();
-            break;
-        }
+        self.onKeyPress(e);
     }
 
     function playpause() {
@@ -122,6 +92,41 @@ function Hexant(el) {
         self.resize(width, height);
     }
 }
+
+Hexant.prototype.onKeyPress =
+function onKeyPress(e) {
+    switch (e.keyCode) {
+    case 0x20: // <Space>
+        this.playpause();
+        break;
+    case 0x23: // #
+        this.toggleLabeled();
+        break;
+    case 0x2a: // *
+        console.log(this.world.tile.dump());
+        break;
+    case 0x2b: // +
+        this.setFrameRate(this.frameRate * 2);
+        this.hash.set('frameRate', this.frameRate);
+        break;
+    case 0x2d: // -
+        this.setFrameRate(Math.max(1, Math.floor(this.frameRate / 2)));
+        this.hash.set('frameRate', this.frameRate);
+        break;
+    case 0x2e: // .
+        this.stepit();
+        break;
+    case 0x2f: // /
+        var ant = this.world.ants[0];
+        this.pause();
+        var rule = this.hash.get('rule');
+        rule = prompt('New Rules: (' + RulesLegend + ')', rule);
+        this.hash.set('rule', parseRule(ant, rule));
+        this.world.updateAntColors();
+        this.reset();
+        break;
+    }
+};
 
 Hexant.prototype.reset =
 function reset() {
