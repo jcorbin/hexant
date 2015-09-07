@@ -51,8 +51,8 @@ function Hexant() {
     this.animFrame = new AnimationFrame();
     this.frameId = null;
     this.lastFrameTime = null;
+    this.frameRate = 0;
 
-    var frameRate = 0;
     var frameInterval = 0;
 
     var hexant = new HexAntWorld(this.el);
@@ -81,12 +81,12 @@ function Hexant() {
             console.log(hexant.tile.dump());
             break;
         case 0x2b: // +
-            setFrameRate(frameRate * 2);
-            self.hash.set('frameRate', frameRate);
+            setFrameRate(self.frameRate * 2);
+            self.hash.set('frameRate', self.frameRate);
             break;
         case 0x2d: // -
-            setFrameRate(Math.max(1, Math.floor(frameRate / 2)));
-            self.hash.set('frameRate', frameRate);
+            setFrameRate(Math.max(1, Math.floor(self.frameRate / 2)));
+            self.hash.set('frameRate', self.frameRate);
             break;
         case 0x2e: // .
             stepit();
@@ -117,8 +117,8 @@ function Hexant() {
     }
 
     function setFrameRate(rate) {
-        frameRate = rate;
-        frameInterval = 1000 / frameRate;
+        self.frameRate = rate;
+        frameInterval = 1000 / self.frameRate;
         if (self.frameId) {
             self.animFrame.cancel(self.frameId);
         }
