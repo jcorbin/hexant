@@ -43,10 +43,10 @@ function parseRule(ant, rule) {
     return rerule;
 }
 
-function Hexant() {
+function Hexant(el) {
     var self = this;
 
-    this.el = document.querySelector('#view');
+    this.el = el;
     this.hash = new Hash(window);
     this.animFrame = new AnimationFrame();
     this.frameId = null;
