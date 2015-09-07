@@ -15,11 +15,13 @@ var BatchLimit = 256;
 
 domready(setup);
 
-var RulesLegend = 'L=Left, R=Right, A=Ahead, F=Flip';
+var RulesLegend = 'W=West, L=Left, A=Ahead, R=Right, E=East, F=Flip';
 var Rules = {
+    W: -2,
     L: -1,
     A: 0,
     R: 1,
+    E: 2,
     F: 3
 };
 
