@@ -32,18 +32,9 @@ function setup() {
     var hexant = new HexAntWorld(el);
     var ant = new Ant(hexant);
     ant.pos = hexant.tile.centerPoint().toCube();
-    var rule = hash.get('rule', 'LR');
-    ant.rules = rule
-        .split('')
-        .map(function each(part) {
-            return Rules[part];
-        })
-        .filter(function truthy(part) {
-            return !!part;
-        })
-        ;
-
+    hash.set('rule', parseRule(ant, hash.get('rule', 'LR')));
     hexant.addAnt(ant);
+
     el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
@@ -162,4 +153,22 @@ function setup() {
             window.innerHeight || 0);
         hexant.resize(width, height);
     }
+}
+
+function parseRule(ant, rule) {
+    var rerule = '';
+    ant.rules = rule
+        .split('')
+        .map(function each(part) {
+            var r = Rules[part];
+            if (r !== undefined) {
+                rerule += part;
+            }
+            return r;
+        })
+        .filter(function truthy(part) {
+            return typeof(part) === 'number';
+        })
+        ;
+    return rerule;
 }
