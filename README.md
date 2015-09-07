@@ -9,7 +9,7 @@ only:
 
 ## Keyboard controls
 
-- `<Space>` -- single step when paused
+- `<Space>` -- single step when paused, pause when playing
 - `+` -- double frame rate
 - `-` -- half frame rate
 - `*` -- dump the data tree to console.log for debugging
