@@ -50,8 +50,8 @@ function Hexant() {
     this.hash = new Hash(window);
     this.animFrame = new AnimationFrame();
     this.frameId = null;
+    this.lastFrameTime = null;
 
-    var lastFrameTime = null;
     var frameRate = 0;
     var frameInterval = 0;
 
@@ -128,7 +128,7 @@ function Hexant() {
     }
 
     function play() {
-        lastFrameTime = null;
+        self.lastFrameTime = null;
         self.frameId = self.animFrame.request(tick);
     }
 
@@ -145,7 +145,7 @@ function Hexant() {
 
     function pause() {
         self.animFrame.cancel(self.frameId);
-        lastFrameTime = null;
+        self.lastFrameTime = null;
         self.frameId = null;
     }
 
@@ -159,15 +159,15 @@ function Hexant() {
 
     function tick(time) {
         var frames = 1;
-        if (!lastFrameTime) {
-            lastFrameTime = time;
+        if (!self.lastFrameTime) {
+            self.lastFrameTime = time;
         } else {
-            var progress = time - lastFrameTime;
+            var progress = time - self.lastFrameTime;
             frames = Math.min(BatchLimit, progress / frameInterval);
         }
 
         for (var i = 0; i < frames; i++) {
-            lastFrameTime += frameInterval;
+            self.lastFrameTime += frameInterval;
             var err = step();
             if (err) {
                 pause();
