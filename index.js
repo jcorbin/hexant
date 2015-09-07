@@ -15,6 +15,7 @@ domready(setup);
 
 var Rules = {
     L: -1,
+    A: 0,
     R: 1,
     F: 3
 };
