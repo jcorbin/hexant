@@ -49,8 +49,8 @@ function Hexant() {
     this.el = document.querySelector('#view');
     this.hash = new Hash(window);
     this.animFrame = new AnimationFrame();
+    this.frameId = null;
 
-    var frameId = null;
     var lastFrameTime = null;
     var frameRate = 0;
     var frameInterval = 0;
@@ -109,7 +109,7 @@ function Hexant() {
     }
 
     function stepit() {
-        if (!frameId) {
+        if (!self.frameId) {
             hexant.stepDraw();
         } else {
             pause();
@@ -119,17 +119,17 @@ function Hexant() {
     function setFrameRate(rate) {
         frameRate = rate;
         frameInterval = 1000 / frameRate;
-        if (frameId) {
-            self.animFrame.cancel(frameId);
+        if (self.frameId) {
+            self.animFrame.cancel(self.frameId);
         }
-        if (frameId) {
+        if (self.frameId) {
             play();
         }
     }
 
     function play() {
         lastFrameTime = null;
-        frameId = self.animFrame.request(tick);
+        self.frameId = self.animFrame.request(tick);
     }
 
     function reset() {
@@ -144,13 +144,13 @@ function Hexant() {
     }
 
     function pause() {
-        self.animFrame.cancel(frameId);
+        self.animFrame.cancel(self.frameId);
         lastFrameTime = null;
-        frameId = null;
+        self.frameId = null;
     }
 
     function playpause() {
-        if (frameId) {
+        if (self.frameId) {
             pause();
         } else {
             play();
@@ -175,7 +175,7 @@ function Hexant() {
             }
         }
 
-        frameId = self.animFrame.request(tick);
+        self.frameId = self.animFrame.request(tick);
     }
 
     function step() {
