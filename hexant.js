@@ -50,12 +50,7 @@ function Hexant() {
     function onKeyPress(e) {
         switch (e.keyCode) {
         case 0x20: // <Space>
-            if (!frameId) {
-                stepit();
-                e.preventDefault();
-            } else {
-                pause();
-            }
+            stepit();
             break;
         case 0x23: // #
             toggleLabeled();
@@ -89,7 +84,11 @@ function Hexant() {
     }
 
     function stepit() {
-        hexant.stepDraw();
+        if (!frameId) {
+            hexant.stepDraw();
+        } else {
+            pause();
+        }
     }
 
     function setFrameRate(rate) {
