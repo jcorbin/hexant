@@ -24,6 +24,25 @@ var Rules = {
     F: 3
 };
 
+function parseRule(ant, rule) {
+    rule = rule.toUpperCase();
+    var rerule = '';
+    ant.rules = rule
+        .split('')
+        .map(function each(part) {
+            var r = Rules[part];
+            if (r !== undefined) {
+                rerule += part;
+            }
+            return r;
+        })
+        .filter(function truthy(part) {
+            return typeof(part) === 'number';
+        })
+        ;
+    return rerule;
+}
+
 function Hexant() {
     var el = document.querySelector('#view');
 
@@ -179,23 +198,4 @@ function Hexant() {
             window.innerHeight || 0);
         hexant.resize(width, height);
     }
-}
-
-function parseRule(ant, rule) {
-    rule = rule.toUpperCase();
-    var rerule = '';
-    ant.rules = rule
-        .split('')
-        .map(function each(part) {
-            var r = Rules[part];
-            if (r !== undefined) {
-                rerule += part;
-            }
-            return r;
-        })
-        .filter(function truthy(part) {
-            return typeof(part) === 'number';
-        })
-        ;
-    return rerule;
 }
