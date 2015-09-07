@@ -1,7 +1,5 @@
 'use strict';
 
-var AnimationFrame = require('animation-frame');
-
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
@@ -21,6 +19,8 @@ var Rules = {
 };
 
 function Hexant() {
+    var self = this;
+    self.animator = null;
 }
 
 Hexant.prototype.add = function (component, id) {
@@ -37,8 +37,7 @@ Hexant.prototype.setup = function setup(el) {
     var document = window.document;
 
     var hash = new Hash(window);
-    var animFrame = new AnimationFrame();
-    var frameId = null;
+    var paused = true;
     var lastFrameTime = null;
     var frameRate = 0;
     var frameInterval = 0;
@@ -52,6 +51,9 @@ Hexant.prototype.setup = function setup(el) {
     el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
+
+    self.animate = tick;
+    self.animator = scope.animator.add(self);
 
     setFrameRate(hash.get('frameRate', 4));
     hexant.setLabeled(hash.get('labeled', false));
@@ -98,7 +100,7 @@ Hexant.prototype.setup = function setup(el) {
     }
 
     function stepit() {
-        if (!frameId) {
+        if (paused) {
             hexant.stepDraw();
         } else {
             pause();
@@ -108,17 +110,12 @@ Hexant.prototype.setup = function setup(el) {
     function setFrameRate(rate) {
         frameRate = rate;
         frameInterval = 1000 / frameRate;
-        if (frameId) {
-            animFrame.cancel(frameId);
-        }
-        if (frameId) {
-            play();
-        }
     }
 
     function play() {
         lastFrameTime = null;
-        frameId = animFrame.request(tick);
+        paused = false;
+        self.animator.requestAnimation();
     }
 
     function reset() {
@@ -133,16 +130,16 @@ Hexant.prototype.setup = function setup(el) {
     }
 
     function pause() {
-        animFrame.cancel(frameId);
+        self.animator.cancelAnimation();
         lastFrameTime = null;
-        frameId = null;
+        paused = true;
     }
 
     function playpause() {
-        if (frameId) {
-            pause();
-        } else {
+        if (paused) {
             play();
+        } else {
+            pause();
         }
     }
 
@@ -163,8 +160,6 @@ Hexant.prototype.setup = function setup(el) {
                 throw err;
             }
         }
-
-        frameId = animFrame.request(tick);
     }
 
     function step() {
@@ -188,6 +183,7 @@ Hexant.prototype.setup = function setup(el) {
             window.innerHeight || 0);
         hexant.resize(width, height);
     }
+
 }
 
 function parseRule(ant, rule) {
