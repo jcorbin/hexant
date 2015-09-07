@@ -1,6 +1,6 @@
 'use strict';
 
-/* eslint max-parameters:6 */
+/* eslint max-params:[0,6] */
 
 module.exports = NGonContext;
 
@@ -65,7 +65,8 @@ function arc(x, y, radius, startArg, endArg, complement) {
     }
 };
 
-NGonContext.prototype.wedge = function wedge(x, y, radius, startArg, endArg, complement) {
+NGonContext.prototype.wedge =
+function wedge(x, y, radius, startArg, endArg, complement) {
     var start = 0;
     var end = 0;
     if (typeof startArg === 'number') {
