@@ -47,8 +47,8 @@ function Hexant() {
     var self = this;
 
     this.el = document.querySelector('#view');
+    this.hash = new Hash(window);
 
-    var hash = new Hash(window);
     var animFrame = new AnimationFrame();
     var frameId = null;
     var lastFrameTime = null;
@@ -58,17 +58,16 @@ function Hexant() {
     var hexant = new HexAntWorld(this.el);
     var ant = new Ant(hexant);
     ant.pos = hexant.tile.centerPoint().toCube();
-    hash.set('rule', parseRule(ant, hash.get('rule', 'LR')));
+    this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
     hexant.addAnt(ant);
 
     this.el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
 
-    setFrameRate(hash.get('frameRate', 4));
-    hexant.setLabeled(hash.get('labeled', false));
-
-    hexant.defaultCellValue = hash.get('drawUnvisited', false) ? 1 : 0;
+    setFrameRate(this.hash.get('frameRate', 4));
+    hexant.setLabeled(this.hash.get('labeled', false));
+    hexant.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
 
     function onKeyPress(e) {
         switch (e.keyCode) {
@@ -83,20 +82,20 @@ function Hexant() {
             break;
         case 0x2b: // +
             setFrameRate(frameRate * 2);
-            hash.set('frameRate', frameRate);
+            self.hash.set('frameRate', frameRate);
             break;
         case 0x2d: // -
             setFrameRate(Math.max(1, Math.floor(frameRate / 2)));
-            hash.set('frameRate', frameRate);
+            self.hash.set('frameRate', frameRate);
             break;
         case 0x2e: // .
             stepit();
             break;
         case 0x2f: // /
             pause();
-            var rule = hash.get('rule');
+            var rule = self.hash.get('rule');
             rule = prompt('New Rules: (' + RulesLegend + ')', rule);
-            hash.set('rule', parseRule(ant, rule));
+            self.hash.set('rule', parseRule(ant, rule));
             hexant.updateAntColors();
             reset();
             break;
@@ -106,7 +105,7 @@ function Hexant() {
     function toggleLabeled() {
         hexant.setLabeled(!hexant.labeled);
         hexant.redraw();
-        hash.set('labeled', hexant.labeled);
+        self.hash.set('labeled', hexant.labeled);
     }
 
     function stepit() {
