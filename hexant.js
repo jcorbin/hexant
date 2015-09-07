@@ -63,7 +63,7 @@ function Hexant(el) {
     this.el.addEventListener('click', playpause);
     window.addEventListener('keypress', onKeyPress);
 
-    setFrameRate(this.hash.get('frameRate', 4));
+    this.setFrameRate(this.hash.get('frameRate', 4));
     this.world.setLabeled(this.hash.get('labeled', false));
     this.world.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
 
@@ -79,11 +79,11 @@ function Hexant(el) {
             console.log(self.world.tile.dump());
             break;
         case 0x2b: // +
-            setFrameRate(self.frameRate * 2);
+            self.setFrameRate(self.frameRate * 2);
             self.hash.set('frameRate', self.frameRate);
             break;
         case 0x2d: // -
-            setFrameRate(Math.max(1, Math.floor(self.frameRate / 2)));
+            self.setFrameRate(Math.max(1, Math.floor(self.frameRate / 2)));
             self.hash.set('frameRate', self.frameRate);
             break;
         case 0x2e: // .
@@ -105,17 +105,6 @@ function Hexant(el) {
         self.world.setLabeled(!self.world.labeled);
         self.world.redraw();
         self.hash.set('labeled', self.world.labeled);
-    }
-
-    function setFrameRate(rate) {
-        self.frameRate = rate;
-        self.frameInterval = 1000 / self.frameRate;
-        if (self.frameId) {
-            self.animFrame.cancel(self.frameId);
-        }
-        if (self.frameId) {
-            self.play();
-        }
     }
 
     function reset() {
@@ -212,5 +201,17 @@ function step() {
         return null;
     } catch(err) {
         return err;
+    }
+};
+
+Hexant.prototype.setFrameRate =
+function setFrameRate(rate) {
+    this.frameRate = rate;
+    this.frameInterval = 1000 / this.frameRate;
+    if (this.frameId) {
+        this.animFrame.cancel(this.frameId);
+    }
+    if (this.frameId) {
+        this.play();
     }
 };
