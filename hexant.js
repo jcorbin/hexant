@@ -5,7 +5,6 @@
 module.exports = Hexant;
 
 var AnimationFrame = require('animation-frame');
-var window = require('global/window');
 
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
@@ -44,42 +43,57 @@ function parseRule(ant, rule) {
     return rerule;
 }
 
-function Hexant(el) {
+function Hexant(body, scope) {
     var self = this;
 
-    this.el = el;
-    this.hash = new Hash(window);
+    this.el = null;
+    this.world = null;
+
+    this.hash = new Hash(scope.window);
     this.animFrame = new AnimationFrame();
     this.frameId = null;
     this.lastFrameTime = null;
     this.frameRate = 0;
     this.frameInterval = 0;
-    this.world = new HexAntWorld(this.el);
+
+    this.boundOnKeyPress = onKeyPress;
+    function onKeyPress(e) {
+        self.onKeyPress(e);
+    }
+
+    this.boundPlaypause = playpause;
+    function playpause() {
+        self.playpause();
+    }
+
     this.boundTick = tick;
+    function tick(time) {
+        self.tick(time);
+    }
+}
+
+Hexant.prototype.hookup = function hookup(id, component, scope) {
+    var self = this;
+    if (id === 'view') {
+        self.setup(component, scope);
+    }
+};
+
+Hexant.prototype.setup = function setup(el, scope) {
+    this.el = el;
+    this.world = new HexAntWorld(this.el);
 
     var ant = this.world.addAnt(new Ant(this.world));
     ant.pos = this.world.tile.centerPoint().toCube();
     this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
 
-    this.el.addEventListener('click', playpause);
-    window.addEventListener('keypress', onKeyPress);
+    this.el.addEventListener('click', this.boundPlaypause);
+    scope.window.addEventListener('keypress', this.boundOnKeyPress);
 
     this.setFrameRate(this.hash.get('frameRate', 4));
     this.world.setLabeled(this.hash.get('labeled', false));
     this.world.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
-
-    function onKeyPress(e) {
-        self.onKeyPress(e);
-    }
-
-    function playpause() {
-        self.playpause();
-    }
-
-    function tick(time) {
-        self.tick(time);
-    }
-}
+};
 
 Hexant.prototype.onKeyPress =
 function onKeyPress(e) {
