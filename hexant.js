@@ -1,8 +1,9 @@
 'use strict';
 
+module.exports = Hexant;
+
 var AnimationFrame = require('animation-frame');
 var window = require('global/window');
-var document = window.document;
 
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
@@ -22,164 +23,8 @@ var Rules = {
     F: 3
 };
 
-function Hexant() {
-    var el = document.querySelector('#view');
-
-    var hash = new Hash(window);
-    var animFrame = new AnimationFrame();
-    var frameId = null;
-    var lastFrameTime = null;
-    var frameRate = 0;
-    var frameInterval = 0;
-
-    var hexant = new HexAntWorld(el);
-    var ant = new Ant(hexant);
-    ant.pos = hexant.tile.centerPoint().toCube();
-    hash.set('rule', parseRule(ant, hash.get('rule', 'LR')));
-    hexant.addAnt(ant);
-
-    el.addEventListener('click', playpause);
-    window.hexant = hexant;
-    window.addEventListener('keypress', onKeyPress);
-
-    setFrameRate(hash.get('frameRate', 4));
-    hexant.setLabeled(hash.get('labeled', false));
-
-    hexant.defaultCellValue = hash.get('drawUnvisited', false) ? 1 : 0;
-
-    function onKeyPress(e) {
-        switch (e.keyCode) {
-        case 0x20: // <Space>
-            playpause();
-            break;
-        case 0x23: // #
-            toggleLabeled();
-            break;
-        case 0x2a: // *
-            console.log(hexant.tile.dump());
-            break;
-        case 0x2b: // +
-            setFrameRate(frameRate * 2);
-            hash.set('frameRate', frameRate);
-            break;
-        case 0x2d: // -
-            setFrameRate(Math.max(1, Math.floor(frameRate / 2)));
-            hash.set('frameRate', frameRate);
-            break;
-        case 0x2e: // .
-            stepit();
-            break;
-        case 0x2f: // /
-            pause();
-            var rule = hash.get('rule');
-            rule = prompt('New Rules: (' + RulesLegend + ')', rule).toUpperCase();
-            hash.set('rule', parseRule(ant, rule));
-            hexant.updateAntColors();
-            reset();
-            break;
-        }
-    }
-
-    function toggleLabeled() {
-        hexant.setLabeled(!hexant.labeled);
-        hexant.redraw();
-        hash.set('labeled', hexant.labeled);
-    }
-
-    function stepit() {
-        if (!frameId) {
-            hexant.stepDraw();
-        } else {
-            pause();
-        }
-    }
-
-    function setFrameRate(rate) {
-        frameRate = rate;
-        frameInterval = 1000 / frameRate;
-        if (frameId) {
-            animFrame.cancel(frameId);
-        }
-        if (frameId) {
-            play();
-        }
-    }
-
-    function play() {
-        lastFrameTime = null;
-        frameId = animFrame.request(tick);
-    }
-
-    function reset() {
-        hexant.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-        hexant.hexGrid.bounds = hexant.tile.boundingBox().copy();
-        ant.dir = 0;
-        ant.pos = hexant.tile.centerPoint().toCube();
-        hexant.tile.set(ant.pos, 1);
-        el.width = el.width;
-        hexant.hexGrid.updateSize();
-        hexant.redraw();
-    }
-
-    function pause() {
-        animFrame.cancel(frameId);
-        lastFrameTime = null;
-        frameId = null;
-    }
-
-    function playpause() {
-        if (frameId) {
-            pause();
-        } else {
-            play();
-        }
-    }
-
-    function tick(time) {
-        var frames = 1;
-        if (!lastFrameTime) {
-            lastFrameTime = time;
-        } else {
-            var progress = time - lastFrameTime;
-            frames = Math.min(BatchLimit, progress / frameInterval);
-        }
-
-        for (var i = 0; i < frames; i++) {
-            lastFrameTime += frameInterval;
-            var err = step();
-            if (err) {
-                pause();
-                throw err;
-            }
-        }
-
-        frameId = animFrame.request(tick);
-    }
-
-    function step() {
-        try {
-            hexant.stepDraw();
-            return null;
-        } catch(err) {
-            return err;
-        }
-    }
-
-    window.addEventListener('resize', onResize);
-    onResize();
-
-    function onResize() {
-        var width = Math.max(
-            document.documentElement.clientWidth,
-            window.innerWidth || 0);
-        var height = Math.max(
-            document.documentElement.clientHeight,
-            window.innerHeight || 0);
-        hexant.resize(width, height);
-    }
-}
-
 function parseRule(ant, rule) {
+    rule = rule.toUpperCase();
     var rerule = '';
     ant.rules = rule
         .split('')
@@ -191,10 +36,180 @@ function parseRule(ant, rule) {
             return r;
         })
         .filter(function truthy(part) {
-            return typeof(part) === 'number';
+            return typeof part === 'number';
         })
         ;
     return rerule;
 }
 
-module.exports = Hexant;
+function Hexant(el) {
+    var self = this;
+
+    this.el = el;
+    this.hash = new Hash(window);
+    this.animFrame = new AnimationFrame();
+    this.frameId = null;
+    this.lastFrameTime = null;
+    this.frameRate = 0;
+    this.frameInterval = 0;
+    this.world = new HexAntWorld(this.el);
+    this.boundTick = tick;
+
+    var ant = this.world.addAnt(new Ant(this.world));
+    ant.pos = this.world.tile.centerPoint().toCube();
+    this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
+
+    this.el.addEventListener('click', playpause);
+    window.addEventListener('keypress', onKeyPress);
+
+    this.setFrameRate(this.hash.get('frameRate', 4));
+    this.world.setLabeled(this.hash.get('labeled', false));
+    this.world.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
+
+    function onKeyPress(e) {
+        self.onKeyPress(e);
+    }
+
+    function playpause() {
+        self.playpause();
+    }
+
+    function tick(time) {
+        self.tick(time);
+    }
+}
+
+Hexant.prototype.onKeyPress =
+function onKeyPress(e) {
+    switch (e.keyCode) {
+    case 0x20: // <Space>
+        this.playpause();
+        break;
+    case 0x23: // #
+        this.toggleLabeled();
+        break;
+    case 0x2a: // *
+        console.log(this.world.tile.dump());
+        break;
+    case 0x2b: // +
+        this.setFrameRate(this.frameRate * 2);
+        this.hash.set('frameRate', this.frameRate);
+        break;
+    case 0x2d: // -
+        this.setFrameRate(Math.max(1, Math.floor(this.frameRate / 2)));
+        this.hash.set('frameRate', this.frameRate);
+        break;
+    case 0x2e: // .
+        this.stepit();
+        break;
+    case 0x2f: // /
+        var ant = this.world.ants[0];
+        this.pause();
+        var rule = this.hash.get('rule');
+        rule = prompt('New Rules: (' + RulesLegend + ')', rule);
+        this.hash.set('rule', parseRule(ant, rule));
+        this.world.updateAntColors();
+        this.reset();
+        break;
+    }
+};
+
+Hexant.prototype.reset =
+function reset() {
+    var ant = this.world.ants[0];
+    this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.world.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    ant.dir = 0;
+    ant.pos = this.world.tile.centerPoint().toCube();
+    this.world.tile.set(ant.pos, 1);
+    this.el.width = this.el.width;
+    this.world.hexGrid.updateSize();
+    this.world.redraw();
+};
+
+Hexant.prototype.tick =
+function tick(time) {
+    var frames = 1;
+    if (!this.lastFrameTime) {
+        this.lastFrameTime = time;
+    } else {
+        var progress = time - this.lastFrameTime;
+        frames = Math.min(BatchLimit, progress / this.frameInterval);
+    }
+
+    for (var i = 0; i < frames; i++) {
+        this.lastFrameTime += this.frameInterval;
+        var err = this.step();
+        if (err) {
+            this.pause();
+            throw err;
+        }
+    }
+
+    this.frameId = this.animFrame.request(this.boundTick);
+};
+
+Hexant.prototype.play =
+function play() {
+    this.lastFrameTime = null;
+    this.frameId = this.animFrame.request(this.boundTick);
+};
+
+Hexant.prototype.pause =
+function pause() {
+    this.animFrame.cancel(this.frameId);
+    this.lastFrameTime = null;
+    this.frameId = null;
+};
+
+Hexant.prototype.playpause =
+function playpause() {
+    if (this.frameId) {
+        this.pause();
+    } else {
+        this.play();
+    }
+};
+
+Hexant.prototype.stepit =
+function stepit() {
+    if (!this.frameId) {
+        this.world.stepDraw();
+    } else {
+        this.pause();
+    }
+};
+
+Hexant.prototype.step =
+function step() {
+    try {
+        this.world.stepDraw();
+        return null;
+    } catch(err) {
+        return err;
+    }
+};
+
+Hexant.prototype.setFrameRate =
+function setFrameRate(rate) {
+    this.frameRate = rate;
+    this.frameInterval = 1000 / this.frameRate;
+    if (this.frameId) {
+        this.animFrame.cancel(this.frameId);
+    }
+    if (this.frameId) {
+        this.play();
+    }
+};
+
+Hexant.prototype.toggleLabeled =
+function toggleLabeled() {
+    this.world.setLabeled(!this.world.labeled);
+    this.world.redraw();
+    this.hash.set('labeled', this.world.labeled);
+};
+
+Hexant.prototype.resize =
+function resize(width, height) {
+    this.world.resize(width, height);
+};
