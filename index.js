@@ -77,7 +77,7 @@ function setup() {
         case 0x2f: // /
             pause();
             var rule = hash.get('rule');
-            rule = prompt('New Rules: (' + RulesLegend + ')', rule);
+            rule = prompt('New Rules: (' + RulesLegend + ')', rule).toUpperCase();
             hash.set('rule', parseRule(ant, rule));
             hexant.updateAntColors();
             reset();
