@@ -10,6 +10,7 @@ only:
 ## Keyboard controls
 
 - `<Space>` -- single step when paused, pause when playing
+- `/` -- prompt and set new rule set
 - `+` -- double frame rate
 - `-` -- half frame rate
 - `*` -- dump the data tree to console.log for debugging

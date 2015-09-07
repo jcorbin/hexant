@@ -8,11 +8,14 @@ var document = window.document;
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
+var OddQOffset = require('./coord.js').OddQOffset;
+var HexTileTree = require('./hextiletree.js');
 
 var BatchLimit = 256;
 
 domready(setup);
 
+var RulesLegend = 'L=Left, R=Right, A=Ahead, F=Flip';
 var Rules = {
     L: -1,
     A: 0,
@@ -69,6 +72,14 @@ function setup() {
             setFrameRate(Math.max(1, Math.floor(frameRate / 2)));
             hash.set('frameRate', frameRate);
             break;
+        case 0x2f: // /
+            pause();
+            var rule = hash.get('rule');
+            rule = prompt('New Rules: (' + RulesLegend + ')', rule);
+            hash.set('rule', parseRule(ant, rule));
+            hexant.updateAntColors();
+            reset();
+            break;
         }
     }
 
@@ -96,6 +107,16 @@ function setup() {
     function play() {
         lastFrameTime = null;
         frameId = animFrame.request(tick);
+    }
+
+    function reset() {
+        hexant.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+        hexant.hexGrid.bounds = hexant.tile.boundingBox().copy();
+        ant.pos = hexant.tile.centerPoint().toCube();
+        hexant.tile.set(ant.pos, 1);
+        el.width = el.width;
+        hexant.hexGrid.updateSize();
+        hexant.redraw();
     }
 
     function pause() {
