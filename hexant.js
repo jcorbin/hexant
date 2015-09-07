@@ -1,4 +1,6 @@
 'use strict';
+/* global console, prompt */
+/* eslint no-console: [0], no-alert: [0], no-try-catch: [0] */
 
 module.exports = Hexant;
 

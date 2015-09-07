@@ -5,7 +5,8 @@
   "main": "hexant.js",
   "scripts": {
     "serve": "http-server -a 127.0.0.1 -p 8080 -c-1 -o",
-    "test": "node test",
+    "test": "node test && npm run lint -s",
+    "lint": "uber-standard",
     "build-pages": "bash build-pages.sh master"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
