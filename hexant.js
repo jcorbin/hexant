@@ -1,8 +1,6 @@
 'use strict';
 
 var AnimationFrame = require('animation-frame');
-var window = require('global/window');
-var document = window.document;
 
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
@@ -23,7 +21,20 @@ var Rules = {
 };
 
 function Hexant() {
-    var el = document.querySelector('#view');
+}
+
+Hexant.prototype.add = function (component, id) {
+    var self = this;
+    if (id === 'view') {
+        self.setup(component);
+    }
+};
+
+Hexant.prototype.setup = function setup(el) {
+    var self = this;
+    var scope = self.scope;
+    var window = scope.window;
+    var document = window.document;
 
     var hash = new Hash(window);
     var animFrame = new AnimationFrame();
