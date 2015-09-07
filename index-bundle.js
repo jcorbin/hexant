@@ -362,7 +362,67 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["ant.js","hexant","ant.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":22},function (require, exports, module, __filename, __dirname){
+
+// gutentag/document.js
+// --------------------
+
+"use strict";
+module.exports = require("koerper");
+
+}],["scope.js","gutentag","scope.js",{},function (require, exports, module, __filename, __dirname){
+
+// gutentag/scope.js
+// -----------------
+
+"use strict";
+
+module.exports = Scope;
+function Scope() {
+    this.root = this;
+    this.components = Object.create(null);
+    this.componentsFor = Object.create(null);
+}
+
+Scope.prototype.nest = function () {
+    var child = Object.create(this);
+    child.parent = this;
+    child.caller = this.caller && this.caller.nest();
+    return child;
+};
+
+Scope.prototype.nestComponents = function () {
+    var child = this.nest();
+    child.components = Object.create(this.components);
+    child.componentsFor = Object.create(this.componentsFor);
+    return child;
+};
+
+// TODO deprecated
+Scope.prototype.set = function (id, component) {
+    console.log(new Error().stack);
+    this.hookup(id, component);
+};
+
+Scope.prototype.hookup = function (id, component) {
+    var scope = this;
+    scope.components[id] = component;
+
+    if (scope.this.hookup) {
+        scope.this.hookup(id, component, scope);
+    } else if (scope.this.add) {
+        // TODO deprecated
+        scope.this.add(component, id, scope);
+    }
+
+    var exportId = scope.this.exports && scope.this.exports[id];
+    if (exportId) {
+        var callerId = scope.caller.id;
+        scope.caller.hookup(callerId + ":" + exportId, component);
+    }
+};
+
+}],["ant.js","hexant","ant.js",{"./coord.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/ant.js
 // -------------
@@ -782,17 +842,55 @@ function notEmptyString(val) {
     return val !== '';
 }
 
-}],["hexant.js","hexant","hexant.js",{"animation-frame":0,"global/window":7,"./world.js":18,"./ant.js":8,"./hash.js":11,"./coord.js":10,"./hextiletree.js":15},function (require, exports, module, __filename, __dirname){
+}],["hexant.html","hexant","hexant.html",{"./hexant.js":15},function (require, exports, module, __filename, __dirname){
+
+// hexant/hexant.html
+// ------------------
+
+"use strict";
+var $SUPER = require("./hexant.js");
+var $THIS = function HexantHexant(body, caller) {
+    $SUPER.apply(this, arguments);
+    var document = body.ownerDocument;
+    var scope = this.scope = caller.root.nestComponents();
+    scope.caller = caller;
+    scope.this = this;
+    var parent = body, parents = [], node, component, callee, argument;
+    node = document.createElement("CANVAS");
+    parent.appendChild(node);
+    component = node.actualNode;
+    scope.hookup("view", component);
+    if (component.setAttribute) {
+        component.setAttribute("id", "view_5nu6oo");
+    }
+    if (scope.componentsFor["view"]) {
+       scope.componentsFor["view"].setAttribute("for", "view_5nu6oo")
+    }
+    if (component.setAttribute) {
+    component.setAttribute("class", "hexant-canvas");
+    }
+    parents[parents.length] = parent; parent = node;
+    // CANVAS
+    node = parent; parent = parents[parents.length - 1]; parents.length--;
+    this.scope.hookup("this", this);
+};
+$THIS.prototype = Object.create($SUPER.prototype);
+$THIS.prototype.constructor = $THIS;
+$THIS.prototype.exports = {};
+module.exports = $THIS;
+
+}],["hexant.js","hexant","hexant.js",{"animation-frame":0,"./world.js":21,"./ant.js":10,"./hash.js":13,"./coord.js":12,"./hextiletree.js":18},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
 
 'use strict';
+/* global console, prompt */
+/* eslint no-console: [0], no-alert: [0], no-try-catch: [0] */
 
 module.exports = Hexant;
 
 var AnimationFrame = require('animation-frame');
-var window = require('global/window');
 
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
@@ -831,42 +929,57 @@ function parseRule(ant, rule) {
     return rerule;
 }
 
-function Hexant(el) {
+function Hexant(body, scope) {
     var self = this;
 
-    this.el = el;
-    this.hash = new Hash(window);
+    this.el = null;
+    this.world = null;
+
+    this.hash = new Hash(scope.window);
     this.animFrame = new AnimationFrame();
     this.frameId = null;
     this.lastFrameTime = null;
     this.frameRate = 0;
     this.frameInterval = 0;
-    this.world = new HexAntWorld(this.el);
+
+    this.boundOnKeyPress = onKeyPress;
+    function onKeyPress(e) {
+        self.onKeyPress(e);
+    }
+
+    this.boundPlaypause = playpause;
+    function playpause() {
+        self.playpause();
+    }
+
     this.boundTick = tick;
+    function tick(time) {
+        self.tick(time);
+    }
+}
+
+Hexant.prototype.hookup = function hookup(id, component, scope) {
+    var self = this;
+    if (id === 'view') {
+        self.setup(component, scope);
+    }
+};
+
+Hexant.prototype.setup = function setup(el, scope) {
+    this.el = el;
+    this.world = new HexAntWorld(this.el);
 
     var ant = this.world.addAnt(new Ant(this.world));
     ant.pos = this.world.tile.centerPoint().toCube();
     this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
 
-    this.el.addEventListener('click', playpause);
-    window.addEventListener('keypress', onKeyPress);
+    this.el.addEventListener('click', this.boundPlaypause);
+    scope.window.addEventListener('keypress', this.boundOnKeyPress);
 
     this.setFrameRate(this.hash.get('frameRate', 4));
     this.world.setLabeled(this.hash.get('labeled', false));
     this.world.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
-
-    function onKeyPress(e) {
-        self.onKeyPress(e);
-    }
-
-    function playpause() {
-        self.playpause();
-    }
-
-    function tick(time) {
-        self.tick(time);
-    }
-}
+};
 
 Hexant.prototype.onKeyPress =
 function onKeyPress(e) {
@@ -1003,7 +1116,7 @@ function resize(width, height) {
     this.world.resize(width, height);
 };
 
-}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
+}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexgrid.js
 // -----------------
@@ -1097,7 +1210,7 @@ function updateSize() {
     this.canvas.style.height = this.canvas.height + 'px';
 };
 
-}],["hextile.js","hexant","hextile.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
+}],["hextile.js","hexant","hextile.js",{"./coord.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextile.js
 // -----------------
@@ -1157,7 +1270,7 @@ OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
     }
 };
 
-}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":10,"./hextile.js":14},function (require, exports, module, __filename, __dirname){
+}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":12,"./hextile.js":17},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextiletree.js
 // ---------------------
@@ -1406,7 +1519,7 @@ HexTileTreeNode.prototype._set = function _set(point, c) {
     return tile.set(point, c);
 };
 
-}],["index.js","hexant","index.js",{"domready":6,"global/window":7,"./hexant":12},function (require, exports, module, __filename, __dirname){
+}],["index.js","hexant","index.js",{"domready":6,"global/window":7,"gutentag/scope":9,"gutentag/document":8,"./hexant.html":14},function (require, exports, module, __filename, __dirname){
 
 // hexant/index.js
 // ---------------
@@ -1417,12 +1530,18 @@ var domready = require('domready');
 var window = require('global/window');
 var document = window.document;
 
-var Hexant = require('./hexant');
+var Scope = require('gutentag/scope');
+var Document = require('gutentag/document');
+var Hexant = require('./hexant.html');
 
 domready(setup);
 
 function setup() {
-    var hexant = new Hexant(document.querySelector('#view'));
+    var scope = new Scope();
+    scope.window = window;
+    var bodyDocument = new Document(window.document.body);
+    var body = bodyDocument.documentElement;
+    var hexant = new Hexant(body, scope);
     window.hexant = hexant;
     window.addEventListener('resize', onResize);
     onResize();
@@ -1550,7 +1669,7 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
-}],["world.js","hexant","world.js",{"./coord.js":10,"./hexgrid.js":13,"./colorgen.js":9,"./hextiletree.js":15,"./ngoncontext.js":17},function (require, exports, module, __filename, __dirname){
+}],["world.js","hexant","world.js",{"./coord.js":12,"./hexgrid.js":16,"./colorgen.js":11,"./hextiletree.js":18,"./ngoncontext.js":20},function (require, exports, module, __filename, __dirname){
 
 // hexant/world.js
 // ---------------
@@ -1729,6 +1848,522 @@ HexAntWorld.prototype.addAnt = function addAnt(ant) {
     this.ants.push(ant);
     this.updateAntColors();
     return ant;
+};
+
+}],["koerper.js","koerper","koerper.js",{"wizdom":23},function (require, exports, module, __filename, __dirname){
+
+// koerper/koerper.js
+// ------------------
+
+"use strict";
+
+var BaseDocument = require("wizdom");
+var BaseNode = BaseDocument.prototype.Node;
+var BaseElement = BaseDocument.prototype.Element;
+var BaseTextNode = BaseDocument.prototype.TextNode;
+
+module.exports = Document;
+function Document(actualNode) {
+    Node.call(this, this);
+    this.actualNode = actualNode;
+    this.actualDocument = actualNode.ownerDocument;
+
+    this.documentElement = this.createBody();
+    this.documentElement.parentNode = this;
+    actualNode.appendChild(this.documentElement.actualNode);
+
+    this.firstChild = this.documentElement;
+    this.lastChild = this.documentElement;
+}
+
+Document.prototype = Object.create(BaseDocument.prototype);
+Document.prototype.Node = Node;
+Document.prototype.Element = Element;
+Document.prototype.TextNode = TextNode;
+Document.prototype.Body = Body;
+Document.prototype.OpaqueHtml = OpaqueHtml;
+
+Document.prototype.createBody = function (label) {
+    return new this.Body(this, label);
+};
+
+Document.prototype.getActualParent = function () {
+    return this.actualNode;
+};
+
+function Node(document) {
+    BaseNode.call(this, document);
+    this.actualNode = null;
+}
+
+Node.prototype = Object.create(BaseNode.prototype);
+Node.prototype.constructor = Node;
+
+Node.prototype.insertBefore = function insertBefore(childNode, nextSibling) {
+    if (nextSibling && nextSibling.parentNode !== this) {
+        throw new Error("Can't insert before node that is not a child of parent");
+    }
+    BaseNode.prototype.insertBefore.call(this, childNode, nextSibling);
+    var actualParentNode = this.getActualParent();
+    var actualNextSibling;
+    if (nextSibling) {
+        actualNextSibling = nextSibling.getActualFirstChild();
+    }
+    if (!actualNextSibling) {
+        actualNextSibling = this.getActualNextSibling();
+    }
+    if (actualNextSibling && actualNextSibling.parentNode !== actualParentNode) {
+        actualNextSibling = null;
+    }
+    actualParentNode.insertBefore(childNode.actualNode, actualNextSibling || null);
+    childNode.inject();
+    return childNode;
+};
+
+Node.prototype.removeChild = function removeChild(childNode) {
+    if (!childNode) {
+        throw new Error("Can't remove child " + childNode);
+    }
+    childNode.extract();
+    this.getActualParent().removeChild(childNode.actualNode);
+    BaseNode.prototype.removeChild.call(this, childNode);
+};
+
+Node.prototype.setAttribute = function setAttribute(key, value) {
+    this.actualNode.setAttribute(key, value);
+};
+
+Node.prototype.getAttribute = function getAttribute(key) {
+    this.actualNode.getAttribute(key);
+};
+
+Node.prototype.hasAttribute = function hasAttribute(key) {
+    this.actualNode.hasAttribute(key);
+};
+
+Node.prototype.removeAttribute = function removeAttribute(key) {
+    this.actualNode.removeAttribute(key);
+};
+
+Node.prototype.addEventListener = function addEventListener(name, handler, capture) {
+    this.actualNode.addEventListener(name, handler, capture);
+};
+
+Node.prototype.removeEventListener = function removeEventListener(name, handler, capture) {
+    this.actualNode.removeEventListener(name, handler, capture);
+};
+
+Node.prototype.inject = function injectNode() { };
+
+Node.prototype.extract = function extractNode() { };
+
+Node.prototype.getActualParent = function () {
+    return this.actualNode;
+};
+
+Node.prototype.getActualFirstChild = function () {
+    return this.actualNode;
+};
+
+Node.prototype.getActualNextSibling = function () {
+    return null;
+};
+
+Object.defineProperty(Node.prototype, "innerHTML", {
+    get: function () {
+        return this.actualNode.innerHTML;
+    }//,
+    //set: function (html) {
+    //    // TODO invalidate any subcontained child nodes
+    //    this.actualNode.innerHTML = html;
+    //}
+});
+
+function Element(document, type, namespace) {
+    BaseNode.call(this, document, namespace);
+    if (namespace) {
+        this.actualNode = document.actualDocument.createElementNS(namespace, type);
+    } else {
+        this.actualNode = document.actualDocument.createElement(type);
+    }
+    this.attributes = this.actualNode.attributes;
+}
+
+Element.prototype = Object.create(Node.prototype);
+Element.prototype.constructor = Element;
+Element.prototype.nodeType = 1;
+
+function TextNode(document, text) {
+    Node.call(this, document);
+    this.actualNode = document.actualDocument.createTextNode(text);
+}
+
+TextNode.prototype = Object.create(Node.prototype);
+TextNode.prototype.constructor = TextNode;
+TextNode.prototype.nodeType = 3;
+
+Object.defineProperty(TextNode.prototype, "data", {
+    set: function (data) {
+        this.actualNode.data = data;
+    },
+    get: function () {
+        return this.actualNode.data;
+    }
+});
+
+// if parentNode is null, the body is extracted
+// if parentNode is non-null, the body is inserted
+function Body(document, label) {
+    Node.call(this, document);
+    this.actualNode = document.actualDocument.createTextNode("");
+    //this.actualNode = document.actualDocument.createComment(label || "");
+    this.actualFirstChild = null;
+    this.actualBody = document.actualDocument.createElement("BODY");
+}
+
+Body.prototype = Object.create(Node.prototype);
+Body.prototype.constructor = Body;
+Body.prototype.nodeType = 13;
+
+Body.prototype.extract = function extract() {
+    var body = this.actualBody;
+    var lastChild = this.actualNode;
+    var parentNode = this.parentNode.getActualParent();
+    var at = this.getActualFirstChild();
+    var next;
+    while (at && at !== lastChild) {
+        next = at.nextSibling;
+        if (body) {
+            body.appendChild(at);
+        } else {
+            parentNode.removeChild(at);
+        }
+        at = next;
+    }
+};
+
+Body.prototype.inject = function inject() {
+    if (!this.parentNode) {
+        throw new Error("Can't inject without a parent node");
+    }
+    var body = this.actualBody;
+    var lastChild = this.actualNode;
+    var parentNode = this.parentNode.getActualParent();
+    var at = body.firstChild;
+    var next;
+    while (at) {
+        next = at.nextSibling;
+        parentNode.insertBefore(at, lastChild);
+        at = next;
+    }
+};
+
+Body.prototype.getActualParent = function () {
+    if (this.parentNode) {
+        return this.parentNode.getActualParent();
+    } else {
+        return this.actualBody;
+    }
+};
+
+Body.prototype.getActualFirstChild = function () {
+    if (this.firstChild) {
+        return this.firstChild.getActualFirstChild();
+    } else {
+        return this.actualNode;
+    }
+};
+
+Body.prototype.getActualNextSibling = function () {
+    return this.actualNode;
+};
+
+Object.defineProperty(Body.prototype, "innerHTML", {
+    get: function () {
+        if (this.parentNode) {
+            this.extract();
+            var html = this.actualBody.innerHTML;
+            this.inject();
+            return html;
+        } else {
+            return this.actualBody.innerHTML;
+        }
+    },
+    set: function (html) {
+        if (this.parentNode) {
+            this.extract();
+            this.actualBody.innerHTML = html;
+            this.firstChild = this.lastChild = new OpaqueHtml(
+                this.ownerDocument,
+                this.actualBody
+            );
+            this.inject();
+        } else {
+            this.actualBody.innerHTML = html;
+            this.firstChild = this.lastChild = new OpaqueHtml(
+                this.ownerDocument,
+                this.actualBody
+            );
+        }
+        return html;
+    }
+});
+
+function OpaqueHtml(ownerDocument, body) {
+    Node.call(this, ownerDocument);
+    this.actualFirstChild = body.firstChild;
+}
+
+OpaqueHtml.prototype = Object.create(Node.prototype);
+OpaqueHtml.prototype.constructor = OpaqueHtml;
+
+OpaqueHtml.prototype.getActualFirstChild = function getActualFirstChild() {
+    return this.actualFirstChild;
+};
+
+}],["dom.js","wizdom","dom.js",{},function (require, exports, module, __filename, __dirname){
+
+// wizdom/dom.js
+// -------------
+
+"use strict";
+
+module.exports = Document;
+function Document(namespace) {
+    this.doctype = null;
+    this.documentElement = null;
+    this.namespaceURI = namespace || "";
+}
+
+Document.prototype.nodeType = 9;
+Document.prototype.Node = Node;
+Document.prototype.Element = Element;
+Document.prototype.TextNode = TextNode;
+Document.prototype.Comment = Comment;
+Document.prototype.Attr = Attr;
+Document.prototype.NamedNodeMap = NamedNodeMap;
+
+Document.prototype.createTextNode = function (text) {
+    return new this.TextNode(this, text);
+};
+
+Document.prototype.createComment = function (text) {
+    return new this.Comment(this, text);
+};
+
+Document.prototype.createElement = function (type, namespace) {
+    return new this.Element(this, type, namespace || this.namespaceURI);
+};
+
+Document.prototype.createElementNS = function (namespace, type) {
+    return new this.Element(this, type, namespace || this.namespaceURI);
+};
+
+Document.prototype.createAttribute = function (name, namespace) {
+    return new this.Attr(this, name, namespace || this.namespaceURI);
+};
+
+Document.prototype.createAttributeNS = function (namespace, name) {
+    return new this.Attr(this, name, namespace || this.namespaceURI);
+};
+
+function Node(document) {
+    this.ownerDocument = document;
+    this.parentNode = null;
+    this.firstChild = null;
+    this.lastChild = null;
+    this.previousSibling = null;
+    this.nextSibling = null;
+}
+
+Node.prototype.appendChild = function appendChild(childNode) {
+    return this.insertBefore(childNode, null);
+};
+
+Node.prototype.insertBefore = function insertBefore(childNode, nextSibling) {
+    if (!childNode) {
+        throw new Error("Can't insert null child");
+    }
+    if (childNode.ownerDocument !== this.ownerDocument) {
+        throw new Error("Can't insert child from foreign document");
+    }
+    if (childNode.parentNode) {
+        childNode.parentNode.removeChild(childNode);
+    }
+    var previousSibling;
+    if (nextSibling) {
+        previousSibling = nextSibling.previousSibling;
+    } else {
+        previousSibling = this.lastChild;
+    }
+    if (previousSibling) {
+        previousSibling.nextSibling = childNode;
+    }
+    if (nextSibling) {
+        nextSibling.previousSibling = childNode;
+    }
+    childNode.nextSibling = nextSibling;
+    childNode.previousSibling = previousSibling;
+    childNode.parentNode = this;
+    if (!nextSibling) {
+        this.lastChild = childNode;
+    }
+    if (!previousSibling) {
+        this.firstChild = childNode;
+    }
+};
+
+Node.prototype.removeChild = function removeChild(childNode) {
+    if (!childNode) {
+        throw new Error("Can't remove null child");
+    }
+    var parentNode = childNode.parentNode;
+    if (parentNode !== this) {
+        throw new Error("Can't remove node that is not a child of parent");
+    }
+    if (childNode === parentNode.firstChild) {
+        parentNode.firstChild = childNode.nextSibling;
+    }
+    if (childNode === parentNode.lastChild) {
+        parentNode.lastChild = childNode.previousSibling;
+    }
+    if (childNode.previousSibling) {
+        childNode.previousSibling.nextSibling = childNode.nextSibling;
+    }
+    if (childNode.nextSibling) {
+        childNode.nextSibling.previousSibling = childNode.previousSibling;
+    }
+    childNode.previousSibling = null;
+    childNode.parentNode = null;
+    childNode.nextSibling = null;
+    return childNode;
+};
+
+function TextNode(document, text) {
+    Node.call(this, document);
+    this.data = text;
+}
+
+TextNode.prototype = Object.create(Node.prototype);
+TextNode.prototype.constructor = TextNode;
+TextNode.prototype.nodeType = 3;
+
+function Comment(document, text) {
+    Node.call(this, document);
+    this.data = text;
+}
+
+Comment.prototype = Object.create(Node.prototype);
+Comment.prototype.constructor = Comment;
+Comment.prototype.nodeType = 8;
+
+function Element(document, type, namespace) {
+    Node.call(this, document);
+    this.tagName = type;
+    this.namespaceURI = namespace;
+    this.attributes = new this.ownerDocument.NamedNodeMap();
+}
+
+Element.prototype = Object.create(Node.prototype);
+Element.prototype.constructor = Element;
+Element.prototype.nodeType = 1;
+
+Element.prototype.hasAttribute = function (name, namespace) {
+    var attr = this.attributes.getNamedItem(name, namespace);
+    return !!attr;
+};
+
+Element.prototype.getAttribute = function (name, namespace) {
+    var attr = this.attributes.getNamedItem(name, namespace);
+    return attr ? attr.value : null;
+};
+
+Element.prototype.setAttribute = function (name, value, namespace) {
+    var attr = this.ownerDocument.createAttribute(name, namespace);
+    attr.value = value;
+    this.attributes.setNamedItem(attr, namespace);
+};
+
+Element.prototype.removeAttribute = function (name, namespace) {
+    this.attributes.removeNamedItem(name, namespace);
+};
+
+Element.prototype.hasAttributeNS = function (namespace, name) {
+    return this.hasAttribute(name, namespace);
+};
+
+Element.prototype.getAttributeNS = function (namespace, name) {
+    return this.getAttribute(name, namespace);
+};
+
+Element.prototype.setAttributeNS = function (namespace, name, value) {
+    this.setAttribute(name, value, namespace);
+};
+
+Element.prototype.removeAttributeNS = function (namespace, name) {
+    this.removeAttribute(name, namespace);
+};
+
+function Attr(ownerDocument, name, namespace) {
+    this.ownerDocument = ownerDocument;
+    this.name = name;
+    this.value = null;
+    this.namespaceURI = namespace;
+}
+
+Attr.prototype.nodeType = 2;
+
+function NamedNodeMap() {
+    this.length = 0;
+}
+
+NamedNodeMap.prototype.getNamedItem = function (name, namespace) {
+    namespace = namespace || "";
+    var key = encodeURIComponent(namespace) + ":" + encodeURIComponent(name);
+    return this[key];
+};
+
+NamedNodeMap.prototype.setNamedItem = function (attr) {
+    var namespace = attr.namespaceURI || "";
+    var name = attr.name;
+    var key = encodeURIComponent(namespace) + ":" + encodeURIComponent(name);
+    var previousAttr = this[key];
+    if (!previousAttr) {
+        this[this.length] = attr;
+        this.length++;
+        previousAttr = null;
+    }
+    this[key] = attr;
+    return previousAttr;
+};
+
+NamedNodeMap.prototype.removeNamedItem = function (name, namespace) {
+    namespace = namespace || "";
+    var key = encodeURIComponent(namespace) + ":" + encodeURIComponent(name);
+    var attr = this[key];
+    if (!attr) {
+        throw new Error("Not found");
+    }
+    var index = Array.prototype.indexOf.call(this, attr);
+    delete this[key];
+    delete this[index];
+    this.length--;
+};
+
+NamedNodeMap.prototype.item = function (index) {
+    return this[index];
+};
+
+NamedNodeMap.prototype.getNamedItemNS = function (namespace, name) {
+    return this.getNamedItem(name, namespace);
+};
+
+NamedNodeMap.prototype.setNamedItemNS = function (attr) {
+    return this.setNamedItem(attr);
+};
+
+NamedNodeMap.prototype.removeNamedItemNS = function (namespace, name) {
+    return this.removeNamedItem(name, namespace);
 };
 
 }]])("hexant/index.js")
