@@ -1,5 +1,7 @@
 'use strict';
 
+module.exports = Hexant;
+
 var AnimationFrame = require('animation-frame');
 var window = require('global/window');
 var document = window.document;
@@ -197,5 +199,3 @@ function parseRule(ant, rule) {
         ;
     return rerule;
 }
-
-module.exports = Hexant;
