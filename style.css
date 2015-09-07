@@ -41,3 +41,8 @@ a:hover {
 a:active {
     color: #ccf;
 }
+
+footer {
+    position: absolute;
+    bottom: 0;
+}
