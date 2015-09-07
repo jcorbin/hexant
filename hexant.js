@@ -44,7 +44,9 @@ function parseRule(ant, rule) {
 }
 
 function Hexant() {
-    var el = document.querySelector('#view');
+    var self = this;
+
+    this.el = document.querySelector('#view');
 
     var hash = new Hash(window);
     var animFrame = new AnimationFrame();
@@ -53,13 +55,13 @@ function Hexant() {
     var frameRate = 0;
     var frameInterval = 0;
 
-    var hexant = new HexAntWorld(el);
+    var hexant = new HexAntWorld(this.el);
     var ant = new Ant(hexant);
     ant.pos = hexant.tile.centerPoint().toCube();
     hash.set('rule', parseRule(ant, hash.get('rule', 'LR')));
     hexant.addAnt(ant);
 
-    el.addEventListener('click', playpause);
+    this.el.addEventListener('click', playpause);
     window.hexant = hexant;
     window.addEventListener('keypress', onKeyPress);
 
@@ -137,7 +139,7 @@ function Hexant() {
         ant.dir = 0;
         ant.pos = hexant.tile.centerPoint().toCube();
         hexant.tile.set(ant.pos, 1);
-        el.width = el.width;
+        self.el.width = self.el.width;
         hexant.hexGrid.updateSize();
         hexant.redraw();
     }
