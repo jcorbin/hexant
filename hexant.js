@@ -96,7 +96,7 @@ function Hexant(el) {
             rule = prompt('New Rules: (' + RulesLegend + ')', rule);
             self.hash.set('rule', parseRule(ant, rule));
             self.world.updateAntColors();
-            reset();
+            self.reset();
             break;
         }
     }
@@ -105,18 +105,6 @@ function Hexant(el) {
         self.world.setLabeled(!self.world.labeled);
         self.world.redraw();
         self.hash.set('labeled', self.world.labeled);
-    }
-
-    function reset() {
-        var ant = self.world.ants[0];
-        self.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-        self.world.hexGrid.bounds = self.world.tile.boundingBox().copy();
-        ant.dir = 0;
-        ant.pos = self.world.tile.centerPoint().toCube();
-        self.world.tile.set(ant.pos, 1);
-        self.el.width = self.el.width;
-        self.world.hexGrid.updateSize();
-        self.world.redraw();
     }
 
     function playpause() {
@@ -140,6 +128,19 @@ function Hexant(el) {
         self.world.resize(width, height);
     }
 }
+
+Hexant.prototype.reset =
+function reset() {
+    var ant = this.world.ants[0];
+    this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.world.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    ant.dir = 0;
+    ant.pos = this.world.tile.centerPoint().toCube();
+    this.world.tile.set(ant.pos, 1);
+    this.el.width = this.el.width;
+    this.world.hexGrid.updateSize();
+    this.world.redraw();
+};
 
 Hexant.prototype.tick =
 function tick(time) {
