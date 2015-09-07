@@ -1,6 +1,5 @@
 'use strict';
 
-var domready = require('domready');
 var AnimationFrame = require('animation-frame');
 var window = require('global/window');
 var document = window.document;
@@ -13,8 +12,6 @@ var HexTileTree = require('./hextiletree.js');
 
 var BatchLimit = 256;
 
-domready(setup);
-
 var RulesLegend = 'W=West, L=Left, A=Ahead, R=Right, E=East, F=Flip';
 var Rules = {
     W: -2,
@@ -25,7 +22,7 @@ var Rules = {
     F: 3
 };
 
-function setup() {
+function Hexant() {
     var el = document.querySelector('#view');
 
     var hash = new Hash(window);
@@ -197,3 +194,5 @@ function parseRule(ant, rule) {
         ;
     return rerule;
 }
+
+module.exports = Hexant;
