@@ -1,0 +1,6 @@
+{
+    "rules": {
+        "no-inline-comments": [0],
+        "default-case": [0]
+    }
+}
