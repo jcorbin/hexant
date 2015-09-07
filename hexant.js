@@ -37,7 +37,7 @@ function parseRule(ant, rule) {
             return r;
         })
         .filter(function truthy(part) {
-            return typeof(part) === 'number';
+            return typeof part === 'number';
         })
         ;
     return rerule;
