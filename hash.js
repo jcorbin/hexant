@@ -51,7 +51,7 @@ Hash.prototype.load = function load() {
                 this.bound[key].reset();
             } else {
                 this.cache[key] = undefined;
-                this.value[key] = undefined;
+                this.values[key] = undefined;
             }
         }
     }
