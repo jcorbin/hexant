@@ -85,11 +85,20 @@ Hexant.prototype.setup = function setup(el, scope) {
 
     this.el = el;
     this.world = new HexAntWorld(this.el);
-    this.world.setColorGen(colorGen.hue);
-    this.world.addAnt(new Ant(this.world));
 
     this.el.addEventListener('click', this.boundPlaypause);
     scope.window.addEventListener('keypress', this.boundOnKeyPress);
+
+    this.hash.bind('colors')
+        .setParse(colorGen.parse, colorGen.toString)
+        .setDefault(colorGen.gens.hue)
+        .addListener(function onColorGenChange(gen) {
+            self.world.setColorGen(gen);
+            self.world.redraw();
+        })
+        ;
+
+    this.world.addAnt(new Ant(this.world));
 
     this.hash.bind('rule')
         .setParse(parseRule, ruleToString)
