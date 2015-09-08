@@ -58,258 +58,178 @@ global = this;
         main = bundle[filename];
         main._require();
     }
-})([["index.js","animation-frame","index.js",{"./lib/animation-frame":1},function (require, exports, module, __filename, __dirname){
+})([["animator.js","blick","animator.js",{"raf":19},function (require, exports, module, __filename, __dirname){
 
-// animation-frame/index.js
-// ------------------------
+// blick/animator.js
+// -----------------
 
-/**
- * An even better animation frame.
- *
- * @copyright Oleg Slobodskoi 2015
- * @website https://github.com/kof/animationFrame
- * @license MIT
- */
+"use strict";
 
-module.exports = require('./lib/animation-frame')
+var defaultRequestAnimation = require("raf");
 
-}],["lib/animation-frame.js","animation-frame/lib","animation-frame.js",{"./native":2,"./now":3,"./performance":5},function (require, exports, module, __filename, __dirname){
+module.exports = Animator;
 
-// animation-frame/lib/animation-frame.js
-// --------------------------------------
-
-'use strict'
-
-var nativeImpl = require('./native')
-var now = require('./now')
-var performance = require('./performance')
-
-// Weird native implementation doesn't work if context is defined.
-var nativeRequest = nativeImpl.request
-var nativeCancel = nativeImpl.cancel
-
-/**
- * Animation frame constructor.
- *
- * Options:
- *   - `useNative` use the native animation frame if possible, defaults to true
- *   - `frameRate` pass a custom frame rate
- *
- * @param {Object|Number} options
- */
-function AnimationFrame(options) {
-    if (!(this instanceof AnimationFrame)) return new AnimationFrame(options)
-    options || (options = {})
-
-    // Its a frame rate.
-    if (typeof options == 'number') options = {frameRate: options}
-    options.useNative != null || (options.useNative = true)
-    this.options = options
-    this.frameRate = options.frameRate || AnimationFrame.FRAME_RATE
-    this._frameLength = 1000 / this.frameRate
-    this._isCustomFrameRate = this.frameRate !== AnimationFrame.FRAME_RATE
-    this._timeoutId = null
-    this._callbacks = {}
-    this._lastTickTime = 0
-    this._tickCounter = 0
+function Animator(requestAnimation) {
+    var self = this;
+    self._requestAnimation = requestAnimation || defaultRequestAnimation;
+    self.controllers = [];
+    // This thunk is doomed to deoptimization for multiple reasons, but passes
+    // off as quickly as possible to the unrolled animation loop.
+    self._animate = function () {
+        try {
+            self.animate(Date.now());
+        } catch (error) {
+            self.requestAnimation();
+            throw error;
+        }
+    };
 }
 
-module.exports = AnimationFrame
-
-/**
- * Default frame rate used for shim implementation. Native implementation
- * will use the screen frame rate, but js have no way to detect it.
- *
- * If you know your target device, define it manually.
- *
- * @type {Number}
- * @api public
- */
-AnimationFrame.FRAME_RATE = 60
-
-/**
- * Replace the globally defined implementation or define it globally.
- *
- * @param {Object|Number} [options]
- * @api public
- */
-AnimationFrame.shim = function(options) {
-    var animationFrame = new AnimationFrame(options)
-
-    window.requestAnimationFrame = function(callback) {
-        return animationFrame.request(callback)
+Animator.prototype.requestAnimation = function () {
+    if (!this.requested) {
+        this._requestAnimation(this._animate);
     }
-    window.cancelAnimationFrame = function(id) {
-        return animationFrame.cancel(id)
+    this.requested = true;
+};
+
+Animator.prototype.animate = function (now) {
+    var node, temp;
+
+    this.requested = false;
+
+    // Measure
+    for (var index = 0; index < this.controllers.length; index++) {
+        var controller = this.controllers[index];
+        if (controller.measure) {
+            controller.component.measure(now);
+            controller.measure = false;
+        }
     }
 
-    return animationFrame
-}
-
-/**
- * Request animation frame.
- * We will use the native RAF as soon as we know it does works.
- *
- * @param {Function} callback
- * @return {Number} timeout id or requested animation frame id
- * @api public
- */
-AnimationFrame.prototype.request = function(callback) {
-    var self = this
-
-    // Alawys inc counter to ensure it never has a conflict with the native counter.
-    // After the feature test phase we don't know exactly which implementation has been used.
-    // Therefore on #cancel we do it for both.
-    ++this._tickCounter
-
-    if (nativeImpl.supported && this.options.useNative && !this._isCustomFrameRate) {
-        return nativeRequest(callback)
-    }
-
-    if (!callback) throw new TypeError('Not enough arguments')
-
-    if (this._timeoutId == null) {
-        // Much faster than Math.max
-        // http://jsperf.com/math-max-vs-comparison/3
-        // http://jsperf.com/date-now-vs-date-gettime/11
-        var delay = this._frameLength + this._lastTickTime - now()
-        if (delay < 0) delay = 0
-
-        this._timeoutId = setTimeout(function() {
-            self._lastTickTime = now()
-            self._timeoutId = null
-            ++self._tickCounter
-            var callbacks = self._callbacks
-            self._callbacks = {}
-            for (var id in callbacks) {
-                if (callbacks[id]) {
-                    if (nativeImpl.supported && self.options.useNative) {
-                        nativeRequest(callbacks[id])
-                    } else {
-                        callbacks[id](performance.now())
-                    }
-                }
+    // Transition
+    for (var index = 0; index < this.controllers.length; index++) {
+        var controller = this.controllers[index];
+        // Unlke others, skipped if draw or redraw are scheduled and left on
+        // the schedule for the next animation frame.
+        if (controller.transition) {
+            if (!controller.draw && !controller.redraw) {
+                controller.component.transition(now);
+                controller.transition = false;
+            } else {
+                this.requestAnimation();
             }
-        }, delay)
+        }
     }
 
-    this._callbacks[this._tickCounter] = callback
+    // Animate
+    // If any components have animation set, continue animation.
+    for (var index = 0; index < this.controllers.length; index++) {
+        var controller = this.controllers[index];
+        if (controller.animate) {
+            controller.component.animate(now);
+            this.requestAnimation();
+            // Unlike others, not reset implicitly.
+        }
+    }
 
-    return this._tickCounter
+    // Draw
+    for (var index = 0; index < this.controllers.length; index++) {
+        var controller = this.controllers[index];
+        if (controller.draw) {
+            controller.component.draw(now);
+            controller.draw = false;
+        }
+    }
+
+    // Redraw
+    for (var index = 0; index < this.controllers.length; index++) {
+        var controller = this.controllers[index];
+        if (controller.redraw) {
+            controller.component.redraw(now);
+            controller.redraw = false;
+        }
+    }
+};
+
+Animator.prototype.add = function (component) {
+    var controller = new AnimationController(component, this);
+    this.controllers.push(controller);
+    return controller;
+};
+
+function AnimationController(component, controller) {
+    this.component = component;
+    this.controller = controller;
+
+    this.measure = false;
+    this.transition = false;
+    this.animate = false;
+    this.draw = false;
+    this.redraw = false;
 }
 
-/**
- * Cancel animation frame.
- *
- * @param {Number} timeout id or requested animation frame id
- *
- * @api public
- */
-AnimationFrame.prototype.cancel = function(id) {
-    if (nativeImpl.supported && this.options.useNative) nativeCancel(id)
-    delete this._callbacks[id]
-}
+AnimationController.prototype.destroy = function () {
+};
 
-}],["lib/native.js","animation-frame/lib","native.js",{},function (require, exports, module, __filename, __dirname){
+AnimationController.prototype.requestMeasure = function () {
+    if (!this.component.measure) {
+        throw new Error("Can't requestMeasure because component does not implement measure");
+    }
+    this.measure = true;
+    this.controller.requestAnimation();
+};
 
-// animation-frame/lib/native.js
-// -----------------------------
+AnimationController.prototype.cancelMeasure = function () {
+    this.measure = false;
+};
 
-'use strict'
+AnimationController.prototype.requestTransition = function () {
+    if (!this.component.transition) {
+        throw new Error("Can't requestTransition because component does not implement transition");
+    }
+    this.transition = true;
+    this.controller.requestAnimation();
+};
 
-var global = window
+AnimationController.prototype.cancelTransition = function () {
+    this.transition = false;
+};
 
-// Test if we are within a foreign domain. Use raf from the top if possible.
-try {
-    // Accessing .name will throw SecurityError within a foreign domain.
-    global.top.name
-    global = global.top
-} catch(e) {}
+AnimationController.prototype.requestAnimation = function () {
+    if (!this.component.animate) {
+        throw new Error("Can't requestAnimation because component does not implement animate");
+    }
+    this.animate = true;
+    this.controller.requestAnimation();
+};
 
-exports.request = global.requestAnimationFrame
-exports.cancel = global.cancelAnimationFrame || global.cancelRequestAnimationFrame
-exports.supported = false
+AnimationController.prototype.cancelAnimation = function () {
+    this.animate = false;
+};
 
-var vendors = ['Webkit', 'Moz', 'ms', 'O']
+AnimationController.prototype.requestDraw = function () {
+    if (!this.component.draw) {
+        throw new Error("Can't requestDraw because component does not implement draw");
+    }
+    this.draw = true;
+    this.controller.requestAnimation();
+};
 
-// Grab the native implementation.
-for (var i = 0; i < vendors.length && !exports.request; i++) {
-    exports.request = global[vendors[i] + 'RequestAnimationFrame']
-    exports.cancel = global[vendors[i] + 'CancelAnimationFrame'] ||
-        global[vendors[i] + 'CancelRequestAnimationFrame']
-}
+AnimationController.prototype.cancelDraw = function () {
+    this.draw = false;
+};
 
-// Test if native implementation works.
-// There are some issues on ios6
-// http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
-// https://gist.github.com/KrofDrakula/5318048
+AnimationController.prototype.requestRedraw = function () {
+    if (!this.component.redraw) {
+        throw new Error("Can't requestRedraw because component does not implement redraw");
+    }
+    this.redraw = true;
+    this.controller.requestAnimation();
+};
 
-if (exports.request) {
-    exports.request.call(null, function() {
-        exports.supported = true
-    });
-}
-
-}],["lib/now.js","animation-frame/lib","now.js",{},function (require, exports, module, __filename, __dirname){
-
-// animation-frame/lib/now.js
-// --------------------------
-
-'use strict'
-
-/**
- * Crossplatform Date.now()
- *
- * @return {Number} time in ms
- * @api private
- */
-module.exports = Date.now || function() {
-    return (new Date).getTime()
-}
-
-}],["lib/performance-timing.js","animation-frame/lib","performance-timing.js",{"./now":3},function (require, exports, module, __filename, __dirname){
-
-// animation-frame/lib/performance-timing.js
-// -----------------------------------------
-
-'use strict'
-
-var now = require('./now')
-
-/**
- * Replacement for PerformanceTiming.navigationStart for the case when
- * performance.now is not implemented.
- *
- * https://developer.mozilla.org/en-US/docs/Web/API/PerformanceTiming.navigationStart
- *
- * @type {Number}
- * @api private
- */
-exports.navigationStart = now()
-
-}],["lib/performance.js","animation-frame/lib","performance.js",{"./now":3,"./performance-timing":4},function (require, exports, module, __filename, __dirname){
-
-// animation-frame/lib/performance.js
-// ----------------------------------
-
-'use strict'
-
-var now = require('./now')
-var PerformanceTiming = require('./performance-timing')
-
-/**
- * Crossplatform performance.now()
- *
- * https://developer.mozilla.org/en-US/docs/Web/API/Performance.now()
- *
- * @return {Number} relative time in ms
- * @api public
- */
-exports.now = function () {
-    if (window.performance && window.performance.now) return window.performance.now()
-    return now() - PerformanceTiming.navigationStart
-}
-
+AnimationController.prototype.cancelRedraw = function () {
+    this.redraw = false;
+};
 
 }],["ready.js","domready","ready.js",{},function (require, exports, module, __filename, __dirname){
 
@@ -362,7 +282,7 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["document.js","gutentag","document.js",{"koerper":22},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":17},function (require, exports, module, __filename, __dirname){
 
 // gutentag/document.js
 // --------------------
@@ -422,7 +342,7 @@ Scope.prototype.hookup = function (id, component) {
     }
 };
 
-}],["ant.js","hexant","ant.js",{"./coord.js":12},function (require, exports, module, __filename, __dirname){
+}],["ant.js","hexant","ant.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
 
 // hexant/ant.js
 // -------------
@@ -842,7 +762,7 @@ function notEmptyString(val) {
     return val !== '';
 }
 
-}],["hexant.html","hexant","hexant.html",{"./hexant.js":15},function (require, exports, module, __filename, __dirname){
+}],["hexant.html","hexant","hexant.html",{"./hexant.js":10},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.html
 // ------------------
@@ -861,10 +781,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_5nu6oo");
+        component.setAttribute("id", "view_hh6m15");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_5nu6oo")
+       scope.componentsFor["view"].setAttribute("for", "view_hh6m15")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -879,7 +799,7 @@ $THIS.prototype.constructor = $THIS;
 $THIS.prototype.exports = {};
 module.exports = $THIS;
 
-}],["hexant.js","hexant","hexant.js",{"animation-frame":0,"./world.js":21,"./ant.js":10,"./hash.js":13,"./coord.js":12,"./hextiletree.js":18},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"./world.js":16,"./ant.js":5,"./hash.js":8,"./coord.js":7,"./hextiletree.js":13},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -889,8 +809,6 @@ module.exports = $THIS;
 /* eslint no-console: [0], no-alert: [0], no-try-catch: [0] */
 
 module.exports = Hexant;
-
-var AnimationFrame = require('animation-frame');
 
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
@@ -936,11 +854,11 @@ function Hexant(body, scope) {
     this.world = null;
 
     this.hash = new Hash(scope.window);
-    this.animFrame = new AnimationFrame();
-    this.frameId = null;
+    this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
     this.frameRate = 0;
     this.frameInterval = 0;
+    this.paused = true;
 
     this.boundOnKeyPress = onKeyPress;
     function onKeyPress(e) {
@@ -950,11 +868,6 @@ function Hexant(body, scope) {
     this.boundPlaypause = playpause;
     function playpause() {
         self.playpause();
-    }
-
-    this.boundTick = tick;
-    function tick(time) {
-        self.tick(time);
     }
 }
 
@@ -1029,8 +942,8 @@ function reset() {
     this.world.redraw();
 };
 
-Hexant.prototype.tick =
-function tick(time) {
+Hexant.prototype.animate =
+function animate(time) {
     var frames = 1;
     if (!this.lastFrameTime) {
         this.lastFrameTime = time;
@@ -1047,35 +960,34 @@ function tick(time) {
             throw err;
         }
     }
-
-    this.frameId = this.animFrame.request(this.boundTick);
 };
 
 Hexant.prototype.play =
 function play() {
     this.lastFrameTime = null;
-    this.frameId = this.animFrame.request(this.boundTick);
+    this.animator.requestAnimation();
+    this.paused = false;
 };
 
 Hexant.prototype.pause =
 function pause() {
-    this.animFrame.cancel(this.frameId);
     this.lastFrameTime = null;
-    this.frameId = null;
+    this.animator.cancelAnimation();
+    this.paused = true;
 };
 
 Hexant.prototype.playpause =
 function playpause() {
-    if (this.frameId) {
-        this.pause();
-    } else {
+    if (this.paused) {
         this.play();
+    } else {
+        this.pause();
     }
 };
 
 Hexant.prototype.stepit =
 function stepit() {
-    if (!this.frameId) {
+    if (this.paused) {
         this.world.stepDraw();
     } else {
         this.pause();
@@ -1096,12 +1008,6 @@ Hexant.prototype.setFrameRate =
 function setFrameRate(rate) {
     this.frameRate = rate;
     this.frameInterval = 1000 / this.frameRate;
-    if (this.frameId) {
-        this.animFrame.cancel(this.frameId);
-    }
-    if (this.frameId) {
-        this.play();
-    }
 };
 
 Hexant.prototype.toggleLabeled =
@@ -1116,7 +1022,7 @@ function resize(width, height) {
     this.world.resize(width, height);
 };
 
-}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":12},function (require, exports, module, __filename, __dirname){
+}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexgrid.js
 // -----------------
@@ -1210,7 +1116,7 @@ function updateSize() {
     this.canvas.style.height = this.canvas.height + 'px';
 };
 
-}],["hextile.js","hexant","hextile.js",{"./coord.js":12},function (require, exports, module, __filename, __dirname){
+}],["hextile.js","hexant","hextile.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextile.js
 // -----------------
@@ -1270,7 +1176,7 @@ OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
     }
 };
 
-}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":12,"./hextile.js":17},function (require, exports, module, __filename, __dirname){
+}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":7,"./hextile.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextiletree.js
 // ---------------------
@@ -1519,7 +1425,7 @@ HexTileTreeNode.prototype._set = function _set(point, c) {
     return tile.set(point, c);
 };
 
-}],["index.js","hexant","index.js",{"domready":6,"global/window":7,"gutentag/scope":9,"gutentag/document":8,"./hexant.html":14},function (require, exports, module, __filename, __dirname){
+}],["index.js","hexant","index.js",{"domready":1,"global/window":2,"gutentag/scope":4,"gutentag/document":3,"blick":0,"./hexant.html":9},function (require, exports, module, __filename, __dirname){
 
 // hexant/index.js
 // ---------------
@@ -1532,6 +1438,7 @@ var document = window.document;
 
 var Scope = require('gutentag/scope');
 var Document = require('gutentag/document');
+var Animator = require('blick');
 var Hexant = require('./hexant.html');
 
 domready(setup);
@@ -1539,6 +1446,7 @@ domready(setup);
 function setup() {
     var scope = new Scope();
     scope.window = window;
+    scope.animator = new Animator();
     var bodyDocument = new Document(window.document.body);
     var body = bodyDocument.documentElement;
     var hexant = new Hexant(body, scope);
@@ -1669,7 +1577,7 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
-}],["world.js","hexant","world.js",{"./coord.js":12,"./hexgrid.js":16,"./colorgen.js":11,"./hextiletree.js":18,"./ngoncontext.js":20},function (require, exports, module, __filename, __dirname){
+}],["world.js","hexant","world.js",{"./coord.js":7,"./hexgrid.js":11,"./colorgen.js":6,"./hextiletree.js":13,"./ngoncontext.js":15},function (require, exports, module, __filename, __dirname){
 
 // hexant/world.js
 // ---------------
@@ -1850,7 +1758,7 @@ HexAntWorld.prototype.addAnt = function addAnt(ant) {
     return ant;
 };
 
-}],["koerper.js","koerper","koerper.js",{"wizdom":23},function (require, exports, module, __filename, __dirname){
+}],["koerper.js","koerper","koerper.js",{"wizdom":20},function (require, exports, module, __filename, __dirname){
 
 // koerper/koerper.js
 // ------------------
@@ -2120,6 +2028,134 @@ OpaqueHtml.prototype.constructor = OpaqueHtml;
 OpaqueHtml.prototype.getActualFirstChild = function getActualFirstChild() {
     return this.actualFirstChild;
 };
+
+}],["lib/performance-now.js","performance-now/lib","performance-now.js",{},function (require, exports, module, __filename, __dirname){
+
+// performance-now/lib/performance-now.js
+// --------------------------------------
+
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var getNanoSeconds, hrtime, loadTime;
+
+  if ((typeof performance !== "undefined" && performance !== null) && performance.now) {
+    module.exports = function() {
+      return performance.now();
+    };
+  } else if ((typeof process !== "undefined" && process !== null) && process.hrtime) {
+    module.exports = function() {
+      return (getNanoSeconds() - loadTime) / 1e6;
+    };
+    hrtime = process.hrtime;
+    getNanoSeconds = function() {
+      var hr;
+      hr = hrtime();
+      return hr[0] * 1e9 + hr[1];
+    };
+    loadTime = getNanoSeconds();
+  } else if (Date.now) {
+    module.exports = function() {
+      return Date.now() - loadTime;
+    };
+    loadTime = Date.now();
+  } else {
+    module.exports = function() {
+      return new Date().getTime() - loadTime;
+    };
+    loadTime = new Date().getTime();
+  }
+
+}).call(this);
+
+/*
+//@ sourceMappingURL=performance-now.map
+*/
+
+}],["index.js","raf","index.js",{"performance-now":18},function (require, exports, module, __filename, __dirname){
+
+// raf/index.js
+// ------------
+
+var now = require('performance-now')
+  , global = typeof window === 'undefined' ? {} : window
+  , vendors = ['moz', 'webkit']
+  , suffix = 'AnimationFrame'
+  , raf = global['request' + suffix]
+  , caf = global['cancel' + suffix] || global['cancelRequest' + suffix]
+  , isNative = true
+
+for(var i = 0; i < vendors.length && !raf; i++) {
+  raf = global[vendors[i] + 'Request' + suffix]
+  caf = global[vendors[i] + 'Cancel' + suffix]
+      || global[vendors[i] + 'CancelRequest' + suffix]
+}
+
+// Some versions of FF have rAF but not cAF
+if(!raf || !caf) {
+  isNative = false
+
+  var last = 0
+    , id = 0
+    , queue = []
+    , frameDuration = 1000 / 60
+
+  raf = function(callback) {
+    if(queue.length === 0) {
+      var _now = now()
+        , next = Math.max(0, frameDuration - (_now - last))
+      last = next + _now
+      setTimeout(function() {
+        var cp = queue.slice(0)
+        // Clear queue here to prevent
+        // callbacks from appending listeners
+        // to the current frame's queue
+        queue.length = 0
+        for(var i = 0; i < cp.length; i++) {
+          if(!cp[i].cancelled) {
+            try{
+              cp[i].callback(last)
+            } catch(e) {
+              setTimeout(function() { throw e }, 0)
+            }
+          }
+        }
+      }, Math.round(next))
+    }
+    queue.push({
+      handle: ++id,
+      callback: callback,
+      cancelled: false
+    })
+    return id
+  }
+
+  caf = function(handle) {
+    for(var i = 0; i < queue.length; i++) {
+      if(queue[i].handle === handle) {
+        queue[i].cancelled = true
+      }
+    }
+  }
+}
+
+module.exports = function(fn) {
+  // Wrap in a new function to prevent
+  // `cancel` potentially being assigned
+  // to the native rAF function
+  if(!isNative) {
+    return raf.call(global, fn)
+  }
+  return raf.call(global, function() {
+    try{
+      fn.apply(this, arguments)
+    } catch(e) {
+      setTimeout(function() { throw e }, 0)
+    }
+  })
+}
+module.exports.cancel = function() {
+  caf.apply(global, arguments)
+}
 
 }],["dom.js","wizdom","dom.js",{},function (require, exports, module, __filename, __dirname){
 
