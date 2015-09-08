@@ -94,6 +94,10 @@ Hash.prototype.bind = function bind(key) {
     return bound;
 };
 
+Hash.prototype.getStr = function getStr(key) {
+    return this.cache[key];
+};
+
 Hash.prototype.get = function get(key) {
     return this.values[key];
 };

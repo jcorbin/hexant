@@ -142,7 +142,7 @@ function onKeyPress(e) {
         this.stepit();
         break;
     case 0x2f: // /
-        var rule = this.hash.get('rule');
+        var rule = this.hash.getStr('rule');
         rule = prompt('New Rules: (' + RulesLegend + ')', rule);
         if (typeof rule === 'string') {
             this.pause();
