@@ -1,11 +1,13 @@
 'use strict';
 
-module.exports = HueWheelGenerator;
+module.exports.hue = HueWheelGenerator;
 
-// TODO: husl instead of hsl
-function HueWheelGenerator(s, l) {
-    var ss = (s * 100).toFixed(1) + '%';
-    var sl = (l * 100).toFixed(1) + '%';
+// TODO: husl too
+
+function HueWheelGenerator(intensity) {
+    var ss = (65 + 10 * intensity).toFixed(1) + '%';
+    var sl = (30 + 10 * intensity).toFixed(1) + '%';
+
     var suffix = ', ' + ss + ', ' + sl + ')';
     return function wheelGen(ncolors) {
         var scale = 360 / ncolors;

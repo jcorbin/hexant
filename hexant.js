@@ -4,6 +4,7 @@
 
 module.exports = Hexant;
 
+var colorGen = require('./colorgen.js');
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
@@ -84,6 +85,7 @@ Hexant.prototype.setup = function setup(el, scope) {
 
     this.el = el;
     this.world = new HexAntWorld(this.el);
+    this.world.setColorGen(colorGen.hue);
     this.world.addAnt(new Ant(this.world));
 
     this.el.addEventListener('click', this.boundPlaypause);
