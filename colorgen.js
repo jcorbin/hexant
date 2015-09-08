@@ -34,9 +34,35 @@ function toString(gen) {
     return gen.genString || 'hue';
 }
 
+gens.light = LightWheelGenerator;
 gens.hue = HueWheelGenerator;
 
 // TODO: husl too
+
+function LightWheelGenerator(hue) {
+    hue = parseInt(hue, 10) || 0;
+
+    var sh = hue.toString();
+    var hp = 'hsl(' + sh + ', ';
+    wheelGenGen.genString = 'light(' + sh + ')';
+    return wheelGenGen;
+
+    function wheelGenGen(intensity) {
+        var ss = (65 + 10 * intensity).toFixed(1) + '%';
+        var prefix = hp + ss + ', ';
+        var suffix = ')';
+        return function wheelGen(ncolors) {
+            var step = 100 / (ncolors + 1);
+            var r = [];
+            var l = step;
+            for (var i = 0; i < ncolors; l += step, i++) {
+                var sl = l.toFixed(1) + '%';
+                r.push(prefix + sl + suffix);
+            }
+            return r;
+        };
+    }
+}
 
 HueWheelGenerator.genString = 'hue';
 
