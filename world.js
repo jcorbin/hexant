@@ -38,6 +38,15 @@ HexAntWorld.prototype.setColorGen = function setColorGen(colorGen) {
     this.cellColorGen = colorGen(1);
     this.antBodyColorGen = colorGen(2);
     this.antHeadColorGen = colorGen(3);
+
+    this.cellColors = this.cellColorGen(this.cellColors.length);
+    this.antBodyColors = this.antBodyColorGen(this.antBodyColors.length);
+    this.antHeadColors = this.antHeadColorGen(this.antHeadColors.length);
+
+    for (var i = 0; i < this.ants.length; i++) {
+        this.ants[i].bodyColor = this.antBodyColors[i];
+        this.ants[i].headColor = this.antHeadColors[i];
+    }
 };
 
 HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
