@@ -4,6 +4,7 @@
 
 module.exports = Hexant;
 
+var colorGen = require('./colorgen.js');
 var HexAntWorld = require('./world.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
@@ -22,23 +23,30 @@ var Rules = {
     F: 3
 };
 
-function parseRule(ant, rule) {
+function parseRule(rule) {
     rule = rule.toUpperCase();
-    var rerule = '';
-    ant.rules = rule
-        .split('')
-        .map(function each(part) {
-            var r = Rules[part];
-            if (r !== undefined) {
-                rerule += part;
+    var parts = rule.split('');
+    var rules = [];
+    for (var i = 0; i < parts.length; i++) {
+        var r = Rules[parts[i]];
+        if (r !== undefined) {
+            rules.push(r);
+        }
+    }
+    return rules;
+}
+
+function ruleToString(rules) {
+    var rule = '';
+    var ruleKeys = Object.keys(Rules);
+    for (var i = 0; i < rules.length; i++) {
+        for (var j = 0; j < ruleKeys.length; j++) {
+            if (rules[i] === Rules[ruleKeys[j]]) {
+                rule += ruleKeys[j];
             }
-            return r;
-        })
-        .filter(function truthy(part) {
-            return typeof part === 'number';
-        })
-        ;
-    return rerule;
+        }
+    }
+    return rule;
 }
 
 function Hexant(body, scope) {
@@ -73,19 +81,54 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
 };
 
 Hexant.prototype.setup = function setup(el, scope) {
+    var self = this;
+
     this.el = el;
     this.world = new HexAntWorld(this.el);
-
-    var ant = this.world.addAnt(new Ant(this.world));
-    ant.pos = this.world.tile.centerPoint().toCube();
-    this.hash.set('rule', parseRule(ant, this.hash.get('rule', 'LR')));
 
     this.el.addEventListener('click', this.boundPlaypause);
     scope.window.addEventListener('keypress', this.boundOnKeyPress);
 
-    this.setFrameRate(this.hash.get('frameRate', 4));
-    this.world.setLabeled(this.hash.get('labeled', false));
-    this.world.defaultCellValue = this.hash.get('drawUnvisited', false) ? 1 : 0;
+    this.hash.bind('colors')
+        .setParse(colorGen.parse, colorGen.toString)
+        .setDefault(colorGen.gens.hue)
+        .addListener(function onColorGenChange(gen) {
+            self.world.setColorGen(gen);
+            self.world.redraw();
+        })
+        ;
+
+    this.world.addAnt(new Ant(this.world));
+
+    this.hash.bind('rule')
+        .setParse(parseRule, ruleToString)
+        .setDefault('LR')
+        .addListener(function onRuleChange(rules) {
+            var ant = self.world.ants[0];
+            ant.rules = rules;
+            self.world.updateAntColors();
+            self.reset();
+        });
+
+    this.hash.bind('frameRate')
+        .setParse(parseInt)
+        .setDefault(4)
+        .addListener(function onFrameRateChange(rate) {
+            self.setFrameRate(rate);
+        });
+
+    this.hash.bind('labeled')
+        .setDefault(false)
+        .addListener(function onLabeledChange(labeled) {
+            self.world.setLabeled(labeled);
+            self.world.redraw();
+        });
+
+    this.hash.bind('drawUnvisited')
+        .setDefault(false)
+        .addListener(function onDrawUnvisitedChange(drawUnvisited) {
+            self.world.defaultCellValue = drawUnvisited ? 1 : 0;
+        });
 };
 
 Hexant.prototype.onKeyPress =
@@ -101,24 +144,21 @@ function onKeyPress(e) {
         console.log(this.world.tile.dump());
         break;
     case 0x2b: // +
-        this.setFrameRate(this.frameRate * 2);
-        this.hash.set('frameRate', this.frameRate);
+        this.hash.set('frameRate', this.frameRate * 2);
         break;
     case 0x2d: // -
-        this.setFrameRate(Math.max(1, Math.floor(this.frameRate / 2)));
-        this.hash.set('frameRate', this.frameRate);
+        this.hash.set('frameRate', Math.max(1, Math.floor(this.frameRate / 2)));
         break;
     case 0x2e: // .
         this.stepit();
         break;
     case 0x2f: // /
-        var ant = this.world.ants[0];
-        this.pause();
-        var rule = this.hash.get('rule');
+        var rule = this.hash.getStr('rule');
         rule = prompt('New Rules: (' + RulesLegend + ')', rule);
-        this.hash.set('rule', parseRule(ant, rule));
-        this.world.updateAntColors();
-        this.reset();
+        if (typeof rule === 'string') {
+            this.pause();
+            this.hash.set('rule', rule);
+        }
         break;
     }
 };
@@ -206,9 +246,7 @@ function setFrameRate(rate) {
 
 Hexant.prototype.toggleLabeled =
 function toggleLabeled() {
-    this.world.setLabeled(!this.world.labeled);
-    this.world.redraw();
-    this.hash.set('labeled', this.world.labeled);
+    this.hash.set('labeled', !this.world.labeled);
 };
 
 Hexant.prototype.resize =

@@ -2,7 +2,6 @@
 
 var Coord = require('./coord.js');
 var HexGrid = require('./hexgrid.js');
-var colorGen = require('./colorgen.js');
 var HexTileTree = require('./hextiletree.js');
 var NGonContext = require('./ngoncontext.js');
 
@@ -15,9 +14,9 @@ function HexAntWorld(canvas) {
     this.ctx2d = this.canvas.getContext('2d');
     this.ctxHex = new NGonContext(6, this.ctx2d);
 
-    this.cellColorGen = colorGen(0.75, 0.4);
-    this.antBodyColorGen = colorGen(0.85, 0.5);
-    this.antHeadColorGen = colorGen(0.95, 0.6);
+    this.cellColorGen = null;
+    this.antBodyColorGen = null;
+    this.antHeadColorGen = null;
 
     this.cellColors = [];
     this.antBodyColors = [];
@@ -34,6 +33,21 @@ function HexAntWorld(canvas) {
 
     this.defaultCellValue = 0;
 }
+
+HexAntWorld.prototype.setColorGen = function setColorGen(colorGen) {
+    this.cellColorGen = colorGen(1);
+    this.antBodyColorGen = colorGen(2);
+    this.antHeadColorGen = colorGen(3);
+
+    this.cellColors = this.cellColorGen(this.cellColors.length);
+    this.antBodyColors = this.antBodyColorGen(this.antBodyColors.length);
+    this.antHeadColors = this.antHeadColorGen(this.antHeadColors.length);
+
+    for (var i = 0; i < this.ants.length; i++) {
+        this.ants[i].bodyColor = this.antBodyColors[i];
+        this.ants[i].headColor = this.antHeadColors[i];
+    }
+};
 
 HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
     this.labeled = labeled;
