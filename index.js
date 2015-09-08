@@ -7,7 +7,7 @@ var document = window.document;
 var Scope = require('gutentag/scope');
 var Document = require('gutentag/document');
 var Animator = require('blick');
-var Hexant = require('./hexant.html');
+var Main = require('./main.html');
 
 domready(setup);
 
@@ -17,8 +17,8 @@ function setup() {
     scope.animator = new Animator();
     var bodyDocument = new Document(window.document.body);
     var body = bodyDocument.documentElement;
-    var hexant = new Hexant(body, scope);
-    window.hexant = hexant;
+    var main = new Main(body, scope);
+    window.hexant = main;
     window.addEventListener('resize', onResize);
     onResize();
 }
