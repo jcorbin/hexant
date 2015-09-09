@@ -173,6 +173,9 @@ HashKeyBinding.prototype.addListener = function addListener(listener) {
 };
 
 HashKeyBinding.prototype.setDefault = function setDefault(def) {
+    if (typeof def === 'string') {
+        def = this.parse(def);
+    }
     this.def = def;
     if (this.value === undefined) {
         this.value = def;
