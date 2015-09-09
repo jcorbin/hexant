@@ -87,6 +87,15 @@ CubePoint.prototype.toString = function toString() {
 CubePoint.prototype.copy = function copy() {
     return CubePoint(this.x, this.y, this.z);
 };
+CubePoint.prototype.copyFrom = function copyFrom(other) {
+    if (other.type !== this.type) {
+        return this.copyFrom(other.toCube());
+    }
+    this.x = other.x;
+    this.y = other.y;
+    this.z = other.z;
+    return this;
+};
 CubePoint.prototype.add = function add(other) {
     if (other.type !== this.type) {
         other = other.toCube();
