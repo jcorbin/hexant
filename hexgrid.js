@@ -19,6 +19,7 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.canvas = canvas;
     this.ctxHex = ctxHex;
     this.bounds = bounds || OddQBox();
+    this.view = ScreenPoint();
     this.cell = ScreenPoint();
     this.origin = ScreenPoint();
     this.avail = ScreenPoint();
@@ -65,9 +66,9 @@ function resize(width, height) {
 
 HexGrid.prototype.updateSize =
 function updateSize() {
-    var view = this.bounds.screenCount();
-    this.cell.x = this.avail.x / view.x;
-    this.cell.y = this.avail.y / view.y;
+    this.bounds.screenCountInto(this.view);
+    this.cell.x = this.avail.x / this.view.x;
+    this.cell.y = this.avail.y / this.view.y;
     var widthSize = this.cell.x / 2;
     var heightSize = this.cell.y / 2 / HexAspect;
     if (widthSize < heightSize) {
@@ -81,8 +82,8 @@ function updateSize() {
     // align top-left
     this.origin.copyFrom(this.cell).scale(0.5);
 
-    this.canvas.width = this.cell.x * view.x;
-    this.canvas.height = this.cell.y * view.y;
+    this.canvas.width = this.cell.x * this.view.x;
+    this.canvas.height = this.cell.y * this.view.y;
     this.canvas.style.width = this.canvas.width + 'px';
     this.canvas.style.height = this.canvas.height + 'px';
 };
