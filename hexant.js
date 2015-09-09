@@ -75,15 +75,11 @@ function Hexant(body, scope) {
 
 Hexant.prototype.hookup = function hookup(id, component, scope) {
     var self = this;
-    if (id === 'view') {
-        self.setup(component, scope);
+    if (id !== 'view') {
+        return;
     }
-};
 
-Hexant.prototype.setup = function setup(el, scope) {
-    var self = this;
-
-    this.el = el;
+    this.el = component;
     this.world = new HexAntWorld(this.el);
 
     this.el.addEventListener('click', this.boundPlaypause);
