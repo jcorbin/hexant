@@ -125,6 +125,10 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
             self.world.defaultCellValue = drawUnvisited ? 1 : 0;
         });
+
+    if (this.hash.get('autoplay')) {
+        this.play();
+    }
 };
 
 Hexant.prototype.onKeyPress =
