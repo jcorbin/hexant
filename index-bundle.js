@@ -935,6 +935,9 @@ HashKeyBinding.prototype.addListener = function addListener(listener) {
 };
 
 HashKeyBinding.prototype.setDefault = function setDefault(def) {
+    if (typeof def === 'string') {
+        def = this.parse(def);
+    }
     this.def = def;
     if (this.value === undefined) {
         this.value = def;
@@ -1015,10 +1018,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_sf9dez");
+        component.setAttribute("id", "view_vk7hs3");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_sf9dez")
+       scope.componentsFor["view"].setAttribute("for", "view_vk7hs3")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1115,15 +1118,11 @@ function Hexant(body, scope) {
 
 Hexant.prototype.hookup = function hookup(id, component, scope) {
     var self = this;
-    if (id === 'view') {
-        self.setup(component, scope);
+    if (id !== 'view') {
+        return;
     }
-};
 
-Hexant.prototype.setup = function setup(el, scope) {
-    var self = this;
-
-    this.el = el;
+    this.el = component;
     this.world = new HexAntWorld(this.el);
 
     this.el.addEventListener('click', this.boundPlaypause);
@@ -1169,6 +1168,10 @@ Hexant.prototype.setup = function setup(el, scope) {
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
             self.world.defaultCellValue = drawUnvisited ? 1 : 0;
         });
+
+    if (this.hash.get('autoplay')) {
+        this.play();
+    }
 };
 
 Hexant.prototype.onKeyPress =
@@ -1765,10 +1768,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_dj8cpr");
+        component.setAttribute("id", "view_s7t1yr");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_dj8cpr")
+       scope.componentsFor["view"].setAttribute("for", "view_s7t1yr")
     }
     this.scope.hookup("this", this);
 };
