@@ -42,14 +42,13 @@ gens.hue = HueWheelGenerator;
 function LightWheelGenerator(hue) {
     hue = parseInt(hue, 10) || 0;
 
-    var sh = hue.toString();
-    var hp = 'hsl(' + sh + ', ';
-    wheelGenGen.genString = 'light(' + sh + ')';
+    wheelGenGen.genString = 'light(' + hue.toString() + ')';
     return wheelGenGen;
 
     function wheelGenGen(intensity) {
-        var ss = (65 + 10 * intensity).toFixed(1) + '%';
-        var prefix = hp + ss + ', ';
+        var h = hue * (1 + (intensity - 1) / 3);
+        var sh = h.toString();
+        var prefix = 'hsl(' + sh + ', 65%, ';
         var suffix = ')';
         return function wheelGen(ncolors) {
             var step = 100 / (ncolors + 1);

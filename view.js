@@ -60,7 +60,8 @@ function redraw() {
 
 View.prototype.updateAnts =
 function updateAnts() {
-    for (var i = 0; i < this.world.ants.length; i++) {
+    var i;
+    for (i = 0; i < this.world.ants.length; i++) {
         var ant = this.world.ants[i];
         if (i < this.lastAntPos.length) {
             this.lastAntPos[i].copyFrom(ant.pos);
@@ -135,7 +136,7 @@ function setLabeled(labeled) {
 };
 
 View.prototype.drawUnlabeledCell =
-function drawCell(point, c) {
+function drawUnlabeledCell(point, c) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
@@ -145,7 +146,7 @@ function drawCell(point, c) {
 };
 
 View.prototype.drawLabeledCell =
-function drawCell(point, c) {
+function drawLabeledCell(point, c) {
     var screenPoint = this.drawUnlabeledCell(point, c);
     this.drawCellLabel(point, screenPoint);
 };
@@ -211,13 +212,27 @@ function drawAnt(ant) {
         this.drawCell(ant.pos, c);
     }
 
+    var screenPoint = this.hexGrid.toScreen(ant.pos);
+    var size = this.hexGrid.cellSize * ant.size;
+
+    if (size <= 5) {
+        this.drawSmallAnt(ant, screenPoint, size);
+    } else {
+        this.drawFullAnt(ant, screenPoint, size);
+    }
+
+    if (this.labeled) {
+        this.drawCellLabel(ant.pos, screenPoint);
+    }
+};
+
+View.prototype.drawFullAnt =
+function drawFullAnt(ant, screenPoint, size) {
     var ctxHex = this.hexGrid.ctxHex;
     var ctx2d = ctxHex.ctx2d;
 
     var start = ant.dir;
     var end = ant.dir + 1;
-    var screenPoint = this.hexGrid.toScreen(ant.pos);
-    var size = this.hexGrid.cellSize * ant.size;
 
     // head
     ctx2d.fillStyle = this.antHeadColors[ant.index];
@@ -235,10 +250,18 @@ function drawAnt(ant) {
     ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
     ctx2d.closePath();
     ctx2d.fill();
+};
 
-    if (this.labeled) {
-        this.drawCellLabel(ant.pos, screenPoint);
-    }
+View.prototype.drawSmallAnt =
+function drawSmallAnt(ant, screenPoint, size) {
+    var ctxHex = this.hexGrid.ctxHex;
+    var ctx2d = ctxHex.ctx2d;
+
+    ctx2d.fillStyle = this.antHeadColors[ant.index];
+    ctx2d.beginPath();
+    ctxHex.full(screenPoint.x, screenPoint.y, size);
+    ctx2d.closePath();
+    ctx2d.fill();
 };
 
 function swapout(ar, i) {
