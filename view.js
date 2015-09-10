@@ -136,7 +136,7 @@ function setLabeled(labeled) {
 };
 
 View.prototype.drawUnlabeledCell =
-function drawCell(point, c) {
+function drawUnlabeledCell(point, c) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
@@ -146,7 +146,7 @@ function drawCell(point, c) {
 };
 
 View.prototype.drawLabeledCell =
-function drawCell(point, c) {
+function drawLabeledCell(point, c) {
     var screenPoint = this.drawUnlabeledCell(point, c);
     this.drawCellLabel(point, screenPoint);
 };
