@@ -422,14 +422,13 @@ gens.hue = HueWheelGenerator;
 function LightWheelGenerator(hue) {
     hue = parseInt(hue, 10) || 0;
 
-    var sh = hue.toString();
-    var hp = 'hsl(' + sh + ', ';
-    wheelGenGen.genString = 'light(' + sh + ')';
+    wheelGenGen.genString = 'light(' + hue.toString() + ')';
     return wheelGenGen;
 
     function wheelGenGen(intensity) {
-        var ss = (65 + 10 * intensity).toFixed(1) + '%';
-        var prefix = hp + ss + ', ';
+        var h = hue * (1 + (intensity - 1) / 3);
+        var sh = h.toString();
+        var prefix = 'hsl(' + sh + ', 65%, ';
         var suffix = ')';
         return function wheelGen(ncolors) {
             var step = 100 / (ncolors + 1);
@@ -986,10 +985,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_ght0lf");
+        component.setAttribute("id", "view_n9oxvh");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_ght0lf")
+       scope.componentsFor["view"].setAttribute("for", "view_n9oxvh")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1705,10 +1704,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_bh2mem");
+        component.setAttribute("id", "view_ur3l27");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_bh2mem")
+       scope.componentsFor["view"].setAttribute("for", "view_ur3l27")
     }
     this.scope.hookup("this", this);
 };
@@ -1971,7 +1970,8 @@ function redraw() {
 
 View.prototype.updateAnts =
 function updateAnts() {
-    for (var i = 0; i < this.world.ants.length; i++) {
+    var i;
+    for (i = 0; i < this.world.ants.length; i++) {
         var ant = this.world.ants[i];
         if (i < this.lastAntPos.length) {
             this.lastAntPos[i].copyFrom(ant.pos);
@@ -2046,7 +2046,7 @@ function setLabeled(labeled) {
 };
 
 View.prototype.drawUnlabeledCell =
-function drawCell(point, c) {
+function drawUnlabeledCell(point, c) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
@@ -2056,7 +2056,7 @@ function drawCell(point, c) {
 };
 
 View.prototype.drawLabeledCell =
-function drawCell(point, c) {
+function drawLabeledCell(point, c) {
     var screenPoint = this.drawUnlabeledCell(point, c);
     this.drawCellLabel(point, screenPoint);
 };
@@ -2122,13 +2122,27 @@ function drawAnt(ant) {
         this.drawCell(ant.pos, c);
     }
 
+    var screenPoint = this.hexGrid.toScreen(ant.pos);
+    var size = this.hexGrid.cellSize * ant.size;
+
+    if (size <= 5) {
+        this.drawSmallAnt(ant, screenPoint, size);
+    } else {
+        this.drawFullAnt(ant, screenPoint, size);
+    }
+
+    if (this.labeled) {
+        this.drawCellLabel(ant.pos, screenPoint);
+    }
+};
+
+View.prototype.drawFullAnt =
+function drawFullAnt(ant, screenPoint, size) {
     var ctxHex = this.hexGrid.ctxHex;
     var ctx2d = ctxHex.ctx2d;
 
     var start = ant.dir;
     var end = ant.dir + 1;
-    var screenPoint = this.hexGrid.toScreen(ant.pos);
-    var size = this.hexGrid.cellSize * ant.size;
 
     // head
     ctx2d.fillStyle = this.antHeadColors[ant.index];
@@ -2146,10 +2160,18 @@ function drawAnt(ant) {
     ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
     ctx2d.closePath();
     ctx2d.fill();
+};
 
-    if (this.labeled) {
-        this.drawCellLabel(ant.pos, screenPoint);
-    }
+View.prototype.drawSmallAnt =
+function drawSmallAnt(ant, screenPoint, size) {
+    var ctxHex = this.hexGrid.ctxHex;
+    var ctx2d = ctxHex.ctx2d;
+
+    ctx2d.fillStyle = this.antHeadColors[ant.index];
+    ctx2d.beginPath();
+    ctxHex.full(screenPoint.x, screenPoint.y, size);
+    ctx2d.closePath();
+    ctx2d.fill();
 };
 
 function swapout(ar, i) {
