@@ -60,7 +60,8 @@ function redraw() {
 
 View.prototype.updateAnts =
 function updateAnts() {
-    for (var i = 0; i < this.world.ants.length; i++) {
+    var i;
+    for (i = 0; i < this.world.ants.length; i++) {
         var ant = this.world.ants[i];
         if (i < this.lastAntPos.length) {
             this.lastAntPos[i].copyFrom(ant.pos);
