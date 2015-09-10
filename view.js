@@ -212,13 +212,23 @@ function drawAnt(ant) {
         this.drawCell(ant.pos, c);
     }
 
+    var screenPoint = this.hexGrid.toScreen(ant.pos);
+    var size = this.hexGrid.cellSize * ant.size;
+
+    this.drawFullAnt(ant, screenPoint, size);
+
+    if (this.labeled) {
+        this.drawCellLabel(ant.pos, screenPoint);
+    }
+};
+
+View.prototype.drawFullAnt =
+function drawFullAnt(ant, screenPoint, size) {
     var ctxHex = this.hexGrid.ctxHex;
     var ctx2d = ctxHex.ctx2d;
 
     var start = ant.dir;
     var end = ant.dir + 1;
-    var screenPoint = this.hexGrid.toScreen(ant.pos);
-    var size = this.hexGrid.cellSize * ant.size;
 
     // head
     ctx2d.fillStyle = this.antHeadColors[ant.index];
@@ -236,10 +246,6 @@ function drawAnt(ant) {
     ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
     ctx2d.closePath();
     ctx2d.fill();
-
-    if (this.labeled) {
-        this.drawCellLabel(ant.pos, screenPoint);
-    }
 };
 
 function swapout(ar, i) {
