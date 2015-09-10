@@ -5,55 +5,22 @@
 module.exports = Hexant;
 
 var colorGen = require('./colorgen.js');
-var HexAntWorld = require('./world.js');
+var World = require('./world.js');
+var View = require('./view.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
+var rules = require('./rules.js');
 
 var BatchLimit = 256;
-
-var RulesLegend = 'W=West, L=Left, A=Ahead, R=Right, E=East, F=Flip';
-var Rules = {
-    W: -2,
-    L: -1,
-    A: 0,
-    R: 1,
-    E: 2,
-    F: 3
-};
-
-function parseRule(rule) {
-    rule = rule.toUpperCase();
-    var parts = rule.split('');
-    var rules = [];
-    for (var i = 0; i < parts.length; i++) {
-        var r = Rules[parts[i]];
-        if (r !== undefined) {
-            rules.push(r);
-        }
-    }
-    return rules;
-}
-
-function ruleToString(rules) {
-    var rule = '';
-    var ruleKeys = Object.keys(Rules);
-    for (var i = 0; i < rules.length; i++) {
-        for (var j = 0; j < ruleKeys.length; j++) {
-            if (rules[i] === Rules[ruleKeys[j]]) {
-                rule += ruleKeys[j];
-            }
-        }
-    }
-    return rule;
-}
 
 function Hexant(body, scope) {
     var self = this;
 
     this.el = null;
     this.world = null;
+    this.view = null;
 
     this.hash = new Hash(scope.window);
     this.animator = scope.animator.add(this);
@@ -80,7 +47,9 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     }
 
     this.el = component;
-    this.world = new HexAntWorld(this.el);
+    this.world = new World();
+    this.view = this.world.addView(
+        new View(this.world, component));
 
     this.el.addEventListener('click', this.boundPlaypause);
     scope.window.addEventListener('keypress', this.boundOnKeyPress);
@@ -89,20 +58,20 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
         .setParse(colorGen.parse, colorGen.toString)
         .setDefault(colorGen.gens.hue)
         .addListener(function onColorGenChange(gen) {
-            self.world.setColorGen(gen);
-            self.world.redraw();
+            self.view.setColorGen(gen);
+            self.view.redraw();
         })
         ;
 
     this.world.addAnt(new Ant(this.world));
 
     this.hash.bind('rule')
-        .setParse(parseRule, ruleToString)
+        .setParse(rules.parse, rules.toString)
         .setDefault('LR')
         .addListener(function onRuleChange(rules) {
             var ant = self.world.ants[0];
             ant.rules = rules;
-            self.world.updateAntColors();
+            self.world.updateAnt(ant);
             self.reset();
         });
 
@@ -116,14 +85,14 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     this.hash.bind('labeled')
         .setDefault(false)
         .addListener(function onLabeledChange(labeled) {
-            self.world.setLabeled(labeled);
-            self.world.redraw();
+            self.view.setLabeled(labeled);
+            self.view.redraw();
         });
 
     this.hash.bind('drawUnvisited')
         .setDefault(false)
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.world.defaultCellValue = drawUnvisited ? 1 : 0;
+            self.view.defaultCellValue = drawUnvisited ? 1 : 0;
         });
 
     if (this.hash.get('autoplay')) {
@@ -154,7 +123,7 @@ function onKeyPress(e) {
         break;
     case 0x2f: // /
         var rule = this.hash.getStr('rule');
-        rule = prompt('New Rules: (' + RulesLegend + ')', rule);
+        rule = prompt('New Rules: (' + rules.help + ')', rule);
         if (typeof rule === 'string') {
             this.pause();
             this.hash.set('rule', rule);
@@ -167,13 +136,13 @@ Hexant.prototype.reset =
 function reset() {
     var ant = this.world.ants[0];
     this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-    this.world.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
     ant.dir = 0;
     ant.pos = this.world.tile.centerPoint().toCube();
     this.world.tile.set(ant.pos, 1);
     this.el.width = this.el.width;
-    this.world.hexGrid.updateSize();
-    this.world.redraw();
+    this.view.hexGrid.updateSize();
+    this.view.redraw();
 };
 
 Hexant.prototype.animate =
@@ -222,7 +191,7 @@ function playpause() {
 Hexant.prototype.stepit =
 function stepit() {
     if (this.paused) {
-        this.world.stepDraw();
+        this.world.step();
     } else {
         this.pause();
     }
@@ -231,7 +200,7 @@ function stepit() {
 Hexant.prototype.step =
 function step() {
     try {
-        this.world.stepDraw();
+        this.world.step();
         return null;
     } catch(err) {
         return err;
@@ -246,10 +215,10 @@ function setFrameRate(rate) {
 
 Hexant.prototype.toggleLabeled =
 function toggleLabeled() {
-    this.hash.set('labeled', !this.world.labeled);
+    this.hash.set('labeled', !this.view.labeled);
 };
 
 Hexant.prototype.resize =
 function resize(width, height) {
-    this.world.resize(width, height);
+    this.view.resize(width, height);
 };

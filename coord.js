@@ -87,6 +87,15 @@ CubePoint.prototype.toString = function toString() {
 CubePoint.prototype.copy = function copy() {
     return CubePoint(this.x, this.y, this.z);
 };
+CubePoint.prototype.copyFrom = function copyFrom(other) {
+    if (other.type !== this.type) {
+        return this.copyFrom(other.toCube());
+    }
+    this.x = other.x;
+    this.y = other.y;
+    this.z = other.z;
+    return this;
+};
 CubePoint.prototype.add = function add(other) {
     if (other.type !== this.type) {
         other = other.toCube();
@@ -197,7 +206,10 @@ OddQBox.prototype.toString = function toString() {
         this.topLeft.toString() + ', ' +
         this.bottomRight.toString() + ')';
 };
-OddQBox.prototype.screenCount = function screenCount() {
+OddQBox.prototype.screenCount = function screenCount(screenPoint) {
+    return this.screenCountInto(ScreenPoint());
+};
+OddQBox.prototype.screenCountInto = function screenCountInto(screenPoint) {
     var W = this.bottomRight.q - this.topLeft.q;
     var H = this.bottomRight.r - this.topLeft.r;
 
@@ -206,13 +218,13 @@ OddQBox.prototype.screenCount = function screenCount() {
 
     // first one is a unit, each successive column backs 1/4 with the last
     // var x = 1 + 3 / 4 * (W - 1);
-    var x = (3 * W + 1) / 4;
+    screenPoint.x = (3 * W + 1) / 4;
 
     // height backs directly, but we need an extra half cell except when we
     // have only one column
-    var y = H + (W > 1 ? 0.5 : 0);
+    screenPoint.y = H + (W > 1 ? 0.5 : 0);
 
-    return ScreenPoint(x, y);
+    return screenPoint;
 };
 OddQBox.prototype.contains = function contains(pointArg) {
     var point = pointArg.toOddQOffset();

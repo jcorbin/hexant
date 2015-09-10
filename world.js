@@ -1,189 +1,82 @@
 'use strict';
 
 var Coord = require('./coord.js');
-var HexGrid = require('./hexgrid.js');
 var HexTileTree = require('./hextiletree.js');
-var NGonContext = require('./ngoncontext.js');
 
 var OddQOffset = Coord.OddQOffset;
 
-module.exports = HexAntWorld;
+module.exports = World;
 
-function HexAntWorld(canvas) {
-    this.canvas = canvas;
-    this.ctx2d = this.canvas.getContext('2d');
-    this.ctxHex = new NGonContext(6, this.ctx2d);
-
-    this.cellColorGen = null;
-    this.antBodyColorGen = null;
-    this.antHeadColorGen = null;
-
-    this.cellColors = [];
-    this.antBodyColors = [];
-    this.antHeadColors = [];
-
+function World() {
+    this.numStates = 0;
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-
-    this.hexGrid = new HexGrid(
-        this.canvas, this.ctxHex,
-        this.tile.boundingBox().copy());
     this.ants = [];
-
-    this.labeled = false;
-
-    this.defaultCellValue = 0;
+    this.views = [];
 }
 
-HexAntWorld.prototype.setColorGen = function setColorGen(colorGen) {
-    this.cellColorGen = colorGen(1);
-    this.antBodyColorGen = colorGen(2);
-    this.antHeadColorGen = colorGen(3);
-
-    this.cellColors = this.cellColorGen(this.cellColors.length);
-    this.antBodyColors = this.antBodyColorGen(this.antBodyColors.length);
-    this.antHeadColors = this.antHeadColorGen(this.antHeadColors.length);
-
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].bodyColor = this.antBodyColors[i];
-        this.ants[i].headColor = this.antHeadColors[i];
+World.prototype.step = function step() {
+    var i;
+    for (i = 0; i < this.ants.length; i++) {
+        this.ants[i].step();
+    }
+    for (i = 0; i < this.views.length; i++) {
+        this.views[i].step();
     }
 };
 
-HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
-    this.labeled = labeled;
-    if (this.labeled) {
-        this.drawCell = this.drawLabeledCell;
-    } else {
-        this.drawCell = this.drawUnlabeledCell;
-    }
-};
-
-HexAntWorld.prototype.step = function step() {
-    var i = 0;
-    var ant;
-    var expanded = false;
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.step();
-        expanded = this.hexGrid.bounds.expandTo(ant.pos);
-        if (expanded) {
-            break;
-        }
-    }
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.step();
-        this.hexGrid.bounds.expandTo(ant.pos);
-    }
-
-    if (expanded) {
-        this.hexGrid.updateSize();
-    }
-};
-
-HexAntWorld.prototype.stepDraw = function stepDraw() {
-    var i = 0;
-    var ant;
-    var expanded = false;
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.stepDraw();
-        expanded = this.hexGrid.bounds.expandTo(ant.pos);
-        if (expanded) {
-            break;
-        }
-    }
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.step();
-        this.hexGrid.bounds.expandTo(ant.pos);
-    }
-
-    if (expanded) {
-        this.hexGrid.updateSize();
-        this.redraw();
-    }
-};
-
-HexAntWorld.prototype.resize = function resize(width, height) {
-    this.hexGrid.resize(width, height);
-    this.redraw();
-};
-
-HexAntWorld.prototype.redraw = function redraw() {
-    var self = this;
-
-    self.tile.eachDataPoint(function each(point, c) {
-        c = c || self.defaultCellValue;
-        if (c) {
-            self.drawCell(point, c);
-        }
-    });
-
-    for (var i = 0; i < self.ants.length; i++) {
-        self.ants[i].redraw();
-    }
-};
-
-HexAntWorld.prototype.drawUnlabeledCell = function drawCell(point, c) {
-    this.ctx2d.beginPath();
-    var screenPoint = this.hexGrid.cellPath(point);
-    this.ctx2d.closePath();
-    this.ctx2d.fillStyle = this.cellColors[c - 1];
-    this.ctx2d.fill();
-    return screenPoint;
-};
-
-HexAntWorld.prototype.drawLabeledCell = function drawCell(point, c) {
-    var screenPoint = this.drawUnlabeledCell(point, c);
-    this.drawCellLabel(point, screenPoint);
-};
-
-HexAntWorld.prototype.drawCellLabel =
-function drawCellLabel(point, screenPoint) {
-    if (!screenPoint) {
-        screenPoint = this.hexGrid.toScreen(point);
-    }
-
-    var ctx2d = this.ctx2d;
-    ctx2d.lineWidth = 1;
-    ctx2d.strokeStyle = '#fff';
-    write(point.toCube().toString(), 0);
-    write(point.toOddQOffset().toString(), 14);
-
-    function write(mess, yoff) {
-        var textWidth = ctx2d.measureText(mess).width;
-        ctx2d.strokeText(
-            mess,
-            screenPoint.x - textWidth / 2,
-            screenPoint.y + yoff);
-    }
-};
-
-HexAntWorld.prototype.drawCell = HexAntWorld.prototype.drawUnlabeledCell;
-
-HexAntWorld.prototype.updateAntColors = function updateAntColors() {
-    this.antBodyColors = this.antBodyColorGen(this.ants.length);
-    this.antHeadColors = this.antHeadColorGen(this.ants.length);
-    var numStates = 0;
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].bodyColor = this.antBodyColors[i];
-        this.ants[i].headColor = this.antHeadColors[i];
-        numStates = Math.max(numStates, this.ants[i].rules.length);
-    }
-    this.cellColors = this.cellColorGen(numStates);
-};
-
-HexAntWorld.prototype.addAnt = function addAnt(ant) {
+World.prototype.addAnt = function addAnt(ant) {
+    this.numStates = Math.max(this.numStates, ant.rules.length);
+    ant.index = this.ants.length;
+    this.ants.push(ant);
     var c = this.tile.get(ant.pos);
     if (!c) {
         this.tile.set(ant.pos, 1);
     }
-    this.ants.push(ant);
-    this.updateAntColors();
+
+    for (var i = 0; i < this.views.length; i++) {
+        this.views[i].addAnt(ant);
+    }
+
     return ant;
+};
+
+World.prototype.updateAnt = function updateAnt(ant) {
+    var i;
+
+    this.numStates = 0;
+    for (i = 0; i < this.ants.length; i++) {
+        this.numStates = Math.max(this.numStates, this.ants[i].rules.length);
+    }
+
+    for (i = 0; i < this.views.length; i++) {
+        this.views[i].updateAnt(ant);
+    }
+
+    return ant;
+};
+
+World.prototype.removeAnt = function removeAnt(ant) {
+    if (this.ants[ant.index] !== ant) {
+        throw new Error('removeAnt mismatch');
+    }
+
+    var i = ant.index;
+    var j = i++;
+    for (; i < this.ants.length; i++, j++) {
+        this.ants[j] = this.ants[i];
+        this.ants[j].index = j;
+    }
+    this.ants.pop();
+
+    for (i = 0; i < this.views.length; i++) {
+        this.views[i].removeAnt(ant);
+    }
+
+    return ant;
+};
+
+World.prototype.addView = function addView(view) {
+    this.views.push(view);
+    view.updateAnts();
+    return view;
 };
