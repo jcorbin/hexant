@@ -58,7 +58,7 @@ global = this;
         main = bundle[filename];
         main._require();
     }
-})([["animator.js","blick","animator.js",{"raf":21},function (require, exports, module, __filename, __dirname){
+})([["animator.js","blick","animator.js",{"raf":23},function (require, exports, module, __filename, __dirname){
 
 // blick/animator.js
 // -----------------
@@ -282,7 +282,7 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["document.js","gutentag","document.js",{"koerper":19},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":21},function (require, exports, module, __filename, __dirname){
 
 // gutentag/document.js
 // --------------------
@@ -355,11 +355,10 @@ var CubePoint = Coord.CubePoint;
 module.exports = Ant;
 
 function Ant(world) {
+    this.index = 0;
     this.world = world;
     this.pos = CubePoint(0, 0, 0);
     this.dir = 0;
-    this.headColor = '#eee';
-    this.bodyColor = '#ccc';
     this.size = 0.5;
     this.rules = [-1, 1];
 }
@@ -368,53 +367,10 @@ Ant.prototype.step = function step() {
     var tile = this.world.tile;
     var c = tile.get(this.pos) || 1;
     var rule = this.rules[(c - 1) % this.rules.length];
-    c = tile.set(this.pos, 1 + c % this.world.cellColors.length);
+    c = tile.set(this.pos, 1 + c % this.world.numStates);
     this.dir = (CubePoint.basis.length + this.dir + rule
                ) % CubePoint.basis.length;
     this.pos.add(CubePoint.basis[this.dir]);
-};
-
-Ant.prototype.stepDraw = function stepDraw() {
-    var tile = this.world.tile;
-    var c = tile.get(this.pos) || 1;
-    var rule = this.rules[(c - 1) % this.rules.length];
-    c = tile.set(this.pos, 1 + c % this.world.cellColors.length);
-    this.dir = (CubePoint.basis.length + this.dir + rule
-               ) % CubePoint.basis.length;
-    this.world.drawCell(this.pos, c);
-    this.pos.add(CubePoint.basis[this.dir]);
-    this.redraw();
-};
-
-Ant.prototype.redraw = function redraw() {
-    var ctxHex = this.world.hexGrid.ctxHex;
-    var ctx2d = ctxHex.ctx2d;
-
-    var start = this.dir;
-    var end = this.dir + 1;
-    var screenPoint = this.world.hexGrid.toScreen(this.pos);
-    var size = this.world.hexGrid.cellSize * this.size;
-
-    // head
-    ctx2d.fillStyle = this.headColor;
-    ctx2d.strokeStyle = this.headColor;
-    ctx2d.lineWidth = size / 2;
-    ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, false);
-    ctx2d.closePath();
-    ctx2d.fill();
-    ctx2d.stroke();
-
-    // body
-    ctx2d.fillStyle = this.bodyColor;
-    ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
-    ctx2d.closePath();
-    ctx2d.fill();
-
-    if (this.world.labeled) {
-        this.world.drawCellLabel(this.pos, screenPoint);
-    }
 };
 
 }],["colorgen.js","hexant","colorgen.js",{},function (require, exports, module, __filename, __dirname){
@@ -600,6 +556,15 @@ CubePoint.prototype.toString = function toString() {
 CubePoint.prototype.copy = function copy() {
     return CubePoint(this.x, this.y, this.z);
 };
+CubePoint.prototype.copyFrom = function copyFrom(other) {
+    if (other.type !== this.type) {
+        return this.copyFrom(other.toCube());
+    }
+    this.x = other.x;
+    this.y = other.y;
+    this.z = other.z;
+    return this;
+};
 CubePoint.prototype.add = function add(other) {
     if (other.type !== this.type) {
         other = other.toCube();
@@ -710,7 +675,10 @@ OddQBox.prototype.toString = function toString() {
         this.topLeft.toString() + ', ' +
         this.bottomRight.toString() + ')';
 };
-OddQBox.prototype.screenCount = function screenCount() {
+OddQBox.prototype.screenCount = function screenCount(screenPoint) {
+    return this.screenCountInto(ScreenPoint());
+};
+OddQBox.prototype.screenCountInto = function screenCountInto(screenPoint) {
     var W = this.bottomRight.q - this.topLeft.q;
     var H = this.bottomRight.r - this.topLeft.r;
 
@@ -719,13 +687,13 @@ OddQBox.prototype.screenCount = function screenCount() {
 
     // first one is a unit, each successive column backs 1/4 with the last
     // var x = 1 + 3 / 4 * (W - 1);
-    var x = (3 * W + 1) / 4;
+    screenPoint.x = (3 * W + 1) / 4;
 
     // height backs directly, but we need an extra half cell except when we
     // have only one column
-    var y = H + (W > 1 ? 0.5 : 0);
+    screenPoint.y = H + (W > 1 ? 0.5 : 0);
 
-    return ScreenPoint(x, y);
+    return screenPoint;
 };
 OddQBox.prototype.contains = function contains(pointArg) {
     var point = pointArg.toOddQOffset();
@@ -1018,10 +986,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_vk7hs3");
+        component.setAttribute("id", "view_ght0lf");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_vk7hs3")
+       scope.componentsFor["view"].setAttribute("for", "view_ght0lf")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1036,7 +1004,7 @@ $THIS.prototype.constructor = $THIS;
 $THIS.prototype.exports = {};
 module.exports = $THIS;
 
-}],["hexant.js","hexant","hexant.js",{"./colorgen.js":6,"./world.js":18,"./ant.js":5,"./hash.js":8,"./coord.js":7,"./hextiletree.js":13},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"./colorgen.js":6,"./world.js":20,"./view.js":19,"./ant.js":5,"./hash.js":8,"./coord.js":7,"./hextiletree.js":13,"./rules.js":18},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1048,55 +1016,22 @@ module.exports = $THIS;
 module.exports = Hexant;
 
 var colorGen = require('./colorgen.js');
-var HexAntWorld = require('./world.js');
+var World = require('./world.js');
+var View = require('./view.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
+var rules = require('./rules.js');
 
 var BatchLimit = 256;
-
-var RulesLegend = 'W=West, L=Left, A=Ahead, R=Right, E=East, F=Flip';
-var Rules = {
-    W: -2,
-    L: -1,
-    A: 0,
-    R: 1,
-    E: 2,
-    F: 3
-};
-
-function parseRule(rule) {
-    rule = rule.toUpperCase();
-    var parts = rule.split('');
-    var rules = [];
-    for (var i = 0; i < parts.length; i++) {
-        var r = Rules[parts[i]];
-        if (r !== undefined) {
-            rules.push(r);
-        }
-    }
-    return rules;
-}
-
-function ruleToString(rules) {
-    var rule = '';
-    var ruleKeys = Object.keys(Rules);
-    for (var i = 0; i < rules.length; i++) {
-        for (var j = 0; j < ruleKeys.length; j++) {
-            if (rules[i] === Rules[ruleKeys[j]]) {
-                rule += ruleKeys[j];
-            }
-        }
-    }
-    return rule;
-}
 
 function Hexant(body, scope) {
     var self = this;
 
     this.el = null;
     this.world = null;
+    this.view = null;
 
     this.hash = new Hash(scope.window);
     this.animator = scope.animator.add(this);
@@ -1123,7 +1058,9 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     }
 
     this.el = component;
-    this.world = new HexAntWorld(this.el);
+    this.world = new World();
+    this.view = this.world.addView(
+        new View(this.world, component));
 
     this.el.addEventListener('click', this.boundPlaypause);
     scope.window.addEventListener('keypress', this.boundOnKeyPress);
@@ -1132,20 +1069,20 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
         .setParse(colorGen.parse, colorGen.toString)
         .setDefault(colorGen.gens.hue)
         .addListener(function onColorGenChange(gen) {
-            self.world.setColorGen(gen);
-            self.world.redraw();
+            self.view.setColorGen(gen);
+            self.view.redraw();
         })
         ;
 
     this.world.addAnt(new Ant(this.world));
 
     this.hash.bind('rule')
-        .setParse(parseRule, ruleToString)
+        .setParse(rules.parse, rules.toString)
         .setDefault('LR')
         .addListener(function onRuleChange(rules) {
             var ant = self.world.ants[0];
             ant.rules = rules;
-            self.world.updateAntColors();
+            self.world.updateAnt(ant);
             self.reset();
         });
 
@@ -1159,14 +1096,14 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     this.hash.bind('labeled')
         .setDefault(false)
         .addListener(function onLabeledChange(labeled) {
-            self.world.setLabeled(labeled);
-            self.world.redraw();
+            self.view.setLabeled(labeled);
+            self.view.redraw();
         });
 
     this.hash.bind('drawUnvisited')
         .setDefault(false)
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.world.defaultCellValue = drawUnvisited ? 1 : 0;
+            self.view.defaultCellValue = drawUnvisited ? 1 : 0;
         });
 
     if (this.hash.get('autoplay')) {
@@ -1197,7 +1134,7 @@ function onKeyPress(e) {
         break;
     case 0x2f: // /
         var rule = this.hash.getStr('rule');
-        rule = prompt('New Rules: (' + RulesLegend + ')', rule);
+        rule = prompt('New Rules: (' + rules.help + ')', rule);
         if (typeof rule === 'string') {
             this.pause();
             this.hash.set('rule', rule);
@@ -1210,13 +1147,13 @@ Hexant.prototype.reset =
 function reset() {
     var ant = this.world.ants[0];
     this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-    this.world.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
     ant.dir = 0;
     ant.pos = this.world.tile.centerPoint().toCube();
     this.world.tile.set(ant.pos, 1);
     this.el.width = this.el.width;
-    this.world.hexGrid.updateSize();
-    this.world.redraw();
+    this.view.hexGrid.updateSize();
+    this.view.redraw();
 };
 
 Hexant.prototype.animate =
@@ -1265,7 +1202,7 @@ function playpause() {
 Hexant.prototype.stepit =
 function stepit() {
     if (this.paused) {
-        this.world.stepDraw();
+        this.world.step();
     } else {
         this.pause();
     }
@@ -1274,7 +1211,7 @@ function stepit() {
 Hexant.prototype.step =
 function step() {
     try {
-        this.world.stepDraw();
+        this.world.step();
         return null;
     } catch(err) {
         return err;
@@ -1289,12 +1226,12 @@ function setFrameRate(rate) {
 
 Hexant.prototype.toggleLabeled =
 function toggleLabeled() {
-    this.hash.set('labeled', !this.world.labeled);
+    this.hash.set('labeled', !this.view.labeled);
 };
 
 Hexant.prototype.resize =
 function resize(width, height) {
-    this.world.resize(width, height);
+    this.view.resize(width, height);
 };
 
 }],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
@@ -1323,6 +1260,7 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.canvas = canvas;
     this.ctxHex = ctxHex;
     this.bounds = bounds || OddQBox();
+    this.view = ScreenPoint();
     this.cell = ScreenPoint();
     this.origin = ScreenPoint();
     this.avail = ScreenPoint();
@@ -1369,9 +1307,9 @@ function resize(width, height) {
 
 HexGrid.prototype.updateSize =
 function updateSize() {
-    var view = this.bounds.screenCount();
-    this.cell.x = this.avail.x / view.x;
-    this.cell.y = this.avail.y / view.y;
+    this.bounds.screenCountInto(this.view);
+    this.cell.x = this.avail.x / this.view.x;
+    this.cell.y = this.avail.y / this.view.y;
     var widthSize = this.cell.x / 2;
     var heightSize = this.cell.y / 2 / HexAspect;
     if (widthSize < heightSize) {
@@ -1385,8 +1323,8 @@ function updateSize() {
     // align top-left
     this.origin.copyFrom(this.cell).scale(0.5);
 
-    this.canvas.width = this.cell.x * view.x;
-    this.canvas.height = this.cell.y * view.y;
+    this.canvas.width = this.cell.x * this.view.x;
+    this.canvas.height = this.cell.y * this.view.y;
     this.canvas.style.width = this.canvas.width + 'px';
     this.canvas.style.height = this.canvas.height + 'px';
 };
@@ -1723,9 +1661,8 @@ function setup() {
     scope.window = window;
     scope.animator = new Animator();
     var bodyDocument = new Document(window.document.body);
-    var body = bodyDocument.documentElement;
-    var main = new Main(body, scope);
-    window.hexant = main;
+    window.hexant = new Main(bodyDocument.documentElement, scope);
+
     window.addEventListener('resize', onResize);
     onResize();
 }
@@ -1768,10 +1705,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_s7t1yr");
+        component.setAttribute("id", "view_bh2mem");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_s7t1yr")
+       scope.componentsFor["view"].setAttribute("for", "view_bh2mem")
     }
     this.scope.hookup("this", this);
 };
@@ -1919,26 +1856,78 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
-}],["world.js","hexant","world.js",{"./coord.js":7,"./hexgrid.js":11,"./hextiletree.js":13,"./ngoncontext.js":17},function (require, exports, module, __filename, __dirname){
+}],["rules.js","hexant","rules.js",{},function (require, exports, module, __filename, __dirname){
 
-// hexant/world.js
+// hexant/rules.js
 // ---------------
 
 'use strict';
 
-var Coord = require('./coord.js');
+module.exports.parse = parseRule;
+module.exports.toString = ruleToString;
+
+module.exports.help = 'W=West, L=Left, A=Ahead, R=Right, E=East, F=Flip';
+
+var Rules = {
+    W: -2,
+    L: -1,
+    A: 0,
+    R: 1,
+    E: 2,
+    F: 3
+};
+
+function parseRule(rule) {
+    rule = rule.toUpperCase();
+    var parts = rule.split('');
+    var rules = [];
+    for (var i = 0; i < parts.length; i++) {
+        var r = Rules[parts[i]];
+        if (r !== undefined) {
+            rules.push(r);
+        }
+    }
+    return rules;
+}
+
+function ruleToString(rules) {
+    var rule = '';
+    var ruleKeys = Object.keys(Rules);
+    for (var i = 0; i < rules.length; i++) {
+        for (var j = 0; j < ruleKeys.length; j++) {
+            if (rules[i] === Rules[ruleKeys[j]]) {
+                rule += ruleKeys[j];
+            }
+        }
+    }
+    return rule;
+}
+
+
+}],["view.js","hexant","view.js",{"./hexgrid.js":11,"./ngoncontext.js":17},function (require, exports, module, __filename, __dirname){
+
+// hexant/view.js
+// --------------
+
+'use strict';
+
 var HexGrid = require('./hexgrid.js');
-var HexTileTree = require('./hextiletree.js');
 var NGonContext = require('./ngoncontext.js');
 
-var OddQOffset = Coord.OddQOffset;
+module.exports = View;
 
-module.exports = HexAntWorld;
-
-function HexAntWorld(canvas) {
+function View(world, canvas) {
+    if (!(this instanceof View)) {
+        return new View(world, canvas);
+    }
+    this.world = world;
     this.canvas = canvas;
+
     this.ctx2d = this.canvas.getContext('2d');
     this.ctxHex = new NGonContext(6, this.ctx2d);
+
+    this.labeled = false;
+    this.defaultCellValue = 0;
 
     this.cellColorGen = null;
     this.antBodyColorGen = null;
@@ -1947,35 +1936,107 @@ function HexAntWorld(canvas) {
     this.cellColors = [];
     this.antBodyColors = [];
     this.antHeadColors = [];
-
-    this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.lastAntPos = [];
 
     this.hexGrid = new HexGrid(
         this.canvas, this.ctxHex,
-        this.tile.boundingBox().copy());
-    this.ants = [];
-
-    this.labeled = false;
-
-    this.defaultCellValue = 0;
+        this.world.tile.boundingBox().copy());
 }
 
-HexAntWorld.prototype.setColorGen = function setColorGen(colorGen) {
-    this.cellColorGen = colorGen(1);
-    this.antBodyColorGen = colorGen(2);
-    this.antHeadColorGen = colorGen(3);
+View.prototype.resize =
+function resize(width, height) {
+    this.hexGrid.resize(width, height);
+    this.redraw();
+};
 
-    this.cellColors = this.cellColorGen(this.cellColors.length);
-    this.antBodyColors = this.antBodyColorGen(this.antBodyColors.length);
-    this.antHeadColors = this.antHeadColorGen(this.antHeadColors.length);
+View.prototype.redraw =
+function redraw() {
+    var self = this;
+    var ants = self.world.ants;
 
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].bodyColor = this.antBodyColors[i];
-        this.ants[i].headColor = this.antHeadColors[i];
+    self.world.tile.eachDataPoint(function each(point, c) {
+        c = c || self.defaultCellValue;
+        if (c) {
+            self.drawCell(point, c);
+        }
+    });
+
+    for (var i = 0; i < ants.length; i++) {
+        self.drawAnt(ants[i]);
+        for (i = 0; i < ants.length; i++) {
+            this.lastAntPos[i].copyFrom(ants[i].pos);
+        }
     }
 };
 
-HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
+View.prototype.updateAnts =
+function updateAnts() {
+    for (var i = 0; i < this.world.ants.length; i++) {
+        var ant = this.world.ants[i];
+        if (i < this.lastAntPos.length) {
+            this.lastAntPos[i].copyFrom(ant.pos);
+        } else {
+            this.lastAntPos.push(ant.pos.copy());
+        }
+    }
+    while (i < this.lastAntPos.length) {
+        this.lastAntPos.pop();
+    }
+    this.updateColors(false);
+};
+
+View.prototype.addAnt =
+function addAnt(ant) {
+    this.lastAntPos.push(ant.pos.copy());
+    this.updateColors(false);
+};
+
+View.prototype.updateAnt =
+function updateAnt(ant) {
+    this.lastAntPos[ant.index].copyFrom(ant.pos);
+    this.updateColors(false);
+};
+
+View.prototype.removeAnt =
+function removeAnt(ant) {
+    swapout(this.lastAntPos, ant.index);
+    this.lastAntPos.pop();
+    this.updateColors(false);
+};
+
+View.prototype.setColorGen =
+function setColorGen(colorGen) {
+    this.cellColorGen = colorGen(1);
+    this.antBodyColorGen = colorGen(2);
+    this.antHeadColorGen = colorGen(3);
+    this.updateColors(true);
+};
+
+View.prototype.updateColors = function updateColors(regen) {
+    var N = this.world.numStates;
+    var M = this.world.ants.length;
+
+    if (this.cellColorGen &&
+        (regen || this.cellColors.length !== N)
+    ) {
+        this.cellColors = this.cellColorGen(N);
+    }
+
+    if (this.antBodyColorGen &&
+        (regen || this.antBodyColors.length !== M)
+    ) {
+        this.antBodyColors = this.antBodyColorGen(M);
+    }
+
+    if (this.antHeadColorGen &&
+        (regen || this.antHeadColors.length !== M)
+    ) {
+        this.antHeadColors = this.antHeadColorGen(M);
+    }
+};
+
+View.prototype.setLabeled =
+function setLabeled(labeled) {
     this.labeled = labeled;
     if (this.labeled) {
         this.drawCell = this.drawLabeledCell;
@@ -1984,78 +2045,8 @@ HexAntWorld.prototype.setLabeled = function setLabeled(labeled) {
     }
 };
 
-HexAntWorld.prototype.step = function step() {
-    var i = 0;
-    var ant;
-    var expanded = false;
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.step();
-        expanded = this.hexGrid.bounds.expandTo(ant.pos);
-        if (expanded) {
-            break;
-        }
-    }
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.step();
-        this.hexGrid.bounds.expandTo(ant.pos);
-    }
-
-    if (expanded) {
-        this.hexGrid.updateSize();
-    }
-};
-
-HexAntWorld.prototype.stepDraw = function stepDraw() {
-    var i = 0;
-    var ant;
-    var expanded = false;
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.stepDraw();
-        expanded = this.hexGrid.bounds.expandTo(ant.pos);
-        if (expanded) {
-            break;
-        }
-    }
-
-    while (i < this.ants.length) {
-        ant = this.ants[i++];
-        ant.step();
-        this.hexGrid.bounds.expandTo(ant.pos);
-    }
-
-    if (expanded) {
-        this.hexGrid.updateSize();
-        this.redraw();
-    }
-};
-
-HexAntWorld.prototype.resize = function resize(width, height) {
-    this.hexGrid.resize(width, height);
-    this.redraw();
-};
-
-HexAntWorld.prototype.redraw = function redraw() {
-    var self = this;
-
-    self.tile.eachDataPoint(function each(point, c) {
-        c = c || self.defaultCellValue;
-        if (c) {
-            self.drawCell(point, c);
-        }
-    });
-
-    for (var i = 0; i < self.ants.length; i++) {
-        self.ants[i].redraw();
-    }
-};
-
-HexAntWorld.prototype.drawUnlabeledCell = function drawCell(point, c) {
+View.prototype.drawUnlabeledCell =
+function drawCell(point, c) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
@@ -2064,12 +2055,13 @@ HexAntWorld.prototype.drawUnlabeledCell = function drawCell(point, c) {
     return screenPoint;
 };
 
-HexAntWorld.prototype.drawLabeledCell = function drawCell(point, c) {
+View.prototype.drawLabeledCell =
+function drawCell(point, c) {
     var screenPoint = this.drawUnlabeledCell(point, c);
     this.drawCellLabel(point, screenPoint);
 };
 
-HexAntWorld.prototype.drawCellLabel =
+View.prototype.drawCellLabel =
 function drawCellLabel(point, screenPoint) {
     if (!screenPoint) {
         screenPoint = this.hexGrid.toScreen(point);
@@ -2090,31 +2082,175 @@ function drawCellLabel(point, screenPoint) {
     }
 };
 
-HexAntWorld.prototype.drawCell = HexAntWorld.prototype.drawUnlabeledCell;
+View.prototype.drawCell =
+View.prototype.drawUnlabeledCell;
 
-HexAntWorld.prototype.updateAntColors = function updateAntColors() {
-    this.antBodyColors = this.antBodyColorGen(this.ants.length);
-    this.antHeadColors = this.antHeadColorGen(this.ants.length);
-    var numStates = 0;
-    for (var i = 0; i < this.ants.length; i++) {
-        this.ants[i].bodyColor = this.antBodyColors[i];
-        this.ants[i].headColor = this.antHeadColors[i];
-        numStates = Math.max(numStates, this.ants[i].rules.length);
+View.prototype.step =
+function step() {
+    var ants = this.world.ants;
+    var i;
+
+    var expanded = false;
+    for (i = 0; i < ants.length; i++) {
+        expanded = this.hexGrid.bounds.expandTo(ants[i].pos) || expanded;
     }
-    this.cellColors = this.cellColorGen(numStates);
+
+    if (expanded) {
+        this.hexGrid.updateSize();
+        this.redraw();
+
+        return;
+    }
+
+    for (i = 0; i < ants.length; i++) {
+        var c = this.world.tile.get(this.lastAntPos[i]);
+        this.drawCell(this.lastAntPos[i], c);
+    }
+
+    for (i = 0; i < ants.length; i++) {
+        this.drawAnt(ants[i]);
+        this.lastAntPos[i].copyFrom(ants[i].pos);
+    }
+
 };
 
-HexAntWorld.prototype.addAnt = function addAnt(ant) {
+View.prototype.drawAnt =
+function drawAnt(ant) {
+    var c = this.world.tile.get(ant.pos);
+    if (!c) {
+        this.world.tile.set(ant.pos, 1);
+        this.drawCell(ant.pos, c);
+    }
+
+    var ctxHex = this.hexGrid.ctxHex;
+    var ctx2d = ctxHex.ctx2d;
+
+    var start = ant.dir;
+    var end = ant.dir + 1;
+    var screenPoint = this.hexGrid.toScreen(ant.pos);
+    var size = this.hexGrid.cellSize * ant.size;
+
+    // head
+    ctx2d.fillStyle = this.antHeadColors[ant.index];
+    ctx2d.strokeStyle = this.antHeadColors[ant.index];
+    ctx2d.lineWidth = size / 2;
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, false);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.stroke();
+
+    // body
+    ctx2d.fillStyle = this.antBodyColors[ant.index];
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
+    ctx2d.closePath();
+    ctx2d.fill();
+
+    if (this.labeled) {
+        this.drawCellLabel(ant.pos, screenPoint);
+    }
+};
+
+function swapout(ar, i) {
+    var j = i;
+    var old = ar[i];
+    for (j = i++; i < ar.length; i++, j++) {
+        ar[j] = ar[i];
+    }
+    ar[j] = old;
+    return j;
+}
+
+}],["world.js","hexant","world.js",{"./coord.js":7,"./hextiletree.js":13},function (require, exports, module, __filename, __dirname){
+
+// hexant/world.js
+// ---------------
+
+'use strict';
+
+var Coord = require('./coord.js');
+var HexTileTree = require('./hextiletree.js');
+
+var OddQOffset = Coord.OddQOffset;
+
+module.exports = World;
+
+function World() {
+    this.numStates = 0;
+    this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.ants = [];
+    this.views = [];
+}
+
+World.prototype.step = function step() {
+    var i;
+    for (i = 0; i < this.ants.length; i++) {
+        this.ants[i].step();
+    }
+    for (i = 0; i < this.views.length; i++) {
+        this.views[i].step();
+    }
+};
+
+World.prototype.addAnt = function addAnt(ant) {
+    this.numStates = Math.max(this.numStates, ant.rules.length);
+    ant.index = this.ants.length;
+    this.ants.push(ant);
     var c = this.tile.get(ant.pos);
     if (!c) {
         this.tile.set(ant.pos, 1);
     }
-    this.ants.push(ant);
-    this.updateAntColors();
+
+    for (var i = 0; i < this.views.length; i++) {
+        this.views[i].addAnt(ant);
+    }
+
     return ant;
 };
 
-}],["koerper.js","koerper","koerper.js",{"wizdom":22},function (require, exports, module, __filename, __dirname){
+World.prototype.updateAnt = function updateAnt(ant) {
+    var i;
+
+    this.numStates = 0;
+    for (i = 0; i < this.ants.length; i++) {
+        this.numStates = Math.max(this.numStates, this.ants[i].rules.length);
+    }
+
+    for (i = 0; i < this.views.length; i++) {
+        this.views[i].updateAnt(ant);
+    }
+
+    return ant;
+};
+
+World.prototype.removeAnt = function removeAnt(ant) {
+    if (this.ants[ant.index] !== ant) {
+        throw new Error('removeAnt mismatch');
+    }
+
+    var i = ant.index;
+    var j = i++;
+    for (; i < this.ants.length; i++, j++) {
+        this.ants[j] = this.ants[i];
+        this.ants[j].index = j;
+    }
+    this.ants.pop();
+
+    for (i = 0; i < this.views.length; i++) {
+        this.views[i].removeAnt(ant);
+    }
+
+    return ant;
+};
+
+World.prototype.addView = function addView(view) {
+    this.views.push(view);
+    view.updateAnts();
+    return view;
+};
+
+}],["koerper.js","koerper","koerper.js",{"wizdom":24},function (require, exports, module, __filename, __dirname){
 
 // koerper/koerper.js
 // ------------------
@@ -2427,7 +2563,7 @@ OpaqueHtml.prototype.getActualFirstChild = function getActualFirstChild() {
 //@ sourceMappingURL=performance-now.map
 */
 
-}],["index.js","raf","index.js",{"performance-now":20},function (require, exports, module, __filename, __dirname){
+}],["index.js","raf","index.js",{"performance-now":22},function (require, exports, module, __filename, __dirname){
 
 // raf/index.js
 // ------------
