@@ -5,8 +5,8 @@
 module.exports = Hexant;
 
 var colorGen = require('./colorgen.js');
-var HexAntWorld = require('./world.js');
-var HexAntWorldView = require('./view.js');
+var World = require('./world.js');
+var View = require('./view.js');
 var Ant = require('./ant.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
@@ -82,9 +82,9 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     }
 
     this.el = component;
-    this.world = new HexAntWorld();
+    this.world = new World();
     this.view = this.world.addView(
-        new HexAntWorldView(this.world, component));
+        new View(this.world, component));
 
     this.el.addEventListener('click', this.boundPlaypause);
     scope.window.addEventListener('keypress', this.boundOnKeyPress);

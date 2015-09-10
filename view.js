@@ -3,11 +3,11 @@
 var HexGrid = require('./hexgrid.js');
 var NGonContext = require('./ngoncontext.js');
 
-module.exports = HexAntWorldView;
+module.exports = View;
 
-function HexAntWorldView(world, canvas) {
-    if (!(this instanceof HexAntWorldView)) {
-        return new HexAntWorldView(world, canvas);
+function View(world, canvas) {
+    if (!(this instanceof View)) {
+        return new View(world, canvas);
     }
     this.world = world;
     this.canvas = canvas;
@@ -32,13 +32,13 @@ function HexAntWorldView(world, canvas) {
         this.world.tile.boundingBox().copy());
 }
 
-HexAntWorldView.prototype.resize =
+View.prototype.resize =
 function resize(width, height) {
     this.hexGrid.resize(width, height);
     this.redraw();
 };
 
-HexAntWorldView.prototype.redraw =
+View.prototype.redraw =
 function redraw() {
     var self = this;
     var ants = self.world.ants;
@@ -58,7 +58,7 @@ function redraw() {
     }
 };
 
-HexAntWorldView.prototype.updateAnts =
+View.prototype.updateAnts =
 function updateAnts() {
     for (var i = 0; i < this.world.ants.length; i++) {
         var ant = this.world.ants[i];
@@ -74,26 +74,26 @@ function updateAnts() {
     this.updateColors(false);
 };
 
-HexAntWorldView.prototype.addAnt =
+View.prototype.addAnt =
 function addAnt(ant) {
     this.lastAntPos.push(ant.pos.copy());
     this.updateColors(false);
 };
 
-HexAntWorldView.prototype.updateAnt =
+View.prototype.updateAnt =
 function updateAnt(ant) {
     this.lastAntPos[ant.index].copyFrom(ant.pos);
     this.updateColors(false);
 };
 
-HexAntWorldView.prototype.removeAnt =
+View.prototype.removeAnt =
 function removeAnt(ant) {
     swapout(this.lastAntPos, ant.index);
     this.lastAntPos.pop();
     this.updateColors(false);
 };
 
-HexAntWorldView.prototype.setColorGen =
+View.prototype.setColorGen =
 function setColorGen(colorGen) {
     this.cellColorGen = colorGen(1);
     this.antBodyColorGen = colorGen(2);
@@ -101,7 +101,7 @@ function setColorGen(colorGen) {
     this.updateColors(true);
 };
 
-HexAntWorldView.prototype.updateColors = function updateColors(regen) {
+View.prototype.updateColors = function updateColors(regen) {
     var N = this.world.numStates;
     var M = this.world.ants.length;
 
@@ -124,7 +124,7 @@ HexAntWorldView.prototype.updateColors = function updateColors(regen) {
     }
 };
 
-HexAntWorldView.prototype.setLabeled =
+View.prototype.setLabeled =
 function setLabeled(labeled) {
     this.labeled = labeled;
     if (this.labeled) {
@@ -134,7 +134,7 @@ function setLabeled(labeled) {
     }
 };
 
-HexAntWorldView.prototype.drawUnlabeledCell =
+View.prototype.drawUnlabeledCell =
 function drawCell(point, c) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
@@ -144,13 +144,13 @@ function drawCell(point, c) {
     return screenPoint;
 };
 
-HexAntWorldView.prototype.drawLabeledCell =
+View.prototype.drawLabeledCell =
 function drawCell(point, c) {
     var screenPoint = this.drawUnlabeledCell(point, c);
     this.drawCellLabel(point, screenPoint);
 };
 
-HexAntWorldView.prototype.drawCellLabel =
+View.prototype.drawCellLabel =
 function drawCellLabel(point, screenPoint) {
     if (!screenPoint) {
         screenPoint = this.hexGrid.toScreen(point);
@@ -171,10 +171,10 @@ function drawCellLabel(point, screenPoint) {
     }
 };
 
-HexAntWorldView.prototype.drawCell =
-HexAntWorldView.prototype.drawUnlabeledCell;
+View.prototype.drawCell =
+View.prototype.drawUnlabeledCell;
 
-HexAntWorldView.prototype.step =
+View.prototype.step =
 function step() {
     var ants = this.world.ants;
     var i;
@@ -203,7 +203,7 @@ function step() {
 
 };
 
-HexAntWorldView.prototype.drawAnt =
+View.prototype.drawAnt =
 function drawAnt(ant) {
     var c = this.world.tile.get(ant.pos);
     if (!c) {

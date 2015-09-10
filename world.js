@@ -5,16 +5,16 @@ var HexTileTree = require('./hextiletree.js');
 
 var OddQOffset = Coord.OddQOffset;
 
-module.exports = HexAntWorld;
+module.exports = World;
 
-function HexAntWorld() {
+function World() {
     this.numStates = 0;
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
     this.ants = [];
     this.views = [];
 }
 
-HexAntWorld.prototype.step = function step() {
+World.prototype.step = function step() {
     var i;
     for (i = 0; i < this.ants.length; i++) {
         this.ants[i].step();
@@ -24,7 +24,7 @@ HexAntWorld.prototype.step = function step() {
     }
 };
 
-HexAntWorld.prototype.addAnt = function addAnt(ant) {
+World.prototype.addAnt = function addAnt(ant) {
     this.numStates = Math.max(this.numStates, ant.rules.length);
     ant.index = this.ants.length;
     this.ants.push(ant);
@@ -40,7 +40,7 @@ HexAntWorld.prototype.addAnt = function addAnt(ant) {
     return ant;
 };
 
-HexAntWorld.prototype.updateAnt = function updateAnt(ant) {
+World.prototype.updateAnt = function updateAnt(ant) {
     var i;
 
     this.numStates = 0;
@@ -55,7 +55,7 @@ HexAntWorld.prototype.updateAnt = function updateAnt(ant) {
     return ant;
 };
 
-HexAntWorld.prototype.removeAnt = function removeAnt(ant) {
+World.prototype.removeAnt = function removeAnt(ant) {
     if (this.ants[ant.index] !== ant) {
         throw new Error('removeAnt mismatch');
     }
@@ -75,7 +75,7 @@ HexAntWorld.prototype.removeAnt = function removeAnt(ant) {
     return ant;
 };
 
-HexAntWorld.prototype.addView = function addView(view) {
+World.prototype.addView = function addView(view) {
     this.views.push(view);
     view.updateAnts();
     return view;
