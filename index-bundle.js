@@ -985,10 +985,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_n9oxvh");
+        component.setAttribute("id", "view_j3izy1");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_n9oxvh")
+       scope.componentsFor["view"].setAttribute("for", "view_j3izy1")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1165,13 +1165,11 @@ function animate(time) {
         frames = Math.min(BatchLimit, progress / this.frameInterval);
     }
 
-    for (var i = 0; i < frames; i++) {
-        this.lastFrameTime += this.frameInterval;
-        var err = this.step();
-        if (err) {
-            this.pause();
-            throw err;
-        }
+    this.lastFrameTime += frames * this.frameInterval;
+    var err = this.stepn(frames);
+    if (err) {
+        this.pause();
+        throw err;
     }
 };
 
@@ -1204,6 +1202,16 @@ function stepit() {
         this.world.step();
     } else {
         this.pause();
+    }
+};
+
+Hexant.prototype.stepn =
+function stepn(n) {
+    try {
+        this.world.stepn(n);
+        return null;
+    } catch(err) {
+        return err;
     }
 };
 
@@ -1704,10 +1712,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_ur3l27");
+        component.setAttribute("id", "view_9pbs5i");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_ur3l27")
+       scope.componentsFor["view"].setAttribute("for", "view_9pbs5i")
     }
     this.scope.hookup("this", this);
 };
@@ -1940,6 +1948,8 @@ function View(world, canvas) {
     this.hexGrid = new HexGrid(
         this.canvas, this.ctxHex,
         this.world.tile.boundingBox().copy());
+
+    this.needsRedraw = false;
 }
 
 View.prototype.resize =
@@ -2096,9 +2106,11 @@ function step() {
     }
 
     if (expanded) {
+        this.needsRedraw = true;
         this.hexGrid.updateSize();
-        this.redraw();
+    }
 
+    if (this.needsRedraw) {
         return;
     }
 
@@ -2211,7 +2223,32 @@ World.prototype.step = function step() {
         this.ants[i].step();
     }
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].step();
+        var view = this.views[i];
+        view.step();
+        if (view.needsRedraw) {
+            view.redraw();
+            view.needsRedraw = false;
+        }
+    }
+};
+
+World.prototype.stepn = function stepn(n) {
+    var i;
+    var j;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < this.ants.length; j++) {
+            this.ants[j].step();
+        }
+        for (j = 0; j < this.views.length; j++) {
+            this.views[j].step();
+        }
+    }
+    for (i = 0; i < this.views.length; i++) {
+        var view = this.views[i];
+        if (view.needsRedraw) {
+            view.redraw();
+            view.needsRedraw = false;
+        }
     }
 };
 
