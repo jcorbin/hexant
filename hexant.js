@@ -155,13 +155,11 @@ function animate(time) {
         frames = Math.min(BatchLimit, progress / this.frameInterval);
     }
 
-    for (var i = 0; i < frames; i++) {
-        this.lastFrameTime += this.frameInterval;
-        var err = this.step();
-        if (err) {
-            this.pause();
-            throw err;
-        }
+    this.lastFrameTime += frames * this.frameInterval;
+    var err = this.stepn(frames);
+    if (err) {
+        this.pause();
+        throw err;
     }
 };
 
@@ -194,6 +192,13 @@ function stepit() {
         this.world.step();
     } else {
         this.pause();
+    }
+};
+
+Hexant.prototype.stepn =
+function stepn(n) {
+    for (var i = 0; i < n; i++) {
+        this.step();
     }
 };
 
