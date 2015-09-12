@@ -197,8 +197,11 @@ function stepit() {
 
 Hexant.prototype.stepn =
 function stepn(n) {
-    for (var i = 0; i < n; i++) {
-        this.step();
+    try {
+        this.world.stepn(n);
+        return null;
+    } catch(err) {
+        return err;
     }
 };
 

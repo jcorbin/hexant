@@ -24,6 +24,13 @@ World.prototype.step = function step() {
     }
 };
 
+World.prototype.stepn = function stepn(n) {
+    var i;
+    for (i = 0; i < n; i++) {
+        this.step();
+    }
+};
+
 World.prototype.addAnt = function addAnt(ant) {
     this.numStates = Math.max(this.numStates, ant.rules.length);
     ant.index = this.ants.length;
