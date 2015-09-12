@@ -30,6 +30,8 @@ function View(world, canvas) {
     this.hexGrid = new HexGrid(
         this.canvas, this.ctxHex,
         this.world.tile.boundingBox().copy());
+
+    this.needsRedraw = false;
 }
 
 View.prototype.resize =
@@ -186,9 +188,11 @@ function step() {
     }
 
     if (expanded) {
+        this.needsRedraw = true;
         this.hexGrid.updateSize();
-        this.redraw();
+    }
 
+    if (this.needsRedraw) {
         return;
     }
 

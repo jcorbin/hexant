@@ -20,7 +20,32 @@ World.prototype.step = function step() {
         this.ants[i].step();
     }
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].step();
+        var view = this.views[i];
+        view.step();
+        if (view.needsRedraw) {
+            view.redraw();
+            view.needsRedraw = false;
+        }
+    }
+};
+
+World.prototype.stepn = function stepn(n) {
+    var i;
+    var j;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < this.ants.length; j++) {
+            this.ants[j].step();
+        }
+        for (j = 0; j < this.views.length; j++) {
+            this.views[j].step();
+        }
+    }
+    for (i = 0; i < this.views.length; i++) {
+        var view = this.views[i];
+        if (view.needsRedraw) {
+            view.redraw();
+            view.needsRedraw = false;
+        }
     }
 };
 
