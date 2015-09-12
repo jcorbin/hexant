@@ -26,8 +26,14 @@ World.prototype.step = function step() {
 
 World.prototype.stepn = function stepn(n) {
     var i;
+    var j;
     for (i = 0; i < n; i++) {
-        this.step();
+        for (j = 0; j < this.ants.length; j++) {
+            this.ants[j].step();
+        }
+        for (j = 0; j < this.views.length; j++) {
+            this.views[j].step();
+        }
     }
 };
 
