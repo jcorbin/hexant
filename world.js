@@ -20,7 +20,8 @@ World.prototype.step = function step() {
         this.ants[i].step();
     }
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].step();
+        var view = this.views[i];
+        view.step();
     }
 };
 
