@@ -22,6 +22,10 @@ World.prototype.step = function step() {
     for (i = 0; i < this.views.length; i++) {
         var view = this.views[i];
         view.step();
+        if (view.needsRedraw) {
+            view.redraw();
+            view.needsRedraw = false;
+        }
     }
 };
 
@@ -34,6 +38,13 @@ World.prototype.stepn = function stepn(n) {
         }
         for (j = 0; j < this.views.length; j++) {
             this.views[j].step();
+        }
+    }
+    for (i = 0; i < this.views.length; i++) {
+        var view = this.views[i];
+        if (view.needsRedraw) {
+            view.redraw();
+            view.needsRedraw = false;
         }
     }
 };
