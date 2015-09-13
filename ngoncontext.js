@@ -111,12 +111,12 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 
     this.ctx2d.moveTo(x, y);
 
-    var r = this.offset + this.step * start;
+    var j = start;
     for (var i = 0; i <= n; i++) {
-        var px = x + radius * Math.cos(r);
-        var py = y + radius * Math.sin(r);
+        var px = x + radius * this.cos[j];
+        var py = y + radius * this.sin[j];
         this.ctx2d.lineTo(px, py);
-        r += this.step;
+        j = (j + 1) % this.degree;
     }
 };
 
