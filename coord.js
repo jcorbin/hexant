@@ -26,6 +26,11 @@ ScreenPoint.prototype.copyFrom = function copyFrom(other) {
 ScreenPoint.prototype.toString = function toString() {
     return 'ScreenPoint(' + this.x + ', ' + this.y + ')';
 };
+ScreenPoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
+    screenPoint.x = this.x;
+    screenPoint.y = this.y;
+    return screenPoint;
+};
 ScreenPoint.prototype.toScreen = function toScreen() {
     return this;
 };
@@ -114,10 +119,13 @@ CubePoint.prototype.sub = function sub(other) {
     this.z -= other.z;
     return this;
 };
+CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
+    screenPoint.x = 3 / 2 * this.x;
+    screenPoint.y = Math.sqrt(3) * (this.z + this.x / 2);
+    return screenPoint;
+};
 CubePoint.prototype.toScreen = function toScreen() {
-    var screenX = 3 / 2 * this.x;
-    var screenY = Math.sqrt(3) * (this.z + this.x / 2);
-    return ScreenPoint(screenX, screenY);
+    return this.toScreenInto(ScreenPoint());
 };
 CubePoint.prototype.toCube = function toCube() {
     return this;
@@ -171,10 +179,13 @@ OddQOffset.prototype.mulBy = function mulBy(q, r) {
     this.r *= r;
     return this;
 };
+OddQOffset.prototype.toScreenInto = function toScreenInto(screenPoint) {
+    screenPoint.x = 3 / 2 * this.q;
+    screenPoint.y = Math.sqrt(3) * (this.r + 0.5 * (this.q & 1));
+    return screenPoint;
+};
 OddQOffset.prototype.toScreen = function toScreen() {
-    var x = 3 / 2 * this.q;
-    var y = Math.sqrt(3) * (this.r + 0.5 * (this.q & 1));
-    return ScreenPoint(x, y);
+    return this.toScreenInto(ScreenPoint());
 };
 OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
     return this;
