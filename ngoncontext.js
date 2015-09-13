@@ -30,15 +30,13 @@ function setOffset(offset) {
 
 NGonContext.prototype.full =
 function full(x, y, radius) {
-    var r = this.offset;
     this.ctx2d.moveTo(
-        x + radius * Math.cos(r),
-        y + radius * Math.sin(r));
+        x + radius * this.cos[0],
+        y + radius * this.sin[0]);
     for (var i = 1; i < this.degree; i++) {
-        r += this.step;
         this.ctx2d.lineTo(
-            x + radius * Math.cos(r),
-            y + radius * Math.sin(r));
+            x + radius * this.cos[i],
+            y + radius * this.sin[i]);
     }
 };
 
