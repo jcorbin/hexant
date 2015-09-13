@@ -11,7 +11,8 @@ function NGonContext(degree, ctx2d) {
     this.step = 2 * Math.PI / this.degree;
 }
 
-NGonContext.prototype.full = function full(x, y, radius) {
+NGonContext.prototype.full =
+function full(x, y, radius) {
     var r = this.offset;
     this.ctx2d.moveTo(
         x + radius * Math.cos(r),
