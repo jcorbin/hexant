@@ -24,6 +24,7 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.origin = ScreenPoint();
     this.avail = ScreenPoint();
     this.cellSize = 0;
+    this.scratchPoint = ScreenPoint();
     this.boundTopLeft = ScreenPoint();
 }
 
@@ -32,7 +33,7 @@ function internalize(point) {
     // TODO: hack, better compromise than the broken-ness of doing the sub in
     // odd-q space
     return point
-        .toScreen()
+        .toScreenInto(this.scratchPoint)
         // .copy()
         // .toOddQOffset()
         .sub(this.boundTopLeft)
