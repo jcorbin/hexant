@@ -494,6 +494,11 @@ ScreenPoint.prototype.copyFrom = function copyFrom(other) {
 ScreenPoint.prototype.toString = function toString() {
     return 'ScreenPoint(' + this.x + ', ' + this.y + ')';
 };
+ScreenPoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
+    screenPoint.x = this.x;
+    screenPoint.y = this.y;
+    return screenPoint;
+};
 ScreenPoint.prototype.toScreen = function toScreen() {
     return this;
 };
@@ -582,10 +587,13 @@ CubePoint.prototype.sub = function sub(other) {
     this.z -= other.z;
     return this;
 };
+CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
+    screenPoint.x = 3 / 2 * this.x;
+    screenPoint.y = Math.sqrt(3) * (this.z + this.x / 2);
+    return screenPoint;
+};
 CubePoint.prototype.toScreen = function toScreen() {
-    var screenX = 3 / 2 * this.x;
-    var screenY = Math.sqrt(3) * (this.z + this.x / 2);
-    return ScreenPoint(screenX, screenY);
+    return this.toScreenInto(ScreenPoint());
 };
 CubePoint.prototype.toCube = function toCube() {
     return this;
@@ -639,10 +647,13 @@ OddQOffset.prototype.mulBy = function mulBy(q, r) {
     this.r *= r;
     return this;
 };
+OddQOffset.prototype.toScreenInto = function toScreenInto(screenPoint) {
+    screenPoint.x = 3 / 2 * this.q;
+    screenPoint.y = Math.sqrt(3) * (this.r + 0.5 * (this.q & 1));
+    return screenPoint;
+};
 OddQOffset.prototype.toScreen = function toScreen() {
-    var x = 3 / 2 * this.q;
-    var y = Math.sqrt(3) * (this.r + 0.5 * (this.q & 1));
-    return ScreenPoint(x, y);
+    return this.toScreenInto(ScreenPoint());
 };
 OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
     return this;
@@ -985,10 +996,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_j3izy1");
+        component.setAttribute("id", "view_3g8ggv");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_j3izy1")
+       scope.componentsFor["view"].setAttribute("for", "view_3g8ggv")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1165,12 +1176,8 @@ function animate(time) {
         frames = Math.min(BatchLimit, progress / this.frameInterval);
     }
 
+    this.world.stepn(frames);
     this.lastFrameTime += frames * this.frameInterval;
-    var err = this.stepn(frames);
-    if (err) {
-        this.pause();
-        throw err;
-    }
 };
 
 Hexant.prototype.play =
@@ -1202,26 +1209,6 @@ function stepit() {
         this.world.step();
     } else {
         this.pause();
-    }
-};
-
-Hexant.prototype.stepn =
-function stepn(n) {
-    try {
-        this.world.stepn(n);
-        return null;
-    } catch(err) {
-        return err;
-    }
-};
-
-Hexant.prototype.step =
-function step() {
-    try {
-        this.world.step();
-        return null;
-    } catch(err) {
-        return err;
     }
 };
 
@@ -1272,6 +1259,9 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.origin = ScreenPoint();
     this.avail = ScreenPoint();
     this.cellSize = 0;
+    this.scratchPoint = ScreenPoint();
+    this.boundTopLeft = ScreenPoint();
+    this.cellXYs = new Float64Array(12);
 }
 
 HexGrid.prototype.internalize =
@@ -1279,25 +1269,25 @@ function internalize(point) {
     // TODO: hack, better compromise than the broken-ness of doing the sub in
     // odd-q space
     return point
-        .toScreen()
+        .toScreenInto(this.scratchPoint)
         // .copy()
         // .toOddQOffset()
-        .sub(this.bounds.topLeft)
+        .sub(this.boundTopLeft)
         ;
 };
 
 HexGrid.prototype.toScreen =
 function toScreen(point) {
     return this.internalize(point)
-        .toScreen()
         .scale(this.cellSize)
-        .add(this.origin);
+        .add(this.origin)
+        ;
 };
 
 HexGrid.prototype.cellPath =
-function offsetCellPath(point) {
+function cellPath(point) {
     var screenPoint = this.toScreen(point);
-    this.ctxHex.full(screenPoint.x, screenPoint.y, this.cellSize);
+    this.ctxHex.fullWith(screenPoint.x, screenPoint.y, this.cellXYs);
     return screenPoint;
 };
 
@@ -1314,6 +1304,7 @@ function resize(width, height) {
 
 HexGrid.prototype.updateSize =
 function updateSize() {
+    this.bounds.topLeft.toScreenInto(this.boundTopLeft);
     this.bounds.screenCountInto(this.view);
     this.cell.x = this.avail.x / this.view.x;
     this.cell.y = this.avail.y / this.view.y;
@@ -1326,6 +1317,7 @@ function updateSize() {
         this.cellSize = heightSize;
         this.cell.x = 2 * this.cellSize;
     }
+    this.ctxHex.buildFor(this.cellSize, this.cellXYs);
 
     // align top-left
     this.origin.copyFrom(this.cell).scale(0.5);
@@ -1712,10 +1704,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_9pbs5i");
+        component.setAttribute("id", "view_wllwgk");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_9pbs5i")
+       scope.componentsFor["view"].setAttribute("for", "view_wllwgk")
     }
     this.scope.hookup("this", this);
 };
@@ -1767,18 +1759,50 @@ function NGonContext(degree, ctx2d) {
     this.degree = degree;
     this.offset = 0;
     this.step = 2 * Math.PI / this.degree;
+    this.cos = null;
+    this.sin = null;
+
+    this.setOffset(0);
 }
 
-NGonContext.prototype.full = function full(x, y, radius) {
-    var r = this.offset;
-    this.ctx2d.moveTo(
-        x + radius * Math.cos(r),
-        y + radius * Math.sin(r));
-    for (var i = 1; i < this.degree; i++) {
+NGonContext.prototype.setOffset =
+function setOffset(offset) {
+    this.offset = offset;
+    this.cos = new Float64Array(this.degree);
+    this.sin = new Float64Array(this.degree);
+    var r = offset;
+    for (var i = 0; i < this.degree; i++) {
+        this.cos[i] = Math.cos(r);
+        this.sin[i] = Math.sin(r);
         r += this.step;
+    }
+};
+
+NGonContext.prototype.buildFor =
+function buildFor(radius, xys) {
+    for (var i = 0, j = 0; i < this.degree; i++) {
+        xys[j++] = radius * this.cos[i];
+        xys[j++] = radius * this.sin[i];
+    }
+};
+
+NGonContext.prototype.fullWith =
+function fullWith(x, y, xys) {
+    this.ctx2d.moveTo(x + xys[0], y + xys[1]);
+    for (var i = 1, j = 2; i < this.degree; i++) {
+        this.ctx2d.lineTo(x + xys[j++], y + xys[j++]);
+    }
+};
+
+NGonContext.prototype.full =
+function full(x, y, radius) {
+    this.ctx2d.moveTo(
+        x + radius * this.cos[0],
+        y + radius * this.sin[0]);
+    for (var i = 1; i < this.degree; i++) {
         this.ctx2d.lineTo(
-            x + radius * Math.cos(r),
-            y + radius * Math.sin(r));
+            x + radius * this.cos[i],
+            y + radius * this.sin[i]);
     }
 };
 
@@ -1810,15 +1834,15 @@ function arc(x, y, radius, startArg, endArg, complement) {
         n -= this.degree;
     }
 
-    var r = this.offset + this.step * start;
-    var px = x + radius * Math.cos(r);
-    var py = y + radius * Math.sin(r);
+    var j = start;
+    var px = x + radius * this.cos[j];
+    var py = y + radius * this.sin[j];
     this.ctx2d.moveTo(px, py);
 
     for (var i = 1; i <= n; i++) {
-        r += this.step;
-        px = x + radius * Math.cos(r);
-        py = y + radius * Math.sin(r);
+        j = (j + 1) % this.degree;
+        px = x + radius * this.cos[j];
+        py = y + radius * this.sin[j];
         this.ctx2d.lineTo(px, py);
     }
 };
@@ -1853,12 +1877,12 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 
     this.ctx2d.moveTo(x, y);
 
-    var r = this.offset + this.step * start;
+    var j = start;
     for (var i = 0; i <= n; i++) {
-        var px = x + radius * Math.cos(r);
-        var py = y + radius * Math.sin(r);
+        var px = x + radius * this.cos[j];
+        var py = y + radius * this.sin[j];
         this.ctx2d.lineTo(px, py);
-        r += this.step;
+        j = (j + 1) % this.degree;
     }
 };
 
