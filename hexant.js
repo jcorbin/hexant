@@ -155,8 +155,8 @@ function animate(time) {
         frames = Math.min(BatchLimit, progress / this.frameInterval);
     }
 
-    this.lastFrameTime += frames * this.frameInterval;
     this.world.stepn(frames);
+    this.lastFrameTime += frames * this.frameInterval;
 };
 
 Hexant.prototype.play =
