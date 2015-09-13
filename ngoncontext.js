@@ -9,12 +9,23 @@ function NGonContext(degree, ctx2d) {
     this.degree = degree;
     this.offset = 0;
     this.step = 2 * Math.PI / this.degree;
+    this.cos = null;
+    this.sin = null;
+
     this.setOffset(0);
 }
 
 NGonContext.prototype.setOffset =
 function setOffset(offset) {
     this.offset = offset;
+    this.cos = new Float64Array(this.degree);
+    this.sin = new Float64Array(this.degree);
+    var r = offset;
+    for (var i = 0; i < this.degree; i++) {
+        this.cos[i] = Math.cos(r);
+        this.sin[i] = Math.sin(r);
+        r += this.step;
+    }
 };
 
 NGonContext.prototype.full =
