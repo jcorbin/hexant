@@ -9,18 +9,50 @@ function NGonContext(degree, ctx2d) {
     this.degree = degree;
     this.offset = 0;
     this.step = 2 * Math.PI / this.degree;
+    this.cos = null;
+    this.sin = null;
+
+    this.setOffset(0);
 }
 
-NGonContext.prototype.full = function full(x, y, radius) {
-    var r = this.offset;
-    this.ctx2d.moveTo(
-        x + radius * Math.cos(r),
-        y + radius * Math.sin(r));
-    for (var i = 1; i < this.degree; i++) {
+NGonContext.prototype.setOffset =
+function setOffset(offset) {
+    this.offset = offset;
+    this.cos = new Float64Array(this.degree);
+    this.sin = new Float64Array(this.degree);
+    var r = offset;
+    for (var i = 0; i < this.degree; i++) {
+        this.cos[i] = Math.cos(r);
+        this.sin[i] = Math.sin(r);
         r += this.step;
+    }
+};
+
+NGonContext.prototype.buildFor =
+function buildFor(radius, xys) {
+    for (var i = 0, j = 0; i < this.degree; i++) {
+        xys[j++] = radius * this.cos[i];
+        xys[j++] = radius * this.sin[i];
+    }
+};
+
+NGonContext.prototype.fullWith =
+function fullWith(x, y, xys) {
+    this.ctx2d.moveTo(x + xys[0], y + xys[1]);
+    for (var i = 1, j = 2; i < this.degree; i++) {
+        this.ctx2d.lineTo(x + xys[j++], y + xys[j++]);
+    }
+};
+
+NGonContext.prototype.full =
+function full(x, y, radius) {
+    this.ctx2d.moveTo(
+        x + radius * this.cos[0],
+        y + radius * this.sin[0]);
+    for (var i = 1; i < this.degree; i++) {
         this.ctx2d.lineTo(
-            x + radius * Math.cos(r),
-            y + radius * Math.sin(r));
+            x + radius * this.cos[i],
+            y + radius * this.sin[i]);
     }
 };
 
@@ -52,15 +84,15 @@ function arc(x, y, radius, startArg, endArg, complement) {
         n -= this.degree;
     }
 
-    var r = this.offset + this.step * start;
-    var px = x + radius * Math.cos(r);
-    var py = y + radius * Math.sin(r);
+    var j = start;
+    var px = x + radius * this.cos[j];
+    var py = y + radius * this.sin[j];
     this.ctx2d.moveTo(px, py);
 
     for (var i = 1; i <= n; i++) {
-        r += this.step;
-        px = x + radius * Math.cos(r);
-        py = y + radius * Math.sin(r);
+        j = (j + 1) % this.degree;
+        px = x + radius * this.cos[j];
+        py = y + radius * this.sin[j];
         this.ctx2d.lineTo(px, py);
     }
 };
@@ -95,12 +127,12 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 
     this.ctx2d.moveTo(x, y);
 
-    var r = this.offset + this.step * start;
+    var j = start;
     for (var i = 0; i <= n; i++) {
-        var px = x + radius * Math.cos(r);
-        var py = y + radius * Math.sin(r);
+        var px = x + radius * this.cos[j];
+        var py = y + radius * this.sin[j];
         this.ctx2d.lineTo(px, py);
-        r += this.step;
+        j = (j + 1) % this.degree;
     }
 };
 

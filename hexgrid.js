@@ -24,6 +24,9 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.origin = ScreenPoint();
     this.avail = ScreenPoint();
     this.cellSize = 0;
+    this.scratchPoint = ScreenPoint();
+    this.boundTopLeft = ScreenPoint();
+    this.cellXYs = new Float64Array(12);
 }
 
 HexGrid.prototype.internalize =
@@ -31,25 +34,25 @@ function internalize(point) {
     // TODO: hack, better compromise than the broken-ness of doing the sub in
     // odd-q space
     return point
-        .toScreen()
+        .toScreenInto(this.scratchPoint)
         // .copy()
         // .toOddQOffset()
-        .sub(this.bounds.topLeft)
+        .sub(this.boundTopLeft)
         ;
 };
 
 HexGrid.prototype.toScreen =
 function toScreen(point) {
     return this.internalize(point)
-        .toScreen()
         .scale(this.cellSize)
-        .add(this.origin);
+        .add(this.origin)
+        ;
 };
 
 HexGrid.prototype.cellPath =
-function offsetCellPath(point) {
+function cellPath(point) {
     var screenPoint = this.toScreen(point);
-    this.ctxHex.full(screenPoint.x, screenPoint.y, this.cellSize);
+    this.ctxHex.fullWith(screenPoint.x, screenPoint.y, this.cellXYs);
     return screenPoint;
 };
 
@@ -66,6 +69,7 @@ function resize(width, height) {
 
 HexGrid.prototype.updateSize =
 function updateSize() {
+    this.bounds.topLeft.toScreenInto(this.boundTopLeft);
     this.bounds.screenCountInto(this.view);
     this.cell.x = this.avail.x / this.view.x;
     this.cell.y = this.avail.y / this.view.y;
@@ -78,6 +82,7 @@ function updateSize() {
         this.cellSize = heightSize;
         this.cell.x = 2 * this.cellSize;
     }
+    this.ctxHex.buildFor(this.cellSize, this.cellXYs);
 
     // align top-left
     this.origin.copyFrom(this.cell).scale(0.5);
