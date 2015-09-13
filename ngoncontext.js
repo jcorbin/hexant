@@ -9,7 +9,13 @@ function NGonContext(degree, ctx2d) {
     this.degree = degree;
     this.offset = 0;
     this.step = 2 * Math.PI / this.degree;
+    this.setOffset(0);
 }
+
+NGonContext.prototype.setOffset =
+function setOffset(offset) {
+    this.offset = offset;
+};
 
 NGonContext.prototype.full =
 function full(x, y, radius) {
