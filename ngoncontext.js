@@ -28,6 +28,22 @@ function setOffset(offset) {
     }
 };
 
+NGonContext.prototype.buildFor =
+function buildFor(radius, xys) {
+    for (var i = 0, j = 0; i < this.degree; i++) {
+        xys[j++] = radius * this.cos[i];
+        xys[j++] = radius * this.sin[i];
+    }
+};
+
+NGonContext.prototype.fullWith =
+function fullWith(x, y, xys) {
+    this.ctx2d.moveTo(x + xys[0], y + xys[1]);
+    for (var i = 1, j = 2; i < this.degree; i++) {
+        this.ctx2d.lineTo(x + xys[j++], y + xys[j++]);
+    }
+};
+
 NGonContext.prototype.full =
 function full(x, y, radius) {
     this.ctx2d.moveTo(
