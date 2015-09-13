@@ -68,9 +68,9 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     this.hash.bind('rule')
         .setParse(rules.parse, rules.toString)
         .setDefault('LR')
-        .addListener(function onRuleChange(rules) {
+        .addListener(function onRuleChange(newRules) {
             var ant = self.world.ants[0];
-            ant.rules = rules;
+            ant.rules = newRules;
             self.world.updateAnt(ant);
             self.reset();
         });
