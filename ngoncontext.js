@@ -68,15 +68,15 @@ function arc(x, y, radius, startArg, endArg, complement) {
         n -= this.degree;
     }
 
-    var r = this.offset + this.step * start;
-    var px = x + radius * Math.cos(r);
-    var py = y + radius * Math.sin(r);
+    var j = start;
+    var px = x + radius * this.cos[j];
+    var py = y + radius * this.sin[j];
     this.ctx2d.moveTo(px, py);
 
     for (var i = 1; i <= n; i++) {
-        r += this.step;
-        px = x + radius * Math.cos(r);
-        py = y + radius * Math.sin(r);
+        j = (j + 1) % this.degree;
+        px = x + radius * this.cos[j];
+        py = y + radius * this.sin[j];
         this.ctx2d.lineTo(px, py);
     }
 };
