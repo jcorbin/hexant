@@ -42,9 +42,9 @@ function internalize(point) {
 HexGrid.prototype.toScreen =
 function toScreen(point) {
     return this.internalize(point)
-        .toScreen()
         .scale(this.cellSize)
-        .add(this.origin);
+        .add(this.origin)
+        ;
 };
 
 HexGrid.prototype.cellPath =
