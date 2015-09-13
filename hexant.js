@@ -156,11 +156,7 @@ function animate(time) {
     }
 
     this.lastFrameTime += frames * this.frameInterval;
-    var err = this.stepn(frames);
-    if (err) {
-        this.pause();
-        throw err;
-    }
+    this.world.stepn(frames);
 };
 
 Hexant.prototype.play =
@@ -192,16 +188,6 @@ function stepit() {
         this.world.step();
     } else {
         this.pause();
-    }
-};
-
-Hexant.prototype.stepn =
-function stepn(n) {
-    try {
-        this.world.stepn(n);
-        return null;
-    } catch(err) {
-        return err;
     }
 };
 
