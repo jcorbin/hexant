@@ -26,6 +26,7 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.cellSize = 0;
     this.scratchPoint = ScreenPoint();
     this.boundTopLeft = ScreenPoint();
+    this.cellXYs = new Float64Array(12);
 }
 
 HexGrid.prototype.internalize =
@@ -51,7 +52,7 @@ function toScreen(point) {
 HexGrid.prototype.cellPath =
 function cellPath(point) {
     var screenPoint = this.toScreen(point);
-    this.ctxHex.full(screenPoint.x, screenPoint.y, this.cellSize);
+    this.ctxHex.fullWith(screenPoint.x, screenPoint.y, this.cellXYs);
     return screenPoint;
 };
 
@@ -81,6 +82,7 @@ function updateSize() {
         this.cellSize = heightSize;
         this.cell.x = 2 * this.cellSize;
     }
+    this.ctxHex.buildFor(this.cellSize, this.cellXYs);
 
     // align top-left
     this.origin.copyFrom(this.cell).scale(0.5);
