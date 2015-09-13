@@ -205,16 +205,6 @@ function stepn(n) {
     }
 };
 
-Hexant.prototype.step =
-function step() {
-    try {
-        this.world.step();
-        return null;
-    } catch(err) {
-        return err;
-    }
-};
-
 Hexant.prototype.setFrameRate =
 function setFrameRate(rate) {
     this.frameRate = rate;
