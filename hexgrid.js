@@ -47,7 +47,7 @@ function toScreen(point) {
 };
 
 HexGrid.prototype.cellPath =
-function offsetCellPath(point) {
+function cellPath(point) {
     var screenPoint = this.toScreen(point);
     this.ctxHex.full(screenPoint.x, screenPoint.y, this.cellSize);
     return screenPoint;
