@@ -13,7 +13,7 @@ var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
 var rules = require('./rules.js');
 
-var BatchLimit = 256;
+var BatchLimit = 512;
 
 function Hexant(body, scope) {
     var self = this;
