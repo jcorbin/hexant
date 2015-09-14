@@ -65,8 +65,12 @@ World.prototype.addEnt = function addEnt(ent) {
     return ent;
 };
 
-World.prototype.updateEnt = function updateEnt(ent) {
-    var i;
+World.prototype.updateEnt = function updateEnt(ent, i) {
+    if (i === undefined) {
+        i = ent.index;
+    } else {
+        ent.index = i;
+    }
 
     this.numStates = 0;
     for (i = 0; i < this.ents.length; i++) {
