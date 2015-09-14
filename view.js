@@ -45,10 +45,10 @@ function redraw() {
     var self = this;
     var ants = self.world.ants;
 
-    self.world.tile.eachDataPoint(function each(point, c) {
-        c = c || self.defaultCellValue;
-        if (c) {
-            self.drawCell(point, c);
+    self.world.tile.eachDataPoint(function each(point, color) {
+        color = color || self.defaultCellValue;
+        if (color) {
+            self.drawCell(point, color);
         }
     });
 
@@ -138,18 +138,18 @@ function setLabeled(labeled) {
 };
 
 View.prototype.drawUnlabeledCell =
-function drawUnlabeledCell(point, c) {
+function drawUnlabeledCell(point, color) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = this.cellColors[c - 1];
+    this.ctx2d.fillStyle = this.cellColors[color - 1];
     this.ctx2d.fill();
     return screenPoint;
 };
 
 View.prototype.drawLabeledCell =
-function drawLabeledCell(point, c) {
-    var screenPoint = this.drawUnlabeledCell(point, c);
+function drawLabeledCell(point, color) {
+    var screenPoint = this.drawUnlabeledCell(point, color);
     this.drawCellLabel(point, screenPoint);
 };
 
@@ -197,8 +197,8 @@ function step() {
     }
 
     for (i = 0; i < ants.length; i++) {
-        var c = this.world.tile.get(this.lastAntPos[i]);
-        this.drawCell(this.lastAntPos[i], c);
+        var color = this.world.tile.get(this.lastAntPos[i]);
+        this.drawCell(this.lastAntPos[i], color);
     }
 
     for (i = 0; i < ants.length; i++) {
@@ -210,10 +210,10 @@ function step() {
 
 View.prototype.drawAnt =
 function drawAnt(ant) {
-    var c = this.world.tile.get(ant.pos);
-    if (!c) {
+    var color = this.world.tile.get(ant.pos);
+    if (!color) {
         this.world.tile.set(ant.pos, 1);
-        this.drawCell(ant.pos, c);
+        this.drawCell(ant.pos, color);
     }
 
     var screenPoint = this.hexGrid.toScreen(ant.pos);
