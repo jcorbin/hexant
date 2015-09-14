@@ -10,7 +10,7 @@ function OddQHexTile(origin, width, height) {
     this.origin = origin.toOddQOffset();
     this.width = width;
     this.height = height;
-    this.data = new Uint8Array(this.width * this.height);
+    this.data = new Uint16Array(this.width * this.height);
 }
 
 OddQHexTile.prototype.boundingBox = function boundingBox() {
@@ -34,9 +34,9 @@ OddQHexTile.prototype.get = function get(point) {
     return this.data[this.pointToIndex(point)];
 };
 
-OddQHexTile.prototype.set = function set(point, c) {
-    this.data[this.pointToIndex(point)] = c;
-    return c;
+OddQHexTile.prototype.set = function set(point, datum) {
+    this.data[this.pointToIndex(point)] = datum;
+    return datum;
 };
 
 OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {

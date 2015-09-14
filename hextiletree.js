@@ -89,14 +89,14 @@ HexTileTree.prototype.get = function get(point) {
     return this.root.get(point);
 };
 
-HexTileTree.prototype.set = function set(point, c) {
+HexTileTree.prototype.set = function set(point, datum) {
     var offsetPoint = point.toOddQOffset();
 
     while (!this.root.box.contains(offsetPoint)) {
         this.root = this.root.expand();
     }
 
-    return this.root._set(offsetPoint, c);
+    return this.root._set(offsetPoint, datum);
 };
 
 function HexTileTreeNode(origin, width, height) {
@@ -208,15 +208,15 @@ HexTileTreeNode.prototype.get = function get(point) {
     return 0;
 };
 
-HexTileTreeNode.prototype.set = function set(point, c) {
+HexTileTreeNode.prototype.set = function set(point, datum) {
     var offsetPoint = point.toOddQOffset();
     if (!this.box.contains(offsetPoint)) {
         throw new Error('set out of bounds');
     }
-    return this._set(offsetPoint, c);
+    return this._set(offsetPoint, datum);
 };
 
-HexTileTreeNode.prototype._set = function _set(point, c) {
+HexTileTreeNode.prototype._set = function _set(point, datum) {
     // point known to be in bounds and correct type
 
     var tileCol = point.q < this.origin.q ? 0 : 1;
@@ -239,5 +239,5 @@ HexTileTreeNode.prototype._set = function _set(point, c) {
         this.tiles[i] = tile;
     }
 
-    return tile.set(point, c);
+    return tile.set(point, datum);
 };
