@@ -134,14 +134,17 @@ function onKeyPress(e) {
 
 Hexant.prototype.reset =
 function reset() {
-    var ant = this.world.ants[0];
     this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+
     this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    this.view.hexGrid.updateSize();
+
+    var ant = this.world.ants[0];
     ant.dir = 0;
     ant.pos = this.world.tile.centerPoint().toCube();
     this.world.tile.set(ant.pos, 1);
+
     this.el.width = this.el.width;
-    this.view.hexGrid.updateSize();
     this.view.redraw();
 };
 
