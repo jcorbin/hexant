@@ -1,6 +1,7 @@
 'use strict';
 
 var Coord = require('./coord.js');
+var World = require('./world.js');
 var CubePoint = Coord.CubePoint;
 
 module.exports = Ant;
@@ -16,10 +17,13 @@ function Ant(world) {
 
 Ant.prototype.step = function step() {
     var tile = this.world.tile;
-    var color = tile.get(this.pos) || 1;
-    var rule = this.rules[(color - 1) % this.rules.length];
-    color = 1 + color % this.world.numStates;
-    tile.set(this.pos, color);
+    var data = tile.get(this.pos);
+    var color = data & World.MaskColor;
+    var rule = this.rules[color % this.rules.length];
+    color = (color + 1) % this.world.numStates;
+    data = data | World.FlagVisited;
+    data = data & World.MaskFlags | color;
+    tile.set(this.pos, data);
     this.dir = (CubePoint.basis.length + this.dir + rule
                ) % CubePoint.basis.length;
     this.pos.add(CubePoint.basis[this.dir]);

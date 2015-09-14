@@ -2,6 +2,7 @@
 
 var HexGrid = require('./hexgrid.js');
 var NGonContext = require('./ngoncontext.js');
+var World = require('./world.js');
 
 module.exports = View;
 
@@ -16,7 +17,7 @@ function View(world, canvas) {
     this.ctxHex = new NGonContext(6, this.ctx2d);
 
     this.labeled = false;
-    this.defaultCellValue = 0;
+    this.drawUnvisited = false;
 
     this.cellColorGen = null;
     this.bodyColorGen = null;
@@ -45,10 +46,9 @@ function redraw() {
     var self = this;
     var ents = self.world.ents;
 
-    self.world.tile.eachDataPoint(function each(point, color) {
-        color = color || self.defaultCellValue;
-        if (color) {
-            self.drawCell(point, color);
+    self.world.tile.eachDataPoint(function each(point, data) {
+        if (self.drawUnvisited || data & World.FlagVisited) {
+            self.drawCell(point, data & World.MaskColor);
         }
     });
 
@@ -142,7 +142,7 @@ function drawUnlabeledCell(point, color) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = this.cellColors[color - 1];
+    this.ctx2d.fillStyle = this.cellColors[color];
     this.ctx2d.fill();
     return screenPoint;
 };
@@ -197,8 +197,8 @@ function step() {
     }
 
     for (i = 0; i < ents.length; i++) {
-        var color = this.world.tile.get(this.lastEntPos[i]);
-        this.drawCell(this.lastEntPos[i], color);
+        var data = this.world.tile.get(this.lastEntPos[i]);
+        this.drawCell(this.lastEntPos[i], data & World.MaskColor);
     }
 
     for (i = 0; i < ents.length; i++) {
@@ -209,10 +209,10 @@ function step() {
 
 View.prototype.drawEnt =
 function drawEnt(ent) {
-    var color = this.world.tile.get(ent.pos);
-    if (!color) {
-        this.world.tile.set(ent.pos, 1);
-        this.drawCell(ent.pos, color);
+    var data = this.world.tile.get(ent.pos);
+    if (!(data & World.FlagVisited)) {
+        data = this.world.tile.set(ent.pos, data | World.FlagVisited);
+        this.drawCell(ent.pos, data & World.MaskColor);
     }
 
     var screenPoint = this.hexGrid.toScreen(ent.pos);

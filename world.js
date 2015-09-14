@@ -1,11 +1,17 @@
 'use strict';
 
+/* eslint no-multi-spaces:0 */
+
 var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
 
 var OddQOffset = Coord.OddQOffset;
 
 module.exports = World;
+
+World.FlagVisited = 0x0100;
+World.MaskFlags   = 0xff00;
+World.MaskColor   = 0x00ff;
 
 function World() {
     this.numStates = 0;
@@ -53,9 +59,10 @@ World.prototype.addEnt = function addEnt(ent) {
     this.numStates = Math.max(this.numStates, ent.rules.length);
     ent.index = this.ents.length;
     this.ents.push(ent);
-    var color = this.tile.get(ent.pos);
-    if (!color) {
-        this.tile.set(ent.pos, 1);
+
+    var data = this.tile.get(ent.pos);
+    if (!(data & World.FlagVisited)) {
+        data = this.tile.set(ent.pos, data | World.FlagVisited);
     }
 
     for (var i = 0; i < this.views.length; i++) {
