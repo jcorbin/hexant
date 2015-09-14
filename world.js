@@ -46,13 +46,16 @@ World.prototype.stepn = function stepn(n) {
             this.views[j].step();
         }
     }
+    var didredraw = false;
     for (i = 0; i < this.views.length; i++) {
         var view = this.views[i];
         if (view.needsRedraw) {
             view.redraw();
             view.needsRedraw = false;
+            didredraw = true;
         }
     }
+    return didredraw;
 };
 
 World.prototype.addEnt = function addEnt(ent) {
