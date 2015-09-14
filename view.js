@@ -19,12 +19,12 @@ function View(world, canvas) {
     this.defaultCellValue = 0;
 
     this.cellColorGen = null;
-    this.antBodyColorGen = null;
-    this.antHeadColorGen = null;
+    this.bodyColorGen = null;
+    this.headColorGen = null;
 
     this.cellColors = [];
-    this.antBodyColors = [];
-    this.antHeadColors = [];
+    this.bodyColors = [];
+    this.headColors = [];
     this.lastAntPos = [];
 
     this.hexGrid = new HexGrid(
@@ -99,8 +99,8 @@ function removeAnt(ant) {
 View.prototype.setColorGen =
 function setColorGen(colorGen) {
     this.cellColorGen = colorGen(1);
-    this.antBodyColorGen = colorGen(2);
-    this.antHeadColorGen = colorGen(3);
+    this.bodyColorGen = colorGen(2);
+    this.headColorGen = colorGen(3);
     this.updateColors(true);
 };
 
@@ -114,16 +114,16 @@ View.prototype.updateColors = function updateColors(regen) {
         this.cellColors = this.cellColorGen(N);
     }
 
-    if (this.antBodyColorGen &&
-        (regen || this.antBodyColors.length !== M)
+    if (this.bodyColorGen &&
+        (regen || this.bodyColors.length !== M)
     ) {
-        this.antBodyColors = this.antBodyColorGen(M);
+        this.bodyColors = this.bodyColorGen(M);
     }
 
-    if (this.antHeadColorGen &&
-        (regen || this.antHeadColors.length !== M)
+    if (this.headColorGen &&
+        (regen || this.headColors.length !== M)
     ) {
-        this.antHeadColors = this.antHeadColorGen(M);
+        this.headColors = this.headColorGen(M);
     }
 };
 
@@ -239,8 +239,8 @@ function drawFullAnt(ant, screenPoint, size) {
     var end = ant.dir + 1;
 
     // head
-    ctx2d.fillStyle = this.antHeadColors[ant.index];
-    ctx2d.strokeStyle = this.antHeadColors[ant.index];
+    ctx2d.fillStyle = this.headColors[ant.index];
+    ctx2d.strokeStyle = this.headColors[ant.index];
     ctx2d.lineWidth = size / 2;
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, false);
@@ -249,7 +249,7 @@ function drawFullAnt(ant, screenPoint, size) {
     ctx2d.stroke();
 
     // body
-    ctx2d.fillStyle = this.antBodyColors[ant.index];
+    ctx2d.fillStyle = this.bodyColors[ant.index];
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
     ctx2d.closePath();
@@ -261,7 +261,7 @@ function drawSmallAnt(ant, screenPoint, size) {
     var ctxHex = this.hexGrid.ctxHex;
     var ctx2d = ctxHex.ctx2d;
 
-    ctx2d.fillStyle = this.antHeadColors[ant.index];
+    ctx2d.fillStyle = this.headColors[ant.index];
     ctx2d.beginPath();
     ctxHex.full(screenPoint.x, screenPoint.y, size);
     ctx2d.closePath();
