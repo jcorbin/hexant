@@ -16,9 +16,9 @@ function Ant(world) {
 
 Ant.prototype.step = function step() {
     var tile = this.world.tile;
-    var c = tile.get(this.pos) || 1;
-    var rule = this.rules[(c - 1) % this.rules.length];
-    c = tile.set(this.pos, 1 + c % this.world.numStates);
+    var color = tile.get(this.pos) || 1;
+    var rule = this.rules[(color - 1) % this.rules.length];
+    color = tile.set(this.pos, 1 + color % this.world.numStates);
     this.dir = (CubePoint.basis.length + this.dir + rule
                ) % CubePoint.basis.length;
     this.pos.add(CubePoint.basis[this.dir]);
