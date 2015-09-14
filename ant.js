@@ -12,8 +12,15 @@ function Ant(world) {
     this.pos = CubePoint(0, 0, 0);
     this.dir = 0;
     this.size = 0.5;
-    this.rules = [-1, 1];
+    this.rules = null;
+
+    this.setRules([-1, 1]);
 }
+
+Ant.prototype.setRules =
+function setRules(rules) {
+    this.rules = rules;
+};
 
 Ant.prototype.step =
 function step() {

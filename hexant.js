@@ -70,7 +70,7 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
         .setDefault('LR')
         .addListener(function onRuleChange(newRules) {
             var ent = self.world.ents[0];
-            ent.rules = newRules;
+            ent.setRules(newRules);
             self.world.updateEnt(ent);
             self.reset();
         });
