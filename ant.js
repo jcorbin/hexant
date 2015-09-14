@@ -15,7 +15,8 @@ function Ant(world) {
     this.rules = [-1, 1];
 }
 
-Ant.prototype.step = function step() {
+Ant.prototype.step =
+function step() {
     var tile = this.world.tile;
     var data = tile.get(this.pos);
     var color = data & World.MaskColor;
