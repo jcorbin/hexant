@@ -72,6 +72,10 @@ World.prototype.updateEnt = function updateEnt(ent, i) {
         ent.index = i;
     }
 
+    if (this.ents[i] !== ent) {
+        this.ents[i] = ent;
+    }
+
     this.numStates = 0;
     for (i = 0; i < this.ents.length; i++) {
         this.numStates = Math.max(this.numStates, this.ents[i].rules.length);
