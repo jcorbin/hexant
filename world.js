@@ -53,8 +53,8 @@ World.prototype.addAnt = function addAnt(ant) {
     this.numStates = Math.max(this.numStates, ant.rules.length);
     ant.index = this.ants.length;
     this.ants.push(ant);
-    var c = this.tile.get(ant.pos);
-    if (!c) {
+    var color = this.tile.get(ant.pos);
+    if (!color) {
         this.tile.set(ant.pos, 1);
     }
 
