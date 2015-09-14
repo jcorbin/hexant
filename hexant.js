@@ -63,15 +63,15 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
         })
         ;
 
-    this.world.addAnt(new Ant(this.world));
+    this.world.addEnt(new Ant(this.world));
 
     this.hash.bind('rule')
         .setParse(rules.parse, rules.toString)
         .setDefault('LR')
         .addListener(function onRuleChange(newRules) {
-            var ant = self.world.ants[0];
-            ant.rules = newRules;
-            self.world.updateAnt(ant);
+            var ent = self.world.ents[0];
+            ent.rules = newRules;
+            self.world.updateEnt(ent);
             self.reset();
         });
 
@@ -139,10 +139,10 @@ function reset() {
     this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
     this.view.hexGrid.updateSize();
 
-    var ant = this.world.ants[0];
-    ant.dir = 0;
-    ant.pos = this.world.tile.centerPoint().toCube();
-    this.world.tile.set(ant.pos, 1);
+    var ent = this.world.ents[0];
+    ent.dir = 0;
+    ent.pos = this.world.tile.centerPoint().toCube();
+    this.world.tile.set(ent.pos, 1);
 
     this.el.width = this.el.width;
     this.view.redraw();

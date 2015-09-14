@@ -10,14 +10,14 @@ module.exports = World;
 function World() {
     this.numStates = 0;
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-    this.ants = [];
+    this.ents = [];
     this.views = [];
 }
 
 World.prototype.step = function step() {
     var i;
-    for (i = 0; i < this.ants.length; i++) {
-        this.ants[i].step();
+    for (i = 0; i < this.ents.length; i++) {
+        this.ents[i].step();
     }
     for (i = 0; i < this.views.length; i++) {
         var view = this.views[i];
@@ -33,8 +33,8 @@ World.prototype.stepn = function stepn(n) {
     var i;
     var j;
     for (i = 0; i < n; i++) {
-        for (j = 0; j < this.ants.length; j++) {
-            this.ants[j].step();
+        for (j = 0; j < this.ents.length; j++) {
+            this.ents[j].step();
         }
         for (j = 0; j < this.views.length; j++) {
             this.views[j].step();
@@ -49,59 +49,59 @@ World.prototype.stepn = function stepn(n) {
     }
 };
 
-World.prototype.addAnt = function addAnt(ant) {
-    this.numStates = Math.max(this.numStates, ant.rules.length);
-    ant.index = this.ants.length;
-    this.ants.push(ant);
-    var color = this.tile.get(ant.pos);
+World.prototype.addEnt = function addEnt(ent) {
+    this.numStates = Math.max(this.numStates, ent.rules.length);
+    ent.index = this.ents.length;
+    this.ents.push(ent);
+    var color = this.tile.get(ent.pos);
     if (!color) {
-        this.tile.set(ant.pos, 1);
+        this.tile.set(ent.pos, 1);
     }
 
     for (var i = 0; i < this.views.length; i++) {
-        this.views[i].addAnt(ant);
+        this.views[i].addEnt(ent);
     }
 
-    return ant;
+    return ent;
 };
 
-World.prototype.updateAnt = function updateAnt(ant) {
+World.prototype.updateEnt = function updateEnt(ent) {
     var i;
 
     this.numStates = 0;
-    for (i = 0; i < this.ants.length; i++) {
-        this.numStates = Math.max(this.numStates, this.ants[i].rules.length);
+    for (i = 0; i < this.ents.length; i++) {
+        this.numStates = Math.max(this.numStates, this.ents[i].rules.length);
     }
 
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].updateAnt(ant);
+        this.views[i].updateEnt(ent);
     }
 
-    return ant;
+    return ent;
 };
 
-World.prototype.removeAnt = function removeAnt(ant) {
-    if (this.ants[ant.index] !== ant) {
-        throw new Error('removeAnt mismatch');
+World.prototype.removeEnt = function removeEnt(ent) {
+    if (this.ents[ent.index] !== ent) {
+        throw new Error('removeEnt mismatch');
     }
 
-    var i = ant.index;
+    var i = ent.index;
     var j = i++;
-    for (; i < this.ants.length; i++, j++) {
-        this.ants[j] = this.ants[i];
-        this.ants[j].index = j;
+    for (; i < this.ents.length; i++, j++) {
+        this.ents[j] = this.ents[i];
+        this.ents[j].index = j;
     }
-    this.ants.pop();
+    this.ents.pop();
 
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].removeAnt(ant);
+        this.views[i].removeEnt(ent);
     }
 
-    return ant;
+    return ent;
 };
 
 World.prototype.addView = function addView(view) {
     this.views.push(view);
-    view.updateAnts();
+    view.updateEnts();
     return view;
 };
