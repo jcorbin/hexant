@@ -205,7 +205,6 @@ function step() {
         this.drawAnt(ants[i]);
         this.lastAntPos[i].copyFrom(ants[i].pos);
     }
-
 };
 
 View.prototype.drawAnt =
