@@ -92,7 +92,7 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     this.hash.bind('drawUnvisited')
         .setDefault(false)
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.view.defaultCellValue = drawUnvisited ? 1 : 0;
+            self.view.drawUnvisited = !!drawUnvisited;
         });
 
     if (this.hash.get('autoplay')) {
