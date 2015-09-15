@@ -11,7 +11,6 @@ var Ant = require('./ant.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
-var rules = require('./rules.js');
 
 var BatchLimit = 512;
 
@@ -63,15 +62,23 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
         })
         ;
 
-    this.world.addEnt(new Ant(this.world));
-
     this.hash.bind('rule')
-        .setParse(rules.parse, rules.toString)
+        .setParse(function parseRule(str) {
+            var ent = new Ant(self.world);
+            var err = ent.parse(str);
+            if (err) {
+                // TODO: better handle / fallback
+                throw err;
+            }
+            return ent;
+        })
         .setDefault('LR')
-        .addListener(function onRuleChange(newRules) {
-            var ent = self.world.ents[0];
-            ent.rules = newRules;
-            self.world.updateEnt(ent);
+        .addListener(function onRuleChange(ent) {
+            if (self.world.ents[0]) {
+                self.world.updateEnt(ent, 0);
+            } else {
+                self.world.addEnt(ent);
+            }
             self.reset();
         });
 
@@ -92,10 +99,26 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
     this.hash.bind('drawUnvisited')
         .setDefault(false)
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.view.defaultCellValue = drawUnvisited ? 1 : 0;
+            self.view.drawUnvisited = !!drawUnvisited;
         });
 
-    if (this.hash.get('autoplay')) {
+    var autoplay;
+    var autorefresh;
+    if (this.hash.get('fullauto')) {
+        autoplay = true;
+        autorefresh = 24 * 60 * 60;
+    } else {
+        autoplay = this.hash.get('autoplay');
+        autorefresh = parseInt(this.hash.get('autorefresh'), 10);
+    }
+
+    if (!isNaN(autorefresh) && autorefresh) {
+        scope.window.setTimeout(function shipit() {
+            scope.window.location.reload();
+        }, autorefresh * 1000);
+    }
+
+    if (autoplay) {
         this.play();
     }
 };
@@ -123,7 +146,7 @@ function onKeyPress(e) {
         break;
     case 0x2f: // /
         var rule = this.hash.getStr('rule');
-        rule = prompt('New Rules: (' + rules.help + ')', rule);
+        rule = prompt('New Rules: (' + Ant.ruleHelp + ')', rule);
         if (typeof rule === 'string') {
             this.pause();
             this.hash.set('rule', rule);
@@ -142,7 +165,8 @@ function reset() {
     var ent = this.world.ents[0];
     ent.dir = 0;
     ent.pos = this.world.tile.centerPoint().toCube();
-    this.world.tile.set(ent.pos, World.FlagVisited | this.world.tile.get(ent.pos));
+    var data = this.world.tile.get(ent.pos);
+    this.world.tile.set(ent.pos, World.FlagVisited | data);
 
     this.el.width = this.el.width;
     this.view.redraw();

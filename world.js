@@ -12,8 +12,10 @@ module.exports = World;
 World.FlagVisited = 0x0100;
 World.MaskFlags   = 0xff00;
 World.MaskColor   = 0x00ff;
+World.MaxColor    = 0x00ff;
 
 function World() {
+    this.numColors = 0;
     this.numStates = 0;
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
     this.ents = [];
@@ -59,7 +61,8 @@ World.prototype.stepn = function stepn(n) {
 };
 
 World.prototype.addEnt = function addEnt(ent) {
-    this.numStates = Math.max(this.numStates, ent.rules.length);
+    this.numColors = Math.max(this.numColors, ent.numColors);
+    this.numStates = Math.max(this.numStates, ent.numStates);
     ent.index = this.ents.length;
     this.ents.push(ent);
 
@@ -86,9 +89,11 @@ World.prototype.updateEnt = function updateEnt(ent, i) {
         this.ents[i] = ent;
     }
 
+    this.numColors = 0;
     this.numStates = 0;
     for (i = 0; i < this.ents.length; i++) {
-        this.numStates = Math.max(this.numStates, this.ents[i].rules.length);
+        this.numColors = Math.max(this.numColors, this.ents[i].numColors);
+        this.numStates = Math.max(this.numStates, this.ents[i].numStates);
     }
 
     for (i = 0; i < this.views.length; i++) {
