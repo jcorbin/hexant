@@ -625,7 +625,7 @@ CubePoint.prototype.copy = function copy() {
 };
 CubePoint.prototype.copyFrom = function copyFrom(other) {
     if (other.type !== this.type) {
-        return this.copyFrom(other.toCube());
+        return other.toCubeInto(this);
     }
     this.x = other.x;
     this.y = other.y;
@@ -657,6 +657,12 @@ CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
 };
 CubePoint.prototype.toScreen = function toScreen() {
     return this.toScreenInto(ScreenPoint());
+};
+CubePoint.prototype.toCubeInto = function toCubeInto(other) {
+    other.x = this.x;
+    other.y = this.y;
+    other.z = this.z;
+    return other;
 };
 CubePoint.prototype.toCube = function toCube() {
     return this;
@@ -721,11 +727,14 @@ OddQOffset.prototype.toScreen = function toScreen() {
 OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
     return this;
 };
+OddQOffset.prototype.toCubeInto = function toCubeInto(other) {
+    other.x = this.q;
+    other.z = this.r - (this.q - (this.q & 1)) / 2;
+    other.y = -other.x - other.z;
+    return other;
+};
 OddQOffset.prototype.toCube = function toCube() {
-    var x = this.q;
-    var z = this.r - (this.q - (this.q & 1)) / 2;
-    var y = -x - z;
-    return CubePoint(x, y, z);
+    return this.toCubeInto(CubePoint());
 };
 
 function OddQBox(topLeft, bottomRight) {
@@ -1059,10 +1068,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_st6azc");
+        component.setAttribute("id", "view_y7z3mw");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_st6azc")
+       scope.componentsFor["view"].setAttribute("for", "view_y7z3mw")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1248,7 +1257,7 @@ function reset() {
 
     var ent = this.world.ents[0];
     ent.dir = 0;
-    ent.pos = this.world.tile.centerPoint().toCube();
+    this.world.tile.centerPoint().toCubeInto(ent.pos);
     var data = this.world.tile.get(ent.pos);
     this.world.tile.set(ent.pos, World.FlagVisited | data);
 
@@ -1809,10 +1818,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_fdfc3k");
+        component.setAttribute("id", "view_em5puz");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_fdfc3k")
+       scope.componentsFor["view"].setAttribute("for", "view_em5puz")
     }
     this.scope.hookup("this", this);
 };
@@ -2119,7 +2128,7 @@ View.prototype.updateColors = function updateColors(regen) {
         (regen || this.cellColors.length !== N)
     ) {
         this.cellColors = this.cellColorGen(N);
-        while (this.cellColors.length < World.MaxColor) {
+        while (this.cellColors.length <= World.MaxColor) {
             this.cellColors.push(this.cellColors[this.cellColors.length % N]);
         }
     }
