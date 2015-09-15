@@ -20,6 +20,7 @@ function Ant(world) {
 Ant.prototype.setRules =
 function setRules(rules) {
     this.rules = rules;
+    this.numStates = this.rules.length;
 };
 
 Ant.prototype.step =

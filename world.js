@@ -59,7 +59,7 @@ World.prototype.stepn = function stepn(n) {
 };
 
 World.prototype.addEnt = function addEnt(ent) {
-    this.numStates = Math.max(this.numStates, ent.rules.length);
+    this.numStates = Math.max(this.numStates, ent.numStates);
     ent.index = this.ents.length;
     this.ents.push(ent);
 
@@ -88,7 +88,7 @@ World.prototype.updateEnt = function updateEnt(ent, i) {
 
     this.numStates = 0;
     for (i = 0; i < this.ents.length; i++) {
-        this.numStates = Math.max(this.numStates, this.ents[i].rules.length);
+        this.numStates = Math.max(this.numStates, this.ents[i].numStates);
     }
 
     for (i = 0; i < this.views.length; i++) {
