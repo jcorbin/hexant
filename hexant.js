@@ -11,7 +11,6 @@ var Ant = require('./ant.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
-var rules = require('./rules.js');
 
 var BatchLimit = 512;
 
@@ -63,15 +62,23 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
         })
         ;
 
-    this.world.addEnt(new Ant(this.world));
-
     this.hash.bind('rule')
-        .setParse(rules.parse, rules.toString)
+        .setParse(function parseRule(str) {
+            var ent = new Ant(self.world);
+            var err = ent.parse(str);
+            if (err) {
+                // TODO: better handle / fallback
+                throw err;
+            }
+            return ent;
+        })
         .setDefault('LR')
-        .addListener(function onRuleChange(newRules) {
-            var ent = self.world.ents[0];
-            ent.setRules(newRules);
-            self.world.updateEnt(ent);
+        .addListener(function onRuleChange(ent) {
+            if (self.world.ents[0]) {
+                self.world.updateEnt(ent, 0);
+            } else {
+                self.world.addEnt(ent);
+            }
             self.reset();
         });
 
@@ -123,7 +130,7 @@ function onKeyPress(e) {
         break;
     case 0x2f: // /
         var rule = this.hash.getStr('rule');
-        rule = prompt('New Rules: (' + rules.help + ')', rule);
+        rule = prompt('New Rules: (' + Ant.ruleHelp + ')', rule);
         if (typeof rule === 'string') {
             this.pause();
             this.hash.set('rule', rule);
