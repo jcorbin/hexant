@@ -46,13 +46,17 @@ function fullWith(x, y, xys) {
 
 NGonContext.prototype.full =
 function full(x, y, radius) {
-    this.ctx2d.moveTo(
-        x + radius * this.cos[0],
-        y + radius * this.sin[0]);
-    for (var i = 1; i < this.degree; i++) {
-        this.ctx2d.lineTo(
-            x + radius * this.cos[i],
-            y + radius * this.sin[i]);
+    if (radius <= 2) {
+        this.ctx2d.arc(x, y, radius, 0, 2 * Math.PI);
+    } else {
+        this.ctx2d.moveTo(
+            x + radius * this.cos[0],
+            y + radius * this.sin[0]);
+        for (var i = 1; i < this.degree; i++) {
+            this.ctx2d.lineTo(
+                x + radius * this.cos[i],
+                y + radius * this.sin[i]);
+        }
     }
 };
 
