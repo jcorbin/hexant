@@ -102,14 +102,23 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
             self.view.drawUnvisited = !!drawUnvisited;
         });
 
-    var autorefresh = parseInt(this.hash.get('autorefresh'), 10);
+    var autoplay;
+    var autorefresh;
+    if (this.hash.get('fullauto')) {
+        autoplay = true;
+        autorefresh = 24 * 60 * 60;
+    } else {
+        autoplay = this.hash.get('autoplay');
+        autorefresh = parseInt(this.hash.get('autorefresh'), 10);
+    }
+
     if (!isNaN(autorefresh) && autorefresh) {
         scope.window.setTimeout(function shipit() {
             scope.window.location.reload();
         }, autorefresh * 1000);
     }
 
-    if (this.hash.get('autoplay')) {
+    if (autoplay) {
         this.play();
     }
 };
