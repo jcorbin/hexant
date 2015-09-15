@@ -12,7 +12,7 @@ function Ant(world) {
     this.pos = CubePoint(0, 0, 0);
     this.dir = 0;
     this.size = 0.5;
-    this.rules = null;
+    this.rules = new Int8Array(World.MaxColor + 1);
 
     this.setRules([-1, 1]);
 }
@@ -20,7 +20,12 @@ function Ant(world) {
 Ant.prototype.setRules =
 function setRules(rules) {
     var N = rules.length;
-    this.rules = rules;
+    for (var i = 0; i < N; i++) {
+        this.rules[i] = rules[i];
+    }
+    for (; i <= World.MaxColor; i++) {
+        this.rules[i] = rules[i % N];
+    }
 
     this.numStates = N;
     this.numColors = N;
@@ -31,7 +36,7 @@ function step() {
     var tile = this.world.tile;
     var data = tile.get(this.pos);
     var color = data & World.MaskColor;
-    var rule = this.rules[color % this.rules.length];
+    var rule = this.rules[color];
     color = (color + 1) & World.MaxColor;
     data = data | World.FlagVisited;
     data = data & World.MaskFlags | color;
