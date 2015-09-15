@@ -116,6 +116,9 @@ View.prototype.updateColors = function updateColors(regen) {
         (regen || this.cellColors.length !== N)
     ) {
         this.cellColors = this.cellColorGen(N);
+        while (this.cellColors.length < World.MaxColor) {
+            this.cellColors.push(this.cellColors[this.cellColors.length % N]);
+        }
     }
 
     if (this.bodyColorGen &&

@@ -12,6 +12,7 @@ module.exports = World;
 World.FlagVisited = 0x0100;
 World.MaskFlags   = 0xff00;
 World.MaskColor   = 0x00ff;
+World.MaxColor    = 0x00ff;
 
 function World() {
     this.numColors = 0;
