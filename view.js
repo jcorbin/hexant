@@ -46,8 +46,12 @@ function redraw() {
     var self = this;
     var ents = self.world.ents;
 
-    self.world.tile.eachDataPoint(function each(point, data) {
-        if (self.drawUnvisited || data & World.FlagVisited) {
+    self.world.tile.eachDataPoint(this.drawUnvisited
+    ? function drawEachCell(point, data) {
+        self.drawCell(point, data & World.MaskColor);
+    }
+    : function maybeDrawEachCell(point, data) {
+        if (data & World.FlagVisited) {
             self.drawCell(point, data & World.MaskColor);
         }
     });
