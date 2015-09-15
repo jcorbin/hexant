@@ -94,7 +94,7 @@ CubePoint.prototype.copy = function copy() {
 };
 CubePoint.prototype.copyFrom = function copyFrom(other) {
     if (other.type !== this.type) {
-        return this.copyFrom(other.toCube());
+        return other.toCubeInto(this);
     }
     this.x = other.x;
     this.y = other.y;
@@ -126,6 +126,12 @@ CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
 };
 CubePoint.prototype.toScreen = function toScreen() {
     return this.toScreenInto(ScreenPoint());
+};
+CubePoint.prototype.toCubeInto = function toCubeInto(other) {
+    other.x = this.x;
+    other.y = this.y;
+    other.z = this.z;
+    return other;
 };
 CubePoint.prototype.toCube = function toCube() {
     return this;
@@ -190,11 +196,14 @@ OddQOffset.prototype.toScreen = function toScreen() {
 OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
     return this;
 };
+OddQOffset.prototype.toCubeInto = function toCubeInto(other) {
+    other.x = this.q;
+    other.z = this.r - (this.q - (this.q & 1)) / 2;
+    other.y = -other.x - other.z;
+    return other;
+};
 OddQOffset.prototype.toCube = function toCube() {
-    var x = this.q;
-    var z = this.r - (this.q - (this.q & 1)) / 2;
-    var y = -x - z;
-    return CubePoint(x, y, z);
+    return this.toCubeInto(CubePoint());
 };
 
 function OddQBox(topLeft, bottomRight) {
