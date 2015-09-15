@@ -32,7 +32,7 @@ function step() {
     var data = tile.get(this.pos);
     var color = data & World.MaskColor;
     var rule = this.rules[color % this.rules.length];
-    color = (color + 1) % this.world.numStates;
+    color = (color + 1) & World.MaxColor;
     data = data | World.FlagVisited;
     data = data & World.MaskFlags | color;
     tile.set(this.pos, data);
