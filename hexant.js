@@ -102,6 +102,13 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
             self.view.drawUnvisited = !!drawUnvisited;
         });
 
+    var autorefresh = parseInt(this.hash.get('autorefresh'), 10);
+    if (!isNaN(autorefresh) && autorefresh) {
+        scope.window.setTimeout(function shipit() {
+            scope.window.location.reload();
+        }, autorefresh * 1000);
+    }
+
     if (this.hash.get('autoplay')) {
         this.play();
     }
