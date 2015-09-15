@@ -19,9 +19,11 @@ function Ant(world) {
 
 Ant.prototype.setRules =
 function setRules(rules) {
+    var N = rules.length;
     this.rules = rules;
-    this.numStates = this.rules.length;
-    this.numColors = this.rules.length;
+
+    this.numStates = N;
+    this.numColors = N;
 };
 
 Ant.prototype.step =
