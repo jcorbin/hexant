@@ -109,7 +109,7 @@ function setColorGen(colorGen) {
 };
 
 View.prototype.updateColors = function updateColors(regen) {
-    var N = this.world.numStates;
+    var N = this.world.numColors;
     var M = this.world.ents.length;
 
     if (this.cellColorGen &&
