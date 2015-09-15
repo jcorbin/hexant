@@ -1059,10 +1059,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_rzdavw");
+        component.setAttribute("id", "view_st6azc");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_rzdavw")
+       scope.componentsFor["view"].setAttribute("for", "view_st6azc")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1374,8 +1374,17 @@ function toScreen(point) {
         ;
 };
 
+HexGrid.prototype.circCellPath =
+function circCellPath(point) {
+    var screenPoint = this.toScreen(point);
+    this.ctxHex.ctx2d.arc(screenPoint.x, screenPoint.y,
+                          this.cellSize, 0, 2 * Math.PI);
+    return screenPoint;
+};
+
 HexGrid.prototype.cellPath =
-function cellPath(point) {
+HexGrid.prototype.hexCellPath =
+function hexCellPath(point) {
     var screenPoint = this.toScreen(point);
     this.ctxHex.fullWith(screenPoint.x, screenPoint.y, this.cellXYs);
     return screenPoint;
@@ -1407,7 +1416,13 @@ function updateSize() {
         this.cellSize = heightSize;
         this.cell.x = 2 * this.cellSize;
     }
-    this.ctxHex.buildFor(this.cellSize, this.cellXYs);
+
+    if (this.cellSize <= 2) {
+        this.cellPath = this.circCellPath;
+    } else {
+        this.cellPath = this.hexCellPath;
+        this.ctxHex.buildFor(this.cellSize, this.cellXYs);
+    }
 
     // align top-left
     this.origin.copyFrom(this.cell).scale(0.5);
@@ -1794,10 +1809,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_recumt");
+        component.setAttribute("id", "view_fdfc3k");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_recumt")
+       scope.componentsFor["view"].setAttribute("for", "view_fdfc3k")
     }
     this.scope.hookup("this", this);
 };
@@ -1886,13 +1901,17 @@ function fullWith(x, y, xys) {
 
 NGonContext.prototype.full =
 function full(x, y, radius) {
-    this.ctx2d.moveTo(
-        x + radius * this.cos[0],
-        y + radius * this.sin[0]);
-    for (var i = 1; i < this.degree; i++) {
-        this.ctx2d.lineTo(
-            x + radius * this.cos[i],
-            y + radius * this.sin[i]);
+    if (radius <= 2) {
+        this.ctx2d.arc(x, y, radius, 0, 2 * Math.PI);
+    } else {
+        this.ctx2d.moveTo(
+            x + radius * this.cos[0],
+            y + radius * this.sin[0]);
+        for (var i = 1; i < this.degree; i++) {
+            this.ctx2d.lineTo(
+                x + radius * this.cos[i],
+                y + radius * this.sin[i]);
+        }
     }
 };
 
