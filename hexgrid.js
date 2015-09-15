@@ -49,8 +49,17 @@ function toScreen(point) {
         ;
 };
 
+HexGrid.prototype.circCellPath =
+function circCellPath(point) {
+    var screenPoint = this.toScreen(point);
+    this.ctxHex.ctx2d.arc(screenPoint.x, screenPoint.y,
+                          this.cellSize, 0, 2 * Math.PI);
+    return screenPoint;
+};
+
 HexGrid.prototype.cellPath =
-function cellPath(point) {
+HexGrid.prototype.hexCellPath =
+function hexCellPath(point) {
     var screenPoint = this.toScreen(point);
     this.ctxHex.fullWith(screenPoint.x, screenPoint.y, this.cellXYs);
     return screenPoint;
@@ -82,7 +91,13 @@ function updateSize() {
         this.cellSize = heightSize;
         this.cell.x = 2 * this.cellSize;
     }
-    this.ctxHex.buildFor(this.cellSize, this.cellXYs);
+
+    if (this.cellSize <= 2) {
+        this.cellPath = this.circCellPath;
+    } else {
+        this.cellPath = this.hexCellPath;
+        this.ctxHex.buildFor(this.cellSize, this.cellXYs);
+    }
 
     // align top-left
     this.origin.copyFrom(this.cell).scale(0.5);
