@@ -7,7 +7,7 @@ module.exports = Hexant;
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
-var Ant = require('./ant.js');
+var Turmite = require('./turmite.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
@@ -66,7 +66,7 @@ function hookup(id, component, scope) {
 
     this.hash.bind('rule')
         .setParse(function parseRule(str) {
-            var ent = new Ant(self.world);
+            var ent = new Turmite(self.world);
             var err = ent.parse(str);
             if (err) {
                 // TODO: better handle / fallback
@@ -74,7 +74,7 @@ function hookup(id, component, scope) {
             }
             return ent;
         })
-        .setDefault('LR')
+        .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
             scope.window.document.title = self.titleBase + ': ' + ent;
             if (self.world.ents[0]) {
@@ -154,7 +154,7 @@ function onKeyPress(e) {
         break;
 
     case 0x2f: // /
-        this.promptFor('rule', 'New Rules: (' + Ant.ruleHelp + ')');
+        this.promptFor('rule', Turmite.ruleHelp);
         break;
     }
 };
