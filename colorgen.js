@@ -1,5 +1,7 @@
 'use strict';
 
+var husl = require('husl');
+
 var gens = {};
 module.exports.gens = gens;
 module.exports.parse = parse;
@@ -50,16 +52,12 @@ function LightWheelGenerator(hue, sat) {
 
     function wheelGenGen(intensity) {
         var h = hue * (1 + (intensity - 1) / 3);
-        var sh = h.toString();
-        var prefix = 'hsl(' + sh + ', ' + sat + '%, ';
-        var suffix = ')';
         return function wheelGen(ncolors) {
             var step = 100 / (ncolors + 1);
             var r = [];
             var l = step;
             for (var i = 0; i < ncolors; l += step, i++) {
-                var sl = l.toFixed(1) + '%';
-                r.push(prefix + sl + suffix);
+                r.push(husl.toHex(h, sat, l));
             }
             return r;
         };
