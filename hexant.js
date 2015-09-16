@@ -39,7 +39,8 @@ function Hexant(body, scope) {
     }
 }
 
-Hexant.prototype.hookup = function hookup(id, component, scope) {
+Hexant.prototype.hookup =
+function hookup(id, component, scope) {
     var self = this;
     if (id !== 'view') {
         return;
