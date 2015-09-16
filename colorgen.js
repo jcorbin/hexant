@@ -64,13 +64,17 @@ function LightWheelGenerator(hue) {
 }
 
 function HueWheelGenerator() {
-    hueWheelGenGen.genString = 'hue';
+    var sat = 65;
+    var light = 30;
+    var satDelta = 10;
+    var lightDelta = 10;
 
+    hueWheelGenGen.genString = 'hue';
     return hueWheelGenGen;
 
     function hueWheelGenGen(intensity) {
-        var ss = (65 + 10 * intensity).toFixed(1) + '%';
-        var sl = (30 + 10 * intensity).toFixed(1) + '%';
+        var ss = (sat + satDelta * intensity).toFixed(1) + '%';
+        var sl = (light + lightDelta * intensity).toFixed(1) + '%';
 
         var suffix = ', ' + ss + ', ' + sl + ')';
         return function wheelGen(ncolors) {
