@@ -42,7 +42,8 @@ gens.hue = HueWheelGenerator;
 function LightWheelGenerator(hue) {
     hue = parseInt(hue, 10) || 0;
 
-    wheelGenGen.genString = 'light(' + hue.toString() + ')';
+    wheelGenGen.genString = 'light(' +
+                            hue.toString() + ')';
     return wheelGenGen;
 
     function wheelGenGen(intensity) {
