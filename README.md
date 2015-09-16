@@ -12,6 +12,7 @@ only:
 - `<Space>` -- play/pause
 - `.` -- single step when paused, pause when playing
 - `/` -- prompt and set new rule set
+- `c` -- prompt and set new color scheme
 - `+` -- double frame rate
 - `-` -- half frame rate
 - `*` -- dump the data tree to console.log for debugging

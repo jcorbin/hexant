@@ -55,7 +55,7 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
 
     this.hash.bind('colors')
         .setParse(colorGen.parse, colorGen.toString)
-        .setDefault(colorGen.gens.hue)
+        .setDefault('light')
         .addListener(function onColorGenChange(gen) {
             self.view.setColorGen(gen);
             self.view.redraw();
@@ -144,14 +144,23 @@ function onKeyPress(e) {
     case 0x2e: // .
         this.stepit();
         break;
-    case 0x2f: // /
-        var rule = this.hash.getStr('rule');
-        rule = prompt('New Rules: (' + Ant.ruleHelp + ')', rule);
-        if (typeof rule === 'string') {
-            this.pause();
-            this.hash.set('rule', rule);
-        }
+    case 0x43: // C
+    case 0x63: // c
+        this.promptFor('colors', 'New Colors:');
         break;
+
+    case 0x2f: // /
+        this.promptFor('rule', 'New Rules: (' + Ant.ruleHelp + ')');
+        break;
+    }
+};
+
+Hexant.prototype.promptFor =
+function promptFor(name, desc) {
+    var str = this.hash.getStr(name);
+    str = prompt(desc, str);
+    if (typeof str === 'string') {
+        this.hash.set(name, str);
     }
 };
 
