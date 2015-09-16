@@ -15,7 +15,7 @@ only:
 - `c` -- prompt and set new color scheme
 - `+` -- double frame rate
 - `-` -- half frame rate
-- `*` -- dump the data tree to console.log for debugging
+- `*` -- reset to iteration 0 and pause
 - `#` -- toggle labels for debugging
 
 ## URL-fragment (hash) variables

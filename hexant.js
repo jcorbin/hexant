@@ -133,7 +133,8 @@ function onKeyPress(e) {
         this.toggleLabeled();
         break;
     case 0x2a: // *
-        console.log(this.world.tile.dump());
+        this.pause();
+        this.reset();
         break;
     case 0x2b: // +
         this.hash.set('frameRate', this.frameRate * 2);
