@@ -63,13 +63,13 @@ function LightWheelGenerator(hue) {
     }
 }
 
-function HueWheelGenerator() {
-    var sat = 65;
-    var light = 30;
-    var satDelta = 10;
-    var lightDelta = 10;
+function HueWheelGenerator(sat, light) {
+    sat = parseInt(sat, 10) || 70;
+    light = parseInt(light, 10) || 40;
+    var satDelta = sat > 70 ? -10 : 10;
+    var lightDelta = light > 70 ? -10 : 10;
 
-    hueWheelGenGen.genString = 'hue';
+    hueWheelGenGen.genString = 'hue(' + sat + ', ' + light + ')';
     return hueWheelGenGen;
 
     function hueWheelGenGen(intensity) {
