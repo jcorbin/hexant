@@ -39,17 +39,19 @@ gens.hue = HueWheelGenerator;
 
 // TODO: husl too
 
-function LightWheelGenerator(hue) {
+function LightWheelGenerator(hue, sat) {
     hue = parseInt(hue, 10) || 0;
+    sat = parseInt(sat, 10) || 65;
 
     wheelGenGen.genString = 'light(' +
-                            hue.toString() + ')';
+                            hue.toString() + ', ' +
+                            sat.toString() + ')';
     return wheelGenGen;
 
     function wheelGenGen(intensity) {
         var h = hue * (1 + (intensity - 1) / 3);
         var sh = h.toString();
-        var prefix = 'hsl(' + sh + ', 65%, ';
+        var prefix = 'hsl(' + sh + ', ' + sat + '%, ';
         var suffix = ')';
         return function wheelGen(ncolors) {
             var step = 100 / (ncolors + 1);
