@@ -144,6 +144,11 @@ function onKeyPress(e) {
     case 0x2e: // .
         this.stepit();
         break;
+    case 0x43: // C
+    case 0x63: // c
+        this.promptFor('colors', 'New Colors:');
+        break;
+
     case 0x2f: // /
         this.promptFor('rule', 'New Rules: (' + Ant.ruleHelp + ')');
         break;
