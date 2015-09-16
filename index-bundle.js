@@ -342,100 +342,6 @@ Scope.prototype.hookup = function (id, component) {
     }
 };
 
-}],["ant.js","hexant","ant.js",{"./coord.js":7,"./world.js":19},function (require, exports, module, __filename, __dirname){
-
-// hexant/ant.js
-// -------------
-
-'use strict';
-
-var Coord = require('./coord.js');
-var World = require('./world.js');
-var CubePoint = Coord.CubePoint;
-
-Ant.ruleHelp = 'W=West, L=Left, A=Ahead, R=Right, E=East, F=Flip';
-
-var Rules = {
-    W: -2,
-    L: -1,
-    A: 0,
-    R: 1,
-    E: 2,
-    F: 3
-};
-
-module.exports = Ant;
-
-function Ant(world) {
-    this.index = 0;
-    this.world = world;
-    this.pos = CubePoint(0, 0, 0);
-    this.dir = 0;
-    this.size = 0.5;
-    this.rules = new Int8Array(World.MaxColor + 1);
-
-    this.setRules([-1, 1]);
-}
-
-Ant.prototype.toString =
-function toString() {
-    var ruleKeys = Object.keys(Rules);
-    var rule = '';
-    for (var i = 0; i < this.numStates; i++) {
-        for (var j = 0; j < ruleKeys.length; j++) {
-            if (this.rules[i] === Rules[ruleKeys[j]]) {
-                rule += ruleKeys[j];
-                break;
-            }
-        }
-    }
-    return rule;
-};
-
-Ant.prototype.parse =
-function parseAnt(rule) {
-    rule = rule.toUpperCase();
-    var parts = rule.split('');
-    var rules = [];
-    for (var i = 0; i < parts.length; i++) {
-        var r = Rules[parts[i]];
-        if (r !== undefined) {
-            rules.push(r);
-        }
-    }
-    this.setRules(rules);
-    return null;
-};
-
-Ant.prototype.setRules =
-function setRules(rules) {
-    var N = rules.length;
-    for (var i = 0; i < N; i++) {
-        this.rules[i] = rules[i];
-    }
-    for (; i <= World.MaxColor; i++) {
-        this.rules[i] = rules[i % N];
-    }
-
-    this.numStates = N;
-    this.numColors = N;
-};
-
-Ant.prototype.step =
-function step() {
-    var tile = this.world.tile;
-    var data = tile.get(this.pos);
-    var color = data & World.MaskColor;
-    var rule = this.rules[color];
-    color = (color + 1) & World.MaxColor;
-    data = data | World.FlagVisited;
-    data = data & World.MaskFlags | color;
-    tile.set(this.pos, data);
-    this.dir = (CubePoint.basis.length + this.dir + rule
-               ) % CubePoint.basis.length;
-    this.pos.add(CubePoint.basis[this.dir]);
-};
-
 }],["colorgen.js","hexant","colorgen.js",{"husl":20},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
@@ -1058,7 +964,7 @@ function parseValue(str) {
     return str;
 }
 
-}],["hexant.html","hexant","hexant.html",{"./hexant.js":10},function (require, exports, module, __filename, __dirname){
+}],["hexant.html","hexant","hexant.html",{"./hexant.js":9},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.html
 // ------------------
@@ -1077,10 +983,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_4u6x26");
+        component.setAttribute("id", "view_i9lul6");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_4u6x26")
+       scope.componentsFor["view"].setAttribute("for", "view_i9lul6")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1095,7 +1001,7 @@ $THIS.prototype.constructor = $THIS;
 $THIS.prototype.exports = {};
 module.exports = $THIS;
 
-}],["hexant.js","hexant","hexant.js",{"./colorgen.js":6,"./world.js":19,"./view.js":18,"./ant.js":5,"./hash.js":8,"./coord.js":7,"./hextiletree.js":13},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"./colorgen.js":5,"./world.js":19,"./view.js":18,"./turmite.js":17,"./hash.js":7,"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1109,7 +1015,7 @@ module.exports = Hexant;
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
-var Ant = require('./ant.js');
+var Turmite = require('./turmite.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
@@ -1141,12 +1047,14 @@ function Hexant(body, scope) {
     }
 }
 
-Hexant.prototype.hookup = function hookup(id, component, scope) {
+Hexant.prototype.hookup =
+function hookup(id, component, scope) {
     var self = this;
     if (id !== 'view') {
         return;
     }
 
+    this.titleBase = scope.window.document.title;
     this.el = component;
     this.world = new World();
     this.view = this.world.addView(
@@ -1166,7 +1074,7 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
 
     this.hash.bind('rule')
         .setParse(function parseRule(str) {
-            var ent = new Ant(self.world);
+            var ent = new Turmite(self.world);
             var err = ent.parse(str);
             if (err) {
                 // TODO: better handle / fallback
@@ -1174,8 +1082,9 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
             }
             return ent;
         })
-        .setDefault('LR')
+        .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
+            scope.window.document.title = self.titleBase + ': ' + ent;
             if (self.world.ents[0]) {
                 self.world.updateEnt(ent, 0);
             } else {
@@ -1235,7 +1144,8 @@ function onKeyPress(e) {
         this.toggleLabeled();
         break;
     case 0x2a: // *
-        console.log(this.world.tile.dump());
+        this.pause();
+        this.reset();
         break;
     case 0x2b: // +
         this.hash.set('frameRate', this.frameRate * 2);
@@ -1252,7 +1162,7 @@ function onKeyPress(e) {
         break;
 
     case 0x2f: // /
-        this.promptFor('rule', 'New Rules: (' + Ant.ruleHelp + ')');
+        this.promptFor('rule', Turmite.ruleHelp);
         break;
     }
 };
@@ -1345,7 +1255,7 @@ function resize(width, height) {
     this.view.resize(width, height);
 };
 
-}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
+}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":6},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexgrid.js
 // -----------------
@@ -1460,7 +1370,7 @@ function updateSize() {
     this.canvas.style.height = this.canvas.height + 'px';
 };
 
-}],["hextile.js","hexant","hextile.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
+}],["hextile.js","hexant","hextile.js",{"./coord.js":6},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextile.js
 // -----------------
@@ -1520,7 +1430,7 @@ OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
     }
 };
 
-}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":7,"./hextile.js":12},function (require, exports, module, __filename, __dirname){
+}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":6,"./hextile.js":11},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextiletree.js
 // ---------------------
@@ -1769,7 +1679,7 @@ HexTileTreeNode.prototype._set = function _set(point, datum) {
     return tile.set(point, datum);
 };
 
-}],["index.js","hexant","index.js",{"domready":1,"global/window":2,"gutentag/scope":4,"gutentag/document":3,"blick":0,"./main.html":15},function (require, exports, module, __filename, __dirname){
+}],["index.js","hexant","index.js",{"domready":1,"global/window":2,"gutentag/scope":4,"gutentag/document":3,"blick":0,"./main.html":14},function (require, exports, module, __filename, __dirname){
 
 // hexant/index.js
 // ---------------
@@ -1808,7 +1718,7 @@ function onResize() {
     window.hexant.resize(width, height);
 }
 
-}],["main.html","hexant","main.html",{"./main.js":16,"./hexant.html":9},function (require, exports, module, __filename, __dirname){
+}],["main.html","hexant","main.html",{"./main.js":15,"./hexant.html":8},function (require, exports, module, __filename, __dirname){
 
 // hexant/main.html
 // ----------------
@@ -1836,10 +1746,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_qo5vob");
+        component.setAttribute("id", "view_cn1e8m");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_qo5vob")
+       scope.componentsFor["view"].setAttribute("for", "view_cn1e8m")
     }
     this.scope.hookup("this", this);
 };
@@ -2023,7 +1933,370 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
-}],["view.js","hexant","view.js",{"./hexgrid.js":11,"./ngoncontext.js":17,"./world.js":19},function (require, exports, module, __filename, __dirname){
+}],["turmite.js","hexant","turmite.js",{"./coord.js":6,"./world.js":19},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite.js
+// -----------------
+
+'use strict';
+
+/* eslint no-multi-spaces:0 consistent-this:0 */
+
+var Coord = require('./coord.js');
+var World = require('./world.js');
+var CubePoint = Coord.CubePoint;
+
+module.exports = Turmite;
+
+/*
+ * state, color -> nextState, write, turn
+ *
+ * index struct {
+ *     state u8
+ *     color u8
+ * }
+ *
+ * rule struct {
+ *     nextState u8
+ *     write     u8
+ *     turn      u16 // bit-field
+ * }
+ *
+ * relative turns
+ *    F -- +0 -- no turn, forward
+ *    B -- +3 -- u turn, backaward
+ *   BL -- -2 -- double left turn
+ *    L -- -1 -- left turn
+ *    R -- +1 -- right turn
+ *   BR -- +2 -- double right turn
+ *
+ * absolute turns (for "flat-top" (odd or even q)
+ *   NW -- ? -- North West
+ *    N -- ? -- North
+ *   NE -- ? -- North East
+ *   SE -- ? -- South East
+ *    S -- ? -- South
+ *   SW -- ? -- South West
+ */
+
+var Turn            = {};
+Turn.RelForward     = 0x0001;
+Turn.RelBackward    = 0x0002;
+Turn.RelLeft        = 0x0004;
+Turn.RelRight       = 0x0008;
+Turn.RelDoubleLeft  = 0x0010;
+Turn.RelDoubleRight = 0x0020;
+Turn.AbsNorthWest   = 0x0040;
+Turn.AbsNorth       = 0x0080;
+Turn.AbsNorthEast   = 0x0100;
+Turn.AbsSouthEast   = 0x0200;
+Turn.AbsSouth       = 0x0400;
+Turn.AbsSouthWest   = 0x0800;
+
+var RelTurnDelta                  = [];
+RelTurnDelta[Turn.RelBackward]    =  3;
+RelTurnDelta[Turn.RelDoubleLeft]  = -2;
+RelTurnDelta[Turn.RelLeft]        = -1;
+RelTurnDelta[Turn.RelForward]     =  0;
+RelTurnDelta[Turn.RelRight]       =  1;
+RelTurnDelta[Turn.RelDoubleRight] =  2;
+
+var AbsTurnDir                = [];
+AbsTurnDir[Turn.AbsSouthEast] = 0;
+AbsTurnDir[Turn.AbsSouth]     = 1;
+AbsTurnDir[Turn.AbsSouthWest] = 2;
+AbsTurnDir[Turn.AbsNorthWest] = 3;
+AbsTurnDir[Turn.AbsNorth]     = 4;
+AbsTurnDir[Turn.AbsNorthEast] = 5;
+
+var RelTurnSymbols                  = [];
+RelTurnSymbols[Turn.RelBackward]    = 'B';
+RelTurnSymbols[Turn.RelDoubleLeft]  = 'BL';
+RelTurnSymbols[Turn.RelLeft]        = 'L';
+RelTurnSymbols[Turn.RelForward]     = 'F';
+RelTurnSymbols[Turn.RelRight]       = 'R';
+RelTurnSymbols[Turn.RelDoubleRight] = 'BR';
+
+var RelSymbolTurns = [];
+RelSymbolTurns.B   = Turn.RelBackward;
+RelSymbolTurns.BL  = Turn.RelDoubleLeft;
+RelSymbolTurns.L   = Turn.RelLeft;
+RelSymbolTurns.F   = Turn.RelForward;
+RelSymbolTurns.R   = Turn.RelRight;
+RelSymbolTurns.BR  = Turn.RelDoubleRight;
+
+Turmite.ruleHelp =
+    '\nant(<number>?<turn> ...) , turns:\n' +
+    '  - L=left, R=right\n' +
+    '  - B=back, F=forward\n' +
+    '  - BL=back-left BR=back-right\n'
+    ;
+
+Turmite.Kinds = {
+    'ant': parseAnt
+};
+
+function parseAnt(str, turmite) {
+    str = str.toUpperCase();
+
+    // we'll also build the canonical version of the parsed rule string in the
+    // same pass as parsing it; rulestr will be that string, and we'll need
+    // some state between arg matches
+    var rulestr = '';
+    var lastSym = '';
+    var lastSymCount = 0;
+
+    // TODO: describe
+    var state    = 0;
+    var color    = 0;
+    var stateKey = state << 8;
+    var rule     = stateKey | color;
+
+    parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str,
+        function eachArg(_, nStr, sym) {
+            var mult = nStr ? parseInt(nStr, 10) : 1;
+            for (var j = 0; j < mult; j++) {
+                if (color > World.MaxColor) {
+                    return new Error('too many colors needed for ant ruleset');
+                }
+                var nextRule        = stateKey | ++color & World.MaxColor;
+                turmite.rules[rule] = nextRule << 16 | RelSymbolTurns[sym];
+                rule                = nextRule;
+            }
+            growRuleStr(mult, sym);
+        });
+    growRuleStr(0, '');
+
+    // now that we've compiled the base case, we need to cover the rest of the
+    // (state, color) key space for numColors < color <= World.MaxColor; this
+    // essentially pre-computes "color modulo numColors" as a static rule table
+    // lookup so that no modulo logic is required in .step below (at least
+    // explicitly, since unsigned integer wrap-around is modulo 2^bits)
+    var numColors = color;
+    while (color > 0 && color <= World.MaxColor) {
+        var baseRule        = stateKey |   color % numColors;
+        var nextRule        = stateKey | ++color & World.MaxColor;
+        var turn            = turmite.rules[baseRule] & 0x0000ffff;
+        turmite.rules[rule] = nextRule << 16 | turn;
+        rule                = nextRule;
+    }
+
+    turmite.state = state;
+    turmite.specString = 'ant(' + rulestr + ')';
+    turmite.numColors = numColors;
+    turmite.numStates = 1;
+
+    return null;
+
+    function growRuleStr(mult, sym) {
+        if (lastSym !== sym) {
+            if (lastSym && lastSymCount) {
+                if (rulestr.length) {
+                    rulestr += ' ';
+                }
+                if (lastSymCount > 1) {
+                    rulestr += lastSymCount.toString();
+                }
+                rulestr += lastSym;
+            }
+            lastSym = sym;
+            lastSymCount = 0;
+        }
+        lastSymCount += mult;
+    }
+}
+
+function Turmite(world, rules) {
+    this.numStates = 0;
+    this.numColors = 0;
+    this.rules = rules || new Uint32Array(64 * 1024);
+    this.specString = '';
+
+    this.dir = 0;
+    this.oldDir = 0;
+
+    this.pos = CubePoint(0, 0, 0);
+    this.oldPos = CubePoint(0, 0, 0);
+
+    this.state = 0;
+    this.stateKey = 0;
+
+    this.size = 0.5;
+    this.index = 0;
+    this.world = world;
+}
+
+var antCompatMap = {
+    L: 'L',
+    R: 'R',
+    W: 'BL',
+    E: 'BR',
+    F: 'B',
+    A: 'F'
+};
+
+function antCompatConvert(str) {
+    str = str.toUpperCase();
+    var equivMoves = [];
+    for (var i = 0; i < str.length; i++) {
+        var equivMove = antCompatMap[str[i]];
+        if (equivMove === undefined) {
+            return undefined;
+        }
+        equivMoves.push(equivMove);
+    }
+    return 'ant(' + equivMoves.join(' ') + ')';
+}
+
+Turmite.prototype.parse =
+function parseTurmite(str) {
+    var match = /^\s*(\w+)\(\s*(.+?)\s*\)\s*$/.exec(str);
+    if (!match) {
+        var equivAnt = antCompatConvert(str);
+        if (equivAnt !== undefined) {
+            return this.parse(equivAnt);
+        }
+        return new Error('invalid spec string');
+    }
+    var kind = match[1].toLowerCase();
+    var args = match[2];
+
+    var parseKind = Turmite.Kinds[kind];
+    if (!parseKind) {
+        return new Error('no such turmite kind');
+    }
+
+    return parseKind(args, this);
+};
+
+Turmite.prototype.toString =
+function toString() {
+    if (this.specString) {
+        return this.specString;
+    }
+    return '<UNKNOWN turmite>';
+};
+
+Turmite.prototype.step =
+function step() {
+    var tile = this.world.tile;
+    var data = tile.get(this.pos);
+    var color = data & 0x00ff;
+    var flags = data & 0xff00;
+
+    var ruleIndex = this.stateKey | color;
+    var rule = this.rules[ruleIndex];
+    var turn = rule & 0x0000ffff;
+    var write = (rule & 0x00ff0000) >> 16;
+    var nextState = (rule & 0xff000000) >> 24;
+
+    flags |= 0x0100; // TODO: World constant
+    data = flags | write;
+    tile.set(this.pos, data);
+
+    this.oldDir = this.dir;
+    this.oldPos.copyFrom(this.pos);
+
+    if (nextState !== this.state) {
+        this.state = nextState;
+        this.stateKey = nextState << 8;
+    }
+
+    turn = this.executeTurn(turn);
+    this.pos.add(CubePoint.basis[this.dir]);
+    if (turn !== 0) {
+        throw new Error('turmite forking unimplemented');
+    }
+
+    // TODO: WIP
+    // var self = null;
+    // while (turn !== 0) {
+    //     if (self) {
+    //         self = self.fork();
+    //     } else {
+    //         self = this;
+    //     }
+    //     turn = self.executeTurn(turn);
+    //     self.pos.add(CubePoint.basis[self.dir]);
+    // }
+};
+
+// TODO: WIP
+// Turmite.prototype.fork =
+// function fork() {
+//     // TODO: ability to steal an already allocated ant from world pool
+//     var self = new Turmite(this.world, this.rules);
+
+//     // self.world = this.world;
+//     // self.rules = this.rules;
+
+//     self.numStates = this.numStates;
+//     self.numColors = this.numColors;
+//     self.specString = this.specString;
+//     self.dir = this.oldDir;
+//     self.oldDir = this.oldDir;
+//     self.pos.copyFrom(this.oldPos);
+//     self.oldPos.copyFrom(this.oldPos);
+//     self.state = this.state;
+//     self.stateKey = this.stateKey;
+//     self.size = this.size;
+//     self.index = this.index;
+
+//     // TODO: add to world
+
+//     return self;
+// };
+
+Turmite.prototype.executeTurn =
+function executeTurn(turn) {
+    var t = 1;
+    for (; t <= 0x0020; t <<= 1) {
+        if (turn & t) {
+            this.dir = (6 + this.oldDir + RelTurnDelta[t]) % 6;
+            return turn & ~t;
+        }
+    }
+    for (; t <= 0x0800; t <<= 1) {
+        if (turn & t) {
+            this.dir = AbsTurnDir[t];
+            return turn & ~t;
+        }
+    }
+    // TODO: assert that turn is 0?
+    return 0;
+};
+
+function parseArgs(re, str, each) {
+    var i = 0;
+    for (
+        var match = re.exec(str);
+        match && i === match.index;
+        i += match[0].length, match = re.exec(str)
+    ) {
+        each.apply(null, match);
+    }
+
+    // TODO: check if didn't match full input
+}
+
+// function main() {
+//     var turm = new Turmite(null);
+//     var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
+//     if (err) {
+//         console.error(err);
+//     } else {
+//         // console.log(turm.toString());
+//         console.log(
+//             // turm.rules
+//             new Buffer(
+//                 new Uint8Array(turm.rules.buffer)
+//             ).toString()
+//         );
+//     }
+// }
+// main();
+
+}],["view.js","hexant","view.js",{"./hexgrid.js":10,"./ngoncontext.js":16,"./world.js":19},function (require, exports, module, __filename, __dirname){
 
 // hexant/view.js
 // --------------
@@ -2314,7 +2587,7 @@ function swapout(ar, i) {
     return j;
 }
 
-}],["world.js","hexant","world.js",{"./coord.js":7,"./hextiletree.js":13},function (require, exports, module, __filename, __dirname){
+}],["world.js","hexant","world.js",{"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/world.js
 // ---------------
