@@ -17,7 +17,7 @@ function parse(str) {
         return HueWheelGenerator;
     }
 
-    var args = match[2] && match[2].split(/, */);
+    var args = match[2] ? match[2].split(/, */) : [];
     if (args) {
         /* eslint no-try-catch: [0] */
         try {
@@ -63,20 +63,24 @@ function LightWheelGenerator(hue) {
     }
 }
 
-HueWheelGenerator.genString = 'hue';
+function HueWheelGenerator() {
+    hueWheelGenGen.genString = 'hue';
 
-function HueWheelGenerator(intensity) {
-    var ss = (65 + 10 * intensity).toFixed(1) + '%';
-    var sl = (30 + 10 * intensity).toFixed(1) + '%';
+    return hueWheelGenGen;
 
-    var suffix = ', ' + ss + ', ' + sl + ')';
-    return function wheelGen(ncolors) {
-        var scale = 360 / ncolors;
-        var r = [];
-        for (var i = 0; i < ncolors; i++) {
-            var sh = Math.floor(i * scale).toString();
-            r.push('hsl(' + sh + suffix);
-        }
-        return r;
-    };
+    function hueWheelGenGen(intensity) {
+        var ss = (65 + 10 * intensity).toFixed(1) + '%';
+        var sl = (30 + 10 * intensity).toFixed(1) + '%';
+
+        var suffix = ', ' + ss + ', ' + sl + ')';
+        return function wheelGen(ncolors) {
+            var scale = 360 / ncolors;
+            var r = [];
+            for (var i = 0; i < ncolors; i++) {
+                var sh = Math.floor(i * scale).toString();
+                r.push('hsl(' + sh + suffix);
+            }
+            return r;
+        };
+    }
 }
