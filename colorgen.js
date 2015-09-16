@@ -81,7 +81,7 @@ function HueWheelGenerator(sat, light) {
             var scale = 360 / ncolors;
             var r = [];
             for (var i = 0; i < ncolors; i++) {
-                var sh = Math.floor(i * scale).toString();
+                var sh = Math.round(i * scale).toString();
                 r.push('hsl(' + sh + suffix);
             }
             return r;
