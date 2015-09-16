@@ -55,7 +55,7 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
 
     this.hash.bind('colors')
         .setParse(colorGen.parse, colorGen.toString)
-        .setDefault(colorGen.gens.hue)
+        .setDefault('light')
         .addListener(function onColorGenChange(gen) {
             self.view.setColorGen(gen);
             self.view.redraw();
