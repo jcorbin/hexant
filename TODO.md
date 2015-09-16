@@ -1,9 +1,12 @@
+- utilize / unlock more turmite features
+  - absolute ants
+  - dsl for arbitrary turmite
+  - support forking
+  - interaction rules
 - fix minor view clipping error
-- more rule options
 - compaction
 - optimistic pre-alloc under a threshold
-- support zomo and pan
-- multiple ants
+- support zoom and pan
 - frameRate vs lag adaptation
 - randomized starting cell values
 - UI

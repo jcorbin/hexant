@@ -7,7 +7,7 @@ module.exports = Hexant;
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
-var Ant = require('./ant.js');
+var Turmite = require('./turmite.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
@@ -39,12 +39,14 @@ function Hexant(body, scope) {
     }
 }
 
-Hexant.prototype.hookup = function hookup(id, component, scope) {
+Hexant.prototype.hookup =
+function hookup(id, component, scope) {
     var self = this;
     if (id !== 'view') {
         return;
     }
 
+    this.titleBase = scope.window.document.title;
     this.el = component;
     this.world = new World();
     this.view = this.world.addView(
@@ -64,7 +66,7 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
 
     this.hash.bind('rule')
         .setParse(function parseRule(str) {
-            var ent = new Ant(self.world);
+            var ent = new Turmite(self.world);
             var err = ent.parse(str);
             if (err) {
                 // TODO: better handle / fallback
@@ -72,8 +74,9 @@ Hexant.prototype.hookup = function hookup(id, component, scope) {
             }
             return ent;
         })
-        .setDefault('LR')
+        .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
+            scope.window.document.title = self.titleBase + ': ' + ent;
             if (self.world.ents[0]) {
                 self.world.updateEnt(ent, 0);
             } else {
@@ -133,7 +136,8 @@ function onKeyPress(e) {
         this.toggleLabeled();
         break;
     case 0x2a: // *
-        console.log(this.world.tile.dump());
+        this.pause();
+        this.reset();
         break;
     case 0x2b: // +
         this.hash.set('frameRate', this.frameRate * 2);
@@ -150,7 +154,7 @@ function onKeyPress(e) {
         break;
 
     case 0x2f: // /
-        this.promptFor('rule', 'New Rules: (' + Ant.ruleHelp + ')');
+        this.promptFor('rule', Turmite.ruleHelp);
         break;
     }
 };
