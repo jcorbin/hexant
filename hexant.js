@@ -46,6 +46,7 @@ function hookup(id, component, scope) {
         return;
     }
 
+    this.titleBase = scope.window.document.title;
     this.el = component;
     this.world = new World();
     this.view = this.world.addView(
@@ -75,6 +76,7 @@ function hookup(id, component, scope) {
         })
         .setDefault('LR')
         .addListener(function onRuleChange(ent) {
+            scope.window.document.title = self.titleBase + ': ' + ent;
             if (self.world.ents[0]) {
                 self.world.updateEnt(ent, 0);
             } else {
