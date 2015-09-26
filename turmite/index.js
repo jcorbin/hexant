@@ -38,13 +38,8 @@ function parseAnt(str, turmite) {
     // some state between arg matches
     var numStates    = 1;
     var numColors    = 0;
+    var multurns     = [];
     var buildRuleStr = RLEBuilder('ant(', ' ', ')');
-
-    // TODO: describe
-    var state    = 0;
-    var color    = 0;
-    var stateKey = state << 8;
-    var rule     = stateKey | color;
 
     parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str.toUpperCase(),
         function eachArg(_, nStr, sym) {
@@ -54,35 +49,53 @@ function parseAnt(str, turmite) {
             if (numColors > World.MaxColor) {
                 return new Error('too many colors needed for ant ruleset');
             }
+            multurns.push({
+                mult: mult,
+                relturn: relturn
+            });
+            buildRuleStr(mult, sym);
+        });
+    var rulestr = buildRuleStr(0, '');
 
+    return compileAnt(turmite);
+
+    function compileAnt(turmite) {
+        // TODO: describe
+        var state    = 0;
+        var color    = 0;
+        var stateKey = state << 8;
+        var rule     = stateKey | color;
+
+        for (var i = 0; i < multurns.length; i++) {
+            var mult = multurns[i].mult;
+            var relturn = multurns[i].relturn;
             for (var j = 0; j < mult; j++) {
                 var nextRule        = stateKey | ++color & World.MaxColor;
                 turmite.rules[rule] = nextRule << 16 | relturn;
                 rule                = nextRule;
             }
-            buildRuleStr(mult, sym);
-        });
-    var rulestr = buildRuleStr(0, '');
+        }
 
-    // now that we've compiled the base case, we need to cover the rest of the
-    // (state, color) key space for numColors < color <= World.MaxColor; this
-    // essentially pre-computes "color modulo numColors" as a static rule table
-    // lookup so that no modulo logic is required in .step below (at least
-    // explicitly, since unsigned integer wrap-around is modulo 2^bits)
-    while (color > 0 && color <= World.MaxColor) {
-        var baseRule        = stateKey |   color % numColors;
-        var nextRule        = stateKey | ++color & World.MaxColor;
-        var turn            = turmite.rules[baseRule] & 0x0000ffff;
-        turmite.rules[rule] = nextRule << 16 | turn;
-        rule                = nextRule;
+        // now that we've compiled the base case, we need to cover the rest of the
+        // (state, color) key space for numColors < color <= World.MaxColor; this
+        // essentially pre-computes "color modulo numColors" as a static rule table
+        // lookup so that no modulo logic is required in .step below (at least
+        // explicitly, since unsigned integer wrap-around is modulo 2^bits)
+        while (color > 0 && color <= World.MaxColor) {
+            var baseRule        = stateKey |   color % numColors;
+            var nextRule        = stateKey | ++color & World.MaxColor;
+            var turn            = turmite.rules[baseRule] & 0x0000ffff;
+            turmite.rules[rule] = nextRule << 16 | turn;
+            rule                = nextRule;
+        }
+
+        turmite.state      = state;
+        turmite.specString = rulestr;
+        turmite.numColors  = numColors;
+        turmite.numStates  = numStates;
+
+        return null;
     }
-
-    turmite.state      = state;
-    turmite.specString = rulestr;
-    turmite.numColors  = numColors;
-    turmite.numStates  = numStates;
-
-    return null;
 }
 
 function Turmite(rules) {
