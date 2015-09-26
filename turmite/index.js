@@ -34,14 +34,9 @@ Turmite.ruleHelp =
     ;
 
 function parseTurmite(str) {
-    var match = antCompatPattern.exec(str);
-    if (match) {
-        str = antCompatConvert(match[1]);
-    }
-
-    match = antPattern.exec(str);
-    if (match) {
-        return parseAnt(match[1]);
+    var res = parseAnt(str);
+    if (res.err || res.value) {
+        return res;
     }
 
     return new Result(new Error('invalid spec string'), null);
@@ -50,6 +45,17 @@ function parseTurmite(str) {
 var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
 
 function parseAnt(str) {
+    var match = antCompatPattern.exec(str);
+    if (match) {
+        str = antCompatConvert(match[1]);
+    }
+
+    match = antPattern.exec(str);
+    if (!match) {
+        return new Result(null, null);
+    }
+    str = match[1];
+
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
