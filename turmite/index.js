@@ -41,6 +41,7 @@ function parseAnt(str, turmite) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
+    var numStates    = 1;
     var numColors    = 0;
     var buildRuleStr = RLEBuilder('ant(', ' ', ')');
 
@@ -84,7 +85,7 @@ function parseAnt(str, turmite) {
     turmite.state = state;
     turmite.specString = rulestr;
     turmite.numColors = numColors;
-    turmite.numStates = 1;
+    turmite.numStates = numStates;
 
     return null;
 }
