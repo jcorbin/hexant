@@ -135,11 +135,11 @@ function parseTurmite(str) {
     }
 
     match = /^\s*ant\(\s*(.+?)\s*\)\s*$/.exec(str);
-    if (!match) {
-        return new Error('invalid spec string');
+    if (match) {
+        return parseAnt(match[1], this);
     }
-    var args = match[1];
-    return parseAnt(args, this);
+
+    return new Error('invalid spec string');
 };
 
 Turmite.prototype.toString =
