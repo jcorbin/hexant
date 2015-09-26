@@ -116,6 +116,7 @@ var antCompatMap = {
     F: 'B',
     A: 'F'
 };
+var antCompatPattern = /^\s*([lrwefaLRWEFA]+)\s*$/;
 
 function antCompatConvert(str) {
     str = str.toUpperCase();
@@ -132,12 +133,13 @@ function antCompatConvert(str) {
 
 Turmite.prototype.parse =
 function parseTurmite(str) {
-    var match = /^\s*(\w+)\(\s*(.+?)\s*\)\s*$/.exec(str);
+    var match = antCompatPattern.exec(str);
+    if (match) {
+        str = antCompatConvert(match[1]);
+    }
+
+    match = /^\s*(\w+)\(\s*(.+?)\s*\)\s*$/.exec(str);
     if (!match) {
-        var equivAnt = antCompatConvert(str);
-        if (equivAnt !== undefined) {
-            return this.parse(equivAnt);
-        }
         return new Error('invalid spec string');
     }
     var kind = match[1].toLowerCase();
