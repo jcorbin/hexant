@@ -338,19 +338,22 @@ function parseArgs(re, str, each) {
     // TODO: check if didn't match full input
 }
 
-// function main() {
-//     var turm = new Turmite(null);
-//     var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
-//     if (err) {
-//         console.error(err);
-//     } else {
-//         // console.log(turm.toString());
-//         console.log(
-//             // turm.rules
-//             new Buffer(
-//                 new Uint8Array(turm.rules.buffer)
-//             ).toString()
-//         );
-//     }
-// }
-// main();
+function main() {
+    var turm = new Turmite(null);
+    var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
+    if (err) {
+        console.error(err);
+    } else {
+        // console.log(turm.toString());
+        console.log(
+            // turm.rules
+            new Buffer(
+                new Uint8Array(turm.rules.buffer)
+            ).toString()
+        );
+    }
+}
+
+if (require.main === module) {
+    main();
+}
