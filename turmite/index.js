@@ -41,6 +41,7 @@ function parseAnt(str, turmite) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
+    var numColors    = 0;
     var buildRuleStr = RLEBuilder('ant(', ' ', ')');
 
     // TODO: describe
@@ -52,10 +53,12 @@ function parseAnt(str, turmite) {
     parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str,
         function eachArg(_, nStr, sym) {
             var mult = nStr ? parseInt(nStr, 10) : 1;
+            numColors += mult;
+            if (numColors > World.MaxColor) {
+                return new Error('too many colors needed for ant ruleset');
+            }
+
             for (var j = 0; j < mult; j++) {
-                if (color > World.MaxColor) {
-                    return new Error('too many colors needed for ant ruleset');
-                }
                 var relturn         = constants.RelSymbolTurns[sym];
                 var nextRule        = stateKey | ++color & World.MaxColor;
                 turmite.rules[rule] = nextRule << 16 | relturn;
@@ -70,7 +73,6 @@ function parseAnt(str, turmite) {
     // essentially pre-computes "color modulo numColors" as a static rule table
     // lookup so that no modulo logic is required in .step below (at least
     // explicitly, since unsigned integer wrap-around is modulo 2^bits)
-    var numColors = color;
     while (color > 0 && color <= World.MaxColor) {
         var baseRule        = stateKey |   color % numColors;
         var nextRule        = stateKey | ++color & World.MaxColor;
