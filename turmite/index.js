@@ -53,13 +53,13 @@ function parseAnt(str, turmite) {
     parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str,
         function eachArg(_, nStr, sym) {
             var mult = nStr ? parseInt(nStr, 10) : 1;
+            var relturn = constants.RelSymbolTurns[sym];
             numColors += mult;
             if (numColors > World.MaxColor) {
                 return new Error('too many colors needed for ant ruleset');
             }
 
             for (var j = 0; j < mult; j++) {
-                var relturn         = constants.RelSymbolTurns[sym];
                 var nextRule        = stateKey | ++color & World.MaxColor;
                 turmite.rules[rule] = nextRule << 16 | relturn;
                 rule                = nextRule;
