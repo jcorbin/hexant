@@ -25,13 +25,14 @@ function finish(err, str) {
     var err = turm.parse(str);
     if (err) {
         console.error(err);
-    } else {
-        // console.log(turm.toString());
-        console.log(
-            // turm.rules
-            new Buffer(
-                new Uint8Array(turm.rules.buffer)
-            ).toString()
-        );
+        return;
     }
+
+    // console.log(turm.toString());
+    console.log(
+        // turm.rules
+        new Buffer(
+            new Uint8Array(turm.rules.buffer)
+        ).toString()
+    );
 }
