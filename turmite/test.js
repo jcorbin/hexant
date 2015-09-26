@@ -4,16 +4,34 @@
 
 var Turmite = require('./index.js');
 
-var turm = new Turmite();
-var err = turm.parse('ant(L R LL RRR 5L 8R 13L 21R)');
-if (err) {
-    console.error(err);
-} else {
-    // console.log(turm.toString());
-    console.log(
-        // turm.rules
-        new Buffer(
-            new Uint8Array(turm.rules.buffer)
-        ).toString()
-    );
+var bufs = [];
+process.stdin.on('data', function read(chunk) {
+    bufs.push(chunk);
+});
+process.stdin.on('error', finish);
+process.stdin.on('end', function end() {
+    var buf = Buffer.concat(bufs);
+    var str = buf.toString();
+    finish(null, str);
+});
+
+function finish(err, str) {
+    if (err) {
+        console.error(err);
+        return;
+    }
+
+    var turm = new Turmite(null);
+    var err = turm.parse(str);
+    if (err) {
+        console.error(err);
+    } else {
+        // console.log(turm.toString());
+        console.log(
+            // turm.rules
+            new Buffer(
+                new Uint8Array(turm.rules.buffer)
+            ).toString()
+        );
+    }
 }
