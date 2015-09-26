@@ -82,10 +82,10 @@ function parseAnt(str, turmite) {
         rule                = nextRule;
     }
 
-    turmite.state = state;
+    turmite.state      = state;
     turmite.specString = rulestr;
-    turmite.numColors = numColors;
-    turmite.numStates = numStates;
+    turmite.numColors  = numColors;
+    turmite.numStates  = numStates;
 
     return null;
 }
