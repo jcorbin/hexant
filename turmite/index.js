@@ -2,6 +2,7 @@
 
 /* eslint no-multi-spaces:0 consistent-this:0 */
 
+var Result = require('rezult');
 var Coord = require('../coord.js');
 var World = require('../world.js');
 var CubePoint = Coord.CubePoint;
@@ -40,13 +41,18 @@ function parseTurmite(str, turmite) {
 
     match = /^\s*ant\(\s*(.+?)\s*\)\s*$/.exec(str);
     if (match) {
-        return parseAnt(match[1], turmite);
+        var res = parseAnt(match[1]);
+        if (res.err) {
+            return res.err;
+        }
+        var compile = res.value;
+        return compile(turmite);
     }
 
     return new Error('invalid spec string');
 }
 
-function parseAnt(str, turmite) {
+function parseAnt(str) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
@@ -61,7 +67,9 @@ function parseAnt(str, turmite) {
             var relturn = constants.RelSymbolTurns[sym];
             numColors += mult;
             if (numColors > World.MaxColor) {
-                return new Error('too many colors needed for ant ruleset');
+                return new Result(
+                    new Error('too many colors needed for ant ruleset'),
+                    null);
             }
             multurns.push({
                 mult: mult,
@@ -71,7 +79,7 @@ function parseAnt(str, turmite) {
         });
     var rulestr = buildRuleStr(0, '');
 
-    return compileAnt(turmite);
+    return new Result(null, compileAnt);
 
     function compileAnt(turmite) {
         // TODO: describe
