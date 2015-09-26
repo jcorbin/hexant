@@ -33,7 +33,7 @@ Turmite.ruleHelp =
     '  - BL=back-left BR=back-right\n'
     ;
 
-function parseTurmite(str, turmite) {
+function parseTurmite(str) {
     var match = antCompatPattern.exec(str);
     if (match) {
         str = antCompatConvert(match[1]);
@@ -41,15 +41,10 @@ function parseTurmite(str, turmite) {
 
     match = antPattern.exec(str);
     if (match) {
-        var res = parseAnt(match[1]);
-        if (res.err) {
-            return res.err;
-        }
-        var compile = res.value;
-        return compile(turmite);
+        return parseAnt(match[1]);
     }
 
-    return new Error('invalid spec string');
+    return new Result(new Error('invalid spec string'), null);
 }
 
 var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
@@ -166,7 +161,12 @@ function antCompatConvert(str) {
 
 Turmite.prototype.parse =
 function parse(str) {
-    return parseTurmite(str, this);
+    var res = parseTurmite(str);
+    if (res.err) {
+        return res.err;
+    }
+    var compile = res.value;
+    return compile(this);
 };
 
 Turmite.prototype.toString =
