@@ -32,10 +32,6 @@ Turmite.ruleHelp =
     '  - BL=back-left BR=back-right\n'
     ;
 
-Turmite.Kinds = {
-    'ant': parseAnt
-};
-
 function parseAnt(str, turmite) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
@@ -138,19 +134,12 @@ function parseTurmite(str) {
         str = antCompatConvert(match[1]);
     }
 
-    match = /^\s*(\w+)\(\s*(.+?)\s*\)\s*$/.exec(str);
+    match = /^\s*ant\(\s*(.+?)\s*\)\s*$/.exec(str);
     if (!match) {
         return new Error('invalid spec string');
     }
-    var kind = match[1].toLowerCase();
-    var args = match[2];
-
-    var parseKind = Turmite.Kinds[kind];
-    if (!parseKind) {
-        return new Error('no such turmite kind');
-    }
-
-    return parseKind(args, this);
+    var args = match[1];
+    return parseAnt(args, this);
 };
 
 Turmite.prototype.toString =
