@@ -53,11 +53,10 @@ function Turmite(rules) {
 Turmite.prototype.parse =
 function parse(str) {
     var res = parseTurmite(str);
-    if (res.err) {
-        return res.err;
+    if (!res.err) {
+        var compile = res.value;
+        res = compile(this);
     }
-    var compile = res.value;
-    res = compile(this);
     return res.err;
 };
 
