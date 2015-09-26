@@ -119,7 +119,7 @@ function parseAnt(str) {
         turmite.numColors  = numColors;
         turmite.numStates  = numStates;
 
-        return null;
+        return new Result(null, turmite);
     }
 }
 
@@ -172,7 +172,8 @@ function parse(str) {
         return res.err;
     }
     var compile = res.value;
-    return compile(this);
+    res = compile(this);
+    return res.err;
 };
 
 Turmite.prototype.toString =
