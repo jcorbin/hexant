@@ -50,14 +50,18 @@ function Turmite(rules) {
     this.index = 0;
 }
 
+Turmite.parse =
+function parse(str) {
+    return parseTurmite(str);
+};
+
 Turmite.prototype.parse =
 function parse(str) {
-    var res = parseTurmite(str);
-    if (res.err) {
-        return res.err;
+    var res = Turmite.parse(str);
+    if (!res.err) {
+        var compile = res.value;
+        res = compile(this);
     }
-    var compile = res.value;
-    res = compile(this);
     return res.err;
 };
 
@@ -157,23 +161,3 @@ function executeTurn(turn) {
     // TODO: assert that turn is 0?
     return 0;
 };
-
-function main() {
-    var turm = new Turmite(null);
-    var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
-    if (err) {
-        console.error(err);
-    } else {
-        // console.log(turm.toString());
-        console.log(
-            // turm.rules
-            new Buffer(
-                new Uint8Array(turm.rules.buffer)
-            ).toString()
-        );
-    }
-}
-
-if (require.main === module) {
-    main();
-}

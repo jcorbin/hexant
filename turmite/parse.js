@@ -6,15 +6,19 @@ module.exports = parseTurmite;
 
 var Result = require('rezult');
 var World = require('../world.js');
-var constants = require('./constants.js');
 var RLEBuilder = require('./rle-builder.js');
+var constants = require('./constants.js');
 
 function parseTurmite(str) {
-    var res = parseAnt(str);
-    if (res.err || res.value) {
-        return res;
+    var parsers = [
+        parseAnt
+    ];
+    for (var i = 0; i < parsers.length; i++) {
+        var res = parsers[i](str);
+        if (res.err || res.value) {
+            return res;
+        }
     }
-
     return new Result(new Error('invalid spec string'), null);
 }
 
