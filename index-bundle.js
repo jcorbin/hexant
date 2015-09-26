@@ -58,7 +58,7 @@ global = this;
         main = bundle[filename];
         main._require();
     }
-})([["animator.js","blick","animator.js",{"raf":23},function (require, exports, module, __filename, __dirname){
+})([["animator.js","blick","animator.js",{"raf":26},function (require, exports, module, __filename, __dirname){
 
 // blick/animator.js
 // -----------------
@@ -282,7 +282,7 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["document.js","gutentag","document.js",{"koerper":21},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":24},function (require, exports, module, __filename, __dirname){
 
 // gutentag/document.js
 // --------------------
@@ -342,7 +342,7 @@ Scope.prototype.hookup = function (id, component) {
     }
 };
 
-}],["colorgen.js","hexant","colorgen.js",{"husl":20},function (require, exports, module, __filename, __dirname){
+}],["colorgen.js","hexant","colorgen.js",{"husl":23},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
 // ------------------
@@ -983,10 +983,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_i9lul6");
+        component.setAttribute("id", "view_etv97h");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_i9lul6")
+       scope.componentsFor["view"].setAttribute("for", "view_etv97h")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1001,7 +1001,7 @@ $THIS.prototype.constructor = $THIS;
 $THIS.prototype.exports = {};
 module.exports = $THIS;
 
-}],["hexant.js","hexant","hexant.js",{"./colorgen.js":5,"./world.js":19,"./view.js":18,"./turmite.js":17,"./hash.js":7,"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"./colorgen.js":5,"./world.js":22,"./view.js":21,"./turmite/index.js":18,"./hash.js":7,"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1015,7 +1015,7 @@ module.exports = Hexant;
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
-var Turmite = require('./turmite.js');
+var Turmite = require('./turmite/index.js');
 var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
@@ -1746,10 +1746,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_cn1e8m");
+        component.setAttribute("id", "view_xoyy7z");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_cn1e8m")
+       scope.componentsFor["view"].setAttribute("for", "view_xoyy7z")
     }
     this.scope.hookup("this", this);
 };
@@ -1933,36 +1933,16 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
-}],["turmite.js","hexant","turmite.js",{"./coord.js":6,"./world.js":19},function (require, exports, module, __filename, __dirname){
+}],["turmite/constants.js","hexant/turmite","constants.js",{},function (require, exports, module, __filename, __dirname){
 
-// hexant/turmite.js
-// -----------------
-
-'use strict';
+// hexant/turmite/constants.js
+// ---------------------------
 
 /* eslint no-multi-spaces:0 consistent-this:0 */
 
-var Coord = require('./coord.js');
-var World = require('./world.js');
-var CubePoint = Coord.CubePoint;
+'use strict';
 
-module.exports = Turmite;
-
-/*
- * state, color -> nextState, write, turn
- *
- * index struct {
- *     state u8
- *     color u8
- * }
- *
- * rule struct {
- *     nextState u8
- *     write     u8
- *     turn      u16 // bit-field
- * }
- *
- * relative turns
+/* relative turns
  *    F -- +0 -- no turn, forward
  *    B -- +3 -- u turn, backaward
  *   BL -- -2 -- double left turn
@@ -2025,6 +2005,43 @@ RelSymbolTurns.F   = Turn.RelForward;
 RelSymbolTurns.R   = Turn.RelRight;
 RelSymbolTurns.BR  = Turn.RelDoubleRight;
 
+module.exports.Turn           = Turn;
+module.exports.RelTurnDelta   = RelTurnDelta;
+module.exports.AbsTurnDir     = AbsTurnDir;
+module.exports.RelTurnSymbols = RelTurnSymbols;
+module.exports.RelSymbolTurns = RelSymbolTurns;
+
+}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":6,"./constants.js":17,"./parse.js":19},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/index.js
+// -----------------------
+
+'use strict';
+
+/* eslint no-multi-spaces:0 consistent-this:0 */
+
+var Coord = require('../coord.js');
+var CubePoint = Coord.CubePoint;
+var constants = require('./constants.js');
+var parseTurmite = require('./parse.js');
+
+module.exports = Turmite;
+
+/*
+ * state, color -> nextState, write, turn
+ *
+ * index struct {
+ *     state u8
+ *     color u8
+ * }
+ *
+ * rule struct {
+ *     nextState u8
+ *     write     u8
+ *     turn      u16 // bit-field
+ * }
+ */
+
 Turmite.ruleHelp =
     '\nant(<number>?<turn> ...) , turns:\n' +
     '  - L=left, R=right\n' +
@@ -2032,81 +2049,7 @@ Turmite.ruleHelp =
     '  - BL=back-left BR=back-right\n'
     ;
 
-Turmite.Kinds = {
-    'ant': parseAnt
-};
-
-function parseAnt(str, turmite) {
-    str = str.toUpperCase();
-
-    // we'll also build the canonical version of the parsed rule string in the
-    // same pass as parsing it; rulestr will be that string, and we'll need
-    // some state between arg matches
-    var rulestr = '';
-    var lastSym = '';
-    var lastSymCount = 0;
-
-    // TODO: describe
-    var state    = 0;
-    var color    = 0;
-    var stateKey = state << 8;
-    var rule     = stateKey | color;
-
-    parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str,
-        function eachArg(_, nStr, sym) {
-            var mult = nStr ? parseInt(nStr, 10) : 1;
-            for (var j = 0; j < mult; j++) {
-                if (color > World.MaxColor) {
-                    return new Error('too many colors needed for ant ruleset');
-                }
-                var nextRule        = stateKey | ++color & World.MaxColor;
-                turmite.rules[rule] = nextRule << 16 | RelSymbolTurns[sym];
-                rule                = nextRule;
-            }
-            growRuleStr(mult, sym);
-        });
-    growRuleStr(0, '');
-
-    // now that we've compiled the base case, we need to cover the rest of the
-    // (state, color) key space for numColors < color <= World.MaxColor; this
-    // essentially pre-computes "color modulo numColors" as a static rule table
-    // lookup so that no modulo logic is required in .step below (at least
-    // explicitly, since unsigned integer wrap-around is modulo 2^bits)
-    var numColors = color;
-    while (color > 0 && color <= World.MaxColor) {
-        var baseRule        = stateKey |   color % numColors;
-        var nextRule        = stateKey | ++color & World.MaxColor;
-        var turn            = turmite.rules[baseRule] & 0x0000ffff;
-        turmite.rules[rule] = nextRule << 16 | turn;
-        rule                = nextRule;
-    }
-
-    turmite.state = state;
-    turmite.specString = 'ant(' + rulestr + ')';
-    turmite.numColors = numColors;
-    turmite.numStates = 1;
-
-    return null;
-
-    function growRuleStr(mult, sym) {
-        if (lastSym !== sym) {
-            if (lastSym && lastSymCount) {
-                if (rulestr.length) {
-                    rulestr += ' ';
-                }
-                if (lastSymCount > 1) {
-                    rulestr += lastSymCount.toString();
-                }
-                rulestr += lastSym;
-            }
-            lastSym = sym;
-            lastSymCount = 0;
-        }
-        lastSymCount += mult;
-    }
-}
-
-function Turmite(world, rules) {
+function Turmite(rules) {
     this.numStates = 0;
     this.numColors = 0;
     this.rules = rules || new Uint32Array(64 * 1024);
@@ -2123,50 +2066,17 @@ function Turmite(world, rules) {
 
     this.size = 0.5;
     this.index = 0;
-    this.world = world;
-}
-
-var antCompatMap = {
-    L: 'L',
-    R: 'R',
-    W: 'BL',
-    E: 'BR',
-    F: 'B',
-    A: 'F'
-};
-
-function antCompatConvert(str) {
-    str = str.toUpperCase();
-    var equivMoves = [];
-    for (var i = 0; i < str.length; i++) {
-        var equivMove = antCompatMap[str[i]];
-        if (equivMove === undefined) {
-            return undefined;
-        }
-        equivMoves.push(equivMove);
-    }
-    return 'ant(' + equivMoves.join(' ') + ')';
 }
 
 Turmite.prototype.parse =
-function parseTurmite(str) {
-    var match = /^\s*(\w+)\(\s*(.+?)\s*\)\s*$/.exec(str);
-    if (!match) {
-        var equivAnt = antCompatConvert(str);
-        if (equivAnt !== undefined) {
-            return this.parse(equivAnt);
-        }
-        return new Error('invalid spec string');
+function parse(str) {
+    var res = parseTurmite(str);
+    if (res.err) {
+        return res.err;
     }
-    var kind = match[1].toLowerCase();
-    var args = match[2];
-
-    var parseKind = Turmite.Kinds[kind];
-    if (!parseKind) {
-        return new Error('no such turmite kind');
-    }
-
-    return parseKind(args, this);
+    var compile = res.value;
+    res = compile(this);
+    return res.err;
 };
 
 Turmite.prototype.toString =
@@ -2178,8 +2088,8 @@ function toString() {
 };
 
 Turmite.prototype.step =
-function step() {
-    var tile = this.world.tile;
+function step(world) {
+    var tile = world.tile;
     var data = tile.get(this.pos);
     var color = data & 0x00ff;
     var flags = data & 0xff00;
@@ -2252,19 +2162,170 @@ function executeTurn(turn) {
     var t = 1;
     for (; t <= 0x0020; t <<= 1) {
         if (turn & t) {
-            this.dir = (6 + this.oldDir + RelTurnDelta[t]) % 6;
+            this.dir = (6 + this.oldDir + constants.RelTurnDelta[t]) % 6;
             return turn & ~t;
         }
     }
     for (; t <= 0x0800; t <<= 1) {
         if (turn & t) {
-            this.dir = AbsTurnDir[t];
+            this.dir = constants.AbsTurnDir[t];
             return turn & ~t;
         }
     }
     // TODO: assert that turn is 0?
     return 0;
 };
+
+function main() {
+    var turm = new Turmite(null);
+    var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
+    if (err) {
+        console.error(err);
+    } else {
+        // console.log(turm.toString());
+        console.log(
+            // turm.rules
+            new Buffer(
+                new Uint8Array(turm.rules.buffer)
+            ).toString()
+        );
+    }
+}
+
+if (require.main === module) {
+    main();
+}
+
+}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":27,"../world.js":22,"./constants.js":17,"./rle-builder.js":20},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/parse.js
+// -----------------------
+
+/* eslint no-multi-spaces:0 */
+
+'use strict';
+
+module.exports = parseTurmite;
+
+var Result = require('rezult');
+var World = require('../world.js');
+var constants = require('./constants.js');
+var RLEBuilder = require('./rle-builder.js');
+
+function parseTurmite(str) {
+    var res = parseAnt(str);
+    if (res.err || res.value) {
+        return res;
+    }
+
+    return new Result(new Error('invalid spec string'), null);
+}
+
+var antCompatPattern = /^\s*([lrwefaLRWEFA]+)\s*$/;
+var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
+
+var antCompatMap = {
+    L: 'L',
+    R: 'R',
+    W: 'BL',
+    E: 'BR',
+    F: 'B',
+    A: 'F'
+};
+
+function antCompatConvert(str) {
+    str = str.toUpperCase();
+    var equivMoves = [];
+    for (var i = 0; i < str.length; i++) {
+        var equivMove = antCompatMap[str[i]];
+        if (equivMove === undefined) {
+            return undefined;
+        }
+        equivMoves.push(equivMove);
+    }
+    return 'ant(' + equivMoves.join(' ') + ')';
+}
+
+function parseAnt(str) {
+    var match = antCompatPattern.exec(str);
+    if (match) {
+        str = antCompatConvert(match[1]);
+    }
+
+    match = antPattern.exec(str);
+    if (!match) {
+        return new Result(null, null);
+    }
+    str = match[1];
+
+    // we'll also build the canonical version of the parsed rule string in the
+    // same pass as parsing it; rulestr will be that string, and we'll need
+    // some state between arg matches
+    var numStates    = 1;
+    var numColors    = 0;
+    var multurns     = [];
+    var buildRuleStr = RLEBuilder('ant(', ' ', ')');
+
+    parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str.toUpperCase(),
+        function eachArg(_, nStr, sym) {
+            var mult = nStr ? parseInt(nStr, 10) : 1;
+            var relturn = constants.RelSymbolTurns[sym];
+            numColors += mult;
+            if (numColors > World.MaxColor) {
+                return new Result(
+                    new Error('too many colors needed for ant ruleset'),
+                    null);
+            }
+            multurns.push({
+                mult: mult,
+                relturn: relturn
+            });
+            buildRuleStr(mult, sym);
+        });
+    var rulestr = buildRuleStr(0, '');
+
+    return new Result(null, compileAnt);
+
+    function compileAnt(turmite) {
+        // TODO: describe
+        var state    = 0;
+        var color    = 0;
+        var stateKey = state << 8;
+        var rule     = stateKey | color;
+        var nextRule = rule;
+
+        for (var i = 0; i < multurns.length; i++) {
+            var mult = multurns[i].mult;
+            var relturn = multurns[i].relturn;
+            for (var j = 0; j < mult; j++) {
+                nextRule            = stateKey | ++color & World.MaxColor;
+                turmite.rules[rule] = nextRule << 16 | relturn;
+                rule                = nextRule;
+            }
+        }
+
+        // now that we've compiled the base case, we need to cover the rest of
+        // the (state, color) key space for numColors < color <=
+        // World.MaxColor; this essentially pre-computes "color modulo
+        // numColors" as a static rule table lookup so that no modulo logic is
+        // required in .step below (at least explicitly, since unsigned integer
+        // wrap-around is modulo 2^bits)
+        while (color > 0 && color <= World.MaxColor) {
+            var baseRule        = stateKey |   color % numColors;
+            nextRule            = stateKey | ++color & World.MaxColor;
+            var turn            = turmite.rules[baseRule] & 0x0000ffff;
+            turmite.rules[rule] = nextRule << 16 | turn;
+            rule                = nextRule;
+        }
+
+        turmite.state      = state;
+        turmite.specString = rulestr;
+        turmite.numColors  = numColors;
+        turmite.numStates  = numStates;
+
+        return new Result(null, turmite);
+    }
+}
 
 function parseArgs(re, str, each) {
     var i = 0;
@@ -2279,24 +2340,57 @@ function parseArgs(re, str, each) {
     // TODO: check if didn't match full input
 }
 
-// function main() {
-//     var turm = new Turmite(null);
-//     var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
-//     if (err) {
-//         console.error(err);
-//     } else {
-//         // console.log(turm.toString());
-//         console.log(
-//             // turm.rules
-//             new Buffer(
-//                 new Uint8Array(turm.rules.buffer)
-//             ).toString()
-//         );
-//     }
-// }
-// main();
+}],["turmite/rle-builder.js","hexant/turmite","rle-builder.js",{},function (require, exports, module, __filename, __dirname){
 
-}],["view.js","hexant","view.js",{"./hexgrid.js":10,"./ngoncontext.js":16,"./world.js":19},function (require, exports, module, __filename, __dirname){
+// hexant/turmite/rle-builder.js
+// -----------------------------
+
+/* eslint no-multi-spaces:0 */
+
+'use strict';
+
+module.exports = RLEBuilder;
+
+function RLEBuilder(prefix, sep, suffix) {
+    build.prefix = prefix;
+    build.sep    = sep;
+    build.suffix = suffix;
+    build.cur    = '';
+    build.count  = 0;
+    build.str    = build.prefix;
+    build.init   = true;
+    return build;
+
+    function build(mult, sym) {
+        if (build.cur !== sym) {
+            if (build.cur && build.count) {
+                if (build.init) {
+                    build.init = false;
+                } else {
+                    build.str += build.sep;
+                }
+                if (build.count > 1) {
+                    build.str += build.count.toString();
+                }
+                build.str += build.cur;
+            }
+            build.cur = sym || '';
+            build.count = 0;
+        }
+        if (mult === 0 && !sym) {
+            var ret     = build.str + build.suffix;
+            build.cur   = '';
+            build.count = 0;
+            build.str   = build.prefix;
+            build.init  = false;
+            return ret;
+        }
+        build.count += mult;
+        return '';
+    }
+}
+
+}],["view.js","hexant","view.js",{"./hexgrid.js":10,"./ngoncontext.js":16,"./world.js":22},function (require, exports, module, __filename, __dirname){
 
 // hexant/view.js
 // --------------
@@ -2619,7 +2713,7 @@ function World() {
 World.prototype.step = function step() {
     var i;
     for (i = 0; i < this.ents.length; i++) {
-        this.ents[i].step();
+        this.ents[i].step(this);
     }
     for (i = 0; i < this.views.length; i++) {
         var view = this.views[i];
@@ -2636,7 +2730,7 @@ World.prototype.stepn = function stepn(n) {
     var j;
     for (i = 0; i < n; i++) {
         for (j = 0; j < this.ents.length; j++) {
-            this.ents[j].step();
+            this.ents[j].step(this);
         }
         for (j = 0; j < this.views.length; j++) {
             this.views[j].step();
@@ -3111,7 +3205,7 @@ World.prototype.addView = function addView(view) {
 
 }).call(this);
 
-}],["koerper.js","koerper","koerper.js",{"wizdom":24},function (require, exports, module, __filename, __dirname){
+}],["koerper.js","koerper","koerper.js",{"wizdom":28},function (require, exports, module, __filename, __dirname){
 
 // koerper/koerper.js
 // ------------------
@@ -3424,7 +3518,7 @@ OpaqueHtml.prototype.getActualFirstChild = function getActualFirstChild() {
 //@ sourceMappingURL=performance-now.map
 */
 
-}],["index.js","raf","index.js",{"performance-now":22},function (require, exports, module, __filename, __dirname){
+}],["index.js","raf","index.js",{"performance-now":25},function (require, exports, module, __filename, __dirname){
 
 // raf/index.js
 // ------------
@@ -3509,6 +3603,35 @@ module.exports = function(fn) {
 module.exports.cancel = function() {
   caf.apply(global, arguments)
 }
+
+}],["index.js","rezult","index.js",{},function (require, exports, module, __filename, __dirname){
+
+// rezult/index.js
+// ---------------
+
+"use strict";
+
+module.exports = Result;
+
+function Result(err, value) {
+    var self = this;
+    self.err = err || null;
+    self.value = value;
+}
+
+Result.prototype.toValue = function toValue() {
+    var self = this;
+    if (self.err) {
+        throw self.err;
+    } else {
+        return self.value;
+    }
+};
+
+Result.prototype.toCallback = function toCallback(callback) {
+    var self = this;
+    callback(self.err, self.value);
+};
 
 }],["dom.js","wizdom","dom.js",{},function (require, exports, module, __filename, __dirname){
 
