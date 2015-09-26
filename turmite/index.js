@@ -39,7 +39,7 @@ function parseTurmite(str, turmite) {
         str = antCompatConvert(match[1]);
     }
 
-    match = /^\s*ant\(\s*(.+?)\s*\)\s*$/.exec(str);
+    match = antPattern.exec(str);
     if (match) {
         var res = parseAnt(match[1]);
         if (res.err) {
@@ -51,6 +51,8 @@ function parseTurmite(str, turmite) {
 
     return new Error('invalid spec string');
 }
+
+var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
 
 function parseAnt(str) {
     // we'll also build the canonical version of the parsed rule string in the
