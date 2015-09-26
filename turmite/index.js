@@ -160,7 +160,7 @@ function executeTurn(turn) {
 
 function main() {
     var turm = new Turmite(null);
-    var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
+    var err = turm.parse('ant(L R LL RRR 5L 8R 13L 21R)');
     if (err) {
         console.error(err);
     } else {
