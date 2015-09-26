@@ -50,9 +50,14 @@ function Turmite(rules) {
     this.index = 0;
 }
 
+Turmite.parse =
+function parse(str) {
+    return parseTurmite(str);
+};
+
 Turmite.prototype.parse =
 function parse(str) {
-    var res = parseTurmite(str);
+    var res = Turmite.parse(str);
     if (!res.err) {
         var compile = res.value;
         res = compile(this);
