@@ -25,7 +25,7 @@ function World() {
 World.prototype.step = function step() {
     var i;
     for (i = 0; i < this.ents.length; i++) {
-        this.ents[i].step();
+        this.ents[i].step(this);
     }
     for (i = 0; i < this.views.length; i++) {
         var view = this.views[i];
@@ -42,7 +42,7 @@ World.prototype.stepn = function stepn(n) {
     var j;
     for (i = 0; i < n; i++) {
         for (j = 0; j < this.ents.length; j++) {
-            this.ents[j].step();
+            this.ents[j].step(this);
         }
         for (j = 0; j < this.views.length; j++) {
             this.views[j].step();

@@ -1,6 +1,6 @@
 {
   "name": "hexant",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Hexagonal Ants",
   "main": "hexant.js",
   "scripts": {
@@ -24,7 +24,8 @@
     "domready": "^1.0.8",
     "global": "^4.3.0",
     "gutentag": "^2.1.0",
-    "husl": "^6.0.1"
+    "husl": "^6.0.1",
+    "rezult": "^1.0.0"
   },
   "translators": {
     "html": "gutentag/translate-html"
