@@ -2,8 +2,8 @@
 
 /* eslint no-multi-spaces:0 consistent-this:0 */
 
-var Coord = require('./coord.js');
-var World = require('./world.js');
+var Coord = require('../coord.js');
+var World = require('../world.js');
 var CubePoint = Coord.CubePoint;
 
 module.exports = Turmite;
