@@ -41,9 +41,7 @@ function parseAnt(str, turmite) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
-    var rulestr = '';
-    var lastSym = '';
-    var lastSymCount = 0;
+    var buildRuleStr = RLEBuilder('ant(', ' ', ')');
 
     // TODO: describe
     var state    = 0;
@@ -63,9 +61,9 @@ function parseAnt(str, turmite) {
                 turmite.rules[rule] = nextRule << 16 | relturn;
                 rule                = nextRule;
             }
-            growRuleStr(mult, sym);
+            buildRuleStr(mult, sym);
         });
-    growRuleStr(0, '');
+    var rulestr = buildRuleStr(0, '');
 
     // now that we've compiled the base case, we need to cover the rest of the
     // (state, color) key space for numColors < color <= World.MaxColor; this
@@ -82,27 +80,49 @@ function parseAnt(str, turmite) {
     }
 
     turmite.state = state;
-    turmite.specString = 'ant(' + rulestr + ')';
+    turmite.specString = rulestr;
     turmite.numColors = numColors;
     turmite.numStates = 1;
 
     return null;
+}
 
-    function growRuleStr(mult, sym) {
-        if (lastSym !== sym) {
-            if (lastSym && lastSymCount) {
-                if (rulestr.length) {
-                    rulestr += ' ';
+function RLEBuilder(prefix, sep, suffix) {
+    build.prefix = prefix;
+    build.sep    = sep;
+    build.suffix = suffix;
+    build.cur    = '';
+    build.count  = 0;
+    build.str    = build.prefix;
+    build.init   = true;
+    return build;
+
+    function build(mult, sym) {
+        if (build.cur !== sym) {
+            if (build.cur && build.count) {
+                if (build.init) {
+                    build.init = false;
+                } else {
+                    build.str += build.sep;
                 }
-                if (lastSymCount > 1) {
-                    rulestr += lastSymCount.toString();
+                if (build.count > 1) {
+                    build.str += build.count.toString();
                 }
-                rulestr += lastSym;
+                build.str += build.cur;
             }
-            lastSym = sym;
-            lastSymCount = 0;
+            build.cur = sym || '';
+            build.count = 0;
         }
-        lastSymCount += mult;
+        if (mult === 0 && !sym) {
+            var ret     = build.str + build.suffix;
+            build.cur   = '';
+            build.count = 0;
+            build.str   = build.prefix;
+            build.init  = false;
+            return ret;
+        }
+        build.count += mult;
+        return '';
     }
 }
 
