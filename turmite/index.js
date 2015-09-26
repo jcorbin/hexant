@@ -37,8 +37,6 @@ Turmite.Kinds = {
 };
 
 function parseAnt(str, turmite) {
-    str = str.toUpperCase();
-
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
@@ -52,7 +50,7 @@ function parseAnt(str, turmite) {
     var stateKey = state << 8;
     var rule     = stateKey | color;
 
-    parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str,
+    parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str.toUpperCase(),
         function eachArg(_, nStr, sym) {
             var mult = nStr ? parseInt(nStr, 10) : 1;
             var relturn = constants.RelSymbolTurns[sym];
