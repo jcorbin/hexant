@@ -6,8 +6,8 @@ module.exports = parseTurmite;
 
 var Result = require('rezult');
 var World = require('../world.js');
-var constants = require('./constants.js');
 var RLEBuilder = require('./rle-builder.js');
+var constants = require('./constants.js');
 
 function parseTurmite(str) {
     var res = parseAnt(str);
