@@ -983,10 +983,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_etv97h");
+        component.setAttribute("id", "view_vnnl4j");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_etv97h")
+       scope.componentsFor["view"].setAttribute("for", "view_vnnl4j")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1746,10 +1746,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_xoyy7z");
+        component.setAttribute("id", "view_qzyfgq");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_xoyy7z")
+       scope.componentsFor["view"].setAttribute("for", "view_qzyfgq")
     }
     this.scope.hookup("this", this);
 };
@@ -2068,14 +2068,18 @@ function Turmite(rules) {
     this.index = 0;
 }
 
+Turmite.parse =
+function parse(str) {
+    return parseTurmite(str);
+};
+
 Turmite.prototype.parse =
 function parse(str) {
-    var res = parseTurmite(str);
-    if (res.err) {
-        return res.err;
+    var res = Turmite.parse(str);
+    if (!res.err) {
+        var compile = res.value;
+        res = compile(this);
     }
-    var compile = res.value;
-    res = compile(this);
     return res.err;
 };
 
@@ -2176,27 +2180,7 @@ function executeTurn(turn) {
     return 0;
 };
 
-function main() {
-    var turm = new Turmite(null);
-    var err = Turmite.parse('ant(L R LL RRR 5L 8R 13L 21R)', turm);
-    if (err) {
-        console.error(err);
-    } else {
-        // console.log(turm.toString());
-        console.log(
-            // turm.rules
-            new Buffer(
-                new Uint8Array(turm.rules.buffer)
-            ).toString()
-        );
-    }
-}
-
-if (require.main === module) {
-    main();
-}
-
-}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":27,"../world.js":22,"./constants.js":17,"./rle-builder.js":20},function (require, exports, module, __filename, __dirname){
+}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":27,"../world.js":22,"./rle-builder.js":20,"./constants.js":17},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/parse.js
 // -----------------------
@@ -2209,15 +2193,19 @@ module.exports = parseTurmite;
 
 var Result = require('rezult');
 var World = require('../world.js');
-var constants = require('./constants.js');
 var RLEBuilder = require('./rle-builder.js');
+var constants = require('./constants.js');
 
 function parseTurmite(str) {
-    var res = parseAnt(str);
-    if (res.err || res.value) {
-        return res;
+    var parsers = [
+        parseAnt
+    ];
+    for (var i = 0; i < parsers.length; i++) {
+        var res = parsers[i](str);
+        if (res.err || res.value) {
+            return res;
+        }
     }
-
     return new Result(new Error('invalid spec string'), null);
 }
 
