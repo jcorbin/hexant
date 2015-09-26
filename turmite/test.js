@@ -21,18 +21,13 @@ function finish(err, str) {
         return;
     }
 
-    var turm = new Turmite(null);
-    var err = turm.parse(str);
-    if (err) {
-        console.error(err);
+    var res = Turmite.parse(str);
+    if (res.err) {
+        console.error(res.err);
         return;
     }
 
-    // console.log(turm.toString());
-    console.log(
-        // turm.rules
-        new Buffer(
-            new Uint8Array(turm.rules.buffer)
-        ).toString()
-    );
+    console.log(res.value);
+
+    // TODO: call compile and rules
 }
