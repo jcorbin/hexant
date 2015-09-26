@@ -166,7 +166,7 @@ function parseAnt(str, turmite) {
     }
 }
 
-function Turmite(world, rules) {
+function Turmite(rules) {
     this.numStates = 0;
     this.numColors = 0;
     this.rules = rules || new Uint32Array(64 * 1024);
@@ -183,7 +183,6 @@ function Turmite(world, rules) {
 
     this.size = 0.5;
     this.index = 0;
-    this.world = world;
 }
 
 var antCompatMap = {
@@ -238,8 +237,8 @@ function toString() {
 };
 
 Turmite.prototype.step =
-function step() {
-    var tile = this.world.tile;
+function step(world) {
+    var tile = world.tile;
     var data = tile.get(this.pos);
     var color = data & 0x00ff;
     var flags = data & 0xff00;
