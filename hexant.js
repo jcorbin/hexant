@@ -29,11 +29,12 @@ function Hexant(body, scope) {
     this.paused = true;
 
     this.boundOnKeyPress = onKeyPress;
+    this.boundPlaypause = playpause;
+
     function onKeyPress(e) {
         self.onKeyPress(e);
     }
 
-    this.boundPlaypause = playpause;
     function playpause() {
         self.playpause();
     }
