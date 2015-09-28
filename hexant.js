@@ -43,9 +43,17 @@ function Hexant(body, scope) {
 Hexant.prototype.hookup =
 function hookup(id, component, scope) {
     var self = this;
-    if (id !== 'view') {
-        return;
+
+    switch (id) {
+    case 'view':
+        self.hookupCanvas(component, scope);
+        break;
     }
+};
+
+Hexant.prototype.hookupCanvas =
+function hookupCanvas(component, scope) {
+    var self = this;
 
     this.titleBase = scope.window.document.title;
     this.el = component;
