@@ -24,10 +24,13 @@ function finish(err, str) {
     var res = Turmite.parse(str);
     if (res.err) {
         console.error(res.err);
+        if (res.value !== null) {
+            console.log(res.value);
+        }
         return;
     }
 
-    console.log(res.value);
+    console.log(res.value.toString());
 
     // TODO: call compile and rules
 }

@@ -1,6 +1,4 @@
 'use strict';
-/* global console, prompt */
-/* eslint no-console: [0], no-alert: [0], no-try-catch: [0] */
 
 module.exports = Hexant;
 
@@ -27,13 +25,11 @@ function Hexant(body, scope) {
     this.frameRate = 0;
     this.frameInterval = 0;
     this.paused = true;
-
-    this.boundOnKeyPress = onKeyPress;
-    function onKeyPress(e) {
-        self.onKeyPress(e);
-    }
+    this.prompt = null;
+    this.promptField = null;
 
     this.boundPlaypause = playpause;
+
     function playpause() {
         self.playpause();
     }
@@ -42,9 +38,21 @@ function Hexant(body, scope) {
 Hexant.prototype.hookup =
 function hookup(id, component, scope) {
     var self = this;
-    if (id !== 'view') {
-        return;
+
+    switch (id) {
+    case 'view':
+        self.hookupCanvas(component, scope);
+        break;
+
+    case 'prompt':
+        self.prompt = component;
+        break;
     }
+};
+
+Hexant.prototype.hookupCanvas =
+function hookupCanvas(component, scope) {
+    var self = this;
 
     this.titleBase = scope.window.document.title;
     this.el = component;
@@ -52,8 +60,16 @@ function hookup(id, component, scope) {
     this.view = this.world.addView(
         new View(this.world, component));
 
+    scope.window.addEventListener('keypress', function onKeyPress(e) {
+        if (e.target === scope.window.document.documentElement ||
+            e.target === scope.window.document.body ||
+            e.target === self.el
+        ) {
+            self.onKeyPress(e);
+        }
+    });
+
     this.el.addEventListener('click', this.boundPlaypause);
-    scope.window.addEventListener('keypress', this.boundOnKeyPress);
 
     this.hash.bind('colors')
         .setParse(colorGen.parse, colorGen.toString)
@@ -151,20 +167,31 @@ function onKeyPress(e) {
     case 0x43: // C
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
+        e.preventDefault();
         break;
 
     case 0x2f: // /
         this.promptFor('rule', Turmite.ruleHelp);
+        e.preventDefault();
         break;
     }
 };
 
 Hexant.prototype.promptFor =
 function promptFor(name, desc) {
-    var str = this.hash.getStr(name);
-    str = prompt(desc, str);
-    if (typeof str === 'string') {
-        this.hash.set(name, str);
+    var self = this;
+
+    if (self.prompt.active()) {
+        return;
+    }
+
+    var orig = self.hash.getStr(name);
+    self.prompt.prompt(desc, orig, finish);
+
+    function finish(canceled, value) {
+        if (!canceled) {
+            self.hash.set(name, value);
+        }
     }
 };
 

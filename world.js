@@ -9,6 +9,9 @@ var OddQOffset = Coord.OddQOffset;
 
 module.exports = World;
 
+World.StateShift  = 8;
+World.ColorShift  = 8;
+World.TurnShift   = 16;
 World.FlagVisited = 0x0100;
 World.MaskFlags   = 0xff00;
 World.MaskColor   = 0x00ff;

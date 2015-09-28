@@ -91,7 +91,7 @@ function parseAnt(str) {
         // TODO: describe
         var state    = 0;
         var color    = 0;
-        var stateKey = state << 8;
+        var stateKey = state << World.ColorShift;
         var rule     = stateKey | color;
         var nextRule = rule;
 
@@ -100,7 +100,7 @@ function parseAnt(str) {
             var relturn = multurns[i].relturn;
             for (var j = 0; j < mult; j++) {
                 nextRule            = stateKey | ++color & World.MaxColor;
-                turmite.rules[rule] = nextRule << 16 | relturn;
+                turmite.rules[rule] = nextRule << World.TurnShift | relturn;
                 rule                = nextRule;
             }
         }
@@ -115,7 +115,7 @@ function parseAnt(str) {
             var baseRule        = stateKey |   color % numColors;
             nextRule            = stateKey | ++color & World.MaxColor;
             var turn            = turmite.rules[baseRule] & 0x0000ffff;
-            turmite.rules[rule] = nextRule << 16 | turn;
+            turmite.rules[rule] = nextRule << World.TurnShift | turn;
             rule                = nextRule;
         }
 
