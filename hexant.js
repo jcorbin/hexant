@@ -1,6 +1,4 @@
 'use strict';
-/* global console, prompt */
-/* eslint no-console: [0], no-alert: [0], no-try-catch: [0] */
 
 module.exports = Hexant;
 
@@ -27,6 +25,8 @@ function Hexant(body, scope) {
     this.frameRate = 0;
     this.frameInterval = 0;
     this.paused = true;
+    this.prompt = null;
+    this.promptField = null;
 
     this.boundPlaypause = playpause;
 
@@ -42,6 +42,10 @@ function hookup(id, component, scope) {
     switch (id) {
     case 'view':
         self.hookupCanvas(component, scope);
+        break;
+
+    case 'prompt':
+        self.prompt = component;
         break;
     }
 };
@@ -175,10 +179,19 @@ function onKeyPress(e) {
 
 Hexant.prototype.promptFor =
 function promptFor(name, desc) {
-    var str = this.hash.getStr(name);
-    str = prompt(desc, str);
-    if (typeof str === 'string') {
-        this.hash.set(name, str);
+    var self = this;
+
+    if (self.prompt.active()) {
+        return;
+    }
+
+    var orig = self.hash.getStr(name);
+    self.prompt.prompt(desc, orig, finish);
+
+    function finish(canceled, value) {
+        if (!canceled) {
+            self.hash.set(name, value);
+        }
     }
 };
 
