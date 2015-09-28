@@ -58,7 +58,7 @@ global = this;
         main = bundle[filename];
         main._require();
     }
-})([["animator.js","blick","animator.js",{"raf":26},function (require, exports, module, __filename, __dirname){
+})([["animator.js","blick","animator.js",{"raf":28},function (require, exports, module, __filename, __dirname){
 
 // blick/animator.js
 // -----------------
@@ -282,7 +282,7 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["document.js","gutentag","document.js",{"koerper":24},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":26},function (require, exports, module, __filename, __dirname){
 
 // gutentag/document.js
 // --------------------
@@ -342,7 +342,7 @@ Scope.prototype.hookup = function (id, component) {
     }
 };
 
-}],["colorgen.js","hexant","colorgen.js",{"husl":23},function (require, exports, module, __filename, __dirname){
+}],["colorgen.js","hexant","colorgen.js",{"husl":25},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
 // ------------------
@@ -964,13 +964,14 @@ function parseValue(str) {
     return str;
 }
 
-}],["hexant.html","hexant","hexant.html",{"./hexant.js":9},function (require, exports, module, __filename, __dirname){
+}],["hexant.html","hexant","hexant.html",{"./hexant.js":9,"./prompt.html":17},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.html
 // ------------------
 
 "use strict";
 var $SUPER = require("./hexant.js");
+var $PROMPT = require("./prompt.html");
 var $THIS = function HexantHexant(body, caller) {
     $SUPER.apply(this, arguments);
     var document = body.ownerDocument;
@@ -983,10 +984,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_vnnl4j");
+        component.setAttribute("id", "view_9cfyl3");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_vnnl4j")
+       scope.componentsFor["view"].setAttribute("for", "view_9cfyl3")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -994,21 +995,41 @@ var $THIS = function HexantHexant(body, caller) {
     parents[parents.length] = parent; parent = node;
     // CANVAS
     node = parent; parent = parents[parents.length - 1]; parents.length--;
+    node = document.createBody();
+    parent.appendChild(node);
+    parents[parents.length] = parent; parent = node;
+    // PROMPT
+        node = {tagName: "prompt"};
+        node.component = $THIS$0;
+        callee = scope.nest();
+        callee.argument = node;
+        callee.id = "prompt";
+        component = new $PROMPT(parent, callee);
+    node = parent; parent = parents[parents.length - 1]; parents.length--;
+    scope.hookup("prompt", component);
+    if (component.setAttribute) {
+        component.setAttribute("id", "prompt_5m7jrj");
+    }
+    if (scope.componentsFor["prompt"]) {
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_5m7jrj")
+    }
     this.scope.hookup("this", this);
 };
 $THIS.prototype = Object.create($SUPER.prototype);
 $THIS.prototype.constructor = $THIS;
 $THIS.prototype.exports = {};
 module.exports = $THIS;
+var $THIS$0 = function HexantHexant$0(body, caller) {
+    var document = body.ownerDocument;
+    var scope = this.scope = caller;
+};
 
-}],["hexant.js","hexant","hexant.js",{"./colorgen.js":5,"./world.js":22,"./view.js":21,"./turmite/index.js":18,"./hash.js":7,"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"./colorgen.js":5,"./world.js":24,"./view.js":23,"./turmite/index.js":20,"./hash.js":7,"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
 
 'use strict';
-/* global console, prompt */
-/* eslint no-console: [0], no-alert: [0], no-try-catch: [0] */
 
 module.exports = Hexant;
 
@@ -1035,13 +1056,11 @@ function Hexant(body, scope) {
     this.frameRate = 0;
     this.frameInterval = 0;
     this.paused = true;
-
-    this.boundOnKeyPress = onKeyPress;
-    function onKeyPress(e) {
-        self.onKeyPress(e);
-    }
+    this.prompt = null;
+    this.promptField = null;
 
     this.boundPlaypause = playpause;
+
     function playpause() {
         self.playpause();
     }
@@ -1050,9 +1069,21 @@ function Hexant(body, scope) {
 Hexant.prototype.hookup =
 function hookup(id, component, scope) {
     var self = this;
-    if (id !== 'view') {
-        return;
+
+    switch (id) {
+    case 'view':
+        self.hookupCanvas(component, scope);
+        break;
+
+    case 'prompt':
+        self.prompt = component;
+        break;
     }
+};
+
+Hexant.prototype.hookupCanvas =
+function hookupCanvas(component, scope) {
+    var self = this;
 
     this.titleBase = scope.window.document.title;
     this.el = component;
@@ -1060,8 +1091,16 @@ function hookup(id, component, scope) {
     this.view = this.world.addView(
         new View(this.world, component));
 
+    scope.window.addEventListener('keypress', function onKeyPress(e) {
+        if (e.target === scope.window.document.documentElement ||
+            e.target === scope.window.document.body ||
+            e.target === self.el
+        ) {
+            self.onKeyPress(e);
+        }
+    });
+
     this.el.addEventListener('click', this.boundPlaypause);
-    scope.window.addEventListener('keypress', this.boundOnKeyPress);
 
     this.hash.bind('colors')
         .setParse(colorGen.parse, colorGen.toString)
@@ -1159,20 +1198,31 @@ function onKeyPress(e) {
     case 0x43: // C
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
+        e.preventDefault();
         break;
 
     case 0x2f: // /
         this.promptFor('rule', Turmite.ruleHelp);
+        e.preventDefault();
         break;
     }
 };
 
 Hexant.prototype.promptFor =
 function promptFor(name, desc) {
-    var str = this.hash.getStr(name);
-    str = prompt(desc, str);
-    if (typeof str === 'string') {
-        this.hash.set(name, str);
+    var self = this;
+
+    if (self.prompt.active()) {
+        return;
+    }
+
+    var orig = self.hash.getStr(name);
+    self.prompt.prompt(desc, orig, finish);
+
+    function finish(canceled, value) {
+        if (!canceled) {
+            self.hash.set(name, value);
+        }
     }
 };
 
@@ -1746,10 +1796,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_qzyfgq");
+        component.setAttribute("id", "view_l4dlcp");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_qzyfgq")
+       scope.componentsFor["view"].setAttribute("for", "view_l4dlcp")
     }
     this.scope.hookup("this", this);
 };
@@ -1933,6 +1983,214 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
+}],["prompt.html","hexant","prompt.html",{"./prompt.js":18},function (require, exports, module, __filename, __dirname){
+
+// hexant/prompt.html
+// ------------------
+
+"use strict";
+var $SUPER = require("./prompt.js");
+var $THIS = function HexantPrompt(body, caller) {
+    $SUPER.apply(this, arguments);
+    var document = body.ownerDocument;
+    var scope = this.scope = caller.root.nestComponents();
+    scope.caller = caller;
+    scope.this = this;
+    var parent = body, parents = [], node, component, callee, argument;
+    node = document.createElement("DIV");
+    parent.appendChild(node);
+    component = node.actualNode;
+    scope.hookup("box", component);
+    if (component.setAttribute) {
+        component.setAttribute("id", "box_9ug2l9");
+    }
+    if (scope.componentsFor["box"]) {
+       scope.componentsFor["box"].setAttribute("for", "box_9ug2l9")
+    }
+    if (component.setAttribute) {
+    component.setAttribute("class", "prompt");
+    }
+    if (component.setAttribute) {
+    component.setAttribute("style", "display: none");
+    }
+    parents[parents.length] = parent; parent = node;
+    // DIV
+        node = document.createElement("DIV");
+        parent.appendChild(node);
+        component = node.actualNode;
+        scope.hookup("help", component);
+        if (component.setAttribute) {
+            component.setAttribute("id", "help_puy88t");
+        }
+        if (scope.componentsFor["help"]) {
+           scope.componentsFor["help"].setAttribute("for", "help_puy88t")
+        }
+        if (component.setAttribute) {
+        component.setAttribute("class", "help");
+        }
+        parents[parents.length] = parent; parent = node;
+        // DIV
+        node = parent; parent = parents[parents.length - 1]; parents.length--;
+        node = document.createElement("TEXTAREA");
+        parent.appendChild(node);
+        component = node.actualNode;
+        scope.hookup("text", component);
+        if (component.setAttribute) {
+            component.setAttribute("id", "text_2oqs1w");
+        }
+        if (scope.componentsFor["text"]) {
+           scope.componentsFor["text"].setAttribute("for", "text_2oqs1w")
+        }
+        parents[parents.length] = parent; parent = node;
+        // TEXTAREA
+        node = parent; parent = parents[parents.length - 1]; parents.length--;
+    node = parent; parent = parents[parents.length - 1]; parents.length--;
+    this.scope.hookup("this", this);
+};
+$THIS.prototype = Object.create($SUPER.prototype);
+$THIS.prototype.constructor = $THIS;
+$THIS.prototype.exports = {};
+module.exports = $THIS;
+
+}],["prompt.js","hexant","prompt.js",{},function (require, exports, module, __filename, __dirname){
+
+// hexant/prompt.js
+// ----------------
+
+/* eslint no-try-catch: [0] */
+
+'use strict';
+
+module.exports = Prompt;
+
+function Prompt(body, scope) {
+    var self = this;
+
+    this.box = null;
+    this.help = null;
+    this.text = null;
+    this.callback = null;
+
+    this.boundOnKeyDown = onKeyDown;
+    this.boundOnKeyUp = onKeyUp;
+    this.boundCancel = cancel;
+    this.lastEnter = 0;
+
+    function onKeyDown(e) {
+        self.onKeyDown(e);
+    }
+
+    function onKeyUp(e) {
+        self.onKeyUp(e);
+    }
+
+    function cancel(e) {
+        self.cancel();
+    }
+}
+
+Prompt.prototype.active =
+function active() {
+    return !!this.callback;
+};
+
+Prompt.prototype.prompt =
+function prompt(help, value, callback) {
+    this.help.innerText = help;
+    this.text.value = value;
+    this.callback = callback;
+    this.box.style.display = '';
+    this.resizeTextRows();
+    this.text.select();
+    this.text.focus();
+};
+
+Prompt.prototype.resizeTextRows =
+function resizeTextRows() {
+    var lines = this.text.value.split(/\n/);
+    this.text.rows = lines.length + 1;
+};
+
+Prompt.prototype.finish =
+function finish() {
+    var value = this.text.value;
+    var callback = this.callback;
+    this.hide();
+    if (callback) {
+        value = value.replace(/(?:\r?\n)+/, '');
+        callback(false, value);
+    }
+};
+
+Prompt.prototype.cancel =
+function cancel() {
+    var callback = this.callback;
+    this.hide();
+    if (callback) {
+        callback(true, null);
+    }
+};
+
+Prompt.prototype.hide =
+function hide() {
+    this.lastEnter = 0;
+    this.box.style.display = 'none';
+    this.callback = null;
+    this.text.value = '';
+    this.help.innerText = '';
+};
+
+Prompt.prototype.hookup =
+function hookup(id, component, scope) {
+    var self = this;
+
+    switch (id) {
+    case 'box':
+        self.box = component;
+        break;
+
+    case 'help':
+        self.help = component;
+        break;
+
+    case 'text':
+        self.text = component;
+        self.text.addEventListener('keydown', this.boundOnKeyDown);
+        self.text.addEventListener('keyup', this.boundOnKeyUp);
+        self.text.addEventListener('blur', this.boundCancel);
+        break;
+    }
+};
+
+Prompt.prototype.onKeyDown =
+function onKeyDown(e) {
+    switch (e.keyCode) {
+    case 0x1b: // <Esc>
+        this.cancel();
+        e.preventDefault();
+        return;
+    }
+    this.resizeTextRows();
+};
+
+Prompt.prototype.onKeyUp =
+function onKeyUp(e) {
+    switch (e.keyCode) {
+    case 0x0d: // <Enter>
+        if (Date.now() - this.lastEnter < 1000 ||
+            e.ctrlKey) {
+            e.preventDefault();
+            this.finish();
+            return;
+        }
+        this.lastEnter = Date.now();
+        break;
+    default:
+        this.lastEnter = 0;
+    }
+    this.resizeTextRows();
+};
+
 }],["turmite/constants.js","hexant/turmite","constants.js",{},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/constants.js
@@ -2011,7 +2269,7 @@ module.exports.AbsTurnDir     = AbsTurnDir;
 module.exports.RelTurnSymbols = RelTurnSymbols;
 module.exports.RelSymbolTurns = RelSymbolTurns;
 
-}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":6,"./constants.js":17,"./parse.js":19},function (require, exports, module, __filename, __dirname){
+}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":6,"./constants.js":19,"./parse.js":21},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/index.js
 // -----------------------
@@ -2180,7 +2438,7 @@ function executeTurn(turn) {
     return 0;
 };
 
-}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":27,"../world.js":22,"./rle-builder.js":20,"./constants.js":17},function (require, exports, module, __filename, __dirname){
+}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":29,"../world.js":24,"./rle-builder.js":22,"./constants.js":19},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/parse.js
 // -----------------------
@@ -2278,7 +2536,7 @@ function parseAnt(str) {
         // TODO: describe
         var state    = 0;
         var color    = 0;
-        var stateKey = state << 8;
+        var stateKey = state << World.ColorShift;
         var rule     = stateKey | color;
         var nextRule = rule;
 
@@ -2287,7 +2545,7 @@ function parseAnt(str) {
             var relturn = multurns[i].relturn;
             for (var j = 0; j < mult; j++) {
                 nextRule            = stateKey | ++color & World.MaxColor;
-                turmite.rules[rule] = nextRule << 16 | relturn;
+                turmite.rules[rule] = nextRule << World.TurnShift | relturn;
                 rule                = nextRule;
             }
         }
@@ -2302,7 +2560,7 @@ function parseAnt(str) {
             var baseRule        = stateKey |   color % numColors;
             nextRule            = stateKey | ++color & World.MaxColor;
             var turn            = turmite.rules[baseRule] & 0x0000ffff;
-            turmite.rules[rule] = nextRule << 16 | turn;
+            turmite.rules[rule] = nextRule << World.TurnShift | turn;
             rule                = nextRule;
         }
 
@@ -2378,7 +2636,7 @@ function RLEBuilder(prefix, sep, suffix) {
     }
 }
 
-}],["view.js","hexant","view.js",{"./hexgrid.js":10,"./ngoncontext.js":16,"./world.js":22},function (require, exports, module, __filename, __dirname){
+}],["view.js","hexant","view.js",{"./hexgrid.js":10,"./ngoncontext.js":16,"./world.js":24},function (require, exports, module, __filename, __dirname){
 
 // hexant/view.js
 // --------------
@@ -2685,6 +2943,9 @@ var OddQOffset = Coord.OddQOffset;
 
 module.exports = World;
 
+World.StateShift  = 8;
+World.ColorShift  = 8;
+World.TurnShift   = 16;
 World.FlagVisited = 0x0100;
 World.MaskFlags   = 0xff00;
 World.MaskColor   = 0x00ff;
@@ -3193,7 +3454,7 @@ World.prototype.addView = function addView(view) {
 
 }).call(this);
 
-}],["koerper.js","koerper","koerper.js",{"wizdom":28},function (require, exports, module, __filename, __dirname){
+}],["koerper.js","koerper","koerper.js",{"wizdom":30},function (require, exports, module, __filename, __dirname){
 
 // koerper/koerper.js
 // ------------------
@@ -3506,7 +3767,7 @@ OpaqueHtml.prototype.getActualFirstChild = function getActualFirstChild() {
 //@ sourceMappingURL=performance-now.map
 */
 
-}],["index.js","raf","index.js",{"performance-now":25},function (require, exports, module, __filename, __dirname){
+}],["index.js","raf","index.js",{"performance-now":27},function (require, exports, module, __filename, __dirname){
 
 // raf/index.js
 // ------------
