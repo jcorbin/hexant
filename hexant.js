@@ -160,10 +160,12 @@ function onKeyPress(e) {
     case 0x43: // C
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
+        e.preventDefault();
         break;
 
     case 0x2f: // /
         this.promptFor('rule', Turmite.ruleHelp);
+        e.preventDefault();
         break;
     }
 };
