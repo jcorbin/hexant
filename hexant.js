@@ -28,12 +28,7 @@ function Hexant(body, scope) {
     this.frameInterval = 0;
     this.paused = true;
 
-    this.boundOnKeyPress = onKeyPress;
     this.boundPlaypause = playpause;
-
-    function onKeyPress(e) {
-        self.onKeyPress(e);
-    }
 
     function playpause() {
         self.playpause();
@@ -61,8 +56,16 @@ function hookupCanvas(component, scope) {
     this.view = this.world.addView(
         new View(this.world, component));
 
+    scope.window.addEventListener('keypress', function onKeyPress(e) {
+        if (e.target === scope.window.document.documentElement ||
+            e.target === scope.window.document.body ||
+            e.target === self.el
+        ) {
+            self.onKeyPress(e);
+        }
+    });
+
     this.el.addEventListener('click', this.boundPlaypause);
-    scope.window.addEventListener('keypress', this.boundOnKeyPress);
 
     this.hash.bind('colors')
         .setParse(colorGen.parse, colorGen.toString)
