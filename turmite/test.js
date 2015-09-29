@@ -9,19 +9,18 @@ var bufs = [];
 process.stdin.on('data', function read(chunk) {
     bufs.push(chunk);
 });
-process.stdin.on('error', finish);
+process.stdin.on('error', function onError(err) {
+    console.error(err);
+    return;
+});
 process.stdin.on('end', function end() {
     var buf = Buffer.concat(bufs);
     var str = buf.toString();
-    finish(null, str);
+
+    dump(str);
 });
 
-function finish(err, str) {
-    if (err) {
-        console.error(err);
-        return;
-    }
-
+function dump(str) {
     var res = Turmite.parse(str);
     if (res.err) {
         console.error(res.err);
