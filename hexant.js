@@ -82,7 +82,7 @@ function hookupCanvas(component, scope) {
 
     this.hash.bind('rule')
         .setParse(function parseRule(str) {
-            var ent = new Turmite(self.world);
+            var ent = new Turmite();
             var err = ent.parse(str);
             if (err) {
                 // TODO: better handle / fallback

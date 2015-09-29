@@ -31,10 +31,10 @@ Turmite.ruleHelp =
     '  - BL=back-left BR=back-right\n'
     ;
 
-function Turmite(rules) {
+function Turmite() {
     this.numStates = 0;
     this.numColors = 0;
-    this.rules = rules || new Uint32Array(64 * 1024);
+    this.rules = new Uint32Array(64 * 1024);
     this.specString = '';
 
     this.dir = 0;
