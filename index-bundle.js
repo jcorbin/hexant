@@ -984,10 +984,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_qthw0j");
+        component.setAttribute("id", "view_peukxu");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_qthw0j")
+       scope.componentsFor["view"].setAttribute("for", "view_peukxu")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1008,10 +1008,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_dwpkq5");
+        component.setAttribute("id", "prompt_ep5l7k");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_dwpkq5")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_ep5l7k")
     }
     this.scope.hookup("this", this);
 };
@@ -1795,10 +1795,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_m8ncsi");
+        component.setAttribute("id", "view_n653d7");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_m8ncsi")
+       scope.componentsFor["view"].setAttribute("for", "view_n653d7")
     }
     this.scope.hookup("this", this);
 };
@@ -2001,10 +2001,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_el09r");
+        component.setAttribute("id", "box_jexpuo");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_el09r")
+       scope.componentsFor["box"].setAttribute("for", "box_jexpuo")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2019,10 +2019,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_qkeaqw");
+            component.setAttribute("id", "help_jp94tw");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_qkeaqw")
+           scope.componentsFor["help"].setAttribute("for", "help_jp94tw")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2035,10 +2035,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_fxcox1");
+            component.setAttribute("id", "text_l6qxzq");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_fxcox1")
+           scope.componentsFor["text"].setAttribute("for", "text_l6qxzq")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2164,6 +2164,11 @@ function hookup(id, component, scope) {
 Prompt.prototype.onKeyDown =
 function onKeyDown(e) {
     switch (e.keyCode) {
+    case 0x0d: // <Enter>
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+        break;
     case 0x1b: // <Esc>
         this.cancel();
         e.preventDefault();
@@ -2948,7 +2953,9 @@ World.TurnShift   = 16;
 World.FlagVisited = 0x0100;
 World.MaskFlags   = 0xff00;
 World.MaskColor   = 0x00ff;
-World.MaxColor    = 0x00ff;
+World.MaxState    = 0xff;
+World.MaxColor    = 0xff;
+World.TurnMask    = 0xff;
 
 function World() {
     this.numColors = 0;
