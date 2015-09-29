@@ -12,6 +12,7 @@
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "license": "MIT",
   "devDependencies": {
+    "hexer": "^1.4.5",
     "html-inline": "^1.1.1",
     "http-server": "^0.8.0",
     "minify": "^1.4.20",

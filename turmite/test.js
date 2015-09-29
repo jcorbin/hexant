@@ -2,6 +2,7 @@
 
 'use strict';
 
+var hex = require('hexer');
 var Turmite = require('./index.js');
 
 var bufs = [];
@@ -30,7 +31,18 @@ function finish(err, str) {
         return;
     }
 
-    console.log(res.value.toString());
+    var compile = res.value;
+    console.log('COMPILE:\n%s\n', compile.toString());
 
-    // TODO: call compile and rules
+    res = compile(new Turmite());
+    if (res.err) {
+        console.error(res.err);
+        if (res.value !== null) {
+            console.log(res.value);
+        }
+        return;
+    }
+
+    var ent = res.value;
+    process.stdout.write(hex(new Buffer(new Uint8Array(ent.rules.buffer))) + '\n');
 }
