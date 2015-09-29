@@ -106,6 +106,11 @@ function hookup(id, component, scope) {
 Prompt.prototype.onKeyDown =
 function onKeyDown(e) {
     switch (e.keyCode) {
+    case 0x0d: // <Enter>
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+        break;
     case 0x1b: // <Esc>
         this.cancel();
         e.preventDefault();
