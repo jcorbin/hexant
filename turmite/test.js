@@ -22,6 +22,30 @@ process.stdin.on('end', function end() {
     roundTrip(str);
 });
 
+// diffRules(
+//     'ant(L R)',
+//     '0, c => 0, c+1, turns(L R)');
+
+function diffRules(str1, str2) {
+    var res = Turmite.compile(str1);
+    if (!check(res)) {
+        return;
+    }
+    var ent1 = res.value;
+
+    res = Turmite.compile(str2);
+    if (!check(res)) {
+        return;
+    }
+    var ent2 = res.value;
+
+    var dump1 = hex(new Buffer(new Uint8Array(ent1.rules.buffer)));
+    var dump2 = hex(new Buffer(new Uint8Array(ent2.rules.buffer)));
+
+    console.log('%s\n-- vs\n%s', ent1.specString, ent2.specString);
+    printDiff([dump1, dump2]);
+}
+
 function dump(str) {
     var res = Turmite.parse(str);
     if (!check(res)) {
