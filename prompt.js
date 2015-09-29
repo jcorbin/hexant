@@ -58,7 +58,7 @@ function finish() {
     var callback = this.callback;
     this.hide();
     if (callback) {
-        value = value.replace(/(?:\r?\n)+/, '');
+        value = value.replace(/(?:\r?\n)+$/, '');
         callback(false, value);
     }
 };
