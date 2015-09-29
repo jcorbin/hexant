@@ -55,16 +55,6 @@ function parse(str) {
     return parseTurmite(str);
 };
 
-Turmite.prototype.parse =
-function parse(str) {
-    var res = Turmite.parse(str);
-    if (!res.err) {
-        var compile = res.value;
-        res = compile(this);
-    }
-    return res.err;
-};
-
 Turmite.prototype.toString =
 function toString() {
     if (this.specString) {

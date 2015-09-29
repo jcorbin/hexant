@@ -82,13 +82,20 @@ function hookupCanvas(component, scope) {
 
     this.hash.bind('rule')
         .setParse(function parseRule(str) {
-            var ent = new Turmite();
-            var err = ent.parse(str);
-            if (err) {
+            var res = Turmite.parse(str);
+            if (res.err) {
                 // TODO: better handle / fallback
-                throw err;
+                throw res.err;
             }
-            return ent;
+            var compile = res.value;
+
+            res = compile(new Turmite());
+            if (res.err) {
+                // TODO: better handle / fallback
+                throw res.err;
+            }
+
+            return res.value;
         })
         .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
