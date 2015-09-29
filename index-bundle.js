@@ -984,10 +984,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_9cfyl3");
+        component.setAttribute("id", "view_qthw0j");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_9cfyl3")
+       scope.componentsFor["view"].setAttribute("for", "view_qthw0j")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1008,10 +1008,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_5m7jrj");
+        component.setAttribute("id", "prompt_dwpkq5");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_5m7jrj")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_dwpkq5")
     }
     this.scope.hookup("this", this);
 };
@@ -1113,13 +1113,12 @@ function hookupCanvas(component, scope) {
 
     this.hash.bind('rule')
         .setParse(function parseRule(str) {
-            var ent = new Turmite(self.world);
-            var err = ent.parse(str);
-            if (err) {
-                // TODO: better handle / fallback
-                throw err;
+            var res = Turmite.compile(str);
+            if (res.err) {
+                console.error(res.err); // TODO: better error facility
+                return this.value;
             }
-            return ent;
+            return res.value;
         })
         .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
@@ -1796,10 +1795,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_l4dlcp");
+        component.setAttribute("id", "view_m8ncsi");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_l4dlcp")
+       scope.componentsFor["view"].setAttribute("for", "view_m8ncsi")
     }
     this.scope.hookup("this", this);
 };
@@ -2002,10 +2001,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_9ug2l9");
+        component.setAttribute("id", "box_el09r");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_9ug2l9")
+       scope.componentsFor["box"].setAttribute("for", "box_el09r")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2020,10 +2019,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_puy88t");
+            component.setAttribute("id", "help_qkeaqw");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_puy88t")
+           scope.componentsFor["help"].setAttribute("for", "help_qkeaqw")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2036,10 +2035,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_2oqs1w");
+            component.setAttribute("id", "text_fxcox1");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_2oqs1w")
+           scope.componentsFor["text"].setAttribute("for", "text_fxcox1")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2307,10 +2306,10 @@ Turmite.ruleHelp =
     '  - BL=back-left BR=back-right\n'
     ;
 
-function Turmite(rules) {
+function Turmite() {
     this.numStates = 0;
     this.numColors = 0;
-    this.rules = rules || new Uint32Array(64 * 1024);
+    this.rules = new Uint32Array(64 * 1024);
     this.specString = '';
 
     this.dir = 0;
@@ -2331,14 +2330,14 @@ function parse(str) {
     return parseTurmite(str);
 };
 
-Turmite.prototype.parse =
-function parse(str) {
+Turmite.compile =
+function compile(str, ent) {
     var res = Turmite.parse(str);
-    if (!res.err) {
-        var compile = res.value;
-        res = compile(this);
+    if (res.err) {
+        return res;
     }
-    return res.err;
+    var compile = res.value;
+    return compile(ent || new Turmite());
 };
 
 Turmite.prototype.toString =
