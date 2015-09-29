@@ -119,18 +119,36 @@ function check(res) {
 //     printDiff(dumps);
 // }
 
-function printDiff(strs) {
+function printDiff(strs, heads) {
     var cols = strs.map(splitLines);
+
+    var start = 0;
+    var i, j;
+    if (heads) {
+        var headCols = heads.map(splitLines);
+        start = maxLength(headCols) + 1;
+        for (i = 0; i < headCols.length; i++) {
+            var headCol = headCols[i];
+            for (j = headCol.length; j < start; j++) {
+                headCol.unshift('');
+            }
+            headCol.push('');
+            cols[i] = headCol.concat(cols[i])
+        }
+    }
+
     var widths = cols.map(maxLength);
     var n = maxLength(cols);
-    for (var i = 0; i < n; i++) {
+
+    for (i = 0; i < n; i++) {
         var out = '';
-        for (var j = 0; j < cols.length; j++) {
+        for (j = 0; j < cols.length; j++) {
             var line = pad(widths[j], cols[j][i]);
-            if (j > 0) {
-                var sep = cols[j - 1][i] === cols[j][i] ? '|' : 'X';
-                out += ' ' + sep + ' ';
+            var sep = '   ';
+            if (i > start && j > 0) {
+                sep = cols[j - 1][i] === cols[j][i] ? '|' : 'X';
             }
+            out += ' ' + sep + ' ';
             out += line;
         }
         process.stdout.write(out + '\n');
