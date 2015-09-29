@@ -1,3 +1,4 @@
+/* global console, process, Buffer */
 /* eslint no-console:0 */
 
 'use strict';
@@ -93,6 +94,17 @@ function check(res) {
     }
     return true;
 }
+
+// function debugAmbiguous(results) {
+//     var util = require('util');
+//     console.error('ambiguous parse, got %s results', results.length);
+//     var dumps = [];
+//     for (var i = 0; i < results.length; i++) {
+//         var dump = util.inspect(results[i], {depth: Infinity}).split(/\n/);
+//         dumps.push(dump);
+//     }
+//     printDiffCols(dumps);
+// }
 
 function printDiffCols(dumps) {
     var widths = dumps.map(maxLength);
