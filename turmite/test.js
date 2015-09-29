@@ -35,7 +35,9 @@ function dump(str) {
     }
 
     var ent = res.value;
-    process.stdout.write(hex(new Buffer(new Uint8Array(ent.rules.buffer))) + '\n');
+
+    var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
+    process.stdout.write(hex(rulesDump) + '\n');
 }
 
 function check(res) {
