@@ -31,10 +31,10 @@ Turmite.ruleHelp =
     '  - BL=back-left BR=back-right\n'
     ;
 
-function Turmite(rules) {
+function Turmite() {
     this.numStates = 0;
     this.numColors = 0;
-    this.rules = rules || new Uint32Array(64 * 1024);
+    this.rules = new Uint32Array(64 * 1024);
     this.specString = '';
 
     this.dir = 0;
@@ -55,14 +55,14 @@ function parse(str) {
     return parseTurmite(str);
 };
 
-Turmite.prototype.parse =
-function parse(str) {
+Turmite.compile =
+function compile(str, ent) {
     var res = Turmite.parse(str);
-    if (!res.err) {
-        var compile = res.value;
-        res = compile(this);
+    if (res.err) {
+        return res;
     }
-    return res.err;
+    var compile = res.value;
+    return compile(ent || new Turmite());
 };
 
 Turmite.prototype.toString =
