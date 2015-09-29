@@ -22,11 +22,7 @@ process.stdin.on('end', function end() {
 
 function dump(str) {
     var res = Turmite.parse(str);
-    if (res.err) {
-        console.error(res.err);
-        if (res.value !== null) {
-            console.log(res.value);
-        }
+    if (!check(res)) {
         return;
     }
 
@@ -34,14 +30,21 @@ function dump(str) {
     console.log('COMPILE:\n%s\n', compile.toString());
 
     res = compile(new Turmite());
-    if (res.err) {
-        console.error(res.err);
-        if (res.value !== null) {
-            console.log(res.value);
-        }
+    if (!check(res)) {
         return;
     }
 
     var ent = res.value;
     process.stdout.write(hex(new Buffer(new Uint8Array(ent.rules.buffer))) + '\n');
+}
+
+function check(res) {
+    if (res.err) {
+        console.error(res.err);
+        if (res.value !== null) {
+            console.log(res.value);
+        }
+        return false;
+    }
+    return true;
 }
