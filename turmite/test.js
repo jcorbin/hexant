@@ -22,6 +22,30 @@ process.stdin.on('end', function end() {
     roundTrip(str);
 });
 
+// diffRules(
+//     'ant(L R)',
+//     '0, c => 0, c+1, turns(L R)');
+
+function diffRules(str1, str2) {
+    var res = Turmite.compile(str1);
+    if (!check(res)) {
+        return;
+    }
+    var ent1 = res.value;
+
+    res = Turmite.compile(str2);
+    if (!check(res)) {
+        return;
+    }
+    var ent2 = res.value;
+
+    var dump1 = hex(new Buffer(new Uint8Array(ent1.rules.buffer)));
+    var dump2 = hex(new Buffer(new Uint8Array(ent2.rules.buffer)));
+
+    console.log('%s\n-- vs\n%s', ent1.specString, ent2.specString);
+    printDiff([dump1, dump2]);
+}
+
 function dump(str) {
     var res = Turmite.parse(str);
     if (!check(res)) {
@@ -71,10 +95,7 @@ function roundTrip(str) {
     var comp2 = compile.toString();
 
     if (comp1 !== comp2) {
-        printDiffCols([
-            comp1.split(/\n/),
-            comp2.split(/\n/)
-        ]);
+        printDiff([comp1, comp2]);
         return;
     }
 
@@ -100,27 +121,31 @@ function check(res) {
 //     console.error('ambiguous parse, got %s results', results.length);
 //     var dumps = [];
 //     for (var i = 0; i < results.length; i++) {
-//         var dump = util.inspect(results[i], {depth: Infinity}).split(/\n/);
-//         dumps.push(dump);
+//         dumps.push(util.inspect(results[i], {depth: Infinity}));
 //     }
-//     printDiffCols(dumps);
+//     printDiff(dumps);
 // }
 
-function printDiffCols(dumps) {
-    var widths = dumps.map(maxLength);
-    var n = maxLength(dumps);
+function printDiff(strs) {
+    var cols = strs.map(splitLines);
+    var widths = cols.map(maxLength);
+    var n = maxLength(cols);
     for (var i = 0; i < n; i++) {
         var out = '';
-        for (var j = 0; j < dumps.length; j++) {
-            var line = pad(widths[j], dumps[j][i]);
+        for (var j = 0; j < cols.length; j++) {
+            var line = pad(widths[j], cols[j][i]);
             if (j > 0) {
-                var sep = dumps[j - 1][i] === dumps[j][i] ? '|' : 'X';
+                var sep = cols[j - 1][i] === cols[j][i] ? '|' : 'X';
                 out += ' ' + sep + ' ';
             }
             out += line;
         }
         process.stdout.write(out + '\n');
     }
+}
+
+function splitLines(str) {
+    return str.split(/\n/);
 }
 
 function pad(n, str) {
