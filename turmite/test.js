@@ -6,20 +6,13 @@
 var hex = require('hexer');
 var Turmite = require('./index.js');
 
-var bufs = [];
-process.stdin.on('data', function read(chunk) {
-    bufs.push(chunk);
-});
-process.stdin.on('error', function onError(err) {
-    console.error(err);
-    return;
-});
-process.stdin.on('end', function end() {
-    var buf = Buffer.concat(bufs);
-    var str = buf.toString();
-
-    // dump(str);
-    roundTrip(str);
+bufferStream(process.stdin, function done(err, str) {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    dump(str);
+    // roundTrip(str);
 });
 
 // diffRules(
@@ -163,4 +156,19 @@ function maxLength(items) {
         .reduce(function max(a, b) {
             return Math.max(a, b);
         });
+}
+
+function bufferStream(stream, callback) {
+    var bufs = [];
+    stream.on('data', function read(chunk) {
+        bufs.push(chunk);
+    });
+    stream.on('error', function onError(err) {
+        callback(err, null);
+    });
+    stream.on('end', function end() {
+        var buf = Buffer.concat(bufs);
+        var str = buf.toString();
+        callback(null, str);
+    });
 }
