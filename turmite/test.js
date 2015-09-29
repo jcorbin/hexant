@@ -59,16 +59,15 @@ function dump(str) {
     process.stdout.write(hex(rulesDump) + '\n');
 }
 
-function roundTrip(str) {
-    var res = Turmite.parse(str);
+function roundTrip(str1) {
+    var res = Turmite.parse(str1);
     if (!check(res)) {
         return;
     }
 
     var compile = res.value;
     var comp1 = compile.toString();
-
-    console.log(comp1);
+    console.log('first compile:\n%s', comp1);
 
     res = compile(new Turmite());
     if (!check(res)) {
@@ -76,8 +75,7 @@ function roundTrip(str) {
     }
 
     var ent = res.value;
-
-    console.log('Round Tripping:\n%s', ent.specString);
+    var str2 = ent.specString;
 
     res = Turmite.parse(ent.specString);
     if (!check(res)) {
@@ -88,7 +86,8 @@ function roundTrip(str) {
     var comp2 = compile.toString();
 
     if (comp1 !== comp2) {
-        printDiff([comp1, comp2]);
+        printDiff([comp1, comp2],
+                  [str1, str2]);
         return;
     }
 
@@ -100,7 +99,7 @@ function roundTrip(str) {
 
 function check(res) {
     if (res.err) {
-        console.error(res.err);
+        console.error(res.err.stack);
         if (res.value !== null) {
             console.log(res.value);
         }
