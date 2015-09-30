@@ -11,7 +11,7 @@ bufferStream(process.stdin, function done(err, str) {
         console.error(err);
         return;
     }
-    dump(str);
+    parseAndDump(str);
     // roundTrip(str);
 });
 
@@ -39,7 +39,7 @@ function diffRules(str1, str2) {
     printDiff([dump1, dump2]);
 }
 
-function dump(str) {
+function parseAndDump(str) {
     var res = Turmite.parse(str);
     if (!check(res)) {
         return;
@@ -54,20 +54,29 @@ function dump(str) {
     }
 
     var ent = res.value;
+    dump(ent, function each(line) {
+        process.stdout.write(line + '\n');
+    });
+}
 
+function dump(ent, emit) {
     var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
-    console.log('numStates:', ent.numStates);
-    console.log('numColors:', ent.numColors);
-    console.log('spec:', ent.specString
-                    .split(/\n/)
-                    .map(function each(line, i) {
-                        if (i > 0) {
-                            line = '      ' + line;
-                        }
-                        return line;
-                    })
-                    .join('\n'));
-    console.log('rules:\n%s', hex(rulesDump));
+
+    emit('numStates: ' + ent.numStates);
+    emit('numColors: ' + ent.numColors);
+
+    ent.specString
+        .split(/\n/)
+        .forEach(function each(line, i) {
+            if (i === 0) {
+                line = 'spec: ' + line;
+            } else {
+                line = '      ' + line;
+            }
+            emit(line);
+        });
+    emit('rules:');
+    hex(rulesDump).split('\n').forEach(emit);
 }
 
 function roundTrip(str1) {
@@ -104,8 +113,9 @@ function roundTrip(str1) {
 
     console.log('round code trip okay:\n%s', comp2);
 
-    var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
-    process.stdout.write(hex(rulesDump) + '\n');
+    dump(ent, function each(line) {
+        process.stdout.write(line + '\n');
+    });
 }
 
 function check(res) {
