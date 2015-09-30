@@ -56,7 +56,18 @@ function dump(str) {
     var ent = res.value;
 
     var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
-    process.stdout.write(hex(rulesDump) + '\n');
+    console.log('numStates:', ent.numStates);
+    console.log('numColors:', ent.numColors);
+    console.log('spec:', ent.specString
+                    .split(/\n/)
+                    .map(function each(line, i) {
+                        if (i > 0) {
+                            line = '      ' + line;
+                        }
+                        return line;
+                    })
+                    .join('\n'));
+    console.log('rules:\n%s', hex(rulesDump));
 }
 
 function roundTrip(str1) {
