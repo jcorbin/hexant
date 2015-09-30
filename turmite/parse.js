@@ -95,6 +95,7 @@ function parseAnt(str) {
         var rule     = stateKey | color;
         var nextRule = rule;
 
+        turmite.clearRules();
         for (var i = 0; i < multurns.length; i++) {
             var mult = multurns[i].mult;
             var relturn = multurns[i].relturn;
