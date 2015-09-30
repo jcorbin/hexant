@@ -50,6 +50,13 @@ function Turmite() {
     this.index = 0;
 }
 
+Turmite.prototype.clearRules =
+function clearRules() {
+    for (var i = 0; i < this.rules.length; i++) {
+        this.rules[i] = 0;
+    }
+};
+
 Turmite.parse =
 function parse(str) {
     return parseTurmite(str);
