@@ -50,11 +50,11 @@ function hookup(id, component, scope) {
     this.view = this.world.addView(
         new View(this.world, this.el));
 
-    this.setup(scope);
+    this.setup();
 };
 
 Hexant.prototype.setup =
-function setup(scope) {
+function setup() {
     var self = this;
 
     this.window.addEventListener('keypress', function onKeyPress(e) {
