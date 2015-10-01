@@ -197,8 +197,13 @@ function promptFor(name, desc) {
             callback(null);
             return;
         }
-        self.hash.set(name, value);
-        callback(null);
+
+        self.hash.set(name, value, function setDone(err) {
+            // NOTE: we get two extra args, the string value entered, and  the
+            // parsed value, so we cannot just pass callback in directly, whose
+            // signature is callback(err, help, revalue)
+            callback(err);
+        });
     }
 };
 
