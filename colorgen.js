@@ -42,6 +42,7 @@ gens.hue = HueWheelGenerator;
 // TODO: husl too
 
 /* roles:
+ * 0: empty cells
  * 1: ant traced cells
  * 2: ant body
  * 3: ant head

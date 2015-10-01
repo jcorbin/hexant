@@ -18,12 +18,15 @@ function View(world, canvas) {
 
     this.labeled = false;
     this.drawUnvisited = false;
+    this.drawTrace = false;
 
     this.antCellColorGen = null;
+    this.emptyCellColorGen = null;
     this.bodyColorGen = null;
     this.headColorGen = null;
 
     this.antCellColors = [];
+    this.emptyCellColors = [];
     this.bodyColors = [];
     this.headColors = [];
     this.lastEntPos = [];
@@ -45,18 +48,19 @@ View.prototype.redraw =
 function redraw() {
     var self = this;
     var ents = self.world.ents;
+    var colors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 
     self.world.tile.eachDataPoint(this.drawUnvisited
     ? function drawEachCell(point, data) {
         self.drawCell(point,
                       data & World.MaskColor,
-                      this.antCellColors);
+                      colors);
     }
     : function maybeDrawEachCell(point, data) {
         if (data & World.FlagVisited) {
             self.drawCell(point,
                           data & World.MaskColor,
-                          this.antCellColors);
+                          colors);
         }
     });
 
@@ -106,6 +110,7 @@ function removeEnt(ent) {
 
 View.prototype.setColorGen =
 function setColorGen(colorGen) {
+    this.emptyCellColorGen = colorGen(0);
     this.antCellColorGen = colorGen(1);
     this.bodyColorGen = colorGen(2);
     this.headColorGen = colorGen(3);
@@ -115,6 +120,17 @@ function setColorGen(colorGen) {
 View.prototype.updateColors = function updateColors(regen) {
     var N = this.world.numColors;
     var M = this.world.ents.length;
+
+    if (this.emptyCellColorGen &&
+        (regen || this.emptyCellColors.length !== N)
+    ) {
+        this.emptyCellColors = this.emptyCellColorGen(N);
+        while (this.emptyCellColors.length <= World.MaxColor) {
+            this.emptyCellColors.push(
+                this.emptyCellColors[this.emptyCellColors.length % N]
+            );
+        }
+    }
 
     if (this.antCellColorGen &&
         (regen || this.antCellColors.length !== N)
