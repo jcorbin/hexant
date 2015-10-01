@@ -26,7 +26,6 @@ function Hexant(body, scope) {
     this.frameInterval = 0;
     this.paused = true;
     this.prompt = null;
-    this.promptField = null;
 
     this.boundPlaypause = playpause;
 
