@@ -38,26 +38,18 @@ Hexant.prototype.hookup =
 function hookup(id, component, scope) {
     var self = this;
 
-    switch (id) {
-    case 'view':
-        self.hookupCanvas(component, scope);
-        break;
-
-    case 'prompt':
-        self.prompt = component;
-        break;
+    // Only one scope of interest
+    if (id !== 'this') {
+        return;
     }
-};
 
-Hexant.prototype.hookupCanvas =
-function hookupCanvas(component, scope) {
-    var self = this;
+    this.prompt = scope.components.prompt;
+    this.el = scope.components.view;
 
     this.titleBase = scope.window.document.title;
-    this.el = component;
     this.world = new World();
     this.view = this.world.addView(
-        new View(this.world, component));
+        new View(this.world, this.el));
 
     scope.window.addEventListener('keypress', function onKeyPress(e) {
         if (e.target === scope.window.document.documentElement ||
