@@ -6,20 +6,13 @@
 var hex = require('hexer');
 var Turmite = require('./index.js');
 
-var bufs = [];
-process.stdin.on('data', function read(chunk) {
-    bufs.push(chunk);
-});
-process.stdin.on('error', function onError(err) {
-    console.error(err);
-    return;
-});
-process.stdin.on('end', function end() {
-    var buf = Buffer.concat(bufs);
-    var str = buf.toString();
-
-    // dump(str);
-    roundTrip(str);
+bufferStream(process.stdin, function done(err, str) {
+    if (err) {
+        console.error(err);
+        return;
+    }
+    parseAndDump(str);
+    // roundTrip(str);
 });
 
 // diffRules(
@@ -46,7 +39,7 @@ function diffRules(str1, str2) {
     printDiff([dump1, dump2]);
 }
 
-function dump(str) {
+function parseAndDump(str) {
     var res = Turmite.parse(str);
     if (!check(res)) {
         return;
@@ -61,21 +54,40 @@ function dump(str) {
     }
 
     var ent = res.value;
-
-    var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
-    process.stdout.write(hex(rulesDump) + '\n');
+    dump(ent, function each(line) {
+        process.stdout.write(line + '\n');
+    });
 }
 
-function roundTrip(str) {
-    var res = Turmite.parse(str);
+function dump(ent, emit) {
+    var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
+
+    emit('numStates: ' + ent.numStates);
+    emit('numColors: ' + ent.numColors);
+
+    ent.specString
+        .split(/\n/)
+        .forEach(function each(line, i) {
+            if (i === 0) {
+                line = 'spec: ' + line;
+            } else {
+                line = '      ' + line;
+            }
+            emit(line);
+        });
+    emit('rules:');
+    hex(rulesDump).split('\n').forEach(emit);
+}
+
+function roundTrip(str1) {
+    var res = Turmite.parse(str1);
     if (!check(res)) {
         return;
     }
 
     var compile = res.value;
     var comp1 = compile.toString();
-
-    console.log(comp1);
+    console.log('first compile:\n%s', comp1);
 
     res = compile(new Turmite());
     if (!check(res)) {
@@ -83,8 +95,7 @@ function roundTrip(str) {
     }
 
     var ent = res.value;
-
-    console.log('Round Tripping:\n%s', ent.specString);
+    var str2 = ent.specString;
 
     res = Turmite.parse(ent.specString);
     if (!check(res)) {
@@ -95,19 +106,21 @@ function roundTrip(str) {
     var comp2 = compile.toString();
 
     if (comp1 !== comp2) {
-        printDiff([comp1, comp2]);
+        printDiff([comp1, comp2],
+                  [str1, str2]);
         return;
     }
 
     console.log('round code trip okay:\n%s', comp2);
 
-    var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
-    process.stdout.write(hex(rulesDump) + '\n');
+    dump(ent, function each(line) {
+        process.stdout.write(line + '\n');
+    });
 }
 
 function check(res) {
     if (res.err) {
-        console.error(res.err);
+        console.error(res.err.stack);
         if (res.value !== null) {
             console.log(res.value);
         }
@@ -126,18 +139,36 @@ function check(res) {
 //     printDiff(dumps);
 // }
 
-function printDiff(strs) {
+function printDiff(strs, heads) {
     var cols = strs.map(splitLines);
+
+    var start = 0;
+    var i, j;
+    if (heads) {
+        var headCols = heads.map(splitLines);
+        start = maxLength(headCols) + 1;
+        for (i = 0; i < headCols.length; i++) {
+            var headCol = headCols[i];
+            for (j = headCol.length; j < start; j++) {
+                headCol.unshift('');
+            }
+            headCol.push('');
+            cols[i] = headCol.concat(cols[i])
+        }
+    }
+
     var widths = cols.map(maxLength);
     var n = maxLength(cols);
-    for (var i = 0; i < n; i++) {
+
+    for (i = 0; i < n; i++) {
         var out = '';
-        for (var j = 0; j < cols.length; j++) {
+        for (j = 0; j < cols.length; j++) {
             var line = pad(widths[j], cols[j][i]);
-            if (j > 0) {
-                var sep = cols[j - 1][i] === cols[j][i] ? '|' : 'X';
-                out += ' ' + sep + ' ';
+            var sep = '   ';
+            if (i > start && j > 0) {
+                sep = cols[j - 1][i] === cols[j][i] ? '|' : 'X';
             }
+            out += ' ' + sep + ' ';
             out += line;
         }
         process.stdout.write(out + '\n');
@@ -163,4 +194,19 @@ function maxLength(items) {
         .reduce(function max(a, b) {
             return Math.max(a, b);
         });
+}
+
+function bufferStream(stream, callback) {
+    var bufs = [];
+    stream.on('data', function read(chunk) {
+        bufs.push(chunk);
+    });
+    stream.on('error', function onError(err) {
+        callback(err, null);
+    });
+    stream.on('end', function end() {
+        var buf = Buffer.concat(bufs);
+        var str = buf.toString();
+        callback(null, str);
+    });
 }

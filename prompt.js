@@ -58,7 +58,7 @@ function finish() {
     var callback = this.callback;
     this.hide();
     if (callback) {
-        value = value.replace(/(?:\r?\n)+/, '');
+        value = value.replace(/(?:\r?\n)+$/, '');
         callback(false, value);
     }
 };
@@ -83,24 +83,18 @@ function hide() {
 
 Prompt.prototype.hookup =
 function hookup(id, component, scope) {
-    var self = this;
-
-    switch (id) {
-    case 'box':
-        self.box = component;
-        break;
-
-    case 'help':
-        self.help = component;
-        break;
-
-    case 'text':
-        self.text = component;
-        self.text.addEventListener('keydown', this.boundOnKeyDown);
-        self.text.addEventListener('keyup', this.boundOnKeyUp);
-        self.text.addEventListener('blur', this.boundCancel);
-        break;
+    // Only one scope of interest
+    if (id !== 'this') {
+        return;
     }
+
+    this.box = scope.components.box;
+    this.help = scope.components.help;
+    this.text = scope.components.text;
+
+    this.text.addEventListener('keydown', this.boundOnKeyDown);
+    this.text.addEventListener('keyup', this.boundOnKeyUp);
+    this.text.addEventListener('blur', this.boundCancel);
 };
 
 Prompt.prototype.onKeyDown =
