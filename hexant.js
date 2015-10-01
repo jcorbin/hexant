@@ -29,9 +29,14 @@ function Hexant(body, scope) {
     this.prompt = null;
 
     this.boundPlaypause = playpause;
+    this.boundOnKeyPress = onKeyPress;
 
     function playpause() {
         self.playpause();
+    }
+
+    function onKeyPress(e) {
+        self.onKeyPress(e);
     }
 }
 
@@ -57,10 +62,7 @@ Hexant.prototype.setup =
 function setup() {
     var self = this;
 
-    this.window.addEventListener('keypress', function onKeyPress(e) {
-        self.onKeyPress(e);
-    });
-
+    this.window.addEventListener('keypress', this.boundOnKeyPress);
     this.el.addEventListener('click', this.boundPlaypause);
 
     this.hash.bind('colors')
