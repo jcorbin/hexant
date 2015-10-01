@@ -192,10 +192,13 @@ function promptFor(name, desc) {
     var orig = self.hash.getStr(name);
     self.prompt.prompt(desc, orig, finish);
 
-    function finish(canceled, value) {
-        if (!canceled) {
-            self.hash.set(name, value);
+    function finish(canceled, value, callback) {
+        if (canceled) {
+            callback(null);
+            return;
         }
+        self.hash.set(name, value);
+        callback(null);
     }
 };
 

@@ -15,6 +15,7 @@ function Prompt(body, scope) {
     this.boundOnKeyDown = onKeyDown;
     this.boundOnKeyUp = onKeyUp;
     this.boundCancel = cancel;
+    this.boundFinished = finished;
     this.lastEnter = 0;
 
     function onKeyDown(e) {
@@ -27,6 +28,10 @@ function Prompt(body, scope) {
 
     function cancel(e) {
         self.cancel();
+    }
+
+    function finished(err, help, revalue) {
+        self.finished(err, help, revalue);
     }
 }
 
@@ -56,20 +61,36 @@ Prompt.prototype.finish =
 function finish() {
     var value = this.text.value;
     var callback = this.callback;
-    this.hide();
     if (callback) {
         value = value.replace(/(?:\r?\n)+$/, '');
-        callback(false, value);
+        callback(false, value, this.boundFinished);
+    } else {
+        this.boundFinished(null);
     }
 };
 
 Prompt.prototype.cancel =
 function cancel() {
     var callback = this.callback;
-    this.hide();
     if (callback) {
-        callback(true, null);
+        callback(true, null, this.boundFinished);
     }
+};
+
+Prompt.prototype.finished =
+function finished(err, help, revalue) {
+    if (err) {
+        if (help) {
+            this.help.innerText = help;
+        } else {
+            this.help.innerText = '' + err;
+        }
+        if (revalue) {
+            this.text.value = revalue;
+        }
+        return;
+    }
+    this.hide();
 };
 
 Prompt.prototype.hide =
