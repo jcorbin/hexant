@@ -9,6 +9,7 @@ function Prompt(body, scope) {
 
     this.box = null;
     this.help = null;
+    this.error = null;
     this.text = null;
     this.callback = null;
 
@@ -80,10 +81,10 @@ function cancel() {
 Prompt.prototype.finished =
 function finished(err, help, revalue) {
     if (err) {
+        this.error.innerText = '' + err;
+        this.error.style.display = '';
         if (help) {
             this.help.innerText = help;
-        } else {
-            this.help.innerText = '' + err;
         }
         if (revalue) {
             this.text.value = revalue;
@@ -100,6 +101,8 @@ function hide() {
     this.callback = null;
     this.text.value = '';
     this.help.innerText = '';
+    this.error.style.display = 'none';
+    this.error.innerText = '';
 };
 
 Prompt.prototype.hookup =
@@ -111,6 +114,7 @@ function hookup(id, component, scope) {
 
     this.box = scope.components.box;
     this.help = scope.components.help;
+    this.error = scope.components.error;
     this.text = scope.components.text;
 
     this.text.addEventListener('keydown', this.boundOnKeyDown);
