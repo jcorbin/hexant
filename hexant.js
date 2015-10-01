@@ -82,13 +82,7 @@ function setup(scope) {
         })
         .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
-            self.window.document.title = self.titleBase + ': ' + ent;
-            if (self.world.ents[0]) {
-                self.world.updateEnt(ent, 0);
-            } else {
-                self.world.addEnt(ent);
-            }
-            self.reset();
+            self.onRuleChange(ent);
         });
 
     this.hash.bind('frameRate')
@@ -136,6 +130,17 @@ Hexant.prototype.onColorGenChange =
 function onColorGenChange(gen) {
     this.view.setColorGen(gen);
     this.view.redraw();
+};
+
+Hexant.prototype.onRuleChange =
+function onRuleChange(ent) {
+    this.window.document.title = this.titleBase + ': ' + ent;
+    if (this.world.ents[0]) {
+        this.world.updateEnt(ent, 0);
+    } else {
+        this.world.addEnt(ent);
+    }
+    this.reset();
 };
 
 Hexant.prototype.onKeyPress =
