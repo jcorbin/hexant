@@ -67,8 +67,7 @@ function setup(scope) {
         .setParse(colorGen.parse, colorGen.toString)
         .setDefault('light')
         .addListener(function onColorGenChange(gen) {
-            self.view.setColorGen(gen);
-            self.view.redraw();
+            self.onColorGenChange(gen);
         })
         ;
 
@@ -131,6 +130,12 @@ function setup(scope) {
     if (autoplay) {
         this.play();
     }
+};
+
+Hexant.prototype.onColorGenChange =
+function onColorGenChange(gen) {
+    this.view.setColorGen(gen);
+    this.view.redraw();
 };
 
 Hexant.prototype.onKeyPress =
