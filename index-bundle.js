@@ -342,6 +342,301 @@ Scope.prototype.hookup = function (id, component) {
     }
 };
 
+}],["index.js","hashbind","index.js",{},function (require, exports, module, __filename, __dirname){
+
+// hashbind/index.js
+// -----------------
+
+'use strict';
+
+module.exports = Hash;
+
+function Hash(window) {
+    var self = this;
+
+    this.window = window;
+    this.window.addEventListener('hashchange', onHashChange);
+    this.last = '';
+    this.cache = {};
+    this.values = {};
+    this.bound = {};
+    this.load();
+
+    function onHashChange(e) {
+        self.load();
+    }
+}
+
+Hash.prototype.load =
+function load() {
+    if (this.window.location.hash === this.last) {
+        return;
+    }
+
+    this.last = this.window.location.hash;
+    var parts = this.last.slice(1).split('&');
+    var seen = {};
+    for (var i = 0; i < parts.length; i++) {
+        var keyval = parts[i].split('=');
+        var key = unescape(keyval[0]);
+        var str = unescape(keyval[1]) || '';
+        if (this.cache[key] !== str) {
+            this.cache[key] = str;
+            if (this.bound[key]) {
+                this.bound[key].onChange();
+            } else {
+                this.values[key] = parseValue(str);
+            }
+        }
+        seen[key] = true;
+    }
+    this.prune(seen);
+};
+
+Hash.prototype.prune =
+function prune(except) {
+    if (!except) {
+        except = {};
+    }
+    var cacheKeys = Object.keys(this.cache);
+    for (var i = 0; i < cacheKeys.length; i++) {
+        var key = cacheKeys[i];
+        if (!except[key]) {
+            if (this.bound[key]) {
+                this.bound[key].reset();
+            } else {
+                delete this.cache[key];
+                delete this.values[key];
+            }
+        }
+    }
+};
+
+Hash.prototype.save =
+function save() {
+    var parts = [];
+    var keys = Object.keys(this.cache);
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (!this.bound[key]) {
+            this.cache[key] = valueToString(this.values[key]);
+        }
+        var str = this.cache[key];
+
+        var part = '' + escape(key);
+        if (str === undefined) {
+            continue;
+        } else if (str !== '') {
+            part += '=' + escape(str);
+        }
+        parts.push(part);
+    }
+
+    var hash = parts.join('&');
+    if (hash) {
+        hash = '#' + hash;
+    }
+
+    this.window.location.hash = this.last = hash;
+};
+
+Hash.prototype.bind =
+function bind(key) {
+    if (this.bound[key]) {
+        throw new Error('key already bound');
+    }
+    var bound = new HashKeyBinding(this, key);
+    this.bound[key] = bound;
+    return bound;
+};
+
+Hash.prototype.getStr =
+function getStr(key) {
+    return this.cache[key];
+};
+
+Hash.prototype.get =
+function get(key) {
+    return this.values[key];
+};
+
+Hash.prototype.set =
+function set(key, val) {
+    var bound = this.bound[key] || this.bind(key);
+    return bound.set(val);
+};
+
+function HashKeyBinding(hash, key) {
+    this.hash = hash;
+    this.key = key;
+    this.def = undefined;
+    this.value = hash.values[key];
+    this.parse = parseValue;
+    this.valToString = valueToString;
+    this.listener = null;
+    this.listeners = [];
+    this.notify = this.notifyNoop;
+}
+
+HashKeyBinding.prototype.load =
+function load() {
+    var str = this.hash.cache[this.key];
+    if (str !== undefined) {
+        var val = this.parse(str);
+        if (this.value !== val) {
+            this.value = val;
+            this.hash.values[this.key] = this.value;
+            this.notify();
+        }
+    }
+    return this;
+};
+
+HashKeyBinding.prototype.save =
+function save() {
+    this.hash.values[this.key] = this.value;
+    var str = this.valToString(this.value);
+    if (this.hash.cache[this.key] !== str) {
+        this.hash.cache[this.key] = str;
+        this.hash.save();
+    }
+    return this;
+};
+
+HashKeyBinding.prototype.notifyNoop =
+function notifyNoop() {
+    return this;
+};
+
+HashKeyBinding.prototype.notifyOne =
+function notifyOne() {
+    this.listener(this.value);
+    return this;
+};
+
+HashKeyBinding.prototype.notifyAll =
+function notifyAll() {
+    for (var i = 0; i < this.listeners.length; i++) {
+        this.listeners[i].call(this, this.value);
+    }
+    return this;
+};
+
+HashKeyBinding.prototype.setParse =
+function setParse(parse, toString) {
+    this.parse = parse || parseValue;
+    this.load();
+    if (toString) {
+        this.setToString(toString);
+    }
+    return this;
+};
+
+HashKeyBinding.prototype.setToString =
+function setToString(toString) {
+    this.valToString = toString;
+    if (this.value !== undefined) {
+        this.save();
+    }
+    return this;
+};
+
+HashKeyBinding.prototype.addListener =
+function addListener(listener) {
+    if (this.listeners.length) {
+        this.listeners.push(listener);
+    } else if (this.listener) {
+        this.listeners = [this.listener, listener];
+        this.listener = null;
+        this.notify = this.notifyAll;
+    } else {
+        this.listener = listener;
+        this.notify = this.notifyOne;
+    }
+    if (this.value !== undefined) {
+        this.notify();
+    }
+    return this;
+};
+
+HashKeyBinding.prototype.setDefault =
+function setDefault(def) {
+    var value = null;
+    if (typeof def === 'string') {
+        value = this.parse(def);
+    } else {
+        value = def;
+    }
+
+    this.def = value;
+    if (this.value === undefined) {
+        this.value = this.def;
+        this.save();
+    }
+
+    return this;
+};
+
+HashKeyBinding.prototype.onChange =
+function onChange() {
+    this.load();
+};
+
+HashKeyBinding.prototype.get =
+function get() {
+    return this.value;
+};
+
+HashKeyBinding.prototype.reset =
+function reset() {
+    if (this.value !== this.def) {
+        this.value = this.def;
+        this.save();
+    }
+    return this;
+};
+
+HashKeyBinding.prototype.set =
+function set(val) {
+    var value = null;
+    if (typeof val === 'string') {
+        value = this.parse(val);
+    } else {
+        value = val;
+    }
+
+    if (this.value !== value) {
+        this.value = value;
+        this.notify();
+        this.save();
+    }
+
+    return this.value;
+};
+
+function valueToString(val) {
+    if (val === false) {
+        return undefined;
+    }
+    if (val === true) {
+        return '';
+    }
+    return '' + val;
+}
+
+function parseValue(str) {
+    if (str === '' || str === 'true') {
+        return true;
+    }
+    if (str === 'false') {
+        return false;
+    }
+    if (str === 'null') {
+        return null;
+    }
+    return str;
+}
+
 }],["colorgen.js","hexant","colorgen.js",{"husl":25},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
@@ -720,250 +1015,6 @@ OddQBox.prototype.expandTo = function expandTo(pointArg) {
     return expanded;
 };
 
-}],["hash.js","hexant","hash.js",{},function (require, exports, module, __filename, __dirname){
-
-// hexant/hash.js
-// --------------
-
-'use strict';
-
-module.exports = Hash;
-
-function Hash(window) {
-    var self = this;
-
-    this.window = window;
-    this.window.addEventListener('hashchange', onHashChange);
-    this.last = '';
-    this.cache = {};
-    this.values = {};
-    this.bound = {};
-    this.load();
-
-    function onHashChange(e) {
-        self.load();
-    }
-}
-
-Hash.prototype.load = function load() {
-    if (this.window.location.hash === this.last) {
-        return;
-    }
-
-    this.last = this.window.location.hash;
-    var parts = this.last.slice(1).split('&');
-    var seen = {};
-    var i;
-    var key;
-    for (i = 0; i < parts.length; i++) {
-        var keyval = parts[i].split('=');
-        key = unescape(keyval[0]);
-        var str = unescape(keyval[1]) || '';
-        if (this.cache[key] !== str) {
-            this.cache[key] = str;
-            if (this.bound[key]) {
-                this.bound[key].onChange();
-            } else {
-                this.values[key] = parseValue(str);
-            }
-        }
-        seen[key] = true;
-    }
-
-    var cacheKeys = Object.keys(this.cache);
-    for (i = 0; i < cacheKeys.length; i++) {
-        key = cacheKeys[i];
-        if (!seen[key]) {
-            if (this.bound[key]) {
-                this.bound[key].reset();
-            } else {
-                this.cache[key] = undefined;
-                this.values[key] = undefined;
-            }
-        }
-    }
-};
-
-Hash.prototype.save = function save() {
-    var hash = '';
-
-    var keys = Object.keys(this.cache);
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        if (!this.bound[key]) {
-            this.cache[key] = valueToString(this.values[key]);
-        }
-        var str = this.cache[key];
-
-        var part = '' + escape(key);
-        if (str === undefined) {
-            continue;
-        } else if (str !== '') {
-            part += '=' + escape(str);
-        }
-
-        if (hash !== '') {
-            hash += '&' + part;
-        } else {
-            hash += '#' + part;
-        }
-    }
-
-    this.window.location.hash = this.last = hash;
-};
-
-Hash.prototype.bind = function bind(key) {
-    if (this.bound[key]) {
-        throw new Error('key already bound');
-    }
-    var bound = new HashKeyBinding(this, key);
-    this.bound[key] = bound;
-    return bound;
-};
-
-Hash.prototype.getStr = function getStr(key) {
-    return this.cache[key];
-};
-
-Hash.prototype.get = function get(key) {
-    return this.values[key];
-};
-
-Hash.prototype.set = function set(key, val) {
-    var bound = this.bound[key] || this.bind(key);
-    return bound.set(val);
-};
-
-function HashKeyBinding(hash, key) {
-    this.hash = hash;
-    this.key = key;
-    this.def = undefined;
-    this.value = hash.values[key];
-    this.parse = parseValue;
-    this.valToString = valueToString;
-    this.listeners = [];
-}
-
-HashKeyBinding.prototype.load = function load() {
-    var str = this.hash.cache[this.key];
-    if (str !== undefined) {
-        var val = this.parse(str);
-        if (this.value !== val) {
-            this.value = val;
-            this.hash.values[this.key] = this.value;
-            this.notify();
-        }
-    }
-    return this;
-};
-
-HashKeyBinding.prototype.save = function save() {
-    this.hash.values[this.key] = this.value;
-    var str = this.valToString(this.value);
-    if (this.hash.cache[this.key] !== str) {
-        this.hash.cache[this.key] = str;
-        this.hash.save();
-    }
-    return this;
-};
-
-HashKeyBinding.prototype.notify = function notify() {
-    for (var i = 0; i < this.listeners.length; i++) {
-        this.listeners[i].call(this, this.value);
-    }
-    return this;
-};
-
-HashKeyBinding.prototype.setParse = function setParse(parse, toString) {
-    this.parse = parse || parseValue;
-    this.load();
-    if (toString) {
-        this.setToString(toString);
-    }
-    return this;
-};
-
-HashKeyBinding.prototype.setToString = function setToString(toString) {
-    this.valToString = toString;
-    if (this.value !== undefined) {
-        this.save();
-    }
-    return this;
-};
-
-HashKeyBinding.prototype.addListener = function addListener(listener) {
-    if (this.value !== undefined) {
-        listener(this.value);
-    }
-    this.listeners.push(listener);
-    return this;
-};
-
-HashKeyBinding.prototype.setDefault = function setDefault(def) {
-    if (typeof def === 'string') {
-        def = this.parse(def);
-    }
-    this.def = def;
-    if (this.value === undefined) {
-        this.value = def;
-        this.save();
-    }
-    return this;
-};
-
-HashKeyBinding.prototype.onChange = function onChange() {
-    this.load();
-    return this;
-};
-
-HashKeyBinding.prototype.get = function get() {
-    return this.value;
-};
-
-HashKeyBinding.prototype.reset = function reset() {
-    if (this.value !== this.def) {
-        this.value = this.def;
-        this.save();
-    }
-};
-
-HashKeyBinding.prototype.set = function set(val) {
-    if (typeof val === 'string') {
-        val = this.parse(val);
-    }
-
-    if (this.value !== val) {
-        this.value = val;
-        this.notify();
-        this.save();
-    }
-
-    return this.value;
-};
-
-function valueToString(val) {
-    if (val === false) {
-        return undefined;
-    }
-    if (val === true) {
-        return '';
-    }
-    return '' + val;
-}
-
-function parseValue(str) {
-    if (str === '' || str === 'true') {
-        return true;
-    }
-    if (str === 'false') {
-        return false;
-    }
-    if (str === 'null') {
-        return null;
-    }
-    return str;
-}
-
 }],["hexant.html","hexant","hexant.html",{"./hexant.js":9,"./prompt.html":17},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.html
@@ -984,10 +1035,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_peukxu");
+        component.setAttribute("id", "view_gxls2e");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_peukxu")
+       scope.componentsFor["view"].setAttribute("for", "view_gxls2e")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1008,10 +1059,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_ep5l7k");
+        component.setAttribute("id", "prompt_cgyrah");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_ep5l7k")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_cgyrah")
     }
     this.scope.hookup("this", this);
 };
@@ -1024,7 +1075,7 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
     var scope = this.scope = caller;
 };
 
-}],["hexant.js","hexant","hexant.js",{"./colorgen.js":5,"./world.js":24,"./view.js":23,"./turmite/index.js":20,"./hash.js":7,"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"hashbind":5,"./colorgen.js":6,"./world.js":24,"./view.js":23,"./turmite/index.js":20,"./coord.js":7,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1033,11 +1084,11 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
 
 module.exports = Hexant;
 
+var Hash = require('hashbind');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
 var Turmite = require('./turmite/index.js');
-var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
 
@@ -1057,7 +1108,6 @@ function Hexant(body, scope) {
     this.frameInterval = 0;
     this.paused = true;
     this.prompt = null;
-    this.promptField = null;
 
     this.boundPlaypause = playpause;
 
@@ -1304,7 +1354,7 @@ function resize(width, height) {
     this.view.resize(width, height);
 };
 
-}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":6},function (require, exports, module, __filename, __dirname){
+}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexgrid.js
 // -----------------
@@ -1419,7 +1469,7 @@ function updateSize() {
     this.canvas.style.height = this.canvas.height + 'px';
 };
 
-}],["hextile.js","hexant","hextile.js",{"./coord.js":6},function (require, exports, module, __filename, __dirname){
+}],["hextile.js","hexant","hextile.js",{"./coord.js":7},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextile.js
 // -----------------
@@ -1479,7 +1529,7 @@ OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
     }
 };
 
-}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":6,"./hextile.js":11},function (require, exports, module, __filename, __dirname){
+}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":7,"./hextile.js":11},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextiletree.js
 // ---------------------
@@ -1795,10 +1845,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_n653d7");
+        component.setAttribute("id", "view_c3xwcr");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_n653d7")
+       scope.componentsFor["view"].setAttribute("for", "view_c3xwcr")
     }
     this.scope.hookup("this", this);
 };
@@ -2001,10 +2051,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_jexpuo");
+        component.setAttribute("id", "box_p7vy16");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_jexpuo")
+       scope.componentsFor["box"].setAttribute("for", "box_p7vy16")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2019,10 +2069,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_jp94tw");
+            component.setAttribute("id", "help_22ylou");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_jp94tw")
+           scope.componentsFor["help"].setAttribute("for", "help_22ylou")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2035,10 +2085,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_l6qxzq");
+            component.setAttribute("id", "text_leoi31");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_l6qxzq")
+           scope.componentsFor["text"].setAttribute("for", "text_leoi31")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2116,7 +2166,7 @@ function finish() {
     var callback = this.callback;
     this.hide();
     if (callback) {
-        value = value.replace(/(?:\r?\n)+/, '');
+        value = value.replace(/(?:\r?\n)+$/, '');
         callback(false, value);
     }
 };
@@ -2141,24 +2191,18 @@ function hide() {
 
 Prompt.prototype.hookup =
 function hookup(id, component, scope) {
-    var self = this;
-
-    switch (id) {
-    case 'box':
-        self.box = component;
-        break;
-
-    case 'help':
-        self.help = component;
-        break;
-
-    case 'text':
-        self.text = component;
-        self.text.addEventListener('keydown', this.boundOnKeyDown);
-        self.text.addEventListener('keyup', this.boundOnKeyUp);
-        self.text.addEventListener('blur', this.boundCancel);
-        break;
+    // Only one scope of interest
+    if (id !== 'this') {
+        return;
     }
+
+    this.box = scope.components.box;
+    this.help = scope.components.help;
+    this.text = scope.components.text;
+
+    this.text.addEventListener('keydown', this.boundOnKeyDown);
+    this.text.addEventListener('keyup', this.boundOnKeyUp);
+    this.text.addEventListener('blur', this.boundCancel);
 };
 
 Prompt.prototype.onKeyDown =
@@ -2273,7 +2317,7 @@ module.exports.AbsTurnDir     = AbsTurnDir;
 module.exports.RelTurnSymbols = RelTurnSymbols;
 module.exports.RelSymbolTurns = RelSymbolTurns;
 
-}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":6,"./constants.js":19,"./parse.js":21},function (require, exports, module, __filename, __dirname){
+}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":7,"./constants.js":19,"./parse.js":21},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/index.js
 // -----------------------
@@ -2329,6 +2373,13 @@ function Turmite() {
     this.size = 0.5;
     this.index = 0;
 }
+
+Turmite.prototype.clearRules =
+function clearRules() {
+    for (var i = 0; i < this.rules.length; i++) {
+        this.rules[i] = 0;
+    }
+};
 
 Turmite.parse =
 function parse(str) {
@@ -2544,6 +2595,7 @@ function parseAnt(str) {
         var rule     = stateKey | color;
         var nextRule = rule;
 
+        turmite.clearRules();
         for (var i = 0; i < multurns.length; i++) {
             var mult = multurns[i].mult;
             var relturn = multurns[i].relturn;
@@ -2931,7 +2983,7 @@ function swapout(ar, i) {
     return j;
 }
 
-}],["world.js","hexant","world.js",{"./coord.js":6,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
+}],["world.js","hexant","world.js",{"./coord.js":7,"./hextiletree.js":12},function (require, exports, module, __filename, __dirname){
 
 // hexant/world.js
 // ---------------
@@ -3886,6 +3938,24 @@ Result.prototype.toValue = function toValue() {
 Result.prototype.toCallback = function toCallback(callback) {
     var self = this;
     callback(self.err, self.value);
+};
+
+Result.just = function just(value) {
+    return new Result(null, value);
+};
+
+Result.error = function error(err) {
+    return new Result(err, null);
+};
+
+Result.lift = function lift(func) {
+    return function rezultLifted() {
+        try {
+            return Result.just(func.apply(this, arguments));
+        } catch(err) {
+            return Result.error(err);
+        }
+    };
 };
 
 }],["dom.js","wizdom","dom.js",{},function (require, exports, module, __filename, __dirname){
