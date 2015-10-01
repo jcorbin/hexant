@@ -2,11 +2,11 @@
 
 module.exports = Hexant;
 
+var Hash = require('hashbind');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
 var Turmite = require('./turmite/index.js');
-var Hash = require('./hash.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
 
