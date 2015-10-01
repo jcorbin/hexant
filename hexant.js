@@ -19,7 +19,8 @@ function Hexant(body, scope) {
     this.world = null;
     this.view = null;
 
-    this.hash = new Hash(scope.window);
+    this.window = scope.window;
+    this.hash = new Hash(this.window);
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
     this.frameRate = 0;
@@ -44,7 +45,7 @@ function hookup(id, component, scope) {
     this.prompt = scope.components.prompt;
     this.el = scope.components.view;
 
-    this.titleBase = scope.window.document.title;
+    this.titleBase = this.window.document.title;
     this.world = new World();
     this.view = this.world.addView(
         new View(this.world, this.el));
@@ -56,9 +57,9 @@ Hexant.prototype.setup =
 function setup(scope) {
     var self = this;
 
-    scope.window.addEventListener('keypress', function onKeyPress(e) {
-        if (e.target === scope.window.document.documentElement ||
-            e.target === scope.window.document.body ||
+    this.window.addEventListener('keypress', function onKeyPress(e) {
+        if (e.target === self.window.document.documentElement ||
+            e.target === self.window.document.body ||
             e.target === self.el
         ) {
             self.onKeyPress(e);
@@ -87,7 +88,7 @@ function setup(scope) {
         })
         .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
-            scope.window.document.title = self.titleBase + ': ' + ent;
+            self.window.document.title = self.titleBase + ': ' + ent;
             if (self.world.ents[0]) {
                 self.world.updateEnt(ent, 0);
             } else {
@@ -127,8 +128,8 @@ function setup(scope) {
     }
 
     if (!isNaN(autorefresh) && autorefresh) {
-        scope.window.setTimeout(function shipit() {
-            scope.window.location.reload();
+        this.window.setTimeout(function shipit() {
+            this.window.location.reload();
         }, autorefresh * 1000);
     }
 
