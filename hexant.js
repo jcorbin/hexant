@@ -55,15 +55,15 @@ function hookup(id, component, scope) {
     this.view = this.world.addView(
         new View(this.world, this.el));
 
-    this.setup();
-};
-
-Hexant.prototype.setup =
-function setup() {
-    var self = this;
-
     this.window.addEventListener('keypress', this.boundOnKeyPress);
     this.el.addEventListener('click', this.boundPlaypause);
+
+    this.configure();
+};
+
+Hexant.prototype.configure =
+function configure() {
+    var self = this;
 
     this.hash.bind('colors')
         .setParse(colorGen.parse, colorGen.toString)
