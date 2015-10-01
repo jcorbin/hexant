@@ -41,9 +41,19 @@ gens.hue = HueWheelGenerator;
 
 // TODO: husl too
 
+/* roles:
+ * 1: ant traced cells
+ * 2: ant body
+ * 3: ant head
+ */
+
 function LightWheelGenerator(hue, sat) {
     hue = parseInt(hue, 10) || 0;
     sat = parseInt(sat, 10) || 100;
+
+    if (hue === 0) {
+        hue = 360;
+    }
 
     wheelGenGen.genString = 'light(' +
                             hue.toString() + ', ' +
@@ -51,7 +61,7 @@ function LightWheelGenerator(hue, sat) {
     return wheelGenGen;
 
     function wheelGenGen(intensity) {
-        var h = hue * (1 + (intensity - 1) / 3);
+        var h = hue * (1 + (intensity - 1) / 3) % 360;
         return function wheelGen(ncolors) {
             var step = 100 / (ncolors + 1);
             var r = [];
