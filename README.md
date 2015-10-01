@@ -13,6 +13,7 @@ only:
 - `.` -- single step when paused, pause when playing
 - `/` -- prompt and set new rule set
 - `c` -- prompt and set new color scheme
+- `t` -- toggle "trace mode" drawing
 - `+` -- double frame rate
 - `-` -- half frame rate
 - `*` -- reset to iteration 0 and pause
