@@ -18,12 +18,15 @@ function View(world, canvas) {
 
     this.labeled = false;
     this.drawUnvisited = false;
+    this.drawTrace = false;
 
-    this.cellColorGen = null;
+    this.antCellColorGen = null;
+    this.emptyCellColorGen = null;
     this.bodyColorGen = null;
     this.headColorGen = null;
 
-    this.cellColors = [];
+    this.antCellColors = [];
+    this.emptyCellColors = [];
     this.bodyColors = [];
     this.headColors = [];
     this.lastEntPos = [];
@@ -45,14 +48,19 @@ View.prototype.redraw =
 function redraw() {
     var self = this;
     var ents = self.world.ents;
+    var colors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 
     self.world.tile.eachDataPoint(this.drawUnvisited
     ? function drawEachCell(point, data) {
-        self.drawCell(point, data & World.MaskColor);
+        self.drawCell(point,
+                      data & World.MaskColor,
+                      colors);
     }
     : function maybeDrawEachCell(point, data) {
         if (data & World.FlagVisited) {
-            self.drawCell(point, data & World.MaskColor);
+            self.drawCell(point,
+                          data & World.MaskColor,
+                          colors);
         }
     });
 
@@ -102,7 +110,8 @@ function removeEnt(ent) {
 
 View.prototype.setColorGen =
 function setColorGen(colorGen) {
-    this.cellColorGen = colorGen(1);
+    this.emptyCellColorGen = colorGen(0);
+    this.antCellColorGen = colorGen(1);
     this.bodyColorGen = colorGen(2);
     this.headColorGen = colorGen(3);
     this.updateColors(true);
@@ -112,12 +121,25 @@ View.prototype.updateColors = function updateColors(regen) {
     var N = this.world.numColors;
     var M = this.world.ents.length;
 
-    if (this.cellColorGen &&
-        (regen || this.cellColors.length !== N)
+    if (this.emptyCellColorGen &&
+        (regen || this.emptyCellColors.length !== N)
     ) {
-        this.cellColors = this.cellColorGen(N);
-        while (this.cellColors.length <= World.MaxColor) {
-            this.cellColors.push(this.cellColors[this.cellColors.length % N]);
+        this.emptyCellColors = this.emptyCellColorGen(N);
+        while (this.emptyCellColors.length <= World.MaxColor) {
+            this.emptyCellColors.push(
+                this.emptyCellColors[this.emptyCellColors.length % N]
+            );
+        }
+    }
+
+    if (this.antCellColorGen &&
+        (regen || this.antCellColors.length !== N)
+    ) {
+        this.antCellColors = this.antCellColorGen(N);
+        while (this.antCellColors.length <= World.MaxColor) {
+            this.antCellColors.push(
+                this.antCellColors[this.antCellColors.length % N]
+            );
         }
     }
 
@@ -145,18 +167,18 @@ function setLabeled(labeled) {
 };
 
 View.prototype.drawUnlabeledCell =
-function drawUnlabeledCell(point, color) {
+function drawUnlabeledCell(point, color, colors) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = this.cellColors[color];
+    this.ctx2d.fillStyle = colors[color];
     this.ctx2d.fill();
     return screenPoint;
 };
 
 View.prototype.drawLabeledCell =
-function drawLabeledCell(point, color) {
-    var screenPoint = this.drawUnlabeledCell(point, color);
+function drawLabeledCell(point, color, colors) {
+    var screenPoint = this.drawUnlabeledCell(point, color, colors);
     this.drawCellLabel(point, screenPoint);
 };
 
@@ -205,7 +227,9 @@ function step() {
 
     for (i = 0; i < ents.length; i++) {
         var data = this.world.tile.get(this.lastEntPos[i]);
-        this.drawCell(this.lastEntPos[i], data & World.MaskColor);
+        this.drawCell(this.lastEntPos[i],
+                      data & World.MaskColor,
+                      this.antCellColors);
     }
 
     for (i = 0; i < ents.length; i++) {
@@ -219,7 +243,9 @@ function drawEnt(ent) {
     var data = this.world.tile.get(ent.pos);
     if (!(data & World.FlagVisited)) {
         data = this.world.tile.set(ent.pos, data | World.FlagVisited);
-        this.drawCell(ent.pos, data & World.MaskColor);
+        this.drawCell(ent.pos,
+                      data & World.MaskColor,
+                      this.antCellColors);
     }
 
     var screenPoint = this.hexGrid.toScreen(ent.pos);

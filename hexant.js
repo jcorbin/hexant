@@ -101,6 +101,13 @@ function configure() {
             self.view.drawUnvisited = !!drawUnvisited;
         });
 
+    this.hash.bind('drawTrace')
+        .setDefault(false)
+        .addListener(function onDrawTraceChange(drawTrace) {
+            self.view.drawTrace = !!drawTrace;
+            self.view.redraw();
+        });
+
     var autoplay;
     var autorefresh;
     if (this.hash.get('fullauto')) {
@@ -172,6 +179,11 @@ function onKeyPress(e) {
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
         e.preventDefault();
+        break;
+
+    case 0x54:
+    case 0x74:
+        this.hash.set('drawTrace', !this.view.drawTrace);
         break;
 
     case 0x2f: // /
