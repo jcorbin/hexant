@@ -58,12 +58,7 @@ function setup(scope) {
     var self = this;
 
     this.window.addEventListener('keypress', function onKeyPress(e) {
-        if (e.target === self.window.document.documentElement ||
-            e.target === self.window.document.body ||
-            e.target === self.el
-        ) {
-            self.onKeyPress(e);
-        }
+        self.onKeyPress(e);
     });
 
     this.el.addEventListener('click', this.boundPlaypause);
@@ -140,6 +135,13 @@ function setup(scope) {
 
 Hexant.prototype.onKeyPress =
 function onKeyPress(e) {
+    if (e.target !== this.window.document.documentElement &&
+        e.target !== this.window.document.body &&
+        e.target !== this.el
+    ) {
+        return;
+    }
+
     switch (e.keyCode) {
     case 0x20: // <Space>
         this.playpause();
