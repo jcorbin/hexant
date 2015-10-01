@@ -743,9 +743,20 @@ gens.hue = HueWheelGenerator;
 
 // TODO: husl too
 
+/* roles:
+ * 0: empty cells
+ * 1: ant traced cells
+ * 2: ant body
+ * 3: ant head
+ */
+
 function LightWheelGenerator(hue, sat) {
     hue = parseInt(hue, 10) || 0;
     sat = parseInt(sat, 10) || 100;
+
+    if (hue === 0) {
+        hue = 360;
+    }
 
     wheelGenGen.genString = 'light(' +
                             hue.toString() + ', ' +
@@ -753,7 +764,7 @@ function LightWheelGenerator(hue, sat) {
     return wheelGenGen;
 
     function wheelGenGen(intensity) {
-        var h = hue * (1 + (intensity - 1) / 3);
+        var h = hue * (1 + (intensity - 1) / 3) % 360;
         return function wheelGen(ncolors) {
             var step = 100 / (ncolors + 1);
             var r = [];
@@ -1093,10 +1104,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_uo63lx");
+        component.setAttribute("id", "view_dnv4nu");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_uo63lx")
+       scope.componentsFor["view"].setAttribute("for", "view_dnv4nu")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1117,10 +1128,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_vu33a1");
+        component.setAttribute("id", "prompt_ethnle");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_vu33a1")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_ethnle")
     }
     this.scope.hookup("this", this);
 };
@@ -1241,6 +1252,13 @@ function configure() {
             self.view.drawUnvisited = !!drawUnvisited;
         });
 
+    this.hash.bind('drawTrace')
+        .setDefault(false)
+        .addListener(function onDrawTraceChange(drawTrace) {
+            self.view.drawTrace = !!drawTrace;
+            self.view.redraw();
+        });
+
     var autoplay;
     var autorefresh;
     if (this.hash.get('fullauto')) {
@@ -1312,6 +1330,11 @@ function onKeyPress(e) {
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
         e.preventDefault();
+        break;
+
+    case 0x54:
+    case 0x74:
+        this.hash.set('drawTrace', !this.view.drawTrace);
         break;
 
     case 0x2f: // /
@@ -1917,10 +1940,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_uhrmnn");
+        component.setAttribute("id", "view_cyzbgs");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_uhrmnn")
+       scope.componentsFor["view"].setAttribute("for", "view_cyzbgs")
     }
     this.scope.hookup("this", this);
 };
@@ -2124,10 +2147,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_bbphs");
+        component.setAttribute("id", "box_67so3n");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_bbphs")
+       scope.componentsFor["box"].setAttribute("for", "box_67so3n")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2142,10 +2165,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_fms3e2");
+            component.setAttribute("id", "help_u00zse");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_fms3e2")
+           scope.componentsFor["help"].setAttribute("for", "help_u00zse")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2158,10 +2181,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_uuwkz5");
+            component.setAttribute("id", "text_f9ciqh");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_uuwkz5")
+           scope.componentsFor["text"].setAttribute("for", "text_f9ciqh")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2171,10 +2194,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_leuqsc");
+            component.setAttribute("id", "error_9mmxfw");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_leuqsc")
+           scope.componentsFor["error"].setAttribute("for", "error_9mmxfw")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2834,12 +2857,15 @@ function View(world, canvas) {
 
     this.labeled = false;
     this.drawUnvisited = false;
+    this.drawTrace = false;
 
-    this.cellColorGen = null;
+    this.antCellColorGen = null;
+    this.emptyCellColorGen = null;
     this.bodyColorGen = null;
     this.headColorGen = null;
 
-    this.cellColors = [];
+    this.antCellColors = [];
+    this.emptyCellColors = [];
     this.bodyColors = [];
     this.headColors = [];
     this.lastEntPos = [];
@@ -2861,14 +2887,19 @@ View.prototype.redraw =
 function redraw() {
     var self = this;
     var ents = self.world.ents;
+    var colors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 
     self.world.tile.eachDataPoint(this.drawUnvisited
     ? function drawEachCell(point, data) {
-        self.drawCell(point, data & World.MaskColor);
+        self.drawCell(point,
+                      data & World.MaskColor,
+                      colors);
     }
     : function maybeDrawEachCell(point, data) {
         if (data & World.FlagVisited) {
-            self.drawCell(point, data & World.MaskColor);
+            self.drawCell(point,
+                          data & World.MaskColor,
+                          colors);
         }
     });
 
@@ -2918,7 +2949,8 @@ function removeEnt(ent) {
 
 View.prototype.setColorGen =
 function setColorGen(colorGen) {
-    this.cellColorGen = colorGen(1);
+    this.emptyCellColorGen = colorGen(0);
+    this.antCellColorGen = colorGen(1);
     this.bodyColorGen = colorGen(2);
     this.headColorGen = colorGen(3);
     this.updateColors(true);
@@ -2928,12 +2960,25 @@ View.prototype.updateColors = function updateColors(regen) {
     var N = this.world.numColors;
     var M = this.world.ents.length;
 
-    if (this.cellColorGen &&
-        (regen || this.cellColors.length !== N)
+    if (this.emptyCellColorGen &&
+        (regen || this.emptyCellColors.length !== N)
     ) {
-        this.cellColors = this.cellColorGen(N);
-        while (this.cellColors.length <= World.MaxColor) {
-            this.cellColors.push(this.cellColors[this.cellColors.length % N]);
+        this.emptyCellColors = this.emptyCellColorGen(N);
+        while (this.emptyCellColors.length <= World.MaxColor) {
+            this.emptyCellColors.push(
+                this.emptyCellColors[this.emptyCellColors.length % N]
+            );
+        }
+    }
+
+    if (this.antCellColorGen &&
+        (regen || this.antCellColors.length !== N)
+    ) {
+        this.antCellColors = this.antCellColorGen(N);
+        while (this.antCellColors.length <= World.MaxColor) {
+            this.antCellColors.push(
+                this.antCellColors[this.antCellColors.length % N]
+            );
         }
     }
 
@@ -2961,18 +3006,18 @@ function setLabeled(labeled) {
 };
 
 View.prototype.drawUnlabeledCell =
-function drawUnlabeledCell(point, color) {
+function drawUnlabeledCell(point, color, colors) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = this.cellColors[color];
+    this.ctx2d.fillStyle = colors[color];
     this.ctx2d.fill();
     return screenPoint;
 };
 
 View.prototype.drawLabeledCell =
-function drawLabeledCell(point, color) {
-    var screenPoint = this.drawUnlabeledCell(point, color);
+function drawLabeledCell(point, color, colors) {
+    var screenPoint = this.drawUnlabeledCell(point, color, colors);
     this.drawCellLabel(point, screenPoint);
 };
 
@@ -3021,7 +3066,9 @@ function step() {
 
     for (i = 0; i < ents.length; i++) {
         var data = this.world.tile.get(this.lastEntPos[i]);
-        this.drawCell(this.lastEntPos[i], data & World.MaskColor);
+        this.drawCell(this.lastEntPos[i],
+                      data & World.MaskColor,
+                      this.antCellColors);
     }
 
     for (i = 0; i < ents.length; i++) {
@@ -3035,7 +3082,9 @@ function drawEnt(ent) {
     var data = this.world.tile.get(ent.pos);
     if (!(data & World.FlagVisited)) {
         data = this.world.tile.set(ent.pos, data | World.FlagVisited);
-        this.drawCell(ent.pos, data & World.MaskColor);
+        this.drawCell(ent.pos,
+                      data & World.MaskColor,
+                      this.antCellColors);
     }
 
     var screenPoint = this.hexGrid.toScreen(ent.pos);
