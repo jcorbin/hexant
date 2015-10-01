@@ -3,6 +3,7 @@
 module.exports = Hexant;
 
 var Hash = require('hashbind');
+var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
@@ -66,7 +67,7 @@ function configure() {
     var self = this;
 
     this.hash.bind('colors')
-        .setParse(colorGen.parse, colorGen.toString)
+        .setParse(Result.lift(colorGen.parse), colorGen.toString)
         .setDefault('light')
         .addListener(function onColorGenChange(gen) {
             self.onColorGenChange(gen);
@@ -74,21 +75,14 @@ function configure() {
         ;
 
     this.hash.bind('rule')
-        .setParse(function parseRule(str) {
-            var res = Turmite.compile(str);
-            if (res.err) {
-                console.error(res.err); // TODO: better error facility
-                return this.value;
-            }
-            return res.value;
-        })
+        .setParse(Turmite.compile)
         .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
             self.onRuleChange(ent);
         });
 
     this.hash.bind('frameRate')
-        .setParse(parseInt)
+        .setParse(Result.lift(parseInt))
         .setDefault(4)
         .addListener(function onFrameRateChange(rate) {
             self.setFrameRate(rate);
