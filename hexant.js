@@ -3,6 +3,7 @@
 module.exports = Hexant;
 
 var Hash = require('hashbind');
+var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var View = require('./view.js');
@@ -19,7 +20,8 @@ function Hexant(body, scope) {
     this.world = null;
     this.view = null;
 
-    this.hash = new Hash(scope.window);
+    this.window = scope.window;
+    this.hash = new Hash(this.window);
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
     this.frameRate = 0;
@@ -28,79 +30,59 @@ function Hexant(body, scope) {
     this.prompt = null;
 
     this.boundPlaypause = playpause;
+    this.boundOnKeyPress = onKeyPress;
 
     function playpause() {
         self.playpause();
+    }
+
+    function onKeyPress(e) {
+        self.onKeyPress(e);
     }
 }
 
 Hexant.prototype.hookup =
 function hookup(id, component, scope) {
-    var self = this;
-
-    switch (id) {
-    case 'view':
-        self.hookupCanvas(component, scope);
-        break;
-
-    case 'prompt':
-        self.prompt = component;
-        break;
+    // Only one scope of interest
+    if (id !== 'this') {
+        return;
     }
-};
 
-Hexant.prototype.hookupCanvas =
-function hookupCanvas(component, scope) {
-    var self = this;
+    this.prompt = scope.components.prompt;
+    this.el = scope.components.view;
 
-    this.titleBase = scope.window.document.title;
-    this.el = component;
+    this.titleBase = this.window.document.title;
     this.world = new World();
     this.view = this.world.addView(
-        new View(this.world, component));
+        new View(this.world, this.el));
 
-    scope.window.addEventListener('keypress', function onKeyPress(e) {
-        if (e.target === scope.window.document.documentElement ||
-            e.target === scope.window.document.body ||
-            e.target === self.el
-        ) {
-            self.onKeyPress(e);
-        }
-    });
-
+    this.window.addEventListener('keypress', this.boundOnKeyPress);
     this.el.addEventListener('click', this.boundPlaypause);
 
+    this.configure();
+};
+
+Hexant.prototype.configure =
+function configure() {
+    var self = this;
+
     this.hash.bind('colors')
-        .setParse(colorGen.parse, colorGen.toString)
+        .setParse(Result.lift(colorGen.parse), colorGen.toString)
         .setDefault('light')
         .addListener(function onColorGenChange(gen) {
-            self.view.setColorGen(gen);
-            self.view.redraw();
+            self.onColorGenChange(gen);
         })
         ;
 
     this.hash.bind('rule')
-        .setParse(function parseRule(str) {
-            var res = Turmite.compile(str);
-            if (res.err) {
-                console.error(res.err); // TODO: better error facility
-                return this.value;
-            }
-            return res.value;
-        })
+        .setParse(Turmite.compile)
         .setDefault('ant(L R)')
         .addListener(function onRuleChange(ent) {
-            scope.window.document.title = self.titleBase + ': ' + ent;
-            if (self.world.ents[0]) {
-                self.world.updateEnt(ent, 0);
-            } else {
-                self.world.addEnt(ent);
-            }
-            self.reset();
+            self.onRuleChange(ent);
         });
 
     this.hash.bind('frameRate')
-        .setParse(parseInt)
+        .setParse(Result.lift(parseInt))
         .setDefault(4)
         .addListener(function onFrameRateChange(rate) {
             self.setFrameRate(rate);
@@ -130,8 +112,8 @@ function hookupCanvas(component, scope) {
     }
 
     if (!isNaN(autorefresh) && autorefresh) {
-        scope.window.setTimeout(function shipit() {
-            scope.window.location.reload();
+        this.window.setTimeout(function shipit() {
+            this.window.location.reload();
         }, autorefresh * 1000);
     }
 
@@ -140,8 +122,32 @@ function hookupCanvas(component, scope) {
     }
 };
 
+Hexant.prototype.onColorGenChange =
+function onColorGenChange(gen) {
+    this.view.setColorGen(gen);
+    this.view.redraw();
+};
+
+Hexant.prototype.onRuleChange =
+function onRuleChange(ent) {
+    this.window.document.title = this.titleBase + ': ' + ent;
+    if (this.world.ents[0]) {
+        this.world.updateEnt(ent, 0);
+    } else {
+        this.world.addEnt(ent);
+    }
+    this.reset();
+};
+
 Hexant.prototype.onKeyPress =
 function onKeyPress(e) {
+    if (e.target !== this.window.document.documentElement &&
+        e.target !== this.window.document.body &&
+        e.target !== this.el
+    ) {
+        return;
+    }
+
     switch (e.keyCode) {
     case 0x20: // <Space>
         this.playpause();
@@ -186,10 +192,18 @@ function promptFor(name, desc) {
     var orig = self.hash.getStr(name);
     self.prompt.prompt(desc, orig, finish);
 
-    function finish(canceled, value) {
-        if (!canceled) {
-            self.hash.set(name, value);
+    function finish(canceled, value, callback) {
+        if (canceled) {
+            callback(null);
+            return;
         }
+
+        self.hash.set(name, value, function setDone(err) {
+            // NOTE: we get two extra args, the string value entered, and  the
+            // parsed value, so we cannot just pass callback in directly, whose
+            // signature is callback(err, help, revalue)
+            callback(err);
+        });
     }
 };
 

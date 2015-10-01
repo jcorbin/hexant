@@ -55,6 +55,20 @@ html, body {
     word-wrap: pre;
 }
 
+.prompt .error {
+    word-wrap: pre;
+    font-family: monospace;
+    background-color: #433;
+    border-top: 0.1em solid #433;
+    border-bottom: 0.1em solid #433;
+    margin: 0.1em 0;
+    padding: 0.1em 0;
+}
+.prompt .error,
+.prompt .error * {
+    color: #ecc;
+}
+
 a, a:visited {
     text-decoration: none;
     color: #aad;
