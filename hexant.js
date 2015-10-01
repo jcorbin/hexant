@@ -36,8 +36,6 @@ function Hexant(body, scope) {
 
 Hexant.prototype.hookup =
 function hookup(id, component, scope) {
-    var self = this;
-
     // Only one scope of interest
     if (id !== 'this') {
         return;
@@ -50,6 +48,13 @@ function hookup(id, component, scope) {
     this.world = new World();
     this.view = this.world.addView(
         new View(this.world, this.el));
+
+    this.setup(scope);
+};
+
+Hexant.prototype.setup =
+function setup(scope) {
+    var self = this;
 
     scope.window.addEventListener('keypress', function onKeyPress(e) {
         if (e.target === scope.window.document.documentElement ||
