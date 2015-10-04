@@ -6,10 +6,12 @@ var Result = require('rezult');
 var World = require('../world.js');
 var RLEBuilder = require('./rle-builder.js');
 var constants = require('./constants.js');
+var parseLang = require('./lang/parse.js');
 
 function parseTurmite(str) {
     var parsers = [
-        parseAnt
+        parseAnt,
+        parseLang
     ];
     for (var i = 0; i < parsers.length; i++) {
         var res = parsers[i](str, World);
