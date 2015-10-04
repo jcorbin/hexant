@@ -6,18 +6,24 @@
 var hex = require('hexer');
 var Turmite = require('./index.js');
 
-bufferStream(process.stdin, function done(err, str) {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    parseAndDump(str);
-    // roundTrip(str);
-});
+function main(args) {
+    switch (args[0]) {
+        case 'dump':
+            bufferStream(process.stdin, errStrMap(parseAndDump));
+        break;
 
-// diffRules(
-//     'ant(L R)',
-//     '0, c => 0, c+1, turns(L R)');
+        case 'roundTrip':
+            bufferStream(process.stdin, errStrMap(roundTrip));
+        break;
+
+        case 'diffRules':
+            diffRules(args[1], args[2]);
+        break;
+
+        default:
+            console.error('invalid test action', args[0]);
+    }
+}
 
 function diffRules(str1, str2) {
     var res = Turmite.compile(str1);
@@ -143,7 +149,8 @@ function printDiff(strs, heads) {
     var cols = strs.map(splitLines);
 
     var start = 0;
-    var i, j;
+    var i;
+    var j;
     if (heads) {
         var headCols = heads.map(splitLines);
         start = maxLength(headCols) + 1;
@@ -153,7 +160,7 @@ function printDiff(strs, heads) {
                 headCol.unshift('');
             }
             headCol.push('');
-            cols[i] = headCol.concat(cols[i])
+            cols[i] = headCol.concat(cols[i]);
         }
     }
 
@@ -209,4 +216,19 @@ function bufferStream(stream, callback) {
         var str = buf.toString();
         callback(null, str);
     });
+}
+
+function errStrMap(func) {
+    return done;
+    function done(err, str) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        func(str);
+    }
+}
+
+if (require.main === module) {
+    main(process.argv.slice(2));
 }
