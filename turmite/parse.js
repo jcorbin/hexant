@@ -94,8 +94,7 @@ function compileAnt(multurns, turmite) {
     var numColors    = 0;
     var color        = 0;
     var turn         = 0;
-    var stateKey     = 0 << World.ColorShift;
-    var rule         = stateKey | color;
+    var rule         = color;
     var nextRule     = rule;
     var buildRuleStr = RLEBuilder('ant(', ' ', ')');
 
@@ -104,7 +103,7 @@ function compileAnt(multurns, turmite) {
         turn = multurns[i].turn;
         var mult = multurns[i].mult;
         for (var j = 0; j < mult; j++) {
-            nextRule            = stateKey | ++color & World.MaxColor;
+            nextRule            = 0 | ++color & World.MaxColor;
             turmite.rules[rule] = nextRule << World.TurnShift | turn;
             rule                = nextRule;
         }
@@ -119,8 +118,8 @@ function compileAnt(multurns, turmite) {
     // required in .step below (at least explicitly, since unsigned integer
     // wrap-around is modulo 2^bits)
     while (color > 0 && color <= World.MaxColor) {
-        var baseRule        = stateKey |   color % numColors;
-        nextRule            = stateKey | ++color & World.MaxColor;
+        var baseRule        =   color % numColors;
+        nextRule            = ++color & World.MaxColor;
         turn                = turmite.rules[baseRule] & 0x0000ffff;
         turmite.rules[rule] = nextRule << World.TurnShift | turn;
         rule                = nextRule;
