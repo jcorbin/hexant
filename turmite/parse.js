@@ -62,7 +62,6 @@ function parseAnt(str) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
-    var numStates = 1;
     var numColors = 0;
     var multurns  = [];
 
@@ -124,7 +123,7 @@ function parseAnt(str) {
         turmite.state      = state;
         turmite.specString = buildRuleStr(0, '');
         turmite.numColors  = numColors;
-        turmite.numStates  = numStates;
+        turmite.numStates  = 1;
 
         return new Result(null, turmite);
     }
