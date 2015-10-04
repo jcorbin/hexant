@@ -65,7 +65,7 @@ function parseAnt(str) {
     var numColors = 0;
     var multurns  = [];
 
-    var re = /\s*(\d+)?(B|P|L|F|R|S)\s*/g;
+    var re = /\s*\b(\d+)?(?:(B|P|L|F|R|S)|(NW|NO|NE|SE|SO|SW))\b\s*/g;
     str = str.toUpperCase();
 
     var i = 0;
@@ -80,8 +80,15 @@ function parseAnt(str) {
             sym: ''
         };
         multurn.mult = match[1] ? parseInt(match[1], 10) : 1;
-        multurn.sym = match[2];
-        multurn.turn = constants.RelSymbolTurns[match[2]];
+
+        if (match[2]) {
+            multurn.sym = match[2];
+            multurn.turn = constants.RelSymbolTurns[match[2]];
+        } else if (match[3]) {
+            multurn.sym = match[3];
+            multurn.turn = constants.AbsSymbolTurns[match[3]];
+        }
+
         numColors += multurn.mult;
         if (numColors > World.MaxColor) {
             return new Result(
