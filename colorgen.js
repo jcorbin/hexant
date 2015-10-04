@@ -1,5 +1,6 @@
 'use strict';
 
+var Result = require('rezult');
 var husl = require('husl');
 
 var gens = {};
@@ -10,21 +11,21 @@ module.exports.toString = toString;
 function parse(str) {
     var match = /^(\w+)(?:\((.+)\))?$/.exec(str);
     if (!match) {
-        return HueWheelGenerator();
+        return Result.just(HueWheelGenerator());
     }
 
     var name = match[1];
     var gen = gens[name];
     if (!gen) {
-        return HueWheelGenerator();
+        return Result.just(HueWheelGenerator());
     }
 
     var args = match[2] ? match[2].split(/, */) : [];
     /* eslint no-try-catch: [0] */
     try {
-        return gen.apply(null, args);
+        return Result.just(gen.apply(null, args));
     } catch(e) {
-        return HueWheelGenerator();
+        return Result.just(HueWheelGenerator());
     }
 }
 
