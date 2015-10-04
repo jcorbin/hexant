@@ -74,20 +74,21 @@ function parseAnt(str) {
         match && i === match.index;
         i += match[0].length, match = re.exec(str)
     ) {
-        var mult = match[1] ? parseInt(match[1], 10) : 1;
-        var sym  = match[2];
-        var turn = constants.RelSymbolTurns[sym];
-        numColors += mult;
+        var multurn = {
+            mult: 0,
+            turn: 0,
+            sym: ''
+        };
+        multurn.mult = match[1] ? parseInt(match[1], 10) : 1;
+        multurn.sym = match[2];
+        multurn.turn = constants.RelSymbolTurns[match[2]];
+        numColors += multurn.mult;
         if (numColors > World.MaxColor) {
             return new Result(
                 new Error('too many colors needed for ant ruleset'),
                 null);
         }
-        multurns.push({
-            mult: mult,
-            turn: turn,
-            sym: sym
-        });
+        multurns.push(multurn);
     }
     // TODO: check if didn't match full input
 
