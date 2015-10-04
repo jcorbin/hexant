@@ -57,7 +57,7 @@ RelTurnSymbols[Turn.RelForward]     = 'F';
 RelTurnSymbols[Turn.RelRight]       = 'R';
 RelTurnSymbols[Turn.RelDoubleRight] = 'BR';
 
-var RelSymbolTurns = [];
+var RelSymbolTurns = {};
 RelSymbolTurns.B   = Turn.RelBackward;
 RelSymbolTurns.P   = Turn.RelDoubleLeft;
 RelSymbolTurns.L   = Turn.RelLeft;
