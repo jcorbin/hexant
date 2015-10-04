@@ -695,13 +695,14 @@ function parseValue(str) {
     return new Result(null, str);
 }
 
-}],["colorgen.js","hexant","colorgen.js",{"husl":27},function (require, exports, module, __filename, __dirname){
+}],["colorgen.js","hexant","colorgen.js",{"rezult":31,"husl":27},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
 // ------------------
 
 'use strict';
 
+var Result = require('rezult');
 var husl = require('husl');
 
 var gens = {};
@@ -710,28 +711,23 @@ module.exports.parse = parse;
 module.exports.toString = toString;
 
 function parse(str) {
-    var match = /^(\w+)(?:\((.+)\))?$/.exec(str);
+    var match = /^(\w+)(?:\((.*)\))?$/.exec(str);
     if (!match) {
-        return HueWheelGenerator;
+        return Result.error(new Error('invalid color spec'));
     }
 
     var name = match[1];
     var gen = gens[name];
     if (!gen) {
-        return HueWheelGenerator;
+        var choices = Object.keys(gens).sort().join(', ');
+        return Result.error(new Error(
+            'no such color scheme ' + JSON.stringify(name) +
+            ', valid choices: ' + choices
+        ));
     }
 
     var args = match[2] ? match[2].split(/, */) : [];
-    if (args) {
-        /* eslint no-try-catch: [0] */
-        try {
-            return gen.apply(null, args);
-        } catch(e) {
-            return HueWheelGenerator;
-        }
-    }
-
-    return gen;
+    return Result.lift(gen).apply(null, args);
 }
 
 function toString(gen) {
@@ -809,8 +805,6 @@ function HueWheelGenerator(sat, light) {
 // ---------------
 
 'use strict';
-
-/* eslint no-inline-comments:0 */
 
 module.exports.ScreenPoint = ScreenPoint;
 module.exports.CubePoint = CubePoint;
@@ -1104,10 +1098,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_ympcsq");
+        component.setAttribute("id", "view_na3kio");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_ympcsq")
+       scope.componentsFor["view"].setAttribute("for", "view_na3kio")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1128,10 +1122,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_23bcki");
+        component.setAttribute("id", "prompt_7y7kgv");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_23bcki")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_7y7kgv")
     }
     this.scope.hookup("this", this);
 };
@@ -1218,7 +1212,7 @@ function configure() {
     var self = this;
 
     this.hash.bind('colors')
-        .setParse(Result.lift(colorGen.parse), colorGen.toString)
+        .setParse(colorGen.parse, colorGen.toString)
         .setDefault('light')
         .addListener(function onColorGenChange(gen) {
             self.onColorGenChange(gen);
@@ -1631,8 +1625,6 @@ OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
 
 'use strict';
 
-/* eslint no-inline-comments:0 */
-
 var Coord = require('./coord.js');
 var OddQHexTile = require('./hextile.js');
 var OddQOffset = Coord.OddQOffset;
@@ -1940,10 +1932,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_m82fan");
+        component.setAttribute("id", "view_ol1dvw");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_m82fan")
+       scope.componentsFor["view"].setAttribute("for", "view_ol1dvw")
     }
     this.scope.hookup("this", this);
 };
@@ -1985,8 +1977,6 @@ module.exports = Main;
 // ---------------------
 
 'use strict';
-
-/* eslint max-params:[0,6] */
 
 module.exports = NGonContext;
 
@@ -2147,10 +2137,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_7m4umc");
+        component.setAttribute("id", "box_blsm6j");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_7m4umc")
+       scope.componentsFor["box"].setAttribute("for", "box_blsm6j")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2165,10 +2155,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_do8mcp");
+            component.setAttribute("id", "help_83ib6q");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_do8mcp")
+           scope.componentsFor["help"].setAttribute("for", "help_83ib6q")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2181,10 +2171,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_460wpq");
+            component.setAttribute("id", "text_5qy9ul");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_460wpq")
+           scope.componentsFor["text"].setAttribute("for", "text_5qy9ul")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2194,10 +2184,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_4dqspq");
+            component.setAttribute("id", "error_rr4az0");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_4dqspq")
+           scope.componentsFor["error"].setAttribute("for", "error_rr4az0")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2221,8 +2211,6 @@ module.exports = $THIS;
 
 // hexant/prompt.js
 // ----------------
-
-/* eslint no-try-catch: [0] */
 
 'use strict';
 
@@ -2385,8 +2373,6 @@ function onKeyUp(e) {
 // hexant/turmite/constants.js
 // ---------------------------
 
-/* eslint no-multi-spaces:0 consistent-this:0 */
-
 'use strict';
 
 /* relative turns
@@ -2474,8 +2460,6 @@ module.exports.AbsSymbolTurns = AbsSymbolTurns;
 
 'use strict';
 
-/* eslint no-multi-spaces:0 consistent-this:0 */
-
 var Coord = require('../coord.js');
 var CubePoint = Coord.CubePoint;
 var constants = require('./constants.js');
@@ -2542,8 +2526,8 @@ function compile(str, ent) {
     if (res.err) {
         return res;
     }
-    var compile = res.value;
-    return compile(ent || new Turmite());
+    var func = res.value;
+    return func(ent || new Turmite());
 };
 
 Turmite.prototype.toString =
@@ -2647,8 +2631,6 @@ function executeTurn(turn) {
 
 // hexant/turmite/parse.js
 // -----------------------
-
-/* eslint no-multi-spaces:0 */
 
 'use strict';
 
@@ -2790,8 +2772,6 @@ function compileAnt(multurns, turmite) {
 
 // hexant/turmite/rle-builder.js
 // -----------------------------
-
-/* eslint no-multi-spaces:0 */
 
 'use strict';
 
@@ -3159,8 +3139,6 @@ function swapout(ar, i) {
 // ---------------
 
 'use strict';
-
-/* eslint no-multi-spaces:0 */
 
 var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
