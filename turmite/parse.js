@@ -62,10 +62,9 @@ function parseAnt(str) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
-    var numStates    = 1;
-    var numColors    = 0;
-    var multurns     = [];
-    var buildRuleStr = RLEBuilder('ant(', ' ', ')');
+    var numStates = 1;
+    var numColors = 0;
+    var multurns  = [];
 
     parseArgs(/\s*(\d+)?(B|P|L|F|R|S)\s*/g, str.toUpperCase(),
         function eachArg(_, nStr, sym) {
@@ -79,22 +78,22 @@ function parseAnt(str) {
             }
             multurns.push({
                 mult: mult,
-                turn: turn
+                turn: turn,
+                sym: sym
             });
-            buildRuleStr(mult, sym);
         });
-    var rulestr = buildRuleStr(0, '');
 
     return new Result(null, compileAnt);
 
     function compileAnt(turmite) {
         // TODO: describe
-        var state    = 0;
-        var color    = 0;
-        var turn     = 0;
-        var stateKey = state << World.ColorShift;
-        var rule     = stateKey | color;
-        var nextRule = rule;
+        var state        = 0;
+        var color        = 0;
+        var turn         = 0;
+        var stateKey     = state << World.ColorShift;
+        var rule         = stateKey | color;
+        var nextRule     = rule;
+        var buildRuleStr = RLEBuilder('ant(', ' ', ')');
 
         turmite.clearRules();
         for (var i = 0; i < multurns.length; i++) {
@@ -105,6 +104,7 @@ function parseAnt(str) {
                 turmite.rules[rule] = nextRule << World.TurnShift | turn;
                 rule                = nextRule;
             }
+            buildRuleStr(multurns[i].mult, multurns[i].sym);
         }
 
         // now that we've compiled the base case, we need to cover the rest of
@@ -122,7 +122,7 @@ function parseAnt(str) {
         }
 
         turmite.state      = state;
-        turmite.specString = rulestr;
+        turmite.specString = buildRuleStr(0, '');
         turmite.numColors  = numColors;
         turmite.numStates  = numStates;
 
