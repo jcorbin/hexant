@@ -57,7 +57,7 @@ RelTurnSymbols[Turn.RelForward]     = 'F';
 RelTurnSymbols[Turn.RelRight]       = 'R';
 RelTurnSymbols[Turn.RelDoubleRight] = 'BR';
 
-var RelSymbolTurns = [];
+var RelSymbolTurns = {};
 RelSymbolTurns.B   = Turn.RelBackward;
 RelSymbolTurns.P   = Turn.RelDoubleLeft;
 RelSymbolTurns.L   = Turn.RelLeft;
@@ -65,8 +65,17 @@ RelSymbolTurns.F   = Turn.RelForward;
 RelSymbolTurns.R   = Turn.RelRight;
 RelSymbolTurns.S   = Turn.RelDoubleRight;
 
+var AbsSymbolTurns = {};
+AbsSymbolTurns.NW  = Turn.AbsNorthWest;
+AbsSymbolTurns.NO  = Turn.AbsNorth;
+AbsSymbolTurns.NE  = Turn.AbsNorthEast;
+AbsSymbolTurns.SE  = Turn.AbsSouthEast;
+AbsSymbolTurns.SO  = Turn.AbsSouth;
+AbsSymbolTurns.SW  = Turn.AbsSouthWest;
+
 module.exports.Turn           = Turn;
 module.exports.RelTurnDelta   = RelTurnDelta;
 module.exports.AbsTurnDir     = AbsTurnDir;
 module.exports.RelTurnSymbols = RelTurnSymbols;
 module.exports.RelSymbolTurns = RelSymbolTurns;
+module.exports.AbsSymbolTurns = AbsSymbolTurns;
