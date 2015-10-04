@@ -10,13 +10,13 @@ module.exports.toString = toString;
 function parse(str) {
     var match = /^(\w+)(?:\((.+)\))?$/.exec(str);
     if (!match) {
-        return HueWheelGenerator;
+        return HueWheelGenerator();
     }
 
     var name = match[1];
     var gen = gens[name];
     if (!gen) {
-        return HueWheelGenerator;
+        return HueWheelGenerator();
     }
 
     var args = match[2] ? match[2].split(/, */) : [];
@@ -24,7 +24,7 @@ function parse(str) {
     try {
         return gen.apply(null, args);
     } catch(e) {
-        return HueWheelGenerator;
+        return HueWheelGenerator();
     }
 }
 
