@@ -9,24 +9,23 @@ module.exports.parse = parse;
 module.exports.toString = toString;
 
 function parse(str) {
-    var match = /^(\w+)(?:\((.+)\))?$/.exec(str);
+    var match = /^(\w+)(?:\((.*)\))?$/.exec(str);
     if (!match) {
-        return Result.just(HueWheelGenerator());
+        return Result.error(new Error('invalid color spec'));
     }
 
     var name = match[1];
     var gen = gens[name];
     if (!gen) {
-        return Result.just(HueWheelGenerator());
+        var choices = Object.keys(gens).sort().join(', ');
+        return Result.error(new Error(
+            'no such color scheme ' + JSON.stringify(name) +
+            ', valid choices: ' + choices
+        ));
     }
 
     var args = match[2] ? match[2].split(/, */) : [];
-    /* eslint no-try-catch: [0] */
-    try {
-        return Result.just(gen.apply(null, args));
-    } catch(e) {
-        return Result.just(HueWheelGenerator());
-    }
+    return Result.lift(gen).apply(null, args);
 }
 
 function toString(gen) {
