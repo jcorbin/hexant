@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint no-inline-comments:0 */
-
 var Coord = require('./coord.js');
 var OddQHexTile = require('./hextile.js');
 var OddQOffset = Coord.OddQOffset;

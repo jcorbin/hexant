@@ -67,7 +67,7 @@ function configure() {
     var self = this;
 
     this.hash.bind('colors')
-        .setParse(Result.lift(colorGen.parse), colorGen.toString)
+        .setParse(colorGen.parse, colorGen.toString)
         .setDefault('light')
         .addListener(function onColorGenChange(gen) {
             self.onColorGenChange(gen);

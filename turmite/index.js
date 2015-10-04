@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint no-multi-spaces:0 consistent-this:0 */
-
 var Coord = require('../coord.js');
 var CubePoint = Coord.CubePoint;
 var constants = require('./constants.js');
@@ -68,8 +66,8 @@ function compile(str, ent) {
     if (res.err) {
         return res;
     }
-    var compile = res.value;
-    return compile(ent || new Turmite());
+    var func = res.value;
+    return func(ent || new Turmite());
 };
 
 Turmite.prototype.toString =

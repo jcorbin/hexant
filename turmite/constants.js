@@ -1,5 +1,3 @@
-/* eslint no-multi-spaces:0 consistent-this:0 */
-
 'use strict';
 
 /* relative turns

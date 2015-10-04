@@ -1,6 +1,10 @@
 {
     "rules": {
+        "complexity": [0,20],
+        "default-case": [0],
         "no-inline-comments": [0],
-        "default-case": [0]
+        "no-multi-spaces": [0],
+        "max-params": [0, 6],
+        "max-statements": [2, 30]
     }
 }

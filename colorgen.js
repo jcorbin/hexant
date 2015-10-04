@@ -1,5 +1,6 @@
 'use strict';
 
+var Result = require('rezult');
 var husl = require('husl');
 
 var gens = {};
@@ -8,28 +9,23 @@ module.exports.parse = parse;
 module.exports.toString = toString;
 
 function parse(str) {
-    var match = /^(\w+)(?:\((.+)\))?$/.exec(str);
+    var match = /^(\w+)(?:\((.*)\))?$/.exec(str);
     if (!match) {
-        return HueWheelGenerator;
+        return Result.error(new Error('invalid color spec'));
     }
 
     var name = match[1];
     var gen = gens[name];
     if (!gen) {
-        return HueWheelGenerator;
+        var choices = Object.keys(gens).sort().join(', ');
+        return Result.error(new Error(
+            'no such color scheme ' + JSON.stringify(name) +
+            ', valid choices: ' + choices
+        ));
     }
 
     var args = match[2] ? match[2].split(/, */) : [];
-    if (args) {
-        /* eslint no-try-catch: [0] */
-        try {
-            return gen.apply(null, args);
-        } catch(e) {
-            return HueWheelGenerator;
-        }
-    }
-
-    return gen;
+    return Result.lift(gen).apply(null, args);
 }
 
 function toString(gen) {

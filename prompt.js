@@ -1,5 +1,3 @@
-/* eslint no-try-catch: [0] */
-
 'use strict';
 
 module.exports = Prompt;

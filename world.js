@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint no-multi-spaces:0 */
-
 var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
 
