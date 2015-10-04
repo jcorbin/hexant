@@ -28,8 +28,8 @@ var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
 var antCompatMap = {
     L: 'L',
     R: 'R',
-    W: 'BL',
-    E: 'BR',
+    W: 'P',
+    E: 'S',
     F: 'B',
     A: 'F'
 };
@@ -67,7 +67,7 @@ function parseAnt(str) {
     var multurns     = [];
     var buildRuleStr = RLEBuilder('ant(', ' ', ')');
 
-    parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str.toUpperCase(),
+    parseArgs(/\s*(\d+)?(B|P|L|F|R|S)\s*/g, str.toUpperCase(),
         function eachArg(_, nStr, sym) {
             var mult = nStr ? parseInt(nStr, 10) : 1;
             var relturn = constants.RelSymbolTurns[sym];

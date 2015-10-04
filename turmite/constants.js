@@ -59,11 +59,11 @@ RelTurnSymbols[Turn.RelDoubleRight] = 'BR';
 
 var RelSymbolTurns = [];
 RelSymbolTurns.B   = Turn.RelBackward;
-RelSymbolTurns.BL  = Turn.RelDoubleLeft;
+RelSymbolTurns.P   = Turn.RelDoubleLeft;
 RelSymbolTurns.L   = Turn.RelLeft;
 RelSymbolTurns.F   = Turn.RelForward;
 RelSymbolTurns.R   = Turn.RelRight;
-RelSymbolTurns.BR  = Turn.RelDoubleRight;
+RelSymbolTurns.S   = Turn.RelDoubleRight;
 
 module.exports.Turn           = Turn;
 module.exports.RelTurnDelta   = RelTurnDelta;
