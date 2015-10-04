@@ -391,8 +391,11 @@ var Result = require('rezult');
 
 module.exports = Hash;
 
-function Hash(window) {
+function Hash(window, options) {
     var self = this;
+    if (!options) {
+        options = {};
+    }
 
     this.window = window;
     this.window.addEventListener('hashchange', onHashChange);
@@ -401,6 +404,10 @@ function Hash(window) {
     this.values = {};
     this.bound = {};
     this.load();
+    // TODO: do we ever need to escape?
+    this.escape =
+        options.escape === undefined
+        ? true : !!options.escape;
 
     function onHashChange(e) {
         self.load();
@@ -467,11 +474,22 @@ function save() {
         }
         var str = this.cache[key];
 
-        var part = '' + escape(key);
+        var part = '';
+        if (this.escape) {
+            part += escape(key);
+        } else {
+            part += key;
+        }
         if (str === undefined) {
             continue;
-        } else if (str !== '') {
-            part += '=' + escape(str);
+        }
+        if (str !== '') {
+            part += '=';
+            if (this.escape) {
+                part += escape(str);
+            } else {
+                part += str;
+            }
         }
         parts.push(part);
     }
@@ -705,10 +723,13 @@ function parseValue(str) {
 var Result = require('rezult');
 var husl = require('husl');
 
-var gens = {};
 module.exports.gens = gens;
 module.exports.parse = parse;
 module.exports.toString = toString;
+
+var gens = {};
+gens.light = LightWheelGenerator;
+gens.hue = HueWheelGenerator;
 
 function parse(str) {
     var match = /^(\w+)(?:\((.*)\))?$/.exec(str);
@@ -733,9 +754,6 @@ function parse(str) {
 function toString(gen) {
     return gen.genString || 'hue';
 }
-
-gens.light = LightWheelGenerator;
-gens.hue = HueWheelGenerator;
 
 // TODO: husl too
 
@@ -1098,10 +1116,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_na3kio");
+        component.setAttribute("id", "view_ojq33t");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_na3kio")
+       scope.componentsFor["view"].setAttribute("for", "view_ojq33t")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1122,10 +1140,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_7y7kgv");
+        component.setAttribute("id", "prompt_xa944m");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_7y7kgv")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_xa944m")
     }
     this.scope.hookup("this", this);
 };
@@ -1166,7 +1184,9 @@ function Hexant(body, scope) {
     this.view = null;
 
     this.window = scope.window;
-    this.hash = new Hash(this.window);
+    this.hash = new Hash(this.window, {
+        escape: false
+    });
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
     this.frameRate = 0;
@@ -1932,10 +1952,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_ol1dvw");
+        component.setAttribute("id", "view_qxd1kw");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_ol1dvw")
+       scope.componentsFor["view"].setAttribute("for", "view_qxd1kw")
     }
     this.scope.hookup("this", this);
 };
@@ -2137,10 +2157,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_blsm6j");
+        component.setAttribute("id", "box_eoa2e3");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_blsm6j")
+       scope.componentsFor["box"].setAttribute("for", "box_eoa2e3")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2155,10 +2175,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_83ib6q");
+            component.setAttribute("id", "help_p3sr4s");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_83ib6q")
+           scope.componentsFor["help"].setAttribute("for", "help_p3sr4s")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2171,10 +2191,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_5qy9ul");
+            component.setAttribute("id", "text_25do51");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_5qy9ul")
+           scope.componentsFor["text"].setAttribute("for", "text_25do51")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2184,10 +2204,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_rr4az0");
+            component.setAttribute("id", "error_vv62pc");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_rr4az0")
+           scope.componentsFor["error"].setAttribute("for", "error_vv62pc")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
