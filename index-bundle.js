@@ -1104,10 +1104,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_dnv4nu");
+        component.setAttribute("id", "view_sc3eed");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_dnv4nu")
+       scope.componentsFor["view"].setAttribute("for", "view_sc3eed")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1128,10 +1128,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_ethnle");
+        component.setAttribute("id", "prompt_6xzoqz");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_ethnle")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_6xzoqz")
     }
     this.scope.hookup("this", this);
 };
@@ -1940,10 +1940,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_cyzbgs");
+        component.setAttribute("id", "view_atf0pi");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_cyzbgs")
+       scope.componentsFor["view"].setAttribute("for", "view_atf0pi")
     }
     this.scope.hookup("this", this);
 };
@@ -2147,10 +2147,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_67so3n");
+        component.setAttribute("id", "box_pz8v0r");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_67so3n")
+       scope.componentsFor["box"].setAttribute("for", "box_pz8v0r")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2165,10 +2165,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_u00zse");
+            component.setAttribute("id", "help_svjt13");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_u00zse")
+           scope.componentsFor["help"].setAttribute("for", "help_svjt13")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2181,10 +2181,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_f9ciqh");
+            component.setAttribute("id", "text_asvs3l");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_f9ciqh")
+           scope.componentsFor["text"].setAttribute("for", "text_asvs3l")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2194,10 +2194,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_9mmxfw");
+            component.setAttribute("id", "error_sameom");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_9mmxfw")
+           scope.componentsFor["error"].setAttribute("for", "error_sameom")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2208,6 +2208,7 @@ var $THIS = function HexantPrompt(body, caller) {
         parents[parents.length] = parent; parent = node;
         // DIV
         node = parent; parent = parents[parents.length - 1]; parents.length--;
+        parent.appendChild(document.createTextNode("Press <Ctrl>-Enter to submit."));
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     this.scope.hookup("this", this);
 };
@@ -2445,11 +2446,11 @@ RelTurnSymbols[Turn.RelDoubleRight] = 'BR';
 
 var RelSymbolTurns = [];
 RelSymbolTurns.B   = Turn.RelBackward;
-RelSymbolTurns.BL  = Turn.RelDoubleLeft;
+RelSymbolTurns.P   = Turn.RelDoubleLeft;
 RelSymbolTurns.L   = Turn.RelLeft;
 RelSymbolTurns.F   = Turn.RelForward;
 RelSymbolTurns.R   = Turn.RelRight;
-RelSymbolTurns.BR  = Turn.RelDoubleRight;
+RelSymbolTurns.S   = Turn.RelDoubleRight;
 
 module.exports.Turn           = Turn;
 module.exports.RelTurnDelta   = RelTurnDelta;
@@ -2492,7 +2493,7 @@ Turmite.ruleHelp =
     '\nant(<number>?<turn> ...) , turns:\n' +
     '  - L=left, R=right\n' +
     '  - B=back, F=forward\n' +
-    '  - BL=back-left BR=back-right\n'
+    '  - P=port, S=starboard (these are rear-facing left/right)\n'
     ;
 
 function Turmite() {
@@ -2668,8 +2669,8 @@ var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
 var antCompatMap = {
     L: 'L',
     R: 'R',
-    W: 'BL',
-    E: 'BR',
+    W: 'P',
+    E: 'S',
     F: 'B',
     A: 'F'
 };
@@ -2707,7 +2708,7 @@ function parseAnt(str) {
     var multurns     = [];
     var buildRuleStr = RLEBuilder('ant(', ' ', ')');
 
-    parseArgs(/\s*(\d+)?(B|BL|L|F|R|BR)\s*/g, str.toUpperCase(),
+    parseArgs(/\s*(\d+)?(B|P|L|F|R|S)\s*/g, str.toUpperCase(),
         function eachArg(_, nStr, sym) {
             var mult = nStr ? parseInt(nStr, 10) : 1;
             var relturn = constants.RelSymbolTurns[sym];
