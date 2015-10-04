@@ -44,10 +44,12 @@ single-character letters ;-)
 
 ## URL-fragment (hash) variables
 
-- frameRate -- number of animation ticks attempted per second
-- drawUnvisited -- specify to draw every cell in the tree instead of only
+- `rule` -- the rule spec to use
+- `colors` -- the color scheme to use
+- `frameRate` -- number of animation ticks attempted per second
+- `drawUnvisited` -- specify to draw every cell in the tree instead of only
   visited ones
-- labeled -- specify to add coordinate labels to cells (doesn't scale well,
+- `labeled` -- specify to add coordinate labels to cells (doesn't scale well,
   only for debugging)
 
 # Running
