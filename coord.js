@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint no-inline-comments:0 */
-
 module.exports.ScreenPoint = ScreenPoint;
 module.exports.CubePoint = CubePoint;
 module.exports.OddQOffset = OddQOffset;

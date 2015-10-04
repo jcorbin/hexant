@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint no-multi-spaces:0 consistent-this:0 */
-
 var Coord = require('../coord.js');
 var CubePoint = Coord.CubePoint;
 var constants = require('./constants.js');

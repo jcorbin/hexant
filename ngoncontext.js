@@ -1,7 +1,5 @@
 'use strict';
 
-/* eslint max-params:[0,6] */
-
 module.exports = NGonContext;
 
 function NGonContext(degree, ctx2d) {

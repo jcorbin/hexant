@@ -1,5 +1,3 @@
-/* eslint no-multi-spaces:0 */
-
 'use strict';
 
 module.exports = RLEBuilder;
