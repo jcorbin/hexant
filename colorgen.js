@@ -20,16 +20,12 @@ function parse(str) {
     }
 
     var args = match[2] ? match[2].split(/, */) : [];
-    if (args) {
-        /* eslint no-try-catch: [0] */
-        try {
-            return gen.apply(null, args);
-        } catch(e) {
-            return HueWheelGenerator;
-        }
+    /* eslint no-try-catch: [0] */
+    try {
+        return gen.apply(null, args);
+    } catch(e) {
+        return HueWheelGenerator;
     }
-
-    return gen;
 }
 
 function toString(gen) {
