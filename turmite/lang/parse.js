@@ -1,12 +1,21 @@
-/* eslint no-try-catch:0 */
+/* eslint no-try-catch:0 no-eval:0 */
 
 'use strict';
 
 var nearley = require('nearley');
 var Result = require('rezult');
 var grammar = require('./grammar.js');
+var compile = require('./compile.js');
 
-module.exports = parseLang;
+module.exports = parseTurmite;
+
+function parseTurmite(str, World) {
+    var res = parseLang(str, World);
+    if (!res.err) {
+        res = compileGrammarResult(res.value, World);
+    }
+    return res;
+}
 
 function parseLang(str, World) {
     if (typeof str !== 'string') {
@@ -32,4 +41,10 @@ function parseResult(gram, str) {
     } catch(err) {
         return new Result(err, null);
     }
+}
+
+function compileGrammarResult(value, World) {
+    var str = compile.init(value).join('\n');
+    var func = eval(str);
+    return new Result(null, func);
 }
