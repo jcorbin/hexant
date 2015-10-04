@@ -1104,10 +1104,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_l7qt6u");
+        component.setAttribute("id", "view_ympcsq");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_l7qt6u")
+       scope.componentsFor["view"].setAttribute("for", "view_ympcsq")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1128,10 +1128,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_qn26bm");
+        component.setAttribute("id", "prompt_23bcki");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_qn26bm")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_23bcki")
     }
     this.scope.hookup("this", this);
 };
@@ -1940,10 +1940,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_2l18lk");
+        component.setAttribute("id", "view_m82fan");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_2l18lk")
+       scope.componentsFor["view"].setAttribute("for", "view_m82fan")
     }
     this.scope.hookup("this", this);
 };
@@ -2147,10 +2147,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_ki6bl0");
+        component.setAttribute("id", "box_7m4umc");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_ki6bl0")
+       scope.componentsFor["box"].setAttribute("for", "box_7m4umc")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2165,10 +2165,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_c4jj3g");
+            component.setAttribute("id", "help_do8mcp");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_c4jj3g")
+           scope.componentsFor["help"].setAttribute("for", "help_do8mcp")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2181,10 +2181,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_ogadxf");
+            component.setAttribute("id", "text_460wpq");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_ogadxf")
+           scope.componentsFor["text"].setAttribute("for", "text_460wpq")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2194,10 +2194,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_gwkfp4");
+            component.setAttribute("id", "error_4dqspq");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_gwkfp4")
+           scope.componentsFor["error"].setAttribute("for", "error_4dqspq")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2444,7 +2444,7 @@ RelTurnSymbols[Turn.RelForward]     = 'F';
 RelTurnSymbols[Turn.RelRight]       = 'R';
 RelTurnSymbols[Turn.RelDoubleRight] = 'BR';
 
-var RelSymbolTurns = [];
+var RelSymbolTurns = {};
 RelSymbolTurns.B   = Turn.RelBackward;
 RelSymbolTurns.P   = Turn.RelDoubleLeft;
 RelSymbolTurns.L   = Turn.RelLeft;
@@ -2452,11 +2452,20 @@ RelSymbolTurns.F   = Turn.RelForward;
 RelSymbolTurns.R   = Turn.RelRight;
 RelSymbolTurns.S   = Turn.RelDoubleRight;
 
+var AbsSymbolTurns = {};
+AbsSymbolTurns.NW  = Turn.AbsNorthWest;
+AbsSymbolTurns.NO  = Turn.AbsNorth;
+AbsSymbolTurns.NE  = Turn.AbsNorthEast;
+AbsSymbolTurns.SE  = Turn.AbsSouthEast;
+AbsSymbolTurns.SO  = Turn.AbsSouth;
+AbsSymbolTurns.SW  = Turn.AbsSouthWest;
+
 module.exports.Turn           = Turn;
 module.exports.RelTurnDelta   = RelTurnDelta;
 module.exports.AbsTurnDir     = AbsTurnDir;
 module.exports.RelTurnSymbols = RelTurnSymbols;
 module.exports.RelSymbolTurns = RelSymbolTurns;
+module.exports.AbsSymbolTurns = AbsSymbolTurns;
 
 }],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":9,"./constants.js":21,"./parse.js":23},function (require, exports, module, __filename, __dirname){
 
@@ -2703,84 +2712,78 @@ function parseAnt(str) {
     // we'll also build the canonical version of the parsed rule string in the
     // same pass as parsing it; rulestr will be that string, and we'll need
     // some state between arg matches
-    var numStates    = 1;
-    var numColors    = 0;
-    var multurns     = [];
-    var buildRuleStr = RLEBuilder('ant(', ' ', ')');
+    var numColors = 0;
+    var multurns  = [];
 
-    parseArgs(/\s*(\d+)?(B|P|L|F|R|S)\s*/g, str.toUpperCase(),
-        function eachArg(_, nStr, sym) {
-            var mult = nStr ? parseInt(nStr, 10) : 1;
-            var relturn = constants.RelSymbolTurns[sym];
-            numColors += mult;
-            if (numColors > World.MaxColor) {
-                return new Result(
-                    new Error('too many colors needed for ant ruleset'),
-                    null);
-            }
-            multurns.push({
-                mult: mult,
-                relturn: relturn
-            });
-            buildRuleStr(mult, sym);
-        });
-    var rulestr = buildRuleStr(0, '');
+    var re = /\s*\b(\d+)?(?:(B|P|L|F|R|S)|(NW|NO|NE|SE|SO|SW))\b\s*/g;
+    str = str.toUpperCase();
 
-    return new Result(null, compileAnt);
-
-    function compileAnt(turmite) {
-        // TODO: describe
-        var state    = 0;
-        var color    = 0;
-        var stateKey = state << World.ColorShift;
-        var rule     = stateKey | color;
-        var nextRule = rule;
-
-        turmite.clearRules();
-        for (var i = 0; i < multurns.length; i++) {
-            var mult = multurns[i].mult;
-            var relturn = multurns[i].relturn;
-            for (var j = 0; j < mult; j++) {
-                nextRule            = stateKey | ++color & World.MaxColor;
-                turmite.rules[rule] = nextRule << World.TurnShift | relturn;
-                rule                = nextRule;
-            }
-        }
-
-        // now that we've compiled the base case, we need to cover the rest of
-        // the (state, color) key space for numColors < color <=
-        // World.MaxColor; this essentially pre-computes "color modulo
-        // numColors" as a static rule table lookup so that no modulo logic is
-        // required in .step below (at least explicitly, since unsigned integer
-        // wrap-around is modulo 2^bits)
-        while (color > 0 && color <= World.MaxColor) {
-            var baseRule        = stateKey |   color % numColors;
-            nextRule            = stateKey | ++color & World.MaxColor;
-            var turn            = turmite.rules[baseRule] & 0x0000ffff;
-            turmite.rules[rule] = nextRule << World.TurnShift | turn;
-            rule                = nextRule;
-        }
-
-        turmite.state      = state;
-        turmite.specString = rulestr;
-        turmite.numColors  = numColors;
-        turmite.numStates  = numStates;
-
-        return new Result(null, turmite);
-    }
-}
-
-function parseArgs(re, str, each) {
     var i = 0;
     for (
-        var match = re.exec(str);
+        match = re.exec(str);
         match && i === match.index;
         i += match[0].length, match = re.exec(str)
     ) {
-        each.apply(null, match);
+        var multurn = {
+            mult: 0,
+            turn: 0,
+            sym: ''
+        };
+        multurn.mult = match[1] ? parseInt(match[1], 10) : 1;
+
+        if (match[2]) {
+            multurn.sym = match[2];
+            multurn.turn = constants.RelSymbolTurns[match[2]];
+        } else if (match[3]) {
+            multurn.sym = match[3];
+            multurn.turn = constants.AbsSymbolTurns[match[3]];
+        }
+
+        numColors += multurn.mult;
+        if (numColors > World.MaxColor) {
+            return new Result(
+                new Error('too many colors needed for ant ruleset'),
+                null);
+        }
+        multurns.push(multurn);
+    }
+    // TODO: check if didn't match full input
+
+    return new Result(null, boundCompileAnt);
+
+    function boundCompileAnt(turmite) {
+        return compileAnt(multurns, turmite);
+    }
+}
+
+function compileAnt(multurns, turmite) {
+    // TODO: describe
+    var numColors    = 0;
+    var buildRuleStr = RLEBuilder('ant(', ' ', ')');
+    var turns        = [];
+
+    for (var i = 0; i < multurns.length; i++) {
+        var mult = multurns[i].mult;
+        for (var j = 0; j < mult; j++) {
+            turns.push(multurns[i].turn);
+        }
+        numColors += multurns[i].mult;
+        buildRuleStr(multurns[i].mult, multurns[i].sym);
     }
 
-    // TODO: check if didn't match full input
+    turmite.clearRules();
+    for (var c = 0; c <= World.MaxColor; c++) {
+        var turn = turns[c % turns.length];
+        var color = c + 1 & World.MaxColor;
+        turmite.rules[c] = color << World.TurnShift | turn;
+    }
+
+    turmite.state      = 0;
+    turmite.specString = buildRuleStr(0, '');
+    turmite.numColors  = numColors;
+    turmite.numStates  = 1;
+
+    return new Result(null, turmite);
 }
 
 }],["turmite/rle-builder.js","hexant/turmite","rle-builder.js",{},function (require, exports, module, __filename, __dirname){
