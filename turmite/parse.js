@@ -65,22 +65,31 @@ function parseAnt(str) {
     var numColors = 0;
     var multurns  = [];
 
-    parseArgs(/\s*(\d+)?(B|P|L|F|R|S)\s*/g, str.toUpperCase(),
-        function eachArg(_, nStr, sym) {
-            var mult = nStr ? parseInt(nStr, 10) : 1;
-            var turn = constants.RelSymbolTurns[sym];
-            numColors += mult;
-            if (numColors > World.MaxColor) {
-                return new Result(
-                    new Error('too many colors needed for ant ruleset'),
-                    null);
-            }
-            multurns.push({
-                mult: mult,
-                turn: turn,
-                sym: sym
-            });
+    var re = /\s*(\d+)?(B|P|L|F|R|S)\s*/g;
+    str = str.toUpperCase();
+
+    var i = 0;
+    for (
+        match = re.exec(str);
+        match && i === match.index;
+        i += match[0].length, match = re.exec(str)
+    ) {
+        var mult = match[1] ? parseInt(match[1], 10) : 1;
+        var sym  = match[2];
+        var turn = constants.RelSymbolTurns[sym];
+        numColors += mult;
+        if (numColors > World.MaxColor) {
+            return new Result(
+                new Error('too many colors needed for ant ruleset'),
+                null);
+        }
+        multurns.push({
+            mult: mult,
+            turn: turn,
+            sym: sym
         });
+    }
+    // TODO: check if didn't match full input
 
     return new Result(null, boundCompileAnt);
 
@@ -117,17 +126,4 @@ function compileAnt(multurns, turmite) {
     turmite.numStates  = 1;
 
     return new Result(null, turmite);
-}
-
-function parseArgs(re, str, each) {
-    var i = 0;
-    for (
-        var match = re.exec(str);
-        match && i === match.index;
-        i += match[0].length, match = re.exec(str)
-    ) {
-        each.apply(null, match);
-    }
-
-    // TODO: check if didn't match full input
 }
