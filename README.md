@@ -19,6 +19,29 @@ only:
 - `*` -- reset to iteration 0 and pause
 - `#` -- toggle labels for debugging
 
+## Specifying Ants
+
+The language for specifying ants is:
+```
+ant( [<count>]<turn> ... )
+```
+
+Essentially it's simple RLE-encoded turn sequences inside `ant(...)`, some
+examples:
+- the default LR rule set is just: `ant(L R)`
+- a more interesting example: `ant(2R 10F 2R)`
+
+The possible turns are:
+- `L` -- to the left
+- `R` -- to the right
+- `F` -- forward (no turn)
+- `B` -- backward (reverse direction)
+- `P` -- "port", rear left turn
+- `S` -- "starboard", rear right turn
+
+Please excuse the abuse of "port" and "starboard" towards the end of unique
+single-character letters ;-)
+
 ## URL-fragment (hash) variables
 
 - frameRate -- number of animation ticks attempted per second
