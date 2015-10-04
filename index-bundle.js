@@ -1104,10 +1104,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_sc3eed");
+        component.setAttribute("id", "view_l7qt6u");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_sc3eed")
+       scope.componentsFor["view"].setAttribute("for", "view_l7qt6u")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1128,10 +1128,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_6xzoqz");
+        component.setAttribute("id", "prompt_qn26bm");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_6xzoqz")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_qn26bm")
     }
     this.scope.hookup("this", this);
 };
@@ -1940,10 +1940,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_atf0pi");
+        component.setAttribute("id", "view_2l18lk");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_atf0pi")
+       scope.componentsFor["view"].setAttribute("for", "view_2l18lk")
     }
     this.scope.hookup("this", this);
 };
@@ -2147,10 +2147,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_pz8v0r");
+        component.setAttribute("id", "box_ki6bl0");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_pz8v0r")
+       scope.componentsFor["box"].setAttribute("for", "box_ki6bl0")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2165,10 +2165,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_svjt13");
+            component.setAttribute("id", "help_c4jj3g");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_svjt13")
+           scope.componentsFor["help"].setAttribute("for", "help_c4jj3g")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2181,10 +2181,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_asvs3l");
+            component.setAttribute("id", "text_ogadxf");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_asvs3l")
+           scope.componentsFor["text"].setAttribute("for", "text_ogadxf")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2194,10 +2194,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_sameom");
+            component.setAttribute("id", "error_gwkfp4");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_sameom")
+           scope.componentsFor["error"].setAttribute("for", "error_gwkfp4")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2392,17 +2392,17 @@ function onKeyUp(e) {
 /* relative turns
  *    F -- +0 -- no turn, forward
  *    B -- +3 -- u turn, backaward
- *   BL -- -2 -- double left turn
+ *    P -- -2 -- double left turn
  *    L -- -1 -- left turn
  *    R -- +1 -- right turn
- *   BR -- +2 -- double right turn
+ *    S -- +2 -- double right turn
  *
  * absolute turns (for "flat-top" (odd or even q)
  *   NW -- ? -- North West
- *    N -- ? -- North
+ *   NO -- ? -- North
  *   NE -- ? -- North East
  *   SE -- ? -- South East
- *    S -- ? -- South
+ *   SO -- ? -- South
  *   SW -- ? -- South West
  */
 
