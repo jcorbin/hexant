@@ -25,7 +25,7 @@
     "domready": "^1.0.8",
     "global": "^4.3.0",
     "gutentag": "^2.1.1",
-    "hashbind": "^2.0.0",
+    "hashbind": "^2.0.1",
     "husl": "^6.0.1",
     "rezult": "^1.1.0"
   },
