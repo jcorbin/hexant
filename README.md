@@ -42,6 +42,33 @@ The possible turns are:
 Please excuse the abuse of "port" and "starboard" towards the end of unique
 single-character letters ;-)
 
+## Specifying Colors
+
+Colors are driven by a color geeration scheme, using a simple language.
+
+### Lightness-varying color scheme
+
+`light(HUE, SAT)`
+
+Uses lightness variation for a fixed hue and saturation in the [HUSL color
+space](http://www.husl-colors.org/).
+
+- `HUE` is a number between `0` and `360` and is in degrees on the color wheel;
+  defaults to `0`.
+- `SAT` is a number between `0` and `100` and is a percentage; defaults to
+  `100`.
+
+### Hue-varying color scheme
+
+`hue(SAT, LIGHT)`
+
+Uses hue variaton for a fixed saturation and lightness in the HSL color space.
+
+- `SAT` is a number between `0` and `100` and is a percentage; defaults to
+  `70`.
+- `LIGHT` is a number between `0` and `100` and is a percentage; defaults to
+  `40`.
+
 ## URL-fragment (hash) variables
 
 - `rule` -- the rule spec to use
