@@ -70,7 +70,7 @@ function parseAnt(str) {
     parseArgs(/\s*(\d+)?(B|P|L|F|R|S)\s*/g, str.toUpperCase(),
         function eachArg(_, nStr, sym) {
             var mult = nStr ? parseInt(nStr, 10) : 1;
-            var relturn = constants.RelSymbolTurns[sym];
+            var turn = constants.RelSymbolTurns[sym];
             numColors += mult;
             if (numColors > World.MaxColor) {
                 return new Result(
@@ -79,7 +79,7 @@ function parseAnt(str) {
             }
             multurns.push({
                 mult: mult,
-                relturn: relturn
+                turn: turn
             });
             buildRuleStr(mult, sym);
         });
@@ -91,17 +91,18 @@ function parseAnt(str) {
         // TODO: describe
         var state    = 0;
         var color    = 0;
+        var turn     = 0;
         var stateKey = state << World.ColorShift;
         var rule     = stateKey | color;
         var nextRule = rule;
 
         turmite.clearRules();
         for (var i = 0; i < multurns.length; i++) {
+            turn = multurns[i].turn;
             var mult = multurns[i].mult;
-            var relturn = multurns[i].relturn;
             for (var j = 0; j < mult; j++) {
                 nextRule            = stateKey | ++color & World.MaxColor;
-                turmite.rules[rule] = nextRule << World.TurnShift | relturn;
+                turmite.rules[rule] = nextRule << World.TurnShift | turn;
                 rule                = nextRule;
             }
         }
@@ -115,7 +116,7 @@ function parseAnt(str) {
         while (color > 0 && color <= World.MaxColor) {
             var baseRule        = stateKey |   color % numColors;
             nextRule            = stateKey | ++color & World.MaxColor;
-            var turn            = turmite.rules[baseRule] & 0x0000ffff;
+            turn                = turmite.rules[baseRule] & 0x0000ffff;
             turmite.rules[rule] = nextRule << World.TurnShift | turn;
             rule                = nextRule;
         }
