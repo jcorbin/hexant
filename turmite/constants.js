@@ -5,17 +5,17 @@
 /* relative turns
  *    F -- +0 -- no turn, forward
  *    B -- +3 -- u turn, backaward
- *   BL -- -2 -- double left turn
+ *    P -- -2 -- double left turn
  *    L -- -1 -- left turn
  *    R -- +1 -- right turn
- *   BR -- +2 -- double right turn
+ *    S -- +2 -- double right turn
  *
  * absolute turns (for "flat-top" (odd or even q)
  *   NW -- ? -- North West
- *    N -- ? -- North
+ *   NO -- ? -- North
  *   NE -- ? -- North East
  *   SE -- ? -- South East
- *    S -- ? -- South
+ *   SO -- ? -- South
  *   SW -- ? -- South West
  */
 
