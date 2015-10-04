@@ -92,10 +92,9 @@ function parseAnt(str) {
 function compileAnt(multurns, turmite) {
     // TODO: describe
     var numColors    = 0;
-    var state        = 0;
     var color        = 0;
     var turn         = 0;
-    var stateKey     = state << World.ColorShift;
+    var stateKey     = 0 << World.ColorShift;
     var rule         = stateKey | color;
     var nextRule     = rule;
     var buildRuleStr = RLEBuilder('ant(', ' ', ')');
@@ -127,7 +126,7 @@ function compileAnt(multurns, turmite) {
         rule                = nextRule;
     }
 
-    turmite.state      = state;
+    turmite.state      = 0;
     turmite.specString = buildRuleStr(0, '');
     turmite.numColors  = numColors;
     turmite.numStates  = 1;
