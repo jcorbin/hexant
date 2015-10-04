@@ -21,7 +21,9 @@ function Hexant(body, scope) {
     this.view = null;
 
     this.window = scope.window;
-    this.hash = new Hash(this.window);
+    this.hash = new Hash(this.window, {
+        escape: false
+    });
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
     this.frameRate = 0;
