@@ -3,10 +3,13 @@
 var Result = require('rezult');
 var husl = require('husl');
 
-var gens = {};
 module.exports.gens = gens;
 module.exports.parse = parse;
 module.exports.toString = toString;
+
+var gens = {};
+gens.light = LightWheelGenerator;
+gens.hue = HueWheelGenerator;
 
 function parse(str) {
     var match = /^(\w+)(?:\((.*)\))?$/.exec(str);
@@ -31,9 +34,6 @@ function parse(str) {
 function toString(gen) {
     return gen.genString || 'hue';
 }
-
-gens.light = LightWheelGenerator;
-gens.hue = HueWheelGenerator;
 
 // TODO: husl too
 
