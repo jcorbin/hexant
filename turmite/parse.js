@@ -12,7 +12,7 @@ function parseTurmite(str) {
         parseAnt
     ];
     for (var i = 0; i < parsers.length; i++) {
-        var res = parsers[i](str);
+        var res = parsers[i](str, World);
         if (res.err || res.value) {
             return res;
         }
