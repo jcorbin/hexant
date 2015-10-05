@@ -63,10 +63,10 @@ single-character letters ;-)
 
 Internally turmites are implemented as a 65536-element 32-bit lookup table.
 
-- table index is `state << 8 | color` where:
+- table index is ``state << 8 | color`` where:
   - `state` is the turmite state byte
   - `color` is the world color byte
-- table value is `state << 24 | color << 16 | turn` where
+- table value is ``state << 24 | color << 16 | turn`` where
   - `state` is the next turmite state byte
   - `color` is the world color byte to write
   - `turn` is a 16-bit field indicating the turn(s) to take (only 12 of the
