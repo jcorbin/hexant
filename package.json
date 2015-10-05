@@ -1,12 +1,13 @@
 {
   "name": "hexant",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "description": "Hexagonal Ants",
   "main": "hexant.js",
   "scripts": {
     "serve": "http-server -a 127.0.0.1 -p 8080 -c-1 -o",
     "test": "node test && npm run lint -s",
     "lint": "uber-standard",
+    "grammar": "nearleyc turmite/lang/grammar.ne >turmite/lang/grammar.js",
     "build-pages": "bash build-pages.sh master"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
@@ -25,8 +26,9 @@
     "domready": "^1.0.8",
     "global": "^4.3.0",
     "gutentag": "^2.1.1",
-    "hashbind": "^2.0.1",
+    "hashbind": "^2.0.3",
     "husl": "^6.0.1",
+    "nearley": "^1.5.0",
     "rezult": "^1.1.0"
   },
   "translators": {

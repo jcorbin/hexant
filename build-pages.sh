@@ -12,6 +12,7 @@ tagit=
 git checkout -f gh-pages
 git merge --no-edit $branch
 
+npm run grammar
 bundle index.js >index-bundle.js
 minify index-bundle.js >index-bundle-min.js
 

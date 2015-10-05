@@ -23,10 +23,12 @@ module.exports = Turmite;
  */
 
 Turmite.ruleHelp =
-    '\nant(<number>?<turn> ...) , turns:\n' +
+    'ant(<number>?<turn> ...) , turns:\n' +
     '  - L=left, R=right\n' +
     '  - B=back, F=forward\n' +
     '  - P=port, S=starboard (these are rear-facing left/right)\n'
+    '\n'
+    'See README for full turmite language details.'
     ;
 
 function Turmite() {
