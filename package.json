@@ -1,6 +1,6 @@
 {
   "name": "hexant",
-  "version": "0.8.5",
+  "version": "0.9.0",
   "description": "Hexagonal Ants",
   "main": "hexant.js",
   "scripts": {
