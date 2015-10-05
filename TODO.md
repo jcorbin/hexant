@@ -1,10 +1,10 @@
 Features:
 - extend the current hack that is `drawTrace` to something like
   `trace=redraw|<number>` so that we can have "last-N" tracing
-- utilize / unlock more turmite features
-  - dsl for arbitrary turmite -- WIP on the turmite-lang branch
-  - support forking -- see turmite/index.js circa L109
-  - interaction rules
+- support forking -- see turmite/index.js circa L109
+- support interaction rules
+  - first implement mutual annihilation
+  - next support rules table voting from each entity
 - color schemes
   - better hue separation for the various classes in light scheme
   - support varying the scheme for each class (e.g. hue(...) for ants, but
@@ -21,6 +21,15 @@ Features:
 - ant pov inset view(s)
 - randomized starting cell values
 - generalize and borg github:jcorbin/ants
+
+Turmite Lang:
+- better when matching logic
+- bitwise operators
+- syntax for partial then spec
+- syntax for interaction
+- refactor compiler
+  - support error return
+  - consistent composition shape between parts
 
 UI:
 - mobile
