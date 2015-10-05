@@ -93,7 +93,7 @@ Quirks to note:
 - successive rule results are bitwise `OR`ed together; this could be especially
   confusing for the result `state` and `color` fields if overlapping rules
   provide non-zero values
-- the pattern matching in the left-hand side is still rudimentary, and supprots
+- the pattern matching in the left-hand side is still rudimentary, and supports
   only basic arithmetic
 
 A more complex example:
@@ -116,7 +116,7 @@ In other words, it's a kind of dual-personality ant and anti-ant in one.
 
 ## Specifying Colors
 
-Colors are driven by a color geeration scheme, using a simple language.
+Colors are driven by a color generation scheme, using a simple language.
 
 ### Lightness-varying color scheme
 
