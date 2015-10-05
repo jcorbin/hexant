@@ -58,7 +58,7 @@ global = this;
         main = bundle[filename];
         main._require();
     }
-})([["animator.js","blick","animator.js",{"raf":30},function (require, exports, module, __filename, __dirname){
+})([["animator.js","blick","animator.js",{"raf":39},function (require, exports, module, __filename, __dirname){
 
 // blick/animator.js
 // -----------------
@@ -282,7 +282,7 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["document.js","gutentag","document.js",{"koerper":28},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":36},function (require, exports, module, __filename, __dirname){
 
 // gutentag/document.js
 // --------------------
@@ -380,7 +380,7 @@ Object.defineProperty(Text.prototype, "value", {
     }
 });
 
-}],["index.js","hashbind","index.js",{"rezult":31},function (require, exports, module, __filename, __dirname){
+}],["index.js","hashbind","index.js",{"rezult":40},function (require, exports, module, __filename, __dirname){
 
 // hashbind/index.js
 // -----------------
@@ -405,7 +405,7 @@ function Hash(window, options) {
     this.bound = {};
     this.load();
     // TODO: do we ever need to escape?
-    this.escape =
+    this.fullEscape =
         options.escape === undefined
         ? true : !!options.escape;
 
@@ -473,23 +473,12 @@ function save() {
             this.cache[key] = valueToString(this.values[key]);
         }
         var str = this.cache[key];
-
-        var part = '';
-        if (this.escape) {
-            part += escape(key);
-        } else {
-            part += key;
-        }
+        var part = '' + this.escapePart(key);
         if (str === undefined) {
             continue;
         }
         if (str !== '') {
-            part += '=';
-            if (this.escape) {
-                part += escape(str);
-            } else {
-                part += str;
-            }
+            part += '=' + this.escapePart(str);
         }
         parts.push(part);
     }
@@ -500,6 +489,16 @@ function save() {
     }
 
     this.window.location.hash = this.last = hash;
+};
+
+Hash.prototype.escapePart =
+function escapePart(str) {
+    if (this.fullEscape) {
+        return escape(str);
+    }
+    return str.replace(/[#=&]/g, function each(part) {
+        return escape(part);
+    });
 };
 
 Hash.prototype.bind =
@@ -713,7 +712,7 @@ function parseValue(str) {
     return new Result(null, str);
 }
 
-}],["colorgen.js","hexant","colorgen.js",{"rezult":31,"husl":27},function (require, exports, module, __filename, __dirname){
+}],["colorgen.js","hexant","colorgen.js",{"rezult":40,"husl":35},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
 // ------------------
@@ -1116,10 +1115,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_ojq33t");
+        component.setAttribute("id", "view_a4gj23");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_ojq33t")
+       scope.componentsFor["view"].setAttribute("for", "view_a4gj23")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1140,10 +1139,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_xa944m");
+        component.setAttribute("id", "prompt_9uw9kp");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_xa944m")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_9uw9kp")
     }
     this.scope.hookup("this", this);
 };
@@ -1156,7 +1155,7 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
     var scope = this.scope = caller;
 };
 
-}],["hexant.js","hexant","hexant.js",{"hashbind":7,"rezult":31,"./colorgen.js":8,"./world.js":26,"./view.js":25,"./turmite/index.js":22,"./coord.js":9,"./hextiletree.js":14},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"hashbind":7,"rezult":40,"./colorgen.js":8,"./world.js":34,"./view.js":33,"./turmite/index.js":22,"./coord.js":9,"./hextiletree.js":14},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1952,10 +1951,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_qxd1kw");
+        component.setAttribute("id", "view_p1iyqd");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_qxd1kw")
+       scope.componentsFor["view"].setAttribute("for", "view_p1iyqd")
     }
     this.scope.hookup("this", this);
 };
@@ -2157,10 +2156,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_eoa2e3");
+        component.setAttribute("id", "box_1wuhf1");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_eoa2e3")
+       scope.componentsFor["box"].setAttribute("for", "box_1wuhf1")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2175,10 +2174,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_p3sr4s");
+            component.setAttribute("id", "help_7qmlww");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_p3sr4s")
+           scope.componentsFor["help"].setAttribute("for", "help_7qmlww")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2191,10 +2190,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_25do51");
+            component.setAttribute("id", "text_4oewt5");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_25do51")
+           scope.componentsFor["text"].setAttribute("for", "text_4oewt5")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2204,10 +2203,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_vv62pc");
+            component.setAttribute("id", "error_3lqzqh");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_vv62pc")
+           scope.componentsFor["error"].setAttribute("for", "error_3lqzqh")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2473,7 +2472,7 @@ module.exports.RelTurnSymbols = RelTurnSymbols;
 module.exports.RelSymbolTurns = RelSymbolTurns;
 module.exports.AbsSymbolTurns = AbsSymbolTurns;
 
-}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":9,"./constants.js":21,"./parse.js":23},function (require, exports, module, __filename, __dirname){
+}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":9,"./constants.js":21,"./parse.js":31},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/index.js
 // -----------------------
@@ -2503,10 +2502,12 @@ module.exports = Turmite;
  */
 
 Turmite.ruleHelp =
-    '\nant(<number>?<turn> ...) , turns:\n' +
+    'ant(<number>?<turn> ...) , turns:\n' +
     '  - L=left, R=right\n' +
     '  - B=back, F=forward\n' +
     '  - P=port, S=starboard (these are rear-facing left/right)\n'
+    '\n'
+    'See README for full turmite language details.'
     ;
 
 function Turmite() {
@@ -2647,7 +2648,1133 @@ function executeTurn(turn) {
     return 0;
 };
 
-}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":31,"../world.js":26,"./rle-builder.js":24,"./constants.js":21},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/analyze.js","hexant/turmite/lang","analyze.js",{"./walk.js":30},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/analyze.js
+// ------------------------------
+
+'use strict';
+
+var walk = require('./walk.js');
+
+// pre-processing step for compilation
+module.exports = analyze;
+
+function analyze(spec, scope) {
+    walk.iter(spec, function _each(node, next) {
+        each(node, spec, scope);
+        next();
+    });
+}
+
+function each(node, spec, scope) {
+    switch (node.type) {
+    case 'assign':
+        scope[node.id.name] = node.value;
+        break;
+
+    case 'member':
+        if (node.value.type !== 'symbol' &&
+            node.value.type !== 'identifier') {
+            node.value = hoist(
+                gensym(node.value.type, scope),
+                node.value,
+                spec, scope);
+        }
+        break;
+
+    case 'turns':
+        scope.numColors = Math.max(scope.numColors, node.value.length);
+        break;
+
+    case 'then':
+        if (node.turn.type === 'turns') {
+            var colorSyms = walk.collect(node.color, isSymOrId);
+            if (colorSyms.length === 1) {
+                node.turn = {
+                    type: 'member',
+                    value: node.turn,
+                    item: colorSyms[0]
+                };
+            }
+            // TODO: else error
+        }
+        break;
+    }
+}
+
+function hoist(name, value, spec, scope) {
+    scope[name] = value;
+    spec.assigns.push({
+        type: 'assign',
+        id: {
+            type: 'identifier',
+            name: name
+        },
+        value: value
+    });
+    each(value, spec, scope);
+    return {
+        type: 'identifier',
+        name: name
+    };
+}
+
+function gensym(kind, scope) {
+    var sym = kind[0].toUpperCase() +
+        kind.slice(1);
+    var i = 1;
+    while (scope[sym + i]) {
+        i++;
+    }
+    return sym + i;
+}
+
+function isSymOrId(child) {
+    return child.type === 'symbol' ||
+           child.type === 'identifier';
+}
+
+}],["turmite/lang/build.js","hexant/turmite/lang","build.js",{},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/build.js
+// ----------------------------
+
+'use strict';
+
+module.exports.spec = function parseSpec(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'spec',
+        assigns: d[0] || [],
+        rules: d[1]
+    };
+};
+
+module.exports.assign = function parseAssign(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'assign',
+        id: d[0],
+        value: d[4]
+    };
+};
+
+module.exports.rule = function parseRule(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'rule',
+        when: d[0],
+        then: d[2]
+    };
+};
+
+module.exports.turns = function parseTurns(d) {
+    var first = d[2];
+    var rest = d[3];
+    var r = [first];
+    if (rest) {
+        for (var i = 0; i < rest.length; i++) {
+            r.push(rest[i][1]);
+        }
+    }
+    return {
+        type: 'turns',
+        value: r
+    };
+};
+
+module.exports.turn = function parseTurn(d) {
+    return {
+        type: 'turn',
+        names: [d[1]]
+    };
+};
+
+module.exports.multiTurn = function multiTurn(d) {
+    var a = d[0];
+    var b = d[2];
+    return {
+        type: 'turn',
+        names: a.names.concat(b.names)
+    };
+};
+
+module.exports.singleTurn = function parseSingleTurn(d) {
+    return {
+        count: {
+            type: 'number',
+            value: 1
+        },
+        turn: d[0]
+    };
+};
+
+module.exports.countTurn = function parseCountTurn(d) {
+    return {
+        count: d[0],
+        turn: d[1]
+    };
+};
+
+module.exports.when = function parseWhen(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'when',
+        state: d[0],
+        color: d[2]
+    };
+};
+
+module.exports.then = function parseThen(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'then',
+        state: d[0],
+        color: d[2],
+        turn: d[4]
+    };
+};
+
+module.exports.member = function parseMember(d) {
+    return {
+        type: 'member',
+        value: d[0][0],
+        item: d[2]
+    };
+};
+
+module.exports.expr = function expr(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'expr',
+        op: d[1],
+        arg1: d[0],
+        arg2: d[2]
+    };
+};
+
+module.exports.symbol = function parseSymbol(d) {
+    return {
+        type: 'symbol',
+        name: d[0] + d[1].join('')
+    };
+};
+
+module.exports.identifier = function parseIdentifier(d) {
+    return {
+        type: 'identifier',
+        name: d[0] + d[1].join('')
+    };
+};
+
+module.exports.rightConcat = function rightConcat(d) {
+    return [d[0]].concat(d[2]);
+};
+
+module.exports.noop = function noop() {
+    return null;
+};
+
+module.exports.join = function join(d) {
+    return d.join('');
+};
+
+module.exports.int = function int(base) {
+    return function intParser(d) {
+        var str = d[0].join('');
+        return {
+            type: 'number',
+            value: parseInt(str, base)
+        };
+    };
+};
+
+module.exports.item = function item(i) {
+    return function itemn(d) {
+        return d[i];
+    };
+};
+
+}],["turmite/lang/compile.js","hexant/turmite/lang","compile.js",{"../constants.js":21,"./analyze.js":23,"./tostring.js":29,"./solve.js":28,"./walk.js":30},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/compile.js
+// ------------------------------
+
+'use strict';
+
+var constants = require('../constants.js');
+var analyze = require('./analyze.js');
+var symToTstring = require('./tostring.js');
+var solve = require('./solve.js');
+var walk = require('./walk.js');
+
+// TODO: de-dupe
+var opPrec = [
+    '+',
+    '-',
+    '*',
+    '/',
+    '%'
+];
+
+function compileInit(spec) {
+    var scope = {
+        _ent: 'turmite',
+        numStates: 0,
+        numColors: 0
+    };
+
+    analyze(spec, scope);
+
+    var bodyLines = [
+        'var numStates = ' + scope.numStates + ';',
+        'var numColors = ' + scope.numColors + ';'
+    ];
+    bodyLines = compileSpec(spec, scope, bodyLines);
+    bodyLines.push(
+        '',
+        scope._ent + '.numStates = numStates;',
+        scope._ent + '.numColors = numColors;',
+        '',
+        'return new Result(null, ' + scope._ent + ');');
+
+    var lines = [];
+    lines.push('function init(' + scope._ent + ') {');
+    pushWithIndent(lines, bodyLines);
+    lines.push('}');
+
+    return closeit(['World', 'Result'], 'init', lines);
+}
+
+function compileSpec(spec, scope, lines) {
+    for (var i = 0; i < spec.assigns.length; i++) {
+        var assign = spec.assigns[i];
+        lines = lines.concat(compileAssign(assign, scope));
+        lines.push('');
+    }
+    lines = lines.concat(compileRules('rules', spec.rules, scope));
+    return lines;
+}
+
+function compileRules(myName, rules, scope) {
+    scope._state  = '_state';
+    scope._color  = '_color';
+    scope._key    = '_key';
+    scope._result = '_res';
+    scope._states = '_states';
+
+    var lines = [];
+
+    lines.push(
+        'var ' + scope._states + ' = {};',
+        'function countState(state) {',
+        '    if (!' + scope._states + '[state]) {',
+        '        ' + scope._states + '[state] = true;',
+        '        numStates++;',
+        '    }',
+        '}',
+        'var ' + [
+            scope._state,
+            scope._color,
+            scope._key,
+            scope._result
+        ].join(', ') + ';',
+        scope._ent + '.clearRules();'
+    );
+
+    rules.forEach(function eachRule(rule, i) {
+        symToTstring(rule, function each(line) {
+            if (i < rules.length - 1) {
+                line += '\n';
+            }
+            lines.push(
+                '',
+                scope._ent + '.specString += ' +
+                JSON.stringify(line) + ';');
+        });
+
+        lines = lines.concat(compileRule(rule, scope));
+    });
+
+    return lines;
+}
+
+function compileRule(rule, scope) {
+    // XXX: api shift
+    return compileWhen([], rule.when, scope, function underWhen(innerLines) {
+        return compileThen(innerLines, rule.then, scope, noop);
+    });
+}
+
+function compileWhen(outerLines, when, scope, body) {
+    return compileWhenMatch({
+        sym: scope._state,
+        max: 'World.MaxState',
+        count: 'countState'
+    }, when.state, outerLines, whenStateBody, scope);
+
+    function whenStateBody(lines) {
+        lines.push(scope._key + ' = ' + scope._state + ' << World.ColorShift;');
+
+        return compileWhenMatch({
+            sym: scope._color,
+            max: 'World.MaxColor',
+            count: null
+        }, when.color, lines, whenColorBody, scope);
+    }
+
+    function whenColorBody(lines) {
+        lines = body(lines);
+        return lines;
+    }
+}
+
+function compileWhenMatch(varSpec, node, lines, body, scope) {
+    var matchBody = varSpec.count ? countedBody : body;
+
+    switch (node.type) {
+    case 'symbol':
+    case 'expr':
+        return compileWhenLoop(varSpec, node, lines, matchBody, scope);
+
+    case 'number':
+        lines.push(varSpec.sym + ' = ' + node.value + ';');
+        return matchBody(lines);
+
+    default:
+        throw new Error('unsupported match type ' + node.type);
+    }
+
+    function countedBody(bodyLines) {
+        bodyLines.push(varSpec.count + '(' + varSpec.sym + ');');
+        return body(bodyLines);
+    }
+}
+
+function compileWhenLoop(varSpec, node, lines, body, scope) {
+    lines.push('for (' +
+               varSpec.sym + ' = 0; ' +
+               varSpec.sym + ' <= ' + varSpec.max + '; ' +
+               varSpec.sym + '++' +
+               ') {');
+    var bodyLines = compileWhenExprMatch(varSpec, node, [], body, scope);
+    pushWithIndent(lines, bodyLines);
+    lines.push('}');
+    return lines;
+}
+
+function compileWhenExprMatch(varSpec, node, lines, body, scope) {
+    var syms = freeSymbols(node, scope);
+    if (syms.length > 1) {
+        throw new Error('matching more than one variable is unsupported');
+    }
+    var cap = syms[0];
+    if (!cap) {
+        throw new Error('no match variable');
+    }
+
+    var matchExpr = solve(cap, varSpec.sym, node, scope, 0);
+    if (matchExpr === varSpec.sym) {
+        lines.push('var ' + cap + ' = ' + matchExpr + ';');
+        return body(lines);
+    }
+
+    matchExpr = varSpec.max + ' + ' + matchExpr + ' % ' + varSpec.max;
+    lines.push('var ' + cap + ' = ' + matchExpr + ';');
+    // TODO: gratuitous guard, only needed if division is involved
+    lines.push('if (Math.floor(' + cap + ') === ' + cap + ') {');
+    pushWithIndent(lines, body([]));
+    lines.push('}');
+    return lines;
+}
+
+function freeSymbols(node, scope) {
+    var seen = {};
+    var res = [];
+    walk.iter(node, each);
+    return res;
+
+    function each(child, next) {
+        if (child.type === 'symbol' &&
+            scope[child.name] === undefined &&
+            !seen[child.name]) {
+            seen[child.name] = true;
+            res.push(child.name);
+        }
+        next();
+    }
+}
+
+function compileThen(lines, then, scope, body) {
+    var masks = ['World.MaxState', 'World.MaxColor', 'World.TurnMask'];
+    var shifts = ['World.ColorShift', 'World.TurnShift'];
+
+    var allZero = true;
+    var parts = [then.state, then.color, then.turn];
+    for (var i = 0; i < parts.length; i++) {
+        var value = compileValue(parts[i], scope);
+        if (value !== '0') {
+            if (parts[i].type === 'expr') {
+                value = '(' + value + ')';
+            }
+            value += ' & ' + masks[i];
+
+            if (allZero) {
+                allZero = false;
+                lines.push(scope._result + ' = ' + value + ';');
+            } else {
+                lines.push(scope._result + ' |= ' + value + ';');
+            }
+        }
+        if (i < shifts.length && !allZero) {
+            lines.push(scope._result + ' <<= ' + shifts[i] + ';');
+        }
+    }
+
+    if (!allZero) {
+        lines.push(
+            scope._ent + '.rules[' +
+                scope._key + ' | ' + scope._color +
+            '] |= ' + scope._result + ';');
+    }
+
+    return body(lines);
+}
+
+function compileValue(node, scope, outerPrec) {
+    if (!outerPrec) {
+        outerPrec = 0;
+    }
+
+    switch (node.type) {
+
+    case 'expr':
+        var prec = opPrec.indexOf(node.op);
+        var arg1 = compileValue(node.arg1, scope, prec);
+        var arg2 = compileValue(node.arg2, scope, prec);
+        var exprStr = arg1 + ' ' + node.op + ' ' + arg2;
+        if (prec < outerPrec) {
+            return '(' + exprStr + ')';
+        }
+        return exprStr;
+
+    case 'member':
+        // TODO error if scope[sym] === 'undefined'
+        var valRepr = compileValue(node.value, scope, 0);
+        var item = compileValue(node.item, scope, opPrec.length);
+        item = item + ' % ' + valRepr + '.length';
+        return valRepr + '[' + item + ']';
+
+    case 'symbol':
+    case 'identifier':
+        return node.name;
+
+    case 'turn':
+        return node.names.reduce(
+            function orEachTurn(turn, name) {
+                return turn | constants.Turn[name];
+            }, 0);
+
+    case 'number':
+        return node.value.toString();
+
+    case 'turns':
+        return compileTurns(node.value);
+
+    default:
+        return '/* ' + JSON.stringify(node) + ' */ undefined';
+    }
+}
+
+function compileAssign(assign, scope) {
+    var lines = [];
+    symToTstring(assign, function each(line) {
+        line += '\n';
+        lines.push(
+            '',
+            scope._ent + '.specString += ' +
+            JSON.stringify(line) + ';');
+    });
+
+    lines.push(
+        'var ' + assign.id.name + ' = ' +
+        compileValue(assign.value) + ';');
+
+    return lines;
+}
+
+function compileTurns(turns) {
+    var parts = [];
+    for (var i = 0; i < turns.length; i++) {
+        var item = turns[i];
+        var turn = constants.Turn[item.turn];
+        var turnStr = '0x' + zeropad(2, turn.toString(16));
+        for (var j = 0; j < item.count.value; j++) {
+            parts.push(turnStr);
+        }
+    }
+    return '[' + parts.join(', ') + ']';
+}
+
+function zeropad(width, str) {
+    while (str.length < width) {
+        str = '0' + str;
+    }
+    return str;
+}
+
+function pushWithIndent(outer, inner) {
+    for (var i = 0; i < inner.length; i++) {
+        var line = inner[i];
+        if (line) {
+            line = '    ' + line;
+        }
+        outer.push(line);
+    }
+    return outer;
+}
+
+function closeit(args, ret, body) {
+    var argStr = args.join(', ');
+    var lines = [];
+    lines.push('(function(' + argStr + ') {');
+    lines = lines.concat(body);
+    lines.push(
+        '',
+        'return ' + ret + ';',
+        '})(' + argStr + ');');
+    return lines;
+}
+
+function noop(lines) {
+    return lines;
+}
+
+module.exports.assign        = compileAssign;
+module.exports.init          = compileInit;
+module.exports.rule          = compileRule;
+module.exports.rules         = compileRules;
+module.exports.spec          = compileSpec;
+module.exports.then          = compileThen;
+module.exports.turns         = compileTurns;
+module.exports.value         = compileValue;
+module.exports.when          = compileWhen;
+module.exports.whenExprMatch = compileWhenExprMatch;
+module.exports.whenLoop      = compileWhenLoop;
+module.exports.whenMatch     = compileWhenMatch;
+
+}],["turmite/lang/grammar.js","hexant/turmite/lang","grammar.js",{"./build.js":24},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/grammar.js
+// ------------------------------
+
+// Generated automatically by nearley
+// http://github.com/Hardmath123/nearley
+(function () {
+function id(x) {return x[0]; }
+ var build = require('./build.js'); var grammar = {
+    ParserRules: [
+    {"name": "spec", "symbols": ["spec$ebnf$1", "rules"], "postprocess": build.spec},
+    {"name": "assigns", "symbols": ["assign"]},
+    {"name": "assigns", "symbols": ["assign", "newline", "assigns"], "postprocess": build.rightConcat},
+    {"name": "assign", "symbols": ["identifier", "_", {"literal":"="}, "_", "lit"], "postprocess": build.assign},
+    {"name": "rules", "symbols": ["rule"]},
+    {"name": "rules", "symbols": ["rule", "newline", "rules"], "postprocess": build.rightConcat},
+    {"name": "rule$string$1", "symbols": [{"literal":"="}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "rule", "symbols": ["when", "rule$string$1", "then"], "postprocess": build.rule},
+    {"name": "when", "symbols": ["expr", {"literal":","}, "expr"], "postprocess": build.when},
+    {"name": "then", "symbols": ["expr", {"literal":","}, "expr", {"literal":","}, "thenTurn"], "postprocess": build.then},
+    {"name": "thenTurn", "symbols": ["expr"], "postprocess": build.item(0)},
+    {"name": "thenTurn", "symbols": ["turnExpr"], "postprocess": build.item(0)},
+    {"name": "turnExpr", "symbols": ["_", "turn", "_"], "postprocess": build.turn},
+    {"name": "turnExpr", "symbols": ["turnExpr", {"literal":"|"}, "turnExpr"], "postprocess": build.multiTurn},
+    {"name": "expr", "symbols": ["_", "sum", "_"], "postprocess": build.item(1)},
+    {"name": "sumop", "symbols": ["_", {"literal":"+"}, "_"], "postprocess": build.item(1)},
+    {"name": "sumop", "symbols": ["_", {"literal":"-"}, "_"], "postprocess": build.item(1)},
+    {"name": "mulop", "symbols": ["_", {"literal":"*"}, "_"], "postprocess": build.item(1)},
+    {"name": "mulop", "symbols": ["_", {"literal":"/"}, "_"], "postprocess": build.item(1)},
+    {"name": "mulop", "symbols": ["_", {"literal":"%"}, "_"], "postprocess": build.item(1)},
+    {"name": "sum", "symbols": ["sum", "sumop", "mul"], "postprocess": build.expr},
+    {"name": "sum", "symbols": ["mul"], "postprocess": build.item(0)},
+    {"name": "mul", "symbols": ["mul", "mulop", "fac"], "postprocess": build.expr},
+    {"name": "mul", "symbols": ["fac"], "postprocess": build.item(0)},
+    {"name": "fac", "symbols": [{"literal":"("}, "expr", {"literal":")"}], "postprocess": build.item(1)},
+    {"name": "fac", "symbols": ["lit"], "postprocess": build.item(0)},
+    {"name": "fac", "symbols": ["member"], "postprocess": build.item(0)},
+    {"name": "fac", "symbols": ["symbol"], "postprocess": build.item(0)},
+    {"name": "fac", "symbols": ["identifier"], "postprocess": build.item(0)},
+    {"name": "turns$string$1", "symbols": [{"literal":"t"}, {"literal":"u"}, {"literal":"r"}, {"literal":"n"}, {"literal":"s"}, {"literal":"("}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turns", "symbols": ["turns$string$1", "_", "countTurn", "turns$ebnf$1", "_", {"literal":")"}], "postprocess": build.turns},
+    {"name": "turn", "symbols": [{"literal":"L"}], "postprocess": function() {return 'RelLeft'}},
+    {"name": "turn", "symbols": [{"literal":"R"}], "postprocess": function() {return 'RelRight'}},
+    {"name": "turn", "symbols": [{"literal":"F"}], "postprocess": function() {return 'RelForward'}},
+    {"name": "turn", "symbols": [{"literal":"B"}], "postprocess": function() {return 'RelBackward'}},
+    {"name": "turn", "symbols": [{"literal":"P"}], "postprocess": function() {return 'RelDoubleLeft'}},
+    {"name": "turn", "symbols": [{"literal":"S"}], "postprocess": function() {return 'RelDoubleRight'}},
+    {"name": "turn", "symbols": [{"literal":"l"}], "postprocess": function() {return 'RelLeft'}},
+    {"name": "turn", "symbols": [{"literal":"r"}], "postprocess": function() {return 'RelRight'}},
+    {"name": "turn", "symbols": [{"literal":"f"}], "postprocess": function() {return 'RelForward'}},
+    {"name": "turn", "symbols": [{"literal":"b"}], "postprocess": function() {return 'RelBackward'}},
+    {"name": "turn", "symbols": [{"literal":"p"}], "postprocess": function() {return 'RelDoubleLeft'}},
+    {"name": "turn", "symbols": [{"literal":"s"}], "postprocess": function() {return 'RelDoubleRight'}},
+    {"name": "turn$string$1", "symbols": [{"literal":"N"}, {"literal":"W"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$1"], "postprocess": function() {return 'AbsNorthWest'}},
+    {"name": "turn$string$2", "symbols": [{"literal":"N"}, {"literal":"O"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$2"], "postprocess": function() {return 'AbsNorth'}},
+    {"name": "turn$string$3", "symbols": [{"literal":"N"}, {"literal":"E"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$3"], "postprocess": function() {return 'AbsNorthEast'}},
+    {"name": "turn$string$4", "symbols": [{"literal":"S"}, {"literal":"E"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$4"], "postprocess": function() {return 'AbsSouthEast'}},
+    {"name": "turn$string$5", "symbols": [{"literal":"S"}, {"literal":"O"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$5"], "postprocess": function() {return 'AbsSouth'}},
+    {"name": "turn$string$6", "symbols": [{"literal":"S"}, {"literal":"W"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$6"], "postprocess": function() {return 'AbsSouthWest'}},
+    {"name": "turn$string$7", "symbols": [{"literal":"n"}, {"literal":"w"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$7"], "postprocess": function() {return 'AbsNorthWest'}},
+    {"name": "turn$string$8", "symbols": [{"literal":"n"}, {"literal":"o"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$8"], "postprocess": function() {return 'AbsNorth'}},
+    {"name": "turn$string$9", "symbols": [{"literal":"n"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$9"], "postprocess": function() {return 'AbsNorthEast'}},
+    {"name": "turn$string$10", "symbols": [{"literal":"s"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$10"], "postprocess": function() {return 'AbsSouthEast'}},
+    {"name": "turn$string$11", "symbols": [{"literal":"s"}, {"literal":"o"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$11"], "postprocess": function() {return 'AbsSouth'}},
+    {"name": "turn$string$12", "symbols": [{"literal":"s"}, {"literal":"w"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "turn", "symbols": ["turn$string$12"], "postprocess": function() {return 'AbsSouthWest'}},
+    {"name": "countTurn", "symbols": ["turn"], "postprocess": build.singleTurn},
+    {"name": "countTurn", "symbols": ["decint", "turn"], "postprocess": build.countTurn},
+    {"name": "member", "symbols": ["member$subexpression$1", {"literal":"["}, "expr", {"literal":"]"}], "postprocess": build.member},
+    {"name": "symbol", "symbols": [/[a-z]/, "symbol$ebnf$1"], "postprocess": build.symbol},
+    {"name": "identifier", "symbols": [/[A-Z]/, "identifier$ebnf$1"], "postprocess": build.identifier},
+    {"name": "lit", "symbols": ["int"], "postprocess": build.item(0)},
+    {"name": "lit", "symbols": ["turns"], "postprocess": build.item(0)},
+    {"name": "int$string$1", "symbols": [{"literal":"0"}, {"literal":"x"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "int", "symbols": ["int$string$1", "hexint"], "postprocess": build.item(1)},
+    {"name": "int", "symbols": ["decint"], "postprocess": build.item(0)},
+    {"name": "hexint", "symbols": ["hexint$ebnf$1"], "postprocess": build.int(16)},
+    {"name": "decint", "symbols": ["decint$ebnf$1"], "postprocess": build.int(10)},
+    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": build.noop},
+    {"name": "__", "symbols": ["__$ebnf$1"], "postprocess": build.noop},
+    {"name": "newline", "symbols": ["newline$ebnf$1", {"literal":"\n"}], "postprocess": build.noop},
+    {"name": "spec$ebnf$1", "symbols": ["assigns"], "postprocess": id},
+    {"name": "spec$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "turns$ebnf$1", "symbols": []},
+    {"name": "turns$ebnf$1", "symbols": ["turns$ebnf$1$subexpression$1", "turns$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "member$subexpression$1", "symbols": ["member"]},
+    {"name": "member$subexpression$1", "symbols": ["symbol"]},
+    {"name": "member$subexpression$1", "symbols": ["identifier"]},
+    {"name": "member$subexpression$1", "symbols": ["lit"]},
+    {"name": "symbol$ebnf$1", "symbols": []},
+    {"name": "symbol$ebnf$1", "symbols": [/[\w]/, "symbol$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "identifier$ebnf$1", "symbols": [/[\w]/]},
+    {"name": "identifier$ebnf$1", "symbols": [/[\w]/, "identifier$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "hexint$ebnf$1", "symbols": [/[0-9a-fA-F]/]},
+    {"name": "hexint$ebnf$1", "symbols": [/[0-9a-fA-F]/, "hexint$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "decint$ebnf$1", "symbols": [/[0-9]/]},
+    {"name": "decint$ebnf$1", "symbols": [/[0-9]/, "decint$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "_$ebnf$1", "symbols": []},
+    {"name": "_$ebnf$1", "symbols": [/[\s]/, "_$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "__$ebnf$1", "symbols": [/[\s]/]},
+    {"name": "__$ebnf$1", "symbols": [/[\s]/, "__$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
+    {"name": "newline$ebnf$1", "symbols": [{"literal":"\r"}], "postprocess": id},
+    {"name": "newline$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": "turns$ebnf$1$subexpression$1", "symbols": ["__", "countTurn"]}
+]
+  , ParserStart: "spec"
+}
+if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
+   module.exports = grammar;
+} else {
+   window.grammar = grammar;
+}
+})();
+
+}],["turmite/lang/parse.js","hexant/turmite/lang","parse.js",{"nearley":37,"rezult":40,"./grammar.js":26,"./compile.js":25},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/parse.js
+// ----------------------------
+
+/* eslint no-try-catch:0 no-eval:0 */
+
+'use strict';
+
+var nearley = require('nearley');
+var Result = require('rezult');
+var grammar = require('./grammar.js');
+var compile = require('./compile.js');
+
+module.exports = parseTurmite;
+
+function parseTurmite(str, World) {
+    var res = parseLang(str, World);
+    if (!res.err) {
+        res = compileGrammarResult(res.value, World);
+    }
+    return res;
+}
+
+function parseLang(str, World) {
+    if (typeof str !== 'string') {
+        return new Result(new Error('invalid argument, not a string'), null);
+    }
+    var res = parseResult(grammar, str);
+    if (res.err) {
+        return res;
+    }
+    if (!res.value.length) {
+        return new Result(new Error('no parse result'), null);
+    } else if (res.value.length > 1) {
+        return new Result(new Error('ambiguous parse'), null);
+    }
+    return new Result(null, res.value[0] || null);
+}
+
+function parseResult(gram, str) {
+    var parser = new nearley.Parser(gram.ParserRules, gram.ParserStart);
+    try {
+        parser.feed(str);
+        return new Result(null, parser.results);
+    } catch(err) {
+        return new Result(err, null);
+    }
+}
+
+function compileGrammarResult(value, World) {
+    var str = compile.init(value).join('\n');
+    var func = eval(str);
+    return new Result(null, func);
+}
+
+}],["turmite/lang/solve.js","hexant/turmite/lang","solve.js",{"./compile.js":25,"./walk.js":30},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/solve.js
+// ----------------------------
+
+'use strict';
+
+var compile = require('./compile.js');
+var walk = require('./walk.js');
+
+module.exports = solve;
+
+// TODO: de-dupe
+var opPrec = [
+    '+',
+    '-',
+    '*',
+    '/',
+    '%'
+];
+
+var invOp = {
+    '+': '-',
+    '*': '/',
+    '-': '+',
+    '/': '*'
+};
+
+function solve(cap, sym, node, scope, outerPrec) {
+    switch (node.type) {
+    case 'expr':
+        var leftHasSym = hasSym(node.arg1, cap);
+        var rightHasSym = hasSym(node.arg2, cap);
+        if (!leftHasSym && !rightHasSym) {
+            return compile.value(node, scope, outerPrec);
+        }
+        if (leftHasSym && rightHasSym) {
+            // TODO: solve each side to intermediate values
+            throw new Error('matching complex expressions not supported');
+        }
+
+        if (!invOp[node.op]) {
+            throw new Error('unsupported match operator ' + node.op);
+        }
+
+        var prec = opPrec.indexOf(node.op);
+        var arg1 = solve(cap, sym, node.arg1, scope, prec);
+        var arg2 = solve(cap, sym, node.arg2, scope, prec);
+        var str = '';
+
+        if (node.op === '+' || node.op === '*') {
+            // color = c [*+] 6 = 6 [*+] c
+            // c = color [/-] 6
+            if (rightHasSym) {
+                var tmp = arg1;
+                arg1 = arg2;
+                arg2 = tmp;
+            }
+            str += arg1 + ' ' + invOp[node.op] + ' ' + arg2;
+        }
+
+        if (node.op === '-' || node.op === '/') {
+            if (leftHasSym) {
+                // color = c [-/] 6
+                // c = color [+*] 6
+                str += arg1 + ' ' + invOp[node.op] + ' ' + arg2;
+            } else if (rightHasSym) {
+                // color = 6 [-/] c
+                // c = 6 [-/] color
+                str += arg2 + ' ' + node.op + ' ' + arg1;
+            }
+            str += arg1 + ' ' + invOp[node.op] + ' ' + arg2;
+        }
+
+        if (prec < outerPrec) {
+            str = '(' + str + ')';
+        }
+
+        return str;
+
+    case 'symbol':
+        if (node.name === cap) {
+            return sym;
+        }
+        return node.name;
+
+    default:
+        return compile.value(node, scope);
+    }
+}
+
+function hasSym(node, name) {
+    var has = false;
+    walk.iter(node, function each(child, next) {
+        if (child.type === 'symbol' &&
+            child.name === name) {
+            has = true;
+            // next not called, stop here
+        } else {
+            next();
+        }
+    });
+    return has;
+}
+
+}],["turmite/lang/tostring.js","hexant/turmite/lang","tostring.js",{"../rle-builder.js":32,"./walk.js":30},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/tostring.js
+// -------------------------------
+
+'use strict';
+
+var RLEBuilder = require('../rle-builder.js');
+var walk = require('./walk.js');
+
+module.exports = toSpecString;
+
+var TurnSyms = {
+    RelLeft: 'L',
+    RelRight: 'R',
+    RelForward: 'F',
+    RelBackward: 'B',
+    RelDoubleLeft: 'P',
+    RelDoubleRight: 'S',
+    AbsNorth: 'NO',
+    AbsNorthWest: 'NW',
+    AbsNorthEast: 'NE',
+    AbsSouth: 'SO',
+    AbsSouthEast: 'SE',
+    AbsSouthWest: 'SW'
+};
+
+// TODO: de-dupe
+var opPrec = [
+    '+',
+    '-',
+    '*',
+    '/',
+    '%'
+];
+
+function toSpecString(root, emit) {
+    var precs = [0];
+    var stack = [];
+
+    walk.iter(root, each);
+    if (stack.length) {
+        throw new Error('leftover spec string parts');
+    }
+
+    function each(node, next) {
+        switch (node.type) {
+            case 'spec':
+                next();
+                break;
+
+            case 'assign':
+                stack.push(node.id.name);
+                next();
+                join(' = ');
+                emit(stack.pop());
+                break;
+
+            case 'rule':
+                next();
+                join(' => ');
+                emit(stack.pop());
+                break;
+
+            case 'when':
+                next();
+                join(', ');
+                break;
+
+            case 'then':
+                next();
+                join(', ');
+                join(', ');
+                break;
+
+            case 'member':
+                next();
+                wrap('[', ']');
+                join('');
+                break;
+
+            case 'expr':
+                precs.push(opPrec.indexOf(node.op));
+                next();
+                join(' ' + node.op + ' ');
+                if (precs.pop() < precs[precs.length - 1]) {
+                    wrap('(', ')');
+                }
+                break;
+
+            case 'identifier':
+            case 'symbol':
+                stack.push(node.name);
+                next();
+                break;
+
+            case 'turns':
+                var rle = RLEBuilder('turns(', ' ', ')');
+                for (var i = 0; i < node.value.length; i++) {
+                    var turn = node.value[i];
+                    rle(turn.count.value, TurnSyms[turn.turn]);
+                }
+                stack.push(rle(0, ''));
+                next();
+                break;
+
+            case 'turn':
+                stack.push(node.names.map(function eachTurnName(name) {
+                    return TurnSyms[name];
+                }).join('|'));
+                break;
+
+            case 'number':
+                stack.push(node.value.toString());
+                next();
+                break;
+
+            default:
+                stack.push('/* unsupported ' + JSON.stringify(node) + ' */');
+                next();
+        }
+    }
+
+    function join(sep) {
+        var b = stack.pop();
+        var a = stack.pop();
+        var c = a + sep + b;
+        stack.push(c);
+    }
+
+    function wrap(pre, post) {
+        var i = stack.length - 1;
+        stack[i] = pre + stack[i] + post;
+    }
+}
+
+}],["turmite/lang/walk.js","hexant/turmite/lang","walk.js",{},function (require, exports, module, __filename, __dirname){
+
+// hexant/turmite/lang/walk.js
+// ---------------------------
+
+'use strict';
+
+module.exports.iter = iter;
+module.exports.collect = collect;
+
+function iter(root, visit) {
+    each(root);
+
+    function each(node) {
+        visit(node, next);
+
+        function next() {
+            proc(node);
+        }
+    }
+
+    function proc(node) {
+        switch (node.type) {
+            case 'spec':
+                var i;
+                for (i = 0; i < node.assigns.length; i++) {
+                    each(node.assigns[i]);
+                }
+                for (i = 0; i < node.rules.length; i++) {
+                    each(node.rules[i]);
+                }
+                break;
+
+            case 'assign':
+                each(node.value);
+                break;
+
+            case 'rule':
+                each(node.when);
+                each(node.then);
+                break;
+
+            case 'when':
+                each(node.state);
+                each(node.color);
+                break;
+
+            case 'then':
+                each(node.state);
+                each(node.color);
+                each(node.turn);
+                break;
+
+            case 'member':
+                each(node.value);
+                each(node.item);
+                break;
+
+            case 'expr':
+                each(node.arg1);
+                each(node.arg2);
+                break;
+
+            case 'identifier':
+            case 'number':
+            case 'symbol':
+            case 'turn':
+            case 'turns':
+                break;
+
+            default:
+                throw new Error('unimplemnted walk type ' + node.type);
+        }
+    }
+}
+
+function collect(node, filter) {
+    var syms = [];
+    iter(node, function each(child, next) {
+        if (filter(child)) {
+            syms.push(child);
+        }
+        next();
+    });
+    return syms;
+}
+
+}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":40,"../world.js":34,"./rle-builder.js":32,"./constants.js":21,"./lang/parse.js":27},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/parse.js
 // -----------------------
@@ -2660,13 +3787,15 @@ var Result = require('rezult');
 var World = require('../world.js');
 var RLEBuilder = require('./rle-builder.js');
 var constants = require('./constants.js');
+var parseLang = require('./lang/parse.js');
 
 function parseTurmite(str) {
     var parsers = [
-        parseAnt
+        parseAnt,
+        parseLang
     ];
     for (var i = 0; i < parsers.length; i++) {
-        var res = parsers[i](str);
+        var res = parsers[i](str, World);
         if (res.err || res.value) {
             return res;
         }
@@ -2836,7 +3965,7 @@ function RLEBuilder(prefix, sep, suffix) {
     }
 }
 
-}],["view.js","hexant","view.js",{"./hexgrid.js":12,"./ngoncontext.js":18,"./world.js":26},function (require, exports, module, __filename, __dirname){
+}],["view.js","hexant","view.js",{"./hexgrid.js":12,"./ngoncontext.js":18,"./world.js":34},function (require, exports, module, __filename, __dirname){
 
 // hexant/view.js
 // --------------
@@ -3680,7 +4809,7 @@ World.prototype.addView = function addView(view) {
 
 }).call(this);
 
-}],["koerper.js","koerper","koerper.js",{"wizdom":32},function (require, exports, module, __filename, __dirname){
+}],["koerper.js","koerper","koerper.js",{"wizdom":41},function (require, exports, module, __filename, __dirname){
 
 // koerper/koerper.js
 // ------------------
@@ -3951,6 +5080,273 @@ OpaqueHtml.prototype.getActualFirstChild = function getActualFirstChild() {
     return this.actualFirstChild;
 };
 
+}],["lib/nearley.js","nearley/lib","nearley.js",{},function (require, exports, module, __filename, __dirname){
+
+// nearley/lib/nearley.js
+// ----------------------
+
+(function () {
+function Rule(name, symbols, postprocess) {
+    this.name = name;
+    this.symbols = symbols;        // a list of literal | regex class | nonterminal
+    this.postprocess = postprocess;
+    return this;
+}
+
+Rule.prototype.toString = function(withCursorAt) {
+    function stringifySymbolSequence (e) {
+        return (e.literal) ? JSON.stringify(e.literal)
+                           : e.toString();
+    }
+    var symbolSequence = (typeof withCursorAt === "undefined")
+                         ? this.symbols.map(stringifySymbolSequence).join(' ')
+                         : (   this.symbols.slice(0, withCursorAt).map(stringifySymbolSequence).join(' ')
+                             + " ● "
+                             + this.symbols.slice(withCursorAt).map(stringifySymbolSequence).join(' ')     );
+    return this.name + " → " + symbolSequence;
+}
+
+
+// a State is a rule at a position from a given starting point in the input stream (reference)
+function State(rule, expect, reference) {
+    this.rule = rule;
+    this.expect = expect;
+    this.reference = reference;
+    this.data = [];
+}
+
+State.prototype.toString = function() {
+    return "{" + this.rule.toString(this.expect) + "}, from: " + (this.reference || 0);
+};
+
+State.prototype.nextState = function(data) {
+    var state = new State(this.rule, this.expect + 1, this.reference);
+    state.data = this.data.slice(0);  // make a cheap copy of currentState's data
+    state.data.push(data);            // append the passed data
+    return state;
+};
+
+State.prototype.consumeTerminal = function(inp) {
+    var val = false;
+    if (this.rule.symbols[this.expect]) {                  // is there a symbol to test?
+       if (this.rule.symbols[this.expect].test) {          // is the symbol a regex?
+          if (this.rule.symbols[this.expect].test(inp)) {  // does the regex match
+             val = this.nextState(inp);  // nextState on a successful regex match
+          }
+       } else {   // not a regex, must be a literal
+          if (this.rule.symbols[this.expect].literal === inp) {
+             val = this.nextState(inp);  // nextState on a successful literal match
+          }
+       }
+    }
+    return val;
+};
+
+State.prototype.consumeNonTerminal = function(inp) {
+    if (this.rule.symbols[this.expect] === inp) {
+        return this.nextState(inp);
+    }
+    return false;
+};
+
+State.prototype.process = function(location, table, rules, addedRules) {
+    if (this.expect === this.rule.symbols.length) {
+        // I have completed a rule
+        if (this.rule.postprocess) {
+            this.data = this.rule.postprocess(this.data, this.reference, Parser.fail);
+        }
+        if (!(this.data === Parser.fail)) {
+            var w = 0;
+            // We need a while here because the empty rule will
+            // modify table[reference]. (when location === reference)
+            var s,x;
+            while (w < table[this.reference].length) {
+                s = table[this.reference][w];
+                x = s.consumeNonTerminal(this.rule.name);
+                if (x) {
+                    x.data[x.data.length-1] = this.data;
+                    table[location].push(x);
+                }
+                w++;
+            }
+
+            // --- The comment below is OUTDATED. It's left so that future
+            // editors know not to try and do that.
+
+            // Remove this rule from "addedRules" so that another one can be
+            // added if some future added rule requires it.
+            // Note: I can be optimized by someone clever and not-lazy. Somehow
+            // queue rules so that everything that this completion "spawns" can
+            // affect the rest of the rules yet-to-be-added-to-the-table.
+            // Maybe.
+
+            // I repeat, this is a *bad* idea.
+
+            // var i = addedRules.indexOf(this.rule);
+            // if (i !== -1) {
+            //     addedRules.splice(i, 1);
+            // }
+        }
+    } else {
+        // In case I missed an older nullable's sweep, update yourself. See
+        // above context for why this makes sense.
+
+        var ind = table[location].indexOf(this);
+        for (var i=0; i<ind; i++) {
+            var state = table[location][i];
+            if (state.rule.symbols.length === state.expect && state.reference === location) {
+                var x = this.consumeNonTerminal(state.rule.name);
+                if (x) {
+                    x.data[x.data.length-1] = state.data;
+                    table[location].push(x);
+                }
+            }
+        }
+
+        // I'm not done, but I can predict something
+        var exp = this.rule.symbols[this.expect];
+
+        // for each rule
+        var me = this;
+        rules.forEach(function(r) {
+            // if I expect it, and it hasn't been added already
+            if (r.name === exp && addedRules.indexOf(r) === -1) {
+                // Make a note that you've added it already, and don't need to
+                // add it again; otherwise left recursive rules are going to go
+                // into an infinite loop by adding themselves over and over
+                // again.
+
+                // If it's the null rule, however, you don't do this because it
+                // affects the current table row, so you might need it to be
+                // called again later. Instead, I just insert a copy whose
+                // state has been advanced one position (since that's all the
+                // null rule means anyway)
+
+                if (r.symbols.length > 0) {
+                    addedRules.push(r);
+                    table[location].push(new State(r, 0, location));
+                } else {
+                    // Empty rule
+                    // This is special
+                    var copy = me.consumeNonTerminal(r.name);
+                    if (r.postprocess) {
+                        copy.data[copy.data.length-1] = r.postprocess([], this.reference);
+                    } else {
+                        copy.data[copy.data.length-1] = [];
+                    }
+                    table[location].push(copy);
+                }
+            }
+        });
+    }
+};
+
+
+
+function Parser(rules, start) {
+    var table = this.table = [];
+    this.rules = rules.map(function (r) { return (new Rule(r.name, r.symbols, r.postprocess)); });
+    this.start = start = start || this.rules[0].name;
+    // Setup a table
+    var addedRules = [];
+    this.table.push([]);
+    // I could be expecting anything.
+    this.rules.forEach(function (r) {
+        if (r.name === start) {  // add all rules named start
+            addedRules.push(r);
+            table[0].push(new State(r, 0, 0));
+        }});  // this should refer to this object, not each rule inside the forEach
+    this.advanceTo(0, addedRules);
+    this.current = 0;
+}
+
+// create a reserved token for indicating a parse fail
+Parser.fail = {};
+
+Parser.prototype.advanceTo = function(n, addedRules) {
+    // Advance a table, take the closure of .process for location n in the input stream
+    var w = 0;
+    while (w < this.table[n].length) {
+        (this.table[n][w]).process(n, this.table, this.rules, addedRules);
+        w++;
+    }
+}
+
+Parser.prototype.feed = function(chunk) {
+    for (var chunkPos = 0; chunkPos < chunk.length; chunkPos++) {
+        // We add new states to table[current+1]
+        this.table.push([]);
+
+        // Advance all tokens that expect the symbol
+        // So for each state in the previous row,
+
+        for (var w = 0; w < this.table[this.current + chunkPos].length; w++) {
+            var s = this.table[this.current + chunkPos][w];
+            var x = s.consumeTerminal(chunk[chunkPos]);      // Try to consume the token
+            if (x) {
+                // And then add it
+                this.table[this.current + chunkPos + 1].push(x);
+            }
+        }
+
+        // Next, for each of the rules, we either
+        // (a) complete it, and try to see if the reference row expected that
+        //     rule
+        // (b) predict the next nonterminal it expects by adding that
+        //     nonterminal's start state
+        // To prevent duplication, we also keep track of rules we have already
+        // added
+
+        var addedRules = [];
+        this.advanceTo(this.current + chunkPos + 1, addedRules);
+
+        // If needed, throw an error:
+        if (this.table[this.table.length-1].length === 0) {
+            // No states at all! This is not good.
+            var err = new Error(
+                "nearley: No possible parsings (@" + (this.current + chunkPos)
+                    + ": '" + chunk[chunkPos] + "')."
+            );
+            err.offset = this.current + chunkPos;
+            throw err;
+        }
+    }
+
+    this.current += chunkPos;
+    // Incrementally keep track of results
+    this.results = this.finish();
+
+    // Allow chaining, for whatever it's worth
+    return this;
+};
+
+Parser.prototype.finish = function() {
+    // Return the possible parsings
+    var considerations = [];
+    var myself = this;
+    this.table[this.table.length-1].forEach(function (t) {
+        if (t.rule.name === myself.start
+                && t.expect === t.rule.symbols.length
+                && t.reference === 0
+                && t.data !== Parser.fail) {
+            considerations.push(t);
+        }
+    });
+    return considerations.map(function(c) {return c.data; });
+};
+
+var nearley = {
+    Parser: Parser,
+    Rule: Rule
+};
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+   module.exports = nearley;
+} else {
+   window.nearley = nearley;
+}
+})();
+
 }],["lib/performance-now.js","performance-now/lib","performance-now.js",{},function (require, exports, module, __filename, __dirname){
 
 // performance-now/lib/performance-now.js
@@ -3993,7 +5389,7 @@ OpaqueHtml.prototype.getActualFirstChild = function getActualFirstChild() {
 //@ sourceMappingURL=performance-now.map
 */
 
-}],["index.js","raf","index.js",{"performance-now":29},function (require, exports, module, __filename, __dirname){
+}],["index.js","raf","index.js",{"performance-now":38},function (require, exports, module, __filename, __dirname){
 
 // raf/index.js
 // ------------
