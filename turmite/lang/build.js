@@ -45,7 +45,7 @@ module.exports.turns = function parseTurns(d) {
 module.exports.turn = function parseTurn(d) {
     return {
         type: 'turn',
-        names: [d[1]]
+        names: [d[0]]
     };
 };
 

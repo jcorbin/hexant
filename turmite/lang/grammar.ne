@@ -16,10 +16,10 @@ when -> expr "," expr  {% build.when %}
 
 then -> expr "," expr "," thenTurn  {% build.then %}
 
-thenTurn -> expr      {% build.item(0) %}
-          | turnExpr  {% build.item(0) %}
+thenTurn -> expr          {% build.item(0) %}
+          | _ turnExpr _  {% build.item(0) %}
 
-turnExpr -> _ turn _               {% build.turn %}
+turnExpr -> turn                   {% build.turn %}
           | turnExpr "|" turnExpr  {% build.multiTurn %}
 
 expr -> _ sum _  {% build.item(1) %}
