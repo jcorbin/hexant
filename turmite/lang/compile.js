@@ -229,7 +229,10 @@ function compileThenParts(lines, then, scope) {
 
     var allZero = true;
     var parts = [then.state, then.color, then.turn];
+    var maskParts = [];
+
     for (var i = 0; i < parts.length; i++) {
+        var mode = '|';
         var value = parts[i];
 
         var valStr = compileValue(value, scope);
@@ -251,7 +254,12 @@ function compileThenParts(lines, then, scope) {
         }
     }
 
-    return '';
+    var mask = maskParts.join(' | ');
+    if (maskParts.length > 1) {
+        mask = '(' + mask + ')';
+    }
+
+    return mask;
 }
 
 function compileValue(node, scope, outerPrec) {
