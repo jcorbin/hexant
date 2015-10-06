@@ -226,18 +226,20 @@ function compileThenParts(lines, then, scope) {
     var allZero = true;
     var parts = [then.state, then.color, then.turn];
     for (var i = 0; i < parts.length; i++) {
-        var value = compileValue(parts[i], scope);
-        if (value !== '0') {
-            if (parts[i].type === 'expr') {
-                value = '(' + value + ')';
+        var value = parts[i];
+
+        var valStr = compileValue(value, scope);
+        if (valStr !== '0') {
+            if (value.type === 'expr') {
+                valStr = '(' + valStr + ')';
             }
-            value += ' & ' + valMaxes[i];
+            valStr += ' & ' + valMaxes[i];
 
             if (allZero) {
                 allZero = false;
-                lines.push(scope._result + ' = ' + value + ';');
+                lines.push(scope._result + ' = ' + valStr + ';');
             } else {
-                lines.push(scope._result + ' |= ' + value + ';');
+                lines.push(scope._result + ' |= ' + valStr + ';');
             }
         }
         if (i < shifts.length && !allZero) {
