@@ -94,6 +94,15 @@ module.exports.then = function parseThen(d) {
     };
 };
 
+module.exports.thenVal = function parseThenVal(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'thenVal',
+        mode: d[1],
+        value: d[2]
+    };
+};
+
 module.exports.member = function parseMember(d) {
     return {
         type: 'member',

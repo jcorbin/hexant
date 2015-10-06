@@ -14,10 +14,16 @@ rule -> when "=>" then  {% build.rule %}
 
 when -> expr "," expr  {% build.when %}
 
-then -> expr "," expr "," thenTurn  {% build.then %}
+then -> thenState "," thenColor "," thenTurn  {% build.then %}
 
-thenTurn -> expr          {% build.item(0) %}
-          | _ turnExpr _  {% build.item(0) %}
+thenMode -> null  {% build.just('|') %}
+
+thenState -> _ thenMode sum _  {% build.thenVal %}
+
+thenColor -> _ thenMode sum _  {% build.thenVal %}
+
+thenTurn -> _ thenMode sum _       {% build.thenVal %}
+          | _ thenMode turnExpr _  {% build.thenVal %}
 
 turnExpr -> turn                   {% build.turn %}
           | turnExpr "|" turnExpr  {% build.multiTurn %}

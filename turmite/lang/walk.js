@@ -46,6 +46,10 @@ function iter(root, visit) {
                 each(node.turn);
                 break;
 
+            case 'thenVal':
+                each(node.value);
+                break;
+
             case 'member':
                 each(node.value);
                 each(node.item);

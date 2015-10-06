@@ -232,8 +232,8 @@ function compileThenParts(lines, then, scope) {
     var maskParts = [];
 
     for (var i = 0; i < parts.length; i++) {
-        var mode = '|';
-        var value = parts[i];
+        var mode = parts[i].mode;
+        var value = parts[i].value;
 
         var valStr = compileValue(value, scope);
         if (valStr !== '0') {
