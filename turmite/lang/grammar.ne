@@ -17,6 +17,7 @@ when -> expr "," expr  {% build.when %}
 then -> thenState "," thenColor "," thenTurn  {% build.then %}
 
 thenMode -> null  {% build.just('|') %}
+          | "|"   {% build.item(0) %}
 
 thenState -> _ thenMode sum _  {% build.thenVal %}
 
