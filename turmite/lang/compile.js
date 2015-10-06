@@ -208,11 +208,12 @@ function compileThen(lines, then, scope, body) {
     compileThenParts(lines, then, scope);
     var after = lines.length;
 
+    var dest = scope._ent + '.rules[' +
+        scope._key + ' | ' + scope._color +
+    ']';
+
     if (after > before) {
-        lines.push(
-            scope._ent + '.rules[' +
-                scope._key + ' | ' + scope._color +
-            '] |= ' + scope._result + ';');
+        lines.push(dest + ' |= ' + scope._result + ';');
     }
 
     return body(lines);
