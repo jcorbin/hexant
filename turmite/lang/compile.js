@@ -204,7 +204,7 @@ function freeSymbols(node, scope) {
 }
 
 function compileThen(lines, then, scope, body) {
-    var masks = ['World.MaxState', 'World.MaxColor', 'World.TurnMask'];
+    var masks = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
     var shifts = ['World.ColorShift', 'World.TurnShift'];
 
     var allZero = true;

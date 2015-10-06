@@ -15,7 +15,7 @@ World.MaskFlags   = 0xff00;
 World.MaskColor   = 0x00ff;
 World.MaxState    = 0xff;
 World.MaxColor    = 0xff;
-World.TurnMask    = 0xff;
+World.MaxTurn     = 0xffff;
 
 function World() {
     this.numColors = 0;
