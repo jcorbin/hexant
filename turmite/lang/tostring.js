@@ -68,6 +68,16 @@ function toSpecString(root, emit) {
                 join(', ');
                 break;
 
+            case 'thenVal':
+                if (node.mode === '|') {
+                    next();
+                } else {
+                    stack.push(node.mode);
+                    next();
+                    join('');
+                }
+                break;
+
             case 'member':
                 next();
                 wrap('[', ']');

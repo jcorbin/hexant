@@ -7,15 +7,18 @@ var OddQOffset = Coord.OddQOffset;
 
 module.exports = World;
 
-World.StateShift  = 8;
-World.ColorShift  = 8;
-World.TurnShift   = 16;
-World.FlagVisited = 0x0100;
-World.MaskFlags   = 0xff00;
-World.MaskColor   = 0x00ff;
-World.MaxState    = 0xff;
-World.MaxColor    = 0xff;
-World.TurnMask    = 0xff;
+World.StateShift      = 8;
+World.ColorShift      = 8;
+World.TurnShift       = 16;
+World.FlagVisited     = 0x0100;
+World.MaskFlags       = 0xff00;
+World.MaskColor       = 0x00ff;
+World.MaxState        = 0xff;
+World.MaxColor        = 0xff;
+World.MaxTurn         = 0xffff;
+World.MaskResultState = 0xff000000;
+World.MaskResultColor = 0x00ff0000;
+World.MaskResultTurn  = 0x0000ffff;
 
 function World() {
     this.numColors = 0;

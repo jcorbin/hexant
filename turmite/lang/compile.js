@@ -204,24 +204,56 @@ function freeSymbols(node, scope) {
 }
 
 function compileThen(lines, then, scope, body) {
-    var masks = ['World.MaxState', 'World.MaxColor', 'World.TurnMask'];
+    var before = lines.length;
+    var mask = compileThenParts(lines, then, scope);
+    var after = lines.length;
+
+    var dest = scope._ent + '.rules[' +
+        scope._key + ' | ' + scope._color +
+    ']';
+
+    if (mask) {
+        lines.push(dest + ' &= ~' + mask + ';');
+    }
+
+    if (after > before) {
+        lines.push(dest + ' |= ' + scope._result + ';');
+    }
+
+    return body(lines);
+}
+
+function compileThenParts(lines, then, scope) {
+    var valMaxes = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
+    var resMasks = ['World.MaskResultState',
+                    'World.MaskResultColor',
+                    'World.MaskResultTurn'];
     var shifts = ['World.ColorShift', 'World.TurnShift'];
 
     var allZero = true;
     var parts = [then.state, then.color, then.turn];
+    var maskParts = [];
+
     for (var i = 0; i < parts.length; i++) {
-        var value = compileValue(parts[i], scope);
-        if (value !== '0') {
-            if (parts[i].type === 'expr') {
-                value = '(' + value + ')';
+        var mode = parts[i].mode;
+        var value = parts[i].value;
+
+        if (mode === '=') {
+            maskParts.push(resMasks[i]);
+        }
+
+        var valStr = compileValue(value, scope);
+        if (valStr !== '0') {
+            if (value.type === 'expr') {
+                valStr = '(' + valStr + ')';
             }
-            value += ' & ' + masks[i];
+            valStr += ' & ' + valMaxes[i];
 
             if (allZero) {
                 allZero = false;
-                lines.push(scope._result + ' = ' + value + ';');
+                lines.push(scope._result + ' = ' + valStr + ';');
             } else {
-                lines.push(scope._result + ' |= ' + value + ';');
+                lines.push(scope._result + ' |= ' + valStr + ';');
             }
         }
         if (i < shifts.length && !allZero) {
@@ -229,14 +261,12 @@ function compileThen(lines, then, scope, body) {
         }
     }
 
-    if (!allZero) {
-        lines.push(
-            scope._ent + '.rules[' +
-                scope._key + ' | ' + scope._color +
-            '] |= ' + scope._result + ';');
+    var mask = maskParts.join(' | ');
+    if (maskParts.length > 1) {
+        mask = '(' + mask + ')';
     }
 
-    return body(lines);
+    return mask;
 }
 
 function compileValue(node, scope, outerPrec) {

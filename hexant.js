@@ -229,6 +229,7 @@ function reset() {
     this.view.hexGrid.updateSize();
 
     var ent = this.world.ents[0];
+    ent.state = 0;
     ent.dir = 0;
     this.world.tile.centerPoint().toCubeInto(ent.pos);
     var data = this.world.tile.get(ent.pos);
