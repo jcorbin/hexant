@@ -722,10 +722,6 @@ function parseValue(str) {
 var Result = require('rezult');
 var husl = require('husl');
 
-module.exports.gens = gens;
-module.exports.parse = parse;
-module.exports.toString = toString;
-
 var gens = {};
 gens.light = LightWheelGenerator;
 gens.hue = HueWheelGenerator;
@@ -815,6 +811,10 @@ function HueWheelGenerator(sat, light) {
         };
     }
 }
+
+module.exports.gens = gens;
+module.exports.parse = parse;
+module.exports.toString = toString;
 
 }],["coord.js","hexant","coord.js",{},function (require, exports, module, __filename, __dirname){
 
@@ -1115,10 +1115,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_a4gj23");
+        component.setAttribute("id", "view_kny1x5");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_a4gj23")
+       scope.componentsFor["view"].setAttribute("for", "view_kny1x5")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1139,10 +1139,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_9uw9kp");
+        component.setAttribute("id", "prompt_2b4rgl");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_9uw9kp")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_2b4rgl")
     }
     this.scope.hookup("this", this);
 };
@@ -1391,6 +1391,7 @@ function reset() {
     this.view.hexGrid.updateSize();
 
     var ent = this.world.ents[0];
+    ent.state = 0;
     ent.dir = 0;
     this.world.tile.centerPoint().toCubeInto(ent.pos);
     var data = this.world.tile.get(ent.pos);
@@ -1951,10 +1952,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_p1iyqd");
+        component.setAttribute("id", "view_nwiiwj");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_p1iyqd")
+       scope.componentsFor["view"].setAttribute("for", "view_nwiiwj")
     }
     this.scope.hookup("this", this);
 };
@@ -2156,10 +2157,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_1wuhf1");
+        component.setAttribute("id", "box_z2qui3");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_1wuhf1")
+       scope.componentsFor["box"].setAttribute("for", "box_z2qui3")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2174,10 +2175,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_7qmlww");
+            component.setAttribute("id", "help_9q7hpr");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_7qmlww")
+           scope.componentsFor["help"].setAttribute("for", "help_9q7hpr")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2190,10 +2191,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_4oewt5");
+            component.setAttribute("id", "text_7otdso");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_4oewt5")
+           scope.componentsFor["text"].setAttribute("for", "text_7otdso")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2203,10 +2204,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_3lqzqh");
+            component.setAttribute("id", "error_j808r5");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_3lqzqh")
+           scope.componentsFor["error"].setAttribute("for", "error_j808r5")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2505,8 +2506,8 @@ Turmite.ruleHelp =
     'ant(<number>?<turn> ...) , turns:\n' +
     '  - L=left, R=right\n' +
     '  - B=back, F=forward\n' +
-    '  - P=port, S=starboard (these are rear-facing left/right)\n'
-    '\n'
+    '  - P=port, S=starboard (these are rear-facing left/right)\n' +
+    '\n' +
     'See README for full turmite language details.'
     ;
 
@@ -2787,7 +2788,7 @@ module.exports.turns = function parseTurns(d) {
 module.exports.turn = function parseTurn(d) {
     return {
         type: 'turn',
-        names: [d[1]]
+        names: [d[0]]
     };
 };
 
@@ -2833,6 +2834,15 @@ module.exports.then = function parseThen(d) {
         state: d[0],
         color: d[2],
         turn: d[4]
+    };
+};
+
+module.exports.thenVal = function parseThenVal(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'thenVal',
+        mode: d[1],
+        value: d[2]
     };
 };
 
@@ -2893,6 +2903,12 @@ module.exports.int = function int(base) {
 module.exports.item = function item(i) {
     return function itemn(d) {
         return d[i];
+    };
+};
+
+module.exports.just = function just(val) {
+    return function justVal() {
+        return val;
     };
 };
 
@@ -3107,24 +3123,56 @@ function freeSymbols(node, scope) {
 }
 
 function compileThen(lines, then, scope, body) {
-    var masks = ['World.MaxState', 'World.MaxColor', 'World.TurnMask'];
+    var before = lines.length;
+    var mask = compileThenParts(lines, then, scope);
+    var after = lines.length;
+
+    var dest = scope._ent + '.rules[' +
+        scope._key + ' | ' + scope._color +
+    ']';
+
+    if (mask) {
+        lines.push(dest + ' &= ~' + mask + ';');
+    }
+
+    if (after > before) {
+        lines.push(dest + ' |= ' + scope._result + ';');
+    }
+
+    return body(lines);
+}
+
+function compileThenParts(lines, then, scope) {
+    var valMaxes = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
+    var resMasks = ['World.MaskResultState',
+                    'World.MaskResultColor',
+                    'World.MaskResultTurn'];
     var shifts = ['World.ColorShift', 'World.TurnShift'];
 
     var allZero = true;
     var parts = [then.state, then.color, then.turn];
+    var maskParts = [];
+
     for (var i = 0; i < parts.length; i++) {
-        var value = compileValue(parts[i], scope);
-        if (value !== '0') {
-            if (parts[i].type === 'expr') {
-                value = '(' + value + ')';
+        var mode = parts[i].mode;
+        var value = parts[i].value;
+
+        if (mode === '=') {
+            maskParts.push(resMasks[i]);
+        }
+
+        var valStr = compileValue(value, scope);
+        if (valStr !== '0') {
+            if (value.type === 'expr') {
+                valStr = '(' + valStr + ')';
             }
-            value += ' & ' + masks[i];
+            valStr += ' & ' + valMaxes[i];
 
             if (allZero) {
                 allZero = false;
-                lines.push(scope._result + ' = ' + value + ';');
+                lines.push(scope._result + ' = ' + valStr + ';');
             } else {
-                lines.push(scope._result + ' |= ' + value + ';');
+                lines.push(scope._result + ' |= ' + valStr + ';');
             }
         }
         if (i < shifts.length && !allZero) {
@@ -3132,14 +3180,12 @@ function compileThen(lines, then, scope, body) {
         }
     }
 
-    if (!allZero) {
-        lines.push(
-            scope._ent + '.rules[' +
-                scope._key + ' | ' + scope._color +
-            '] |= ' + scope._result + ';');
+    var mask = maskParts.join(' | ');
+    if (maskParts.length > 1) {
+        mask = '(' + mask + ')';
     }
 
-    return body(lines);
+    return mask;
 }
 
 function compileValue(node, scope, outerPrec) {
@@ -3284,10 +3330,15 @@ function id(x) {return x[0]; }
     {"name": "rule$string$1", "symbols": [{"literal":"="}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "rule", "symbols": ["when", "rule$string$1", "then"], "postprocess": build.rule},
     {"name": "when", "symbols": ["expr", {"literal":","}, "expr"], "postprocess": build.when},
-    {"name": "then", "symbols": ["expr", {"literal":","}, "expr", {"literal":","}, "thenTurn"], "postprocess": build.then},
-    {"name": "thenTurn", "symbols": ["expr"], "postprocess": build.item(0)},
-    {"name": "thenTurn", "symbols": ["turnExpr"], "postprocess": build.item(0)},
-    {"name": "turnExpr", "symbols": ["_", "turn", "_"], "postprocess": build.turn},
+    {"name": "then", "symbols": ["thenState", {"literal":","}, "thenColor", {"literal":","}, "thenTurn"], "postprocess": build.then},
+    {"name": "thenMode", "symbols": [], "postprocess": build.just('|')},
+    {"name": "thenMode", "symbols": [{"literal":"="}], "postprocess": build.item(0)},
+    {"name": "thenMode", "symbols": [{"literal":"|"}], "postprocess": build.item(0)},
+    {"name": "thenState", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": build.thenVal},
+    {"name": "thenColor", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": build.thenVal},
+    {"name": "thenTurn", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": build.thenVal},
+    {"name": "thenTurn", "symbols": ["_", "thenMode", "turnExpr", "_"], "postprocess": build.thenVal},
+    {"name": "turnExpr", "symbols": ["turn"], "postprocess": build.turn},
     {"name": "turnExpr", "symbols": ["turnExpr", {"literal":"|"}, "turnExpr"], "postprocess": build.multiTurn},
     {"name": "expr", "symbols": ["_", "sum", "_"], "postprocess": build.item(1)},
     {"name": "sumop", "symbols": ["_", {"literal":"+"}, "_"], "postprocess": build.item(1)},
@@ -3626,6 +3677,16 @@ function toSpecString(root, emit) {
                 join(', ');
                 break;
 
+            case 'thenVal':
+                if (node.mode === '|') {
+                    next();
+                } else {
+                    stack.push(node.mode);
+                    next();
+                    join('');
+                }
+                break;
+
             case 'member':
                 next();
                 wrap('[', ']');
@@ -3738,6 +3799,10 @@ function iter(root, visit) {
                 each(node.state);
                 each(node.color);
                 each(node.turn);
+                break;
+
+            case 'thenVal':
+                each(node.value);
                 break;
 
             case 'member':
@@ -4296,15 +4361,18 @@ var OddQOffset = Coord.OddQOffset;
 
 module.exports = World;
 
-World.StateShift  = 8;
-World.ColorShift  = 8;
-World.TurnShift   = 16;
-World.FlagVisited = 0x0100;
-World.MaskFlags   = 0xff00;
-World.MaskColor   = 0x00ff;
-World.MaxState    = 0xff;
-World.MaxColor    = 0xff;
-World.TurnMask    = 0xff;
+World.StateShift      = 8;
+World.ColorShift      = 8;
+World.TurnShift       = 16;
+World.FlagVisited     = 0x0100;
+World.MaskFlags       = 0xff00;
+World.MaskColor       = 0x00ff;
+World.MaxState        = 0xff;
+World.MaxColor        = 0xff;
+World.MaxTurn         = 0xffff;
+World.MaskResultState = 0xff000000;
+World.MaskResultColor = 0x00ff0000;
+World.MaskResultTurn  = 0x0000ffff;
 
 function World() {
     this.numColors = 0;
