@@ -225,6 +225,9 @@ function compileThen(lines, then, scope, body) {
 
 function compileThenParts(lines, then, scope) {
     var valMaxes = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
+    var resMasks = ['World.MaskResultState',
+                    'World.MaskResultColor',
+                    'World.MaskResultTurn'];
     var shifts = ['World.ColorShift', 'World.TurnShift'];
 
     var allZero = true;
@@ -234,6 +237,10 @@ function compileThenParts(lines, then, scope) {
     for (var i = 0; i < parts.length; i++) {
         var mode = parts[i].mode;
         var value = parts[i].value;
+
+        if (mode === '=') {
+            maskParts.push(resMasks[i]);
+        }
 
         var valStr = compileValue(value, scope);
         if (valStr !== '0') {
