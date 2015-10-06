@@ -204,6 +204,21 @@ function freeSymbols(node, scope) {
 }
 
 function compileThen(lines, then, scope, body) {
+    var before = lines.length;
+    compileThenParts(lines, then, scope);
+    var after = lines.length;
+
+    if (after > before) {
+        lines.push(
+            scope._ent + '.rules[' +
+                scope._key + ' | ' + scope._color +
+            '] |= ' + scope._result + ';');
+    }
+
+    return body(lines);
+}
+
+function compileThenParts(lines, then, scope) {
     var masks = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
     var shifts = ['World.ColorShift', 'World.TurnShift'];
 
@@ -228,15 +243,6 @@ function compileThen(lines, then, scope, body) {
             lines.push(scope._result + ' <<= ' + shifts[i] + ';');
         }
     }
-
-    if (!allZero) {
-        lines.push(
-            scope._ent + '.rules[' +
-                scope._key + ' | ' + scope._color +
-            '] |= ' + scope._result + ';');
-    }
-
-    return body(lines);
 }
 
 function compileValue(node, scope, outerPrec) {
