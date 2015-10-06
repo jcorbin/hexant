@@ -219,7 +219,7 @@ function compileThen(lines, then, scope, body) {
 }
 
 function compileThenParts(lines, then, scope) {
-    var masks = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
+    var valMaxes = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
     var shifts = ['World.ColorShift', 'World.TurnShift'];
 
     var allZero = true;
@@ -230,7 +230,7 @@ function compileThenParts(lines, then, scope) {
             if (parts[i].type === 'expr') {
                 value = '(' + value + ')';
             }
-            value += ' & ' + masks[i];
+            value += ' & ' + valMaxes[i];
 
             if (allZero) {
                 allZero = false;
