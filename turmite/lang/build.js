@@ -153,3 +153,9 @@ module.exports.item = function item(i) {
         return d[i];
     };
 };
+
+module.exports.just = function just(val) {
+    return function justVal() {
+        return val;
+    };
+};
