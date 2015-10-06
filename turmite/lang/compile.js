@@ -205,12 +205,16 @@ function freeSymbols(node, scope) {
 
 function compileThen(lines, then, scope, body) {
     var before = lines.length;
-    compileThenParts(lines, then, scope);
+    var mask = compileThenParts(lines, then, scope);
     var after = lines.length;
 
     var dest = scope._ent + '.rules[' +
         scope._key + ' | ' + scope._color +
     ']';
+
+    if (mask) {
+        lines.push(dest + ' &= ~' + mask + ';');
+    }
 
     if (after > before) {
         lines.push(dest + ' |= ' + scope._result + ';');
@@ -246,6 +250,8 @@ function compileThenParts(lines, then, scope) {
             lines.push(scope._result + ' <<= ' + shifts[i] + ';');
         }
     }
+
+    return '';
 }
 
 function compileValue(node, scope, outerPrec) {
