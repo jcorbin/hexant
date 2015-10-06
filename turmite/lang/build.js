@@ -45,7 +45,7 @@ module.exports.turns = function parseTurns(d) {
 module.exports.turn = function parseTurn(d) {
     return {
         type: 'turn',
-        names: [d[1]]
+        names: [d[0]]
     };
 };
 
@@ -91,6 +91,15 @@ module.exports.then = function parseThen(d) {
         state: d[0],
         color: d[2],
         turn: d[4]
+    };
+};
+
+module.exports.thenVal = function parseThenVal(d) {
+    // TODO: prototype'd object
+    return {
+        type: 'thenVal',
+        mode: d[1],
+        value: d[2]
     };
 };
 
@@ -151,5 +160,11 @@ module.exports.int = function int(base) {
 module.exports.item = function item(i) {
     return function itemn(d) {
         return d[i];
+    };
+};
+
+module.exports.just = function just(val) {
+    return function justVal() {
+        return val;
     };
 };

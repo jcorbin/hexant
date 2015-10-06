@@ -90,29 +90,20 @@ Quirks to note:
 - turns sequence indexing is automatically "modulo length"
 - defined variable names must start with an Uppercase letter; lowercase
   variables can only be used within a rule
-- successive rule results are bitwise `OR`ed together; this could be especially
-  confusing for the result `state` and `color` fields if overlapping rules
-  provide non-zero values
+- successive rule results are bitwise `OR`ed together by default; you can
+  prefix a then field with `=` to instead replace any prior value
 - the pattern matching in the left-hand side is still rudimentary, and supports
   only basic arithmetic
 
 A more complex example:
 ```
-T1 = turns(L S L)
-T2 = turns(R P R)
+T1 = turns(L R)
+T2 = turns(2L 2R)
 0, c => 0, c + 1, T1[c]
 1, c => 1, c - 1, T2[c]
-0, 12 * c => 1, 0, 0
-1, 12 * c => 0, 0, 0
+0, 32 * c => =1, 0, 0
+1, 32 * c => =0, 0, 0
 ```
-
-Features:
-- has two modes (state 0 and 1) with two complementing turn sequences
-- the second mode has the further difference in that it decrements the world
-  color rather than incrementing it like an ant would
-- a mode change happens on every 12-th color
-
-In other words, it's a kind of dual-personality ant and anti-ant in one.
 
 ## Specifying Colors
 
