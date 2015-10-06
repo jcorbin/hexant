@@ -26,8 +26,8 @@ Turmite.ruleHelp =
     'ant(<number>?<turn> ...) , turns:\n' +
     '  - L=left, R=right\n' +
     '  - B=back, F=forward\n' +
-    '  - P=port, S=starboard (these are rear-facing left/right)\n'
-    '\n'
+    '  - P=port, S=starboard (these are rear-facing left/right)\n' +
+    '\n' +
     'See README for full turmite language details.'
     ;
 

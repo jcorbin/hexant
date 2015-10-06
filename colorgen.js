@@ -3,10 +3,6 @@
 var Result = require('rezult');
 var husl = require('husl');
 
-module.exports.gens = gens;
-module.exports.parse = parse;
-module.exports.toString = toString;
-
 var gens = {};
 gens.light = LightWheelGenerator;
 gens.hue = HueWheelGenerator;
@@ -96,3 +92,7 @@ function HueWheelGenerator(sat, light) {
         };
     }
 }
+
+module.exports.gens = gens;
+module.exports.parse = parse;
+module.exports.toString = toString;
