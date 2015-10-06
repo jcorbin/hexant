@@ -12,6 +12,11 @@
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "license": "MIT",
+  "standard": {
+    "ignore": [
+      "turmite/lang/grammar.js"
+    ]
+  },
   "devDependencies": {
     "hexer": "^1.4.5",
     "html-inline": "^1.1.1",
