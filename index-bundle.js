@@ -58,7 +58,74 @@ global = this;
         main = bundle[filename];
         main._require();
     }
-})([["animator.js","blick","animator.js",{"raf":39},function (require, exports, module, __filename, __dirname){
+})([["base64.js","Base64","base64.js",{},function (require, exports, module, __filename, __dirname){
+
+// Base64/base64.js
+// ----------------
+
+;(function () {
+
+  var object = typeof exports != 'undefined' ? exports : this; // #8: web workers
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+
+  function InvalidCharacterError(message) {
+    this.message = message;
+  }
+  InvalidCharacterError.prototype = new Error;
+  InvalidCharacterError.prototype.name = 'InvalidCharacterError';
+
+  // encoder
+  // [https://gist.github.com/999166] by [https://github.com/nignag]
+  object.btoa || (
+  object.btoa = function (input) {
+    var str = String(input);
+    for (
+      // initialize result and counter
+      var block, charCode, idx = 0, map = chars, output = '';
+      // if the next str index does not exist:
+      //   change the mapping table to "="
+      //   check if d has no fractional digits
+      str.charAt(idx | 0) || (map = '=', idx % 1);
+      // "8 - idx % 1 * 8" generates the sequence 2, 4, 6, 8
+      output += map.charAt(63 & block >> 8 - idx % 1 * 8)
+    ) {
+      charCode = str.charCodeAt(idx += 3/4);
+      if (charCode > 0xFF) {
+        throw new InvalidCharacterError("'btoa' failed: The string to be encoded contains characters outside of the Latin1 range.");
+      }
+      block = block << 8 | charCode;
+    }
+    return output;
+  });
+
+  // decoder
+  // [https://gist.github.com/1020396] by [https://github.com/atk]
+  object.atob || (
+  object.atob = function (input) {
+    var str = String(input).replace(/=+$/, '');
+    if (str.length % 4 == 1) {
+      throw new InvalidCharacterError("'atob' failed: The string to be decoded is not correctly encoded.");
+    }
+    for (
+      // initialize result and counters
+      var bc = 0, bs, buffer, idx = 0, output = '';
+      // get next character
+      buffer = str.charAt(idx++);
+      // character found in table? initialize bit storage and add its ascii value;
+      ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer,
+        // and if not first of each 4 characters,
+        // convert the first 8 bits to one ascii character
+        bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0
+    ) {
+      // try to find character in table (0-63, not found => -1)
+      buffer = chars.indexOf(buffer);
+    }
+    return output;
+  });
+
+}());
+
+}],["animator.js","blick","animator.js",{"raf":40},function (require, exports, module, __filename, __dirname){
 
 // blick/animator.js
 // -----------------
@@ -282,7 +349,7 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["document.js","gutentag","document.js",{"koerper":36},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":37},function (require, exports, module, __filename, __dirname){
 
 // gutentag/document.js
 // --------------------
@@ -342,7 +409,7 @@ Scope.prototype.hookup = function (id, component) {
     }
 };
 
-}],["text.html","gutentag","text.html",{"./text":6},function (require, exports, module, __filename, __dirname){
+}],["text.html","gutentag","text.html",{"./text":7},function (require, exports, module, __filename, __dirname){
 
 // gutentag/text.html
 // ------------------
@@ -380,7 +447,7 @@ Object.defineProperty(Text.prototype, "value", {
     }
 });
 
-}],["index.js","hashbind","index.js",{"rezult":40},function (require, exports, module, __filename, __dirname){
+}],["index.js","hashbind","index.js",{"rezult":41},function (require, exports, module, __filename, __dirname){
 
 // hashbind/index.js
 // -----------------
@@ -391,6 +458,50 @@ var Result = require('rezult');
 
 module.exports = Hash;
 
+Hash.decodeUnescape =
+function decodeUnescape(str) {
+    var keyvals = [];
+    var parts = str.split('&');
+    for (var i = 0; i < parts.length; i++) {
+        var keystr = parts[i].split('=');
+        var key = unescape(keystr[0]);
+        var val = unescape(keystr[1]) || '';
+        keyvals.push([key, val]);
+    }
+    return keyvals;
+};
+
+Hash.encodeMinEscape =
+function encodeMinEscape(keyvals) {
+    var parts = [];
+    for (var i = 0; i < keyvals.length; i++) {
+        var key = keyvals[i][0];
+        var val = keyvals[i][1];
+        var part = '' + minEscape(key);
+        if (val !== undefined && val !== '') {
+            part += '=' + minEscape(val);
+        }
+
+        parts.push(part);
+    }
+    return parts.join('&');
+};
+
+Hash.encodeMaxEscape =
+function encodeMaxEscape(keyvals) {
+    var parts = [];
+    for (var i = 0; i < keyvals.length; i++) {
+        var key = keyvals[i][0];
+        var val = keyvals[i][1];
+        var part = '' + escape(key);
+        if (val !== undefined && val !== '') {
+            part += '=' + escape(val);
+        }
+        parts.push(part);
+    }
+    return parts.join('&');
+};
+
 function Hash(window, options) {
     var self = this;
     if (!options) {
@@ -398,16 +509,18 @@ function Hash(window, options) {
     }
 
     this.window = window;
-    this.window.addEventListener('hashchange', onHashChange);
     this.last = '';
     this.cache = {};
     this.values = {};
     this.bound = {};
-    this.load();
     // TODO: do we ever need to escape?
-    this.fullEscape =
-        options.escape === undefined
-        ? true : !!options.escape;
+    this.decode = options.decode || Hash.decodeUnescape;
+    this.encode = options.encode || (options.escape
+        ? Hash.encodeMaxEscape
+        : Hash.encodeMinEscape);
+
+    this.window.addEventListener('hashchange', onHashChange);
+    this.load();
 
     function onHashChange(e) {
         self.load();
@@ -421,12 +534,12 @@ function load() {
     }
 
     this.last = this.window.location.hash;
-    var parts = this.last.slice(1).split('&');
+    var keystrs = this.decode(this.last.slice(1));
+
     var seen = {};
-    for (var i = 0; i < parts.length; i++) {
-        var keyval = parts[i].split('=');
-        var key = unescape(keyval[0]);
-        var str = unescape(keyval[1]) || '';
+    for (var i = 0; i < keystrs.length; i++) {
+        var key = keystrs[i][0];
+        var str = keystrs[i][1];
         if (this.cache[key] !== str) {
             this.cache[key] = str;
             if (this.bound[key]) {
@@ -465,7 +578,7 @@ function prune(except) {
 
 Hash.prototype.save =
 function save() {
-    var parts = [];
+    var keystrs = [];
     var keys = Object.keys(this.cache);
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
@@ -473,32 +586,14 @@ function save() {
             this.cache[key] = valueToString(this.values[key]);
         }
         var str = this.cache[key];
-        var part = '' + this.escapePart(key);
-        if (str === undefined) {
-            continue;
-        }
-        if (str !== '') {
-            part += '=' + this.escapePart(str);
-        }
-        parts.push(part);
+        keystrs.push([key, str]);
     }
 
-    var hash = parts.join('&');
+    var hash = this.encode(keystrs);
     if (hash) {
         hash = '#' + hash;
     }
-
     this.window.location.hash = this.last = hash;
-};
-
-Hash.prototype.escapePart =
-function escapePart(str) {
-    if (this.fullEscape) {
-        return escape(str);
-    }
-    return str.replace(/[#=&]/g, function each(part) {
-        return escape(part);
-    });
 };
 
 Hash.prototype.bind =
@@ -712,7 +807,15 @@ function parseValue(str) {
     return new Result(null, str);
 }
 
-}],["colorgen.js","hexant","colorgen.js",{"rezult":40,"husl":35},function (require, exports, module, __filename, __dirname){
+function minEscape(str) {
+    return str.replace(/[#=&]/g, escapeMatch);
+}
+
+function escapeMatch(part) {
+    return escape(part);
+}
+
+}],["colorgen.js","hexant","colorgen.js",{"rezult":41,"husl":36},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
 // ------------------
@@ -1095,7 +1198,7 @@ OddQBox.prototype.expandTo = function expandTo(pointArg) {
     return expanded;
 };
 
-}],["hexant.html","hexant","hexant.html",{"./hexant.js":11,"./prompt.html":19},function (require, exports, module, __filename, __dirname){
+}],["hexant.html","hexant","hexant.html",{"./hexant.js":12,"./prompt.html":20},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.html
 // ------------------
@@ -1115,10 +1218,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_kny1x5");
+        component.setAttribute("id", "view_vd7gb1");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_kny1x5")
+       scope.componentsFor["view"].setAttribute("for", "view_vd7gb1")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1139,10 +1242,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_2b4rgl");
+        component.setAttribute("id", "prompt_8qt552");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_2b4rgl")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_8qt552")
     }
     this.scope.hookup("this", this);
 };
@@ -1155,7 +1258,7 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
     var scope = this.scope = caller;
 };
 
-}],["hexant.js","hexant","hexant.js",{"hashbind":7,"rezult":40,"./colorgen.js":8,"./world.js":34,"./view.js":33,"./turmite/index.js":22,"./coord.js":9,"./hextiletree.js":14},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"hashbind":8,"Base64":0,"rezult":41,"./colorgen.js":9,"./world.js":35,"./view.js":34,"./turmite/index.js":23,"./coord.js":10,"./hextiletree.js":15},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1165,6 +1268,7 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
 module.exports = Hexant;
 
 var Hash = require('hashbind');
+var Base64 = require('Base64');
 var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
@@ -1177,6 +1281,8 @@ var BatchLimit = 512;
 
 function Hexant(body, scope) {
     var self = this;
+    var atob = scope.window.atob || Base64.atob;
+    var btoa = scope.window.btoa || Base64.btoa;
 
     this.el = null;
     this.world = null;
@@ -1184,7 +1290,7 @@ function Hexant(body, scope) {
 
     this.window = scope.window;
     this.hash = new Hash(this.window, {
-        escape: false
+        decode: decodeHash
     });
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
@@ -1195,6 +1301,7 @@ function Hexant(body, scope) {
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
+    this.b64EncodeHash = encodeHash;
 
     function playpause() {
         self.playpause();
@@ -1202,6 +1309,20 @@ function Hexant(body, scope) {
 
     function onKeyPress(e) {
         self.onKeyPress(e);
+    }
+
+    function decodeHash(str) {
+        if (/^b64:/.test(str)) {
+            str = str.slice(4);
+            str = atob(str);
+        }
+        return Hash.decodeUnescape(str);
+    }
+
+    function encodeHash(keyvals) {
+        var str = Hash.encodeMinEscape(keyvals);
+        str = 'b64:' + btoa(str);
+        return str;
     }
 }
 
@@ -1339,6 +1460,15 @@ function onKeyPress(e) {
     case 0x2e: // .
         this.stepit();
         break;
+
+    case 0x42: // B
+    case 0x62: // b
+        this.hash.encode =
+            this.hash.encode === Hash.encodeMinEscape
+            ? this.b64EncodeHash : Hash.encodeMinEscape;
+        this.hash.save();
+        break;
+
     case 0x43: // C
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
@@ -1463,7 +1593,7 @@ function resize(width, height) {
     this.view.resize(width, height);
 };
 
-}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":9},function (require, exports, module, __filename, __dirname){
+}],["hexgrid.js","hexant","hexgrid.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexgrid.js
 // -----------------
@@ -1578,7 +1708,7 @@ function updateSize() {
     this.canvas.style.height = this.canvas.height + 'px';
 };
 
-}],["hextile.js","hexant","hextile.js",{"./coord.js":9},function (require, exports, module, __filename, __dirname){
+}],["hextile.js","hexant","hextile.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextile.js
 // -----------------
@@ -1638,7 +1768,7 @@ OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
     }
 };
 
-}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":9,"./hextile.js":13},function (require, exports, module, __filename, __dirname){
+}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":10,"./hextile.js":14},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextiletree.js
 // ---------------------
@@ -1885,7 +2015,7 @@ HexTileTreeNode.prototype._set = function _set(point, datum) {
     return tile.set(point, datum);
 };
 
-}],["index.js","hexant","index.js",{"domready":1,"global/window":2,"gutentag/scope":4,"gutentag/document":3,"blick":0,"./main.html":16},function (require, exports, module, __filename, __dirname){
+}],["index.js","hexant","index.js",{"domready":2,"global/window":3,"gutentag/scope":5,"gutentag/document":4,"blick":1,"./main.html":17},function (require, exports, module, __filename, __dirname){
 
 // hexant/index.js
 // ---------------
@@ -1924,7 +2054,7 @@ function onResize() {
     window.hexant.resize(width, height);
 }
 
-}],["main.html","hexant","main.html",{"./main.js":17,"./hexant.html":10},function (require, exports, module, __filename, __dirname){
+}],["main.html","hexant","main.html",{"./main.js":18,"./hexant.html":11},function (require, exports, module, __filename, __dirname){
 
 // hexant/main.html
 // ----------------
@@ -1952,10 +2082,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_nwiiwj");
+        component.setAttribute("id", "view_plcwmu");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_nwiiwj")
+       scope.componentsFor["view"].setAttribute("for", "view_plcwmu")
     }
     this.scope.hookup("this", this);
 };
@@ -2137,7 +2267,7 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
-}],["prompt.html","hexant","prompt.html",{"./prompt.js":20,"gutentag/text.html":5},function (require, exports, module, __filename, __dirname){
+}],["prompt.html","hexant","prompt.html",{"./prompt.js":21,"gutentag/text.html":6},function (require, exports, module, __filename, __dirname){
 
 // hexant/prompt.html
 // ------------------
@@ -2157,10 +2287,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_z2qui3");
+        component.setAttribute("id", "box_j4c2lh");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_z2qui3")
+       scope.componentsFor["box"].setAttribute("for", "box_j4c2lh")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2175,10 +2305,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_9q7hpr");
+            component.setAttribute("id", "help_8s4m1l");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_9q7hpr")
+           scope.componentsFor["help"].setAttribute("for", "help_8s4m1l")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2191,10 +2321,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_7otdso");
+            component.setAttribute("id", "text_3huxb");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_7otdso")
+           scope.componentsFor["text"].setAttribute("for", "text_3huxb")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2204,10 +2334,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_j808r5");
+            component.setAttribute("id", "error_2kdrzp");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_j808r5")
+           scope.componentsFor["error"].setAttribute("for", "error_2kdrzp")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2473,7 +2603,7 @@ module.exports.RelTurnSymbols = RelTurnSymbols;
 module.exports.RelSymbolTurns = RelSymbolTurns;
 module.exports.AbsSymbolTurns = AbsSymbolTurns;
 
-}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":9,"./constants.js":21,"./parse.js":31},function (require, exports, module, __filename, __dirname){
+}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":10,"./constants.js":22,"./parse.js":32},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/index.js
 // -----------------------
@@ -2649,7 +2779,7 @@ function executeTurn(turn) {
     return 0;
 };
 
-}],["turmite/lang/analyze.js","hexant/turmite/lang","analyze.js",{"./walk.js":30},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/analyze.js","hexant/turmite/lang","analyze.js",{"./walk.js":31},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/analyze.js
 // ------------------------------
@@ -2912,7 +3042,7 @@ module.exports.just = function just(val) {
     };
 };
 
-}],["turmite/lang/compile.js","hexant/turmite/lang","compile.js",{"../constants.js":21,"./analyze.js":23,"./tostring.js":29,"./solve.js":28,"./walk.js":30},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/compile.js","hexant/turmite/lang","compile.js",{"../constants.js":22,"./analyze.js":24,"./tostring.js":30,"./solve.js":29,"./walk.js":31},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/compile.js
 // ------------------------------
@@ -3310,7 +3440,7 @@ module.exports.whenExprMatch = compileWhenExprMatch;
 module.exports.whenLoop      = compileWhenLoop;
 module.exports.whenMatch     = compileWhenMatch;
 
-}],["turmite/lang/grammar.js","hexant/turmite/lang","grammar.js",{"./build.js":24},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/grammar.js","hexant/turmite/lang","grammar.js",{"./build.js":25},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/grammar.js
 // ------------------------------
@@ -3441,7 +3571,7 @@ if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
 }
 })();
 
-}],["turmite/lang/parse.js","hexant/turmite/lang","parse.js",{"nearley":37,"rezult":40,"./grammar.js":26,"./compile.js":25},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/parse.js","hexant/turmite/lang","parse.js",{"nearley":38,"rezult":41,"./grammar.js":27,"./compile.js":26},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/parse.js
 // ----------------------------
@@ -3497,7 +3627,7 @@ function compileGrammarResult(value, World) {
     return new Result(null, func);
 }
 
-}],["turmite/lang/solve.js","hexant/turmite/lang","solve.js",{"./compile.js":25,"./walk.js":30},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/solve.js","hexant/turmite/lang","solve.js",{"./compile.js":26,"./walk.js":31},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/solve.js
 // ----------------------------
@@ -3602,7 +3732,7 @@ function hasSym(node, name) {
     return has;
 }
 
-}],["turmite/lang/tostring.js","hexant/turmite/lang","tostring.js",{"../rle-builder.js":32,"./walk.js":30},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/tostring.js","hexant/turmite/lang","tostring.js",{"../rle-builder.js":33,"./walk.js":31},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/tostring.js
 // -------------------------------
@@ -3839,7 +3969,7 @@ function collect(node, filter) {
     return syms;
 }
 
-}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":40,"../world.js":34,"./rle-builder.js":32,"./constants.js":21,"./lang/parse.js":27},function (require, exports, module, __filename, __dirname){
+}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":41,"../world.js":35,"./rle-builder.js":33,"./constants.js":22,"./lang/parse.js":28},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/parse.js
 // -----------------------
@@ -4030,7 +4160,7 @@ function RLEBuilder(prefix, sep, suffix) {
     }
 }
 
-}],["view.js","hexant","view.js",{"./hexgrid.js":12,"./ngoncontext.js":18,"./world.js":34},function (require, exports, module, __filename, __dirname){
+}],["view.js","hexant","view.js",{"./hexgrid.js":13,"./ngoncontext.js":19,"./world.js":35},function (require, exports, module, __filename, __dirname){
 
 // hexant/view.js
 // --------------
@@ -4347,7 +4477,7 @@ function swapout(ar, i) {
     return j;
 }
 
-}],["world.js","hexant","world.js",{"./coord.js":9,"./hextiletree.js":14},function (require, exports, module, __filename, __dirname){
+}],["world.js","hexant","world.js",{"./coord.js":10,"./hextiletree.js":15},function (require, exports, module, __filename, __dirname){
 
 // hexant/world.js
 // ---------------
@@ -4877,7 +5007,7 @@ World.prototype.addView = function addView(view) {
 
 }).call(this);
 
-}],["koerper.js","koerper","koerper.js",{"wizdom":41},function (require, exports, module, __filename, __dirname){
+}],["koerper.js","koerper","koerper.js",{"wizdom":42},function (require, exports, module, __filename, __dirname){
 
 // koerper/koerper.js
 // ------------------
@@ -5457,7 +5587,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 //@ sourceMappingURL=performance-now.map
 */
 
-}],["index.js","raf","index.js",{"performance-now":38},function (require, exports, module, __filename, __dirname){
+}],["index.js","raf","index.js",{"performance-now":39},function (require, exports, module, __filename, __dirname){
 
 // raf/index.js
 // ------------
