@@ -1,6 +1,6 @@
 {
   "name": "hexant",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Hexagonal Ants",
   "main": "hexant.js",
   "scripts": {
@@ -27,11 +27,12 @@
     "uber-standard": "^4.0.1"
   },
   "dependencies": {
+    "Base64": "^0.3.0",
     "blick": "^1.1.0",
     "domready": "^1.0.8",
     "global": "^4.3.0",
     "gutentag": "^2.1.1",
-    "hashbind": "^2.0.3",
+    "hashbind": "^2.1.0",
     "husl": "^6.0.1",
     "nearley": "^1.5.0",
     "rezult": "^1.1.0"

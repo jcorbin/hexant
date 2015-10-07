@@ -3,6 +3,7 @@
 module.exports = Hexant;
 
 var Hash = require('hashbind');
+var Base64 = require('Base64');
 var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
@@ -15,6 +16,8 @@ var BatchLimit = 512;
 
 function Hexant(body, scope) {
     var self = this;
+    var atob = scope.window.atob || Base64.atob;
+    var btoa = scope.window.btoa || Base64.btoa;
 
     this.el = null;
     this.world = null;
@@ -22,7 +25,7 @@ function Hexant(body, scope) {
 
     this.window = scope.window;
     this.hash = new Hash(this.window, {
-        escape: false
+        decode: decodeHash
     });
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
@@ -33,6 +36,7 @@ function Hexant(body, scope) {
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
+    this.b64EncodeHash = encodeHash;
 
     function playpause() {
         self.playpause();
@@ -40,6 +44,20 @@ function Hexant(body, scope) {
 
     function onKeyPress(e) {
         self.onKeyPress(e);
+    }
+
+    function decodeHash(str) {
+        if (/^b64:/.test(str)) {
+            str = str.slice(4);
+            str = atob(str);
+        }
+        return Hash.decodeUnescape(str);
+    }
+
+    function encodeHash(keyvals) {
+        var str = Hash.encodeMinEscape(keyvals);
+        str = 'b64:' + btoa(str);
+        return str;
     }
 }
 
@@ -177,6 +195,15 @@ function onKeyPress(e) {
     case 0x2e: // .
         this.stepit();
         break;
+
+    case 0x42: // B
+    case 0x62: // b
+        this.hash.encode =
+            this.hash.encode === Hash.encodeMinEscape
+            ? this.b64EncodeHash : Hash.encodeMinEscape;
+        this.hash.save();
+        break;
+
     case 0x43: // C
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
