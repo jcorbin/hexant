@@ -9,6 +9,7 @@
     "lint": "uber-standard",
     "grammar": "nearleyc turmite/lang/grammar.ne >turmite/lang/grammar.js",
     "preversion": "bash scripts/preversion.sh",
+    "version": "bash scripts/version.sh",
     "build-pages": "bash scripts/build-pages.sh master"
   },
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
