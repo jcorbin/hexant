@@ -35,20 +35,15 @@ function step() {
         this.ents[i].step(this);
     }
     for (i = 0; i < this.views.length; i++) {
-        var view = this.views[i];
-        view.step();
-        if (view.needsRedraw) {
-            view.redraw();
-            view.needsRedraw = false;
-        }
+        this.views[i].step();
     }
+    this.redraw();
 };
 
 World.prototype.stepn =
 function stepn(n) {
-    var i;
-    var j;
-    for (i = 0; i < n; i++) {
+    for (var i = 0; i < n; i++) {
+        var j;
         for (j = 0; j < this.ents.length; j++) {
             this.ents[j].step(this);
         }
@@ -56,8 +51,13 @@ function stepn(n) {
             this.views[j].step();
         }
     }
+    return this.redraw();
+};
+
+World.prototype.redraw =
+function redraw() {
     var didredraw = false;
-    for (i = 0; i < this.views.length; i++) {
+    for (var i = 0; i < this.views.length; i++) {
         var view = this.views[i];
         if (view.needsRedraw) {
             view.redraw();
