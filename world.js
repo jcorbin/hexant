@@ -199,6 +199,7 @@ function _removeEnt(i) {
         this.ents[i].index = i;
     }
     this.ents.pop();
+    // TODO: call destructor to support pooled re-use
 
     for (i = 0; i < this.views.length; i++) {
         this.views[i].removeEnt(i);
