@@ -153,3 +153,20 @@ function toString() {
     }
     return '<UNKNOWN turmite>';
 };
+
+Turmite.prototype.copy =
+function copy() {
+    // TODO: pooled re-use
+    var self = new Turmite();
+    self.numStates = this.numStates;
+    self.numColors = this.numColors;
+    self.specString = this.specString;
+    self.dir = this.dir;
+    self.pos.copyFrom(this.pos);
+    self.state = this.state;
+    self.index = this.index;
+    for (var i = 0; i < this.rules.length; ++i) {
+        self.rules[i] = this.rules[i];
+    }
+    return self;
+};
