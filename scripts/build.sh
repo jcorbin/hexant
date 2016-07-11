@@ -2,15 +2,27 @@
 set -e
 set -x
 
-mess=$(git show HEAD --pretty=oneline)
-if echo $mess | grep -q 'Merge tag'; then
+desc=$(git describe HEAD)
+mess=$(git show HEAD --no-decorate --pretty=oneline | cut -d ' ' -f2-)
+
+case "$mess" in
+Merge\ tag*)
     desc=$(echo $mess | cut -d"'" -f2)
-else
-    desc=$(git describe HEAD)
-fi
+    base=//github.com/jcorbin/hexant/blob/master
+    ;;
+Merge\ branch*)
+    branch=$(echo $mess | cut -d"'" -f2)
+    base=//github.com/jcorbin/hexant/blob/$branch
+    desc="#$branch $desc"
+    ;;
+*)
+    base=.
+    ;;
+esac
 
 sed \
     -e "/data-import/s/src=[^>]*>/src=\"index-bundle-min.js\">/" \
+    -e "s~BASE~$base~" \
     -e "s/DEV/$desc/" \
     -e "/PROJECT LINK/d" \
     index-dev.html >index-tmp.html
