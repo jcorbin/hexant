@@ -28,7 +28,8 @@ function World() {
     this.views = [];
 }
 
-World.prototype.step = function step() {
+World.prototype.step =
+function step() {
     var i;
     for (i = 0; i < this.ents.length; i++) {
         this.ents[i].step(this);
@@ -43,7 +44,8 @@ World.prototype.step = function step() {
     }
 };
 
-World.prototype.stepn = function stepn(n) {
+World.prototype.stepn =
+function stepn(n) {
     var i;
     var j;
     for (i = 0; i < n; i++) {
@@ -66,7 +68,8 @@ World.prototype.stepn = function stepn(n) {
     return didredraw;
 };
 
-World.prototype.addEnt = function addEnt(ent) {
+World.prototype.addEnt =
+function addEnt(ent) {
     this.numColors = Math.max(this.numColors, ent.numColors);
     this.numStates = Math.max(this.numStates, ent.numStates);
     ent.index = this.ents.length;
@@ -84,7 +87,8 @@ World.prototype.addEnt = function addEnt(ent) {
     return ent;
 };
 
-World.prototype.updateEnt = function updateEnt(ent, i) {
+World.prototype.updateEnt =
+function updateEnt(ent, i) {
     if (i === undefined) {
         i = ent.index;
     } else {
@@ -109,7 +113,8 @@ World.prototype.updateEnt = function updateEnt(ent, i) {
     return ent;
 };
 
-World.prototype.removeEnt = function removeEnt(ent) {
+World.prototype.removeEnt =
+function removeEnt(ent) {
     if (this.ents[ent.index] !== ent) {
         throw new Error('removeEnt mismatch');
     }
@@ -129,7 +134,8 @@ World.prototype.removeEnt = function removeEnt(ent) {
     return ent;
 };
 
-World.prototype.addView = function addView(view) {
+World.prototype.addView =
+function addView(view) {
     this.views.push(view);
     view.updateEnts();
     return view;
