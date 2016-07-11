@@ -165,6 +165,8 @@ function executeTurn(turn) {
             return turn & ~t;
         }
     }
-    // TODO: assert that turn is 0?
+    if (turn !== 0) {
+        throw new Error('unrecognized turning constant ' + turn);
+    }
     return 0;
 };
