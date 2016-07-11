@@ -1218,10 +1218,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_vd7gb1");
+        component.setAttribute("id", "view_ovmuon");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_vd7gb1")
+       scope.componentsFor["view"].setAttribute("for", "view_ovmuon")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1242,10 +1242,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_8qt552");
+        component.setAttribute("id", "prompt_oo76ap");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_8qt552")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_oo76ap")
     }
     this.scope.hookup("this", this);
 };
@@ -2082,10 +2082,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_plcwmu");
+        component.setAttribute("id", "view_siaa46");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_plcwmu")
+       scope.componentsFor["view"].setAttribute("for", "view_siaa46")
     }
     this.scope.hookup("this", this);
 };
@@ -2287,10 +2287,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_j4c2lh");
+        component.setAttribute("id", "box_dycv6b");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_j4c2lh")
+       scope.componentsFor["box"].setAttribute("for", "box_dycv6b")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2305,10 +2305,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_8s4m1l");
+            component.setAttribute("id", "help_qo1q5m");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_8s4m1l")
+           scope.componentsFor["help"].setAttribute("for", "help_qo1q5m")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2321,10 +2321,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_3huxb");
+            component.setAttribute("id", "text_i9wrdf");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_3huxb")
+           scope.componentsFor["text"].setAttribute("for", "text_i9wrdf")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2334,10 +2334,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_2kdrzp");
+            component.setAttribute("id", "error_2etih7");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_2kdrzp")
+           scope.componentsFor["error"].setAttribute("for", "error_2etih7")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -3451,116 +3451,160 @@ module.exports.whenMatch     = compileWhenMatch;
 function id(x) {return x[0]; }
  var build = require('./build.js'); var grammar = {
     ParserRules: [
-    {"name": "spec", "symbols": ["spec$ebnf$1", "rules"], "postprocess": build.spec},
+    {"name": "spec", "symbols": [" ebnf$1", "rules"], "postprocess":  build.spec },
     {"name": "assigns", "symbols": ["assign"]},
-    {"name": "assigns", "symbols": ["assign", "newline", "assigns"], "postprocess": build.rightConcat},
-    {"name": "assign", "symbols": ["identifier", "_", {"literal":"="}, "_", "lit"], "postprocess": build.assign},
+    {"name": "assigns", "symbols": ["assign", "newline", "assigns"], "postprocess":  build.rightConcat },
+    {"name": "assign", "symbols": ["identifier", "_", {"literal":"="}, "_", "lit"], "postprocess":  build.assign },
     {"name": "rules", "symbols": ["rule"]},
-    {"name": "rules", "symbols": ["rule", "newline", "rules"], "postprocess": build.rightConcat},
-    {"name": "rule$string$1", "symbols": [{"literal":"="}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "rule", "symbols": ["when", "rule$string$1", "then"], "postprocess": build.rule},
-    {"name": "when", "symbols": ["expr", {"literal":","}, "expr"], "postprocess": build.when},
-    {"name": "then", "symbols": ["thenState", {"literal":","}, "thenColor", {"literal":","}, "thenTurn"], "postprocess": build.then},
-    {"name": "thenMode", "symbols": [], "postprocess": build.just('|')},
-    {"name": "thenMode", "symbols": [{"literal":"="}], "postprocess": build.item(0)},
-    {"name": "thenMode", "symbols": [{"literal":"|"}], "postprocess": build.item(0)},
-    {"name": "thenState", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": build.thenVal},
-    {"name": "thenColor", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": build.thenVal},
-    {"name": "thenTurn", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": build.thenVal},
-    {"name": "thenTurn", "symbols": ["_", "thenMode", "turnExpr", "_"], "postprocess": build.thenVal},
-    {"name": "turnExpr", "symbols": ["turn"], "postprocess": build.turn},
-    {"name": "turnExpr", "symbols": ["turnExpr", {"literal":"|"}, "turnExpr"], "postprocess": build.multiTurn},
-    {"name": "expr", "symbols": ["_", "sum", "_"], "postprocess": build.item(1)},
-    {"name": "sumop", "symbols": ["_", {"literal":"+"}, "_"], "postprocess": build.item(1)},
-    {"name": "sumop", "symbols": ["_", {"literal":"-"}, "_"], "postprocess": build.item(1)},
-    {"name": "mulop", "symbols": ["_", {"literal":"*"}, "_"], "postprocess": build.item(1)},
-    {"name": "mulop", "symbols": ["_", {"literal":"/"}, "_"], "postprocess": build.item(1)},
-    {"name": "mulop", "symbols": ["_", {"literal":"%"}, "_"], "postprocess": build.item(1)},
-    {"name": "sum", "symbols": ["sum", "sumop", "mul"], "postprocess": build.expr},
-    {"name": "sum", "symbols": ["mul"], "postprocess": build.item(0)},
-    {"name": "mul", "symbols": ["mul", "mulop", "fac"], "postprocess": build.expr},
-    {"name": "mul", "symbols": ["fac"], "postprocess": build.item(0)},
-    {"name": "fac", "symbols": [{"literal":"("}, "expr", {"literal":")"}], "postprocess": build.item(1)},
-    {"name": "fac", "symbols": ["lit"], "postprocess": build.item(0)},
-    {"name": "fac", "symbols": ["member"], "postprocess": build.item(0)},
-    {"name": "fac", "symbols": ["symbol"], "postprocess": build.item(0)},
-    {"name": "fac", "symbols": ["identifier"], "postprocess": build.item(0)},
-    {"name": "turns$string$1", "symbols": [{"literal":"t"}, {"literal":"u"}, {"literal":"r"}, {"literal":"n"}, {"literal":"s"}, {"literal":"("}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turns", "symbols": ["turns$string$1", "_", "countTurn", "turns$ebnf$1", "_", {"literal":")"}], "postprocess": build.turns},
-    {"name": "turn", "symbols": [{"literal":"L"}], "postprocess": function() {return 'RelLeft'}},
-    {"name": "turn", "symbols": [{"literal":"R"}], "postprocess": function() {return 'RelRight'}},
-    {"name": "turn", "symbols": [{"literal":"F"}], "postprocess": function() {return 'RelForward'}},
-    {"name": "turn", "symbols": [{"literal":"B"}], "postprocess": function() {return 'RelBackward'}},
-    {"name": "turn", "symbols": [{"literal":"P"}], "postprocess": function() {return 'RelDoubleLeft'}},
-    {"name": "turn", "symbols": [{"literal":"S"}], "postprocess": function() {return 'RelDoubleRight'}},
-    {"name": "turn", "symbols": [{"literal":"l"}], "postprocess": function() {return 'RelLeft'}},
-    {"name": "turn", "symbols": [{"literal":"r"}], "postprocess": function() {return 'RelRight'}},
-    {"name": "turn", "symbols": [{"literal":"f"}], "postprocess": function() {return 'RelForward'}},
-    {"name": "turn", "symbols": [{"literal":"b"}], "postprocess": function() {return 'RelBackward'}},
-    {"name": "turn", "symbols": [{"literal":"p"}], "postprocess": function() {return 'RelDoubleLeft'}},
-    {"name": "turn", "symbols": [{"literal":"s"}], "postprocess": function() {return 'RelDoubleRight'}},
-    {"name": "turn$string$1", "symbols": [{"literal":"N"}, {"literal":"W"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$1"], "postprocess": function() {return 'AbsNorthWest'}},
-    {"name": "turn$string$2", "symbols": [{"literal":"N"}, {"literal":"O"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$2"], "postprocess": function() {return 'AbsNorth'}},
-    {"name": "turn$string$3", "symbols": [{"literal":"N"}, {"literal":"E"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$3"], "postprocess": function() {return 'AbsNorthEast'}},
-    {"name": "turn$string$4", "symbols": [{"literal":"S"}, {"literal":"E"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$4"], "postprocess": function() {return 'AbsSouthEast'}},
-    {"name": "turn$string$5", "symbols": [{"literal":"S"}, {"literal":"O"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$5"], "postprocess": function() {return 'AbsSouth'}},
-    {"name": "turn$string$6", "symbols": [{"literal":"S"}, {"literal":"W"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$6"], "postprocess": function() {return 'AbsSouthWest'}},
-    {"name": "turn$string$7", "symbols": [{"literal":"n"}, {"literal":"w"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$7"], "postprocess": function() {return 'AbsNorthWest'}},
-    {"name": "turn$string$8", "symbols": [{"literal":"n"}, {"literal":"o"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$8"], "postprocess": function() {return 'AbsNorth'}},
-    {"name": "turn$string$9", "symbols": [{"literal":"n"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$9"], "postprocess": function() {return 'AbsNorthEast'}},
-    {"name": "turn$string$10", "symbols": [{"literal":"s"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$10"], "postprocess": function() {return 'AbsSouthEast'}},
-    {"name": "turn$string$11", "symbols": [{"literal":"s"}, {"literal":"o"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$11"], "postprocess": function() {return 'AbsSouth'}},
-    {"name": "turn$string$12", "symbols": [{"literal":"s"}, {"literal":"w"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turn", "symbols": ["turn$string$12"], "postprocess": function() {return 'AbsSouthWest'}},
-    {"name": "countTurn", "symbols": ["turn"], "postprocess": build.singleTurn},
-    {"name": "countTurn", "symbols": ["decint", "turn"], "postprocess": build.countTurn},
-    {"name": "member", "symbols": ["member$subexpression$1", {"literal":"["}, "expr", {"literal":"]"}], "postprocess": build.member},
-    {"name": "symbol", "symbols": [/[a-z]/, "symbol$ebnf$1"], "postprocess": build.symbol},
-    {"name": "identifier", "symbols": [/[A-Z]/, "identifier$ebnf$1"], "postprocess": build.identifier},
-    {"name": "lit", "symbols": ["int"], "postprocess": build.item(0)},
-    {"name": "lit", "symbols": ["turns"], "postprocess": build.item(0)},
-    {"name": "int$string$1", "symbols": [{"literal":"0"}, {"literal":"x"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "int", "symbols": ["int$string$1", "hexint"], "postprocess": build.item(1)},
-    {"name": "int", "symbols": ["decint"], "postprocess": build.item(0)},
-    {"name": "hexint", "symbols": ["hexint$ebnf$1"], "postprocess": build.int(16)},
-    {"name": "decint", "symbols": ["decint$ebnf$1"], "postprocess": build.int(10)},
-    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": build.noop},
-    {"name": "__", "symbols": ["__$ebnf$1"], "postprocess": build.noop},
-    {"name": "newline", "symbols": ["newline$ebnf$1", {"literal":"\n"}], "postprocess": build.noop},
-    {"name": "spec$ebnf$1", "symbols": ["assigns"], "postprocess": id},
-    {"name": "spec$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "turns$ebnf$1", "symbols": []},
-    {"name": "turns$ebnf$1", "symbols": ["turns$ebnf$1$subexpression$1", "turns$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "member$subexpression$1", "symbols": ["member"]},
-    {"name": "member$subexpression$1", "symbols": ["symbol"]},
-    {"name": "member$subexpression$1", "symbols": ["identifier"]},
-    {"name": "member$subexpression$1", "symbols": ["lit"]},
-    {"name": "symbol$ebnf$1", "symbols": []},
-    {"name": "symbol$ebnf$1", "symbols": [/[\w]/, "symbol$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "identifier$ebnf$1", "symbols": [/[\w]/]},
-    {"name": "identifier$ebnf$1", "symbols": [/[\w]/, "identifier$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "hexint$ebnf$1", "symbols": [/[0-9a-fA-F]/]},
-    {"name": "hexint$ebnf$1", "symbols": [/[0-9a-fA-F]/, "hexint$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "decint$ebnf$1", "symbols": [/[0-9]/]},
-    {"name": "decint$ebnf$1", "symbols": [/[0-9]/, "decint$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "_$ebnf$1", "symbols": []},
-    {"name": "_$ebnf$1", "symbols": [/[\s]/, "_$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "__$ebnf$1", "symbols": [/[\s]/]},
-    {"name": "__$ebnf$1", "symbols": [/[\s]/, "__$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "newline$ebnf$1", "symbols": [{"literal":"\r"}], "postprocess": id},
-    {"name": "newline$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "turns$ebnf$1$subexpression$1", "symbols": ["__", "countTurn"]}
+    {"name": "rules", "symbols": ["rule", "newline", "rules"], "postprocess":  build.rightConcat },
+    {"name": " string$2", "symbols": [{"literal":"="}, {"literal":">"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "rule", "symbols": ["when", " string$2", "then"], "postprocess":  build.rule },
+    {"name": "when", "symbols": ["expr", {"literal":","}, "expr"], "postprocess":  build.when },
+    {"name": "then", "symbols": ["thenState", {"literal":","}, "thenColor", {"literal":","}, "thenTurn"], "postprocess":  build.then },
+    {"name": "thenMode", "symbols": [], "postprocess":  build.just('|') },
+    {"name": "thenMode", "symbols": [{"literal":"="}], "postprocess":  build.item(0) },
+    {"name": "thenMode", "symbols": [{"literal":"|"}], "postprocess":  build.item(0) },
+    {"name": "thenState", "symbols": ["_", "thenMode", "sum", "_"], "postprocess":  build.thenVal },
+    {"name": "thenColor", "symbols": ["_", "thenMode", "sum", "_"], "postprocess":  build.thenVal },
+    {"name": "thenTurn", "symbols": ["_", "thenMode", "sum", "_"], "postprocess":  build.thenVal },
+    {"name": "thenTurn", "symbols": ["_", "thenMode", "turnExpr", "_"], "postprocess":  build.thenVal },
+    {"name": "turnExpr", "symbols": ["turn"], "postprocess":  build.turn },
+    {"name": "turnExpr", "symbols": ["turnExpr", {"literal":"|"}, "turnExpr"], "postprocess":  build.multiTurn },
+    {"name": "expr", "symbols": ["_", "sum", "_"], "postprocess":  build.item(1) },
+    {"name": "sumop", "symbols": ["_", {"literal":"+"}, "_"], "postprocess":  build.item(1) },
+    {"name": "sumop", "symbols": ["_", {"literal":"-"}, "_"], "postprocess":  build.item(1) },
+    {"name": "mulop", "symbols": ["_", {"literal":"*"}, "_"], "postprocess":  build.item(1) },
+    {"name": "mulop", "symbols": ["_", {"literal":"/"}, "_"], "postprocess":  build.item(1) },
+    {"name": "mulop", "symbols": ["_", {"literal":"%"}, "_"], "postprocess":  build.item(1) },
+    {"name": "sum", "symbols": ["sum", "sumop", "mul"], "postprocess":  build.expr },
+    {"name": "sum", "symbols": ["mul"], "postprocess":  build.item(0) },
+    {"name": "mul", "symbols": ["mul", "mulop", "fac"], "postprocess":  build.expr },
+    {"name": "mul", "symbols": ["fac"], "postprocess":  build.item(0) },
+    {"name": "fac", "symbols": [{"literal":"("}, "expr", {"literal":")"}], "postprocess":  build.item(1) },
+    {"name": "fac", "symbols": ["lit"], "postprocess":  build.item(0) },
+    {"name": "fac", "symbols": ["member"], "postprocess":  build.item(0) },
+    {"name": "fac", "symbols": ["symbol"], "postprocess":  build.item(0) },
+    {"name": "fac", "symbols": ["identifier"], "postprocess":  build.item(0) },
+    {"name": " string$3", "symbols": [{"literal":"t"}, {"literal":"u"}, {"literal":"r"}, {"literal":"n"}, {"literal":"s"}, {"literal":"("}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turns", "symbols": [" string$3", "_", "countTurn", " ebnf$4", "_", {"literal":")"}], "postprocess":  build.turns },
+    {"name": "turn", "symbols": [{"literal":"L"}], "postprocess":  function() {return 'RelLeft'}        },
+    {"name": "turn", "symbols": [{"literal":"R"}], "postprocess":  function() {return 'RelRight'}       },
+    {"name": "turn", "symbols": [{"literal":"F"}], "postprocess":  function() {return 'RelForward'}     },
+    {"name": "turn", "symbols": [{"literal":"B"}], "postprocess":  function() {return 'RelBackward'}    },
+    {"name": "turn", "symbols": [{"literal":"P"}], "postprocess":  function() {return 'RelDoubleLeft'}  },
+    {"name": "turn", "symbols": [{"literal":"S"}], "postprocess":  function() {return 'RelDoubleRight'} },
+    {"name": "turn", "symbols": [{"literal":"l"}], "postprocess":  function() {return 'RelLeft'}        },
+    {"name": "turn", "symbols": [{"literal":"r"}], "postprocess":  function() {return 'RelRight'}       },
+    {"name": "turn", "symbols": [{"literal":"f"}], "postprocess":  function() {return 'RelForward'}     },
+    {"name": "turn", "symbols": [{"literal":"b"}], "postprocess":  function() {return 'RelBackward'}    },
+    {"name": "turn", "symbols": [{"literal":"p"}], "postprocess":  function() {return 'RelDoubleLeft'}  },
+    {"name": "turn", "symbols": [{"literal":"s"}], "postprocess":  function() {return 'RelDoubleRight'} },
+    {"name": " string$5", "symbols": [{"literal":"N"}, {"literal":"W"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$5"], "postprocess":  function() {return 'AbsNorthWest'}   },
+    {"name": " string$6", "symbols": [{"literal":"N"}, {"literal":"O"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$6"], "postprocess":  function() {return 'AbsNorth'}       },
+    {"name": " string$7", "symbols": [{"literal":"N"}, {"literal":"E"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$7"], "postprocess":  function() {return 'AbsNorthEast'}   },
+    {"name": " string$8", "symbols": [{"literal":"S"}, {"literal":"E"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$8"], "postprocess":  function() {return 'AbsSouthEast'}   },
+    {"name": " string$9", "symbols": [{"literal":"S"}, {"literal":"O"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$9"], "postprocess":  function() {return 'AbsSouth'}       },
+    {"name": " string$10", "symbols": [{"literal":"S"}, {"literal":"W"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$10"], "postprocess":  function() {return 'AbsSouthWest'}   },
+    {"name": " string$11", "symbols": [{"literal":"n"}, {"literal":"w"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$11"], "postprocess":  function() {return 'AbsNorthWest'}   },
+    {"name": " string$12", "symbols": [{"literal":"n"}, {"literal":"o"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$12"], "postprocess":  function() {return 'AbsNorth'}       },
+    {"name": " string$13", "symbols": [{"literal":"n"}, {"literal":"e"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$13"], "postprocess":  function() {return 'AbsNorthEast'}   },
+    {"name": " string$14", "symbols": [{"literal":"s"}, {"literal":"e"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$14"], "postprocess":  function() {return 'AbsSouthEast'}   },
+    {"name": " string$15", "symbols": [{"literal":"s"}, {"literal":"o"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$15"], "postprocess":  function() {return 'AbsSouth'}       },
+    {"name": " string$16", "symbols": [{"literal":"s"}, {"literal":"w"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "turn", "symbols": [" string$16"], "postprocess":  function() {return 'AbsSouthWest'}   },
+    {"name": "countTurn", "symbols": ["turn"], "postprocess":  build.singleTurn },
+    {"name": "countTurn", "symbols": ["decint", "turn"], "postprocess":  build.countTurn },
+    {"name": "member", "symbols": [" subexpression$17", {"literal":"["}, "expr", {"literal":"]"}], "postprocess":  build.member },
+    {"name": "symbol", "symbols": [/[a-z]/, " ebnf$18"], "postprocess":  build.symbol },
+    {"name": "identifier", "symbols": [/[A-Z]/, " ebnf$19"], "postprocess":  build.identifier },
+    {"name": "lit", "symbols": ["int"], "postprocess":  build.item(0) },
+    {"name": "lit", "symbols": ["turns"], "postprocess":  build.item(0) },
+    {"name": " string$20", "symbols": [{"literal":"0"}, {"literal":"x"}], "postprocess": function joiner(d) {
+        return d.join('');
+    }},
+    {"name": "int", "symbols": [" string$20", "hexint"], "postprocess":  build.item(1) },
+    {"name": "int", "symbols": ["decint"], "postprocess":  build.item(0) },
+    {"name": "hexint", "symbols": [" ebnf$21"], "postprocess":  build.int(16) },
+    {"name": "decint", "symbols": [" ebnf$22"], "postprocess":  build.int(10) },
+    {"name": "_", "symbols": [" ebnf$23"], "postprocess":  build.noop },
+    {"name": "__", "symbols": [" ebnf$24"], "postprocess":  build.noop },
+    {"name": "newline", "symbols": [" ebnf$25", {"literal":"\n"}], "postprocess":  build.noop },
+    {"name": " ebnf$1", "symbols": ["assigns"], "postprocess": id},
+    {"name": " ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": " ebnf$4", "symbols": []},
+    {"name": " ebnf$4", "symbols": [" subexpression$26", " ebnf$4"], "postprocess": function (d) {
+                    return [d[0]].concat(d[1]);
+                }},
+    {"name": " subexpression$17", "symbols": ["member"]},
+    {"name": " subexpression$17", "symbols": ["symbol"]},
+    {"name": " subexpression$17", "symbols": ["identifier"]},
+    {"name": " subexpression$17", "symbols": ["lit"]},
+    {"name": " ebnf$18", "symbols": []},
+    {"name": " ebnf$18", "symbols": [/[\w]/, " ebnf$18"], "postprocess": function (d) {
+                    return [d[0]].concat(d[1]);
+                }},
+    {"name": " ebnf$19", "symbols": [/[\w]/]},
+    {"name": " ebnf$19", "symbols": [/[\w]/, " ebnf$19"], "postprocess": function (d) {
+                    return [d[0]].concat(d[1]);
+                }},
+    {"name": " ebnf$21", "symbols": [/[0-9a-fA-F]/]},
+    {"name": " ebnf$21", "symbols": [/[0-9a-fA-F]/, " ebnf$21"], "postprocess": function (d) {
+                    return [d[0]].concat(d[1]);
+                }},
+    {"name": " ebnf$22", "symbols": [/[0-9]/]},
+    {"name": " ebnf$22", "symbols": [/[0-9]/, " ebnf$22"], "postprocess": function (d) {
+                    return [d[0]].concat(d[1]);
+                }},
+    {"name": " ebnf$23", "symbols": []},
+    {"name": " ebnf$23", "symbols": [/[\s]/, " ebnf$23"], "postprocess": function (d) {
+                    return [d[0]].concat(d[1]);
+                }},
+    {"name": " ebnf$24", "symbols": [/[\s]/]},
+    {"name": " ebnf$24", "symbols": [/[\s]/, " ebnf$24"], "postprocess": function (d) {
+                    return [d[0]].concat(d[1]);
+                }},
+    {"name": " ebnf$25", "symbols": [{"literal":"\r"}], "postprocess": id},
+    {"name": " ebnf$25", "symbols": [], "postprocess": function(d) {return null;}},
+    {"name": " subexpression$26", "symbols": ["__", "countTurn"]}
 ]
   , ParserStart: "spec"
 }
