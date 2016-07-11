@@ -1,4 +1,11 @@
-# v0.9.2
+# v0.9.3
+
+- Added a CHANGELOG
+- Evolved bulid-pages script into fully versioned scripting
+- Added shrinkwrap
+- Changed all package.json dependency versions to be exact
+
+## v0.9.2
 
 - Aded support for base64 encoded hash
 
