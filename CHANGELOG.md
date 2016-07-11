@@ -1,4 +1,8 @@
-# v0.9.3
+# v0.9.4
+
+- Minor fixes and improvements
+
+## v0.9.3
 
 - Added a CHANGELOG
 - Evolved bulid-pages script into fully versioned scripting

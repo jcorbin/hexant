@@ -1218,10 +1218,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_ovmuon");
+        component.setAttribute("id", "view_mchyw6");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_ovmuon")
+       scope.componentsFor["view"].setAttribute("for", "view_mchyw6")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1242,10 +1242,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_oo76ap");
+        component.setAttribute("id", "prompt_7ola80");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_oo76ap")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_7ola80")
     }
     this.scope.hookup("this", this);
 };
@@ -1423,11 +1423,7 @@ function onColorGenChange(gen) {
 Hexant.prototype.onRuleChange =
 function onRuleChange(ent) {
     this.window.document.title = this.titleBase + ': ' + ent;
-    if (this.world.ents[0]) {
-        this.world.updateEnt(ent, 0);
-    } else {
-        this.world.addEnt(ent);
-    }
+    this.world.setEnts([ent]);
     this.reset();
 };
 
@@ -2082,10 +2078,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_siaa46");
+        component.setAttribute("id", "view_u9fj6y");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_siaa46")
+       scope.componentsFor["view"].setAttribute("for", "view_u9fj6y")
     }
     this.scope.hookup("this", this);
 };
@@ -2287,10 +2283,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_dycv6b");
+        component.setAttribute("id", "box_7ece2z");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_dycv6b")
+       scope.componentsFor["box"].setAttribute("for", "box_7ece2z")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2305,10 +2301,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_qo1q5m");
+            component.setAttribute("id", "help_f721s1");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_qo1q5m")
+           scope.componentsFor["help"].setAttribute("for", "help_f721s1")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2321,10 +2317,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_i9wrdf");
+            component.setAttribute("id", "text_vla9up");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_i9wrdf")
+           scope.componentsFor["text"].setAttribute("for", "text_vla9up")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2334,10 +2330,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_2etih7");
+            component.setAttribute("id", "error_z2mpmu");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_2etih7")
+           scope.componentsFor["error"].setAttribute("for", "error_z2mpmu")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2775,7 +2771,9 @@ function executeTurn(turn) {
             return turn & ~t;
         }
     }
-    // TODO: assert that turn is 0?
+    if (turn !== 0) {
+        throw new Error('unrecognized turning constant ' + turn);
+    }
     return 0;
 };
 
@@ -4556,25 +4554,22 @@ function World() {
     this.views = [];
 }
 
-World.prototype.step = function step() {
+World.prototype.step =
+function step() {
     var i;
     for (i = 0; i < this.ents.length; i++) {
         this.ents[i].step(this);
     }
     for (i = 0; i < this.views.length; i++) {
-        var view = this.views[i];
-        view.step();
-        if (view.needsRedraw) {
-            view.redraw();
-            view.needsRedraw = false;
-        }
+        this.views[i].step();
     }
+    this.redraw();
 };
 
-World.prototype.stepn = function stepn(n) {
-    var i;
-    var j;
-    for (i = 0; i < n; i++) {
+World.prototype.stepn =
+function stepn(n) {
+    for (var i = 0; i < n; i++) {
+        var j;
         for (j = 0; j < this.ents.length; j++) {
             this.ents[j].step(this);
         }
@@ -4582,8 +4577,13 @@ World.prototype.stepn = function stepn(n) {
             this.views[j].step();
         }
     }
+    return this.redraw();
+};
+
+World.prototype.redraw =
+function redraw() {
     var didredraw = false;
-    for (i = 0; i < this.views.length; i++) {
+    for (var i = 0; i < this.views.length; i++) {
         var view = this.views[i];
         if (view.needsRedraw) {
             view.redraw();
@@ -4594,7 +4594,8 @@ World.prototype.stepn = function stepn(n) {
     return didredraw;
 };
 
-World.prototype.addEnt = function addEnt(ent) {
+World.prototype.addEnt =
+function addEnt(ent) {
     this.numColors = Math.max(this.numColors, ent.numColors);
     this.numStates = Math.max(this.numStates, ent.numStates);
     ent.index = this.ents.length;
@@ -4612,7 +4613,8 @@ World.prototype.addEnt = function addEnt(ent) {
     return ent;
 };
 
-World.prototype.updateEnt = function updateEnt(ent, i) {
+World.prototype.updateEnt =
+function updateEnt(ent, i) {
     if (i === undefined) {
         i = ent.index;
     } else {
@@ -4637,16 +4639,17 @@ World.prototype.updateEnt = function updateEnt(ent, i) {
     return ent;
 };
 
-World.prototype.removeEnt = function removeEnt(ent) {
+World.prototype.removeEnt =
+function removeEnt(ent) {
     if (this.ents[ent.index] !== ent) {
         throw new Error('removeEnt mismatch');
     }
 
     var i = ent.index;
     var j = i++;
-    for (; i < this.ents.length; i++, j++) {
-        this.ents[j] = this.ents[i];
-        this.ents[j].index = j;
+    for (; j < this.ents.length; i++, j++) {
+        this.ents[i] = this.ents[j];
+        this.ents[i].index = i;
     }
     this.ents.pop();
 
@@ -4657,7 +4660,34 @@ World.prototype.removeEnt = function removeEnt(ent) {
     return ent;
 };
 
-World.prototype.addView = function addView(view) {
+World.prototype.pruneEnts =
+function pruneEnts(n) {
+    if (n >= this.ents.length) {
+        return;
+    }
+    for (var i = n; i < this.ents.length; i++) {
+        for (var j = 0; j < this.views.length; ++j) {
+            this.views[j].removeEnt(this.ents[i]);
+        }
+    }
+    this.ents = this.ents.silce(0, n);
+};
+
+World.prototype.setEnts =
+function setEnts(ents) {
+    this.pruneEnts(ents.length);
+    for (var i = 0; i < ents.length; ++i) {
+        var ent = ents[i];
+        if (i < this.ents.length) {
+            this.updateEnt(ent, i);
+        } else {
+            this.addEnt(ent);
+        }
+    }
+};
+
+World.prototype.addView =
+function addView(view) {
     this.views.push(view);
     view.updateEnts();
     return view;
