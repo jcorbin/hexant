@@ -158,11 +158,7 @@ function onColorGenChange(gen) {
 Hexant.prototype.onRuleChange =
 function onRuleChange(ent) {
     this.window.document.title = this.titleBase + ': ' + ent;
-    if (this.world.ents[0]) {
-        this.world.updateEnt(ent, 0);
-    } else {
-        this.world.addEnt(ent);
-    }
+    this.world.setEnts([ent]);
     this.reset();
 };
 
