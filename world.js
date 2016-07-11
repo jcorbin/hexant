@@ -122,8 +122,8 @@ function removeEnt(ent) {
     var i = ent.index;
     var j = i++;
     for (; j < this.ents.length; i++, j++) {
-        this.ents[j] = this.ents[i];
-        this.ents[j].index = j;
+        this.ents[i] = this.ents[j];
+        this.ents[i].index = i;
     }
     this.ents.pop();
 
