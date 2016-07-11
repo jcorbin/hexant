@@ -57,21 +57,20 @@ function step(world, ents) {
     var n = ents.length;
     for (i = 0; i < n; ++i) {
         turm = ents[i];
-
         tile.update(turm.pos, update);
-        world.turnEnt(this.index, executeTurn);
 
-        // var next = null;
-        // while (turn !== 0) {
-        //     if (next === null) {
-        //         next = turm;
-        //     } else {
-        //         next = turm.copy();
-        //         ents.push(next);
-        //     }
-        //     turn = executeTurn(next, turn);
-        //     world.tuneEnt(self.index, executeTurn);
-        // }
+        var next = null;
+        var turn = 0;
+        while (turn !== 0) {
+            if (next === null) {
+                next = turm;
+            } else {
+                next = turm.copy();
+                ents.push(next);
+            }
+            world.tuneEnt(this.index, executeTurn);
+        }
+
     }
 
     // advance turmites
