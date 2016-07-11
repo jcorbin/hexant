@@ -147,6 +147,19 @@ function pruneEnts(n) {
     this.ents = this.ents.silce(0, n);
 };
 
+World.prototype.setEnts =
+function setEnts(ents) {
+    this.pruneEnts(ents.length);
+    for (var i = 0; i < ents.length; ++i) {
+        var ent = ents[i];
+        if (i < this.ents.length) {
+            this.updateEnt(ent, i);
+        } else {
+            this.addEnt(ent);
+        }
+    }
+};
+
 World.prototype.addView =
 function addView(view) {
     this.views.push(view);
