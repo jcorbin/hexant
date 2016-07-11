@@ -134,6 +134,19 @@ function removeEnt(ent) {
     return ent;
 };
 
+World.prototype.pruneEnts =
+function pruneEnts(n) {
+    if (n >= this.ents.length) {
+        return;
+    }
+    for (var i = n; i < this.ents.length; i++) {
+        for (var j = 0; j < this.views.length; ++j) {
+            this.views[j].removeEnt(this.ents[i]);
+        }
+    }
+    this.ents = this.ents.silce(0, n);
+};
+
 World.prototype.addView =
 function addView(view) {
     this.views.push(view);
