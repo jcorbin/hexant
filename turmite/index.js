@@ -38,15 +38,11 @@ function Turmite() {
     this.specString = '';
 
     this.dir = 0;
-    this.oldDir = 0;
-
     this.pos = CubePoint(0, 0, 0);
-    this.oldPos = CubePoint(0, 0, 0);
 
     this.state = 0;
     this.stateKey = 0;
 
-    this.size = 0.5;
     this.index = 0;
 }
 
@@ -96,9 +92,6 @@ function step(world) {
     flags |= 0x0100; // TODO: World constant
     data = flags | write;
     tile.set(this.pos, data);
-
-    this.oldDir = this.dir;
-    this.oldPos.copyFrom(this.pos);
 
     if (nextState !== this.state) {
         this.state = nextState;
@@ -155,7 +148,7 @@ function executeTurn(turn) {
     var t = 1;
     for (; t <= 0x0020; t <<= 1) {
         if (turn & t) {
-            this.dir = (6 + this.oldDir + constants.RelTurnDelta[t]) % 6;
+            this.dir = (6 + this.dir + constants.RelTurnDelta[t]) % 6;
             return turn & ~t;
         }
     }

@@ -1065,6 +1065,10 @@ CubePoint.prototype.toOddQOffset = function toOddQOffset() {
     var r = this.z + (this.x - (this.x & 1)) / 2;
     return OddQOffset(q, r);
 };
+CubePoint.prototype.toOddQOffsetInto = function toOddQOffsetInto(oqo) {
+    oqo.q = this.x;
+    oqo.r = this.z + (this.x - (this.x & 1)) / 2;
+};
 
 function OddQOffset(q, r) {
     if (!(this instanceof OddQOffset)) {
@@ -1119,6 +1123,10 @@ OddQOffset.prototype.toScreen = function toScreen() {
 };
 OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
     return this;
+};
+OddQOffset.prototype.toOddQOffsetInto = function toOddQOffsetInto(oqo) {
+    oqo.q = this.q;
+    oqo.r = this.r;
 };
 OddQOffset.prototype.toCubeInto = function toCubeInto(other) {
     other.x = this.q;
@@ -1218,10 +1226,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_mchyw6");
+        component.setAttribute("id", "view_cns0aj");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_mchyw6")
+       scope.componentsFor["view"].setAttribute("for", "view_cns0aj")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1242,10 +1250,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_7ola80");
+        component.setAttribute("id", "prompt_9rt5lt");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_7ola80")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_9rt5lt")
     }
     this.scope.hookup("this", this);
 };
@@ -1389,7 +1397,7 @@ function configure() {
     this.hash.bind('drawTrace')
         .setDefault(false)
         .addListener(function onDrawTraceChange(drawTrace) {
-            self.view.drawTrace = !!drawTrace;
+            self.view.setDrawTrace(!!drawTrace);
             self.view.redraw();
         });
 
@@ -1534,11 +1542,20 @@ function animate(time) {
         this.lastFrameTime = time;
     } else {
         var progress = time - this.lastFrameTime;
-        frames = Math.min(BatchLimit, progress / this.frameInterval);
+        frames = Math.min(BatchLimit, Math.round(progress / this.frameInterval));
     }
-
-    this.world.stepn(frames);
-    this.lastFrameTime += frames * this.frameInterval;
+    switch (frames) {
+    case 0:
+        break;
+    case 1:
+        this.world.step();
+        this.lastFrameTime += this.frameInterval;
+        break;
+    default:
+        this.world.stepn(frames);
+        this.lastFrameTime += frames * this.frameInterval;
+        break;
+    }
 };
 
 Hexant.prototype.play =
@@ -1719,38 +1736,45 @@ module.exports = OddQHexTile;
 
 function OddQHexTile(origin, width, height) {
     this.origin = origin.toOddQOffset();
+    this.oqo = new Coord.OddQOffset(0, 0);
     this.width = width;
     this.height = height;
     this.data = new Uint16Array(this.width * this.height);
 }
 
-OddQHexTile.prototype.boundingBox = function boundingBox() {
+OddQHexTile.prototype.boundingBox =
+function boundingBox() {
     return OddQBox(this.origin, OddQOffset(this.width, this.height));
 };
 
-OddQHexTile.prototype.centerPoint = function centerPoint() {
+OddQHexTile.prototype.centerPoint =
+function centerPoint() {
     return OddQOffset(
         this.origin.q + Math.floor(this.width / 2),
         this.origin.r + Math.floor(this.height / 2)
     );
 };
 
-OddQHexTile.prototype.pointToIndex = function pointToIndex(point) {
-    var offsetPoint = point.toOddQOffset();
-    return (offsetPoint.r - this.origin.r) * this.width +
-           (offsetPoint.q - this.origin.q);
+OddQHexTile.prototype.pointToIndex =
+function pointToIndex(point) {
+    point.toOddQOffsetInto(this.oqo);
+    return (this.oqo.r - this.origin.r) * this.width +
+           (this.oqo.q - this.origin.q);
 };
 
-OddQHexTile.prototype.get = function get(point) {
+OddQHexTile.prototype.get =
+function get(point) {
     return this.data[this.pointToIndex(point)];
 };
 
-OddQHexTile.prototype.set = function set(point, datum) {
+OddQHexTile.prototype.set =
+function set(point, datum) {
     this.data[this.pointToIndex(point)] = datum;
     return datum;
 };
 
-OddQHexTile.prototype.eachDataPoint = function eachDataPoint(each) {
+OddQHexTile.prototype.eachDataPoint =
+function eachDataPoint(each) {
     var loQ = this.origin.q;
     var loR = this.origin.r;
     var hiQ = loQ + this.width;
@@ -1801,13 +1825,16 @@ var nodeOriginOffset = [
 
 function HexTileTree(origin, tileWidth, tileHeight) {
     this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
+    this.oqo = new Coord.OddQOffset(0, 0);
 }
 
-HexTileTree.prototype.dump = function dump() {
+HexTileTree.prototype.dump =
+function dump() {
     return this.root.dump();
 };
 
-HexTileTreeNode.prototype.dump = function dump() {
+HexTileTreeNode.prototype.dump =
+function dump() {
     var parts = [
         'TreeNode @' + this.origin.toString(),
         '  box: ' + this.box.toString()
@@ -1828,7 +1855,8 @@ HexTileTreeNode.prototype.dump = function dump() {
     return parts.join('\n');
 };
 
-OddQHexTile.prototype.dump = function dump() {
+OddQHexTile.prototype.dump =
+function dump() {
     var parts = ['Tile @' + this.origin.toString()];
     var row = [];
     for (var i = 0; i < this.data.length; i++) {
@@ -1842,30 +1870,33 @@ OddQHexTile.prototype.dump = function dump() {
     return parts.join('\n');
 };
 
-HexTileTree.prototype.boundingBox = function boundingBox() {
+HexTileTree.prototype.boundingBox =
+function boundingBox() {
     return this.root.boundingBox();
 };
 
-HexTileTree.prototype.eachDataPoint = function eachDataPoint(each) {
+HexTileTree.prototype.eachDataPoint =
+function eachDataPoint(each) {
     this.root.eachDataPoint(each);
 };
 
-HexTileTree.prototype.centerPoint = function centerPoint() {
+HexTileTree.prototype.centerPoint =
+function centerPoint() {
     return this.root.centerPoint();
 };
 
-HexTileTree.prototype.get = function get(point) {
+HexTileTree.prototype.get =
+function get(point) {
     return this.root.get(point);
 };
 
-HexTileTree.prototype.set = function set(point, datum) {
-    var offsetPoint = point.toOddQOffset();
-
-    while (!this.root.box.contains(offsetPoint)) {
+HexTileTree.prototype.set =
+function set(point, datum) {
+    point.toOddQOffsetInto(this.oqo);
+    while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
     }
-
-    return this.root._set(offsetPoint, datum);
+    return this.root._set(this.oqo, datum);
 };
 
 function HexTileTreeNode(origin, width, height) {
@@ -1875,6 +1906,7 @@ function HexTileTreeNode(origin, width, height) {
     this.tileWidth = Math.floor(this.width / 2);
     this.tileHeight = Math.floor(this.height / 2);
     this.tiles = [null, null, null, null];
+    this.oqo = new Coord.OddQOffset(0, 0);
     var topLeft = OddQOffset(this.origin.q - this.tileWidth,
                              this.origin.r - this.tileHeight);
     var bottomRight = OddQOffset(this.origin.q + this.tileWidth,
@@ -1882,24 +1914,21 @@ function HexTileTreeNode(origin, width, height) {
     this.box = OddQBox(topLeft, bottomRight);
 }
 
-HexTileTreeNode.prototype.expand = function expand() {
+HexTileTreeNode.prototype.expand =
+function expand() {
     var node = new HexTileTreeNode(
         this.origin.copy(), this.width * 2, this.height * 2);
     for (var i = 0; i < this.tiles.length; i++) {
-        node.tiles[i] = this.growTile(i);
+        var tile = this.tiles[i];
+        if (tile !== null) {
+            node.tiles[i] = tile.grow(i);
+        }
     }
     return node;
 };
 
-HexTileTreeNode.prototype.growTile = function growTile(i) {
-    var tile = this.tiles[i];
-    if (!tile) {
-        return null;
-    }
-    return tile.grow(i);
-};
-
-OddQHexTile.prototype.grow = function grow(i) {
+OddQHexTile.prototype.grow =
+function grow(i) {
     var offset = tileOriginOffset[i].copy()
         .mulBy(this.width, this.height);
     var origin = this.origin.copy().add(offset);
@@ -1909,7 +1938,8 @@ OddQHexTile.prototype.grow = function grow(i) {
     return node;
 };
 
-HexTileTreeNode.prototype.grow = function grow(i) {
+HexTileTreeNode.prototype.grow =
+function grow(i) {
     var offset = nodeOriginOffset[i].copy()
         .mulBy(this.tileWidth, this.tileHeight);
     var origin = this.origin.copy().add(offset);
@@ -1919,11 +1949,13 @@ HexTileTreeNode.prototype.grow = function grow(i) {
     return node;
 };
 
-HexTileTreeNode.prototype.boundingBox = function boundingBox() {
+HexTileTreeNode.prototype.boundingBox =
+function boundingBox() {
     return this.box;
 };
 
-HexTileTreeNode.prototype.eachDataPoint = function eachDataPoint(each) {
+HexTileTreeNode.prototype.eachDataPoint =
+function eachDataPoint(each) {
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile) {
@@ -1934,7 +1966,8 @@ HexTileTreeNode.prototype.eachDataPoint = function eachDataPoint(each) {
     }
 };
 
-HexTileTreeNode.prototype._fakeDataPoints = function _fakeDataPoints(i, each) {
+HexTileTreeNode.prototype._fakeDataPoints =
+function _fakeDataPoints(i, each) {
     var tileCol = i & 1;
     var tileRow = i >> 1;
 
@@ -1951,23 +1984,25 @@ HexTileTreeNode.prototype._fakeDataPoints = function _fakeDataPoints(i, each) {
     }
 };
 
-HexTileTreeNode.prototype.centerPoint = function centerPoint() {
+HexTileTreeNode.prototype.centerPoint =
+function centerPoint() {
     return this.origin;
 };
 
-HexTileTreeNode.prototype.get = function get(point) {
-    var offsetPoint = point.toOddQOffset();
-    if (!this.box.contains(offsetPoint)) {
+HexTileTreeNode.prototype.get =
+function get(point) {
+    point.toOddQOffsetInto(this.oqo);
+    if (!this.box.contains(this.oqo)) {
         return NaN;
     }
 
     // TODO: assert
-    // - origin.q - tileWidth <= offsetPoint.q <= origin.q + tileWidth
-    // - origin.r - tileHeight <= offsetPoint.r <= origin.r + tileHeight
+    // - origin.q - tileWidth <= this.oqo.q <= origin.q + tileWidth
+    // - origin.r - tileHeight <= this.oqo.r <= origin.r + tileHeight
 
     // TODO: bit hack: negated sign-bit of subtraction
-    var tileCol = offsetPoint.q < this.origin.q ? 0 : 1;
-    var tileRow = offsetPoint.r < this.origin.r ? 0 : 1;
+    var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
+    var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
 
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
@@ -1977,15 +2012,17 @@ HexTileTreeNode.prototype.get = function get(point) {
     return 0;
 };
 
-HexTileTreeNode.prototype.set = function set(point, datum) {
-    var offsetPoint = point.toOddQOffset();
-    if (!this.box.contains(offsetPoint)) {
+HexTileTreeNode.prototype.set =
+function set(point, datum) {
+    point.toOddQOffsetInto(this.oqo);
+    if (!this.box.contains(this.oqo)) {
         throw new Error('set out of bounds');
     }
-    return this._set(offsetPoint, datum);
+    return this._set(this.oqo, datum);
 };
 
-HexTileTreeNode.prototype._set = function _set(point, datum) {
+HexTileTreeNode.prototype._set =
+function _set(point, datum) {
     // point known to be in bounds and correct type
 
     var tileCol = point.q < this.origin.q ? 0 : 1;
@@ -2078,10 +2115,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_u9fj6y");
+        component.setAttribute("id", "view_w3w1qi");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_u9fj6y")
+       scope.componentsFor["view"].setAttribute("for", "view_w3w1qi")
     }
     this.scope.hookup("this", this);
 };
@@ -2283,10 +2320,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_7ece2z");
+        component.setAttribute("id", "box_ees8jz");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_7ece2z")
+       scope.componentsFor["box"].setAttribute("for", "box_ees8jz")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2301,10 +2338,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_f721s1");
+            component.setAttribute("id", "help_tm9r61");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_f721s1")
+           scope.componentsFor["help"].setAttribute("for", "help_tm9r61")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2317,10 +2354,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_vla9up");
+            component.setAttribute("id", "text_812rdf");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_vla9up")
+           scope.componentsFor["text"].setAttribute("for", "text_812rdf")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2330,10 +2367,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_z2mpmu");
+            component.setAttribute("id", "error_7pgwk3");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_z2mpmu")
+           scope.componentsFor["error"].setAttribute("for", "error_7pgwk3")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -2644,15 +2681,11 @@ function Turmite() {
     this.specString = '';
 
     this.dir = 0;
-    this.oldDir = 0;
-
     this.pos = CubePoint(0, 0, 0);
-    this.oldPos = CubePoint(0, 0, 0);
 
     this.state = 0;
     this.stateKey = 0;
 
-    this.size = 0.5;
     this.index = 0;
 }
 
@@ -2702,9 +2735,6 @@ function step(world) {
     flags |= 0x0100; // TODO: World constant
     data = flags | write;
     tile.set(this.pos, data);
-
-    this.oldDir = this.dir;
-    this.oldPos.copyFrom(this.pos);
 
     if (nextState !== this.state) {
         this.state = nextState;
@@ -2761,7 +2791,7 @@ function executeTurn(turn) {
     var t = 1;
     for (; t <= 0x0020; t <<= 1) {
         if (turn & t) {
-            this.dir = (6 + this.oldDir + constants.RelTurnDelta[t]) % 6;
+            this.dir = (6 + this.dir + constants.RelTurnDelta[t]) % 6;
             return turn & ~t;
         }
     }
@@ -4228,12 +4258,14 @@ function View(world, canvas) {
     this.labeled = false;
     this.drawUnvisited = false;
     this.drawTrace = false;
+    this.entSize = 0.5;
 
     this.antCellColorGen = null;
     this.emptyCellColorGen = null;
     this.bodyColorGen = null;
     this.headColorGen = null;
 
+    this.cellColors = null;
     this.antCellColors = [];
     this.emptyCellColors = [];
     this.bodyColors = [];
@@ -4245,7 +4277,32 @@ function View(world, canvas) {
         this.world.tile.boundingBox().copy());
 
     this.needsRedraw = false;
+
+    this.boundDrawEachCell = drawEachCell;
+    this.boundMaybeDrawEachCell = maybeDrawEachCell;
+
+    var self = this;
+
+    function drawEachCell(point, data) {
+        self.drawCell(point,
+                      data & World.MaskColor,
+                      self.cellColors);
+    }
+
+    function maybeDrawEachCell(point, data) {
+        if (data & World.FlagVisited) {
+            self.drawCell(point,
+                          data & World.MaskColor,
+                          self.cellColors);
+        }
+    }
 }
+
+View.prototype.setDrawTrace =
+function setDrawTrace(dt) {
+    this.drawTrace = dt ? true : false;
+    this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
+};
 
 View.prototype.resize =
 function resize(width, height) {
@@ -4255,30 +4312,18 @@ function resize(width, height) {
 
 View.prototype.redraw =
 function redraw() {
-    var self = this;
-    var ents = self.world.ents;
-    var colors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
-
-    self.world.tile.eachDataPoint(this.drawUnvisited
-    ? function drawEachCell(point, data) {
-        self.drawCell(point,
-                      data & World.MaskColor,
-                      colors);
+    if (this.cellColors === null) {
+        return;
     }
-    : function maybeDrawEachCell(point, data) {
-        if (data & World.FlagVisited) {
-            self.drawCell(point,
-                          data & World.MaskColor,
-                          colors);
-        }
-    });
-
+    var ents = this.world.ents;
+    this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
-        self.drawEnt(ents[i]);
+        this.drawEnt(ents[i]);
         for (i = 0; i < ents.length; i++) {
             this.lastEntPos[i].copyFrom(ents[i].pos);
         }
     }
+    this.needsRedraw = false;
 };
 
 View.prototype.updateEnts =
@@ -4339,6 +4384,9 @@ View.prototype.updateColors = function updateColors(regen) {
                 this.emptyCellColors[this.emptyCellColors.length % N]
             );
         }
+        if (this.drawTrace) {
+            this.cellColors = this.emptyCellColors;
+        }
     }
 
     if (this.antCellColorGen &&
@@ -4349,6 +4397,9 @@ View.prototype.updateColors = function updateColors(regen) {
             this.antCellColors.push(
                 this.antCellColors[this.antCellColors.length % N]
             );
+        }
+        if (!this.drawTrace) {
+            this.cellColors = this.antCellColors;
         }
     }
 
@@ -4458,7 +4509,7 @@ function drawEnt(ent) {
     }
 
     var screenPoint = this.hexGrid.toScreen(ent.pos);
-    var size = this.hexGrid.cellSize * ent.size;
+    var size = this.hexGrid.cellSize * this.entSize;
 
     if (size <= 5) {
         this.drawSmallEnt(ent, screenPoint, size);
@@ -4587,7 +4638,6 @@ function redraw() {
         var view = this.views[i];
         if (view.needsRedraw) {
             view.redraw();
-            view.needsRedraw = false;
             didredraw = true;
         }
     }

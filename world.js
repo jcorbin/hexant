@@ -61,7 +61,6 @@ function redraw() {
         var view = this.views[i];
         if (view.needsRedraw) {
             view.redraw();
-            view.needsRedraw = false;
             didredraw = true;
         }
     }

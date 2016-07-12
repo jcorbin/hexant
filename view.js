@@ -19,12 +19,14 @@ function View(world, canvas) {
     this.labeled = false;
     this.drawUnvisited = false;
     this.drawTrace = false;
+    this.entSize = 0.5;
 
     this.antCellColorGen = null;
     this.emptyCellColorGen = null;
     this.bodyColorGen = null;
     this.headColorGen = null;
 
+    this.cellColors = null;
     this.antCellColors = [];
     this.emptyCellColors = [];
     this.bodyColors = [];
@@ -36,7 +38,32 @@ function View(world, canvas) {
         this.world.tile.boundingBox().copy());
 
     this.needsRedraw = false;
+
+    this.boundDrawEachCell = drawEachCell;
+    this.boundMaybeDrawEachCell = maybeDrawEachCell;
+
+    var self = this;
+
+    function drawEachCell(point, data) {
+        self.drawCell(point,
+                      data & World.MaskColor,
+                      self.cellColors);
+    }
+
+    function maybeDrawEachCell(point, data) {
+        if (data & World.FlagVisited) {
+            self.drawCell(point,
+                          data & World.MaskColor,
+                          self.cellColors);
+        }
+    }
 }
+
+View.prototype.setDrawTrace =
+function setDrawTrace(dt) {
+    this.drawTrace = dt ? true : false;
+    this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
+};
 
 View.prototype.resize =
 function resize(width, height) {
@@ -46,30 +73,18 @@ function resize(width, height) {
 
 View.prototype.redraw =
 function redraw() {
-    var self = this;
-    var ents = self.world.ents;
-    var colors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
-
-    self.world.tile.eachDataPoint(this.drawUnvisited
-    ? function drawEachCell(point, data) {
-        self.drawCell(point,
-                      data & World.MaskColor,
-                      colors);
+    if (this.cellColors === null) {
+        return;
     }
-    : function maybeDrawEachCell(point, data) {
-        if (data & World.FlagVisited) {
-            self.drawCell(point,
-                          data & World.MaskColor,
-                          colors);
-        }
-    });
-
+    var ents = this.world.ents;
+    this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
-        self.drawEnt(ents[i]);
+        this.drawEnt(ents[i]);
         for (i = 0; i < ents.length; i++) {
             this.lastEntPos[i].copyFrom(ents[i].pos);
         }
     }
+    this.needsRedraw = false;
 };
 
 View.prototype.updateEnts =
@@ -130,6 +145,9 @@ View.prototype.updateColors = function updateColors(regen) {
                 this.emptyCellColors[this.emptyCellColors.length % N]
             );
         }
+        if (this.drawTrace) {
+            this.cellColors = this.emptyCellColors;
+        }
     }
 
     if (this.antCellColorGen &&
@@ -140,6 +158,9 @@ View.prototype.updateColors = function updateColors(regen) {
             this.antCellColors.push(
                 this.antCellColors[this.antCellColors.length % N]
             );
+        }
+        if (!this.drawTrace) {
+            this.cellColors = this.antCellColors;
         }
     }
 
@@ -249,7 +270,7 @@ function drawEnt(ent) {
     }
 
     var screenPoint = this.hexGrid.toScreen(ent.pos);
-    var size = this.hexGrid.cellSize * ent.size;
+    var size = this.hexGrid.cellSize * this.entSize;
 
     if (size <= 5) {
         this.drawSmallEnt(ent, screenPoint, size);

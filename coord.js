@@ -139,6 +139,10 @@ CubePoint.prototype.toOddQOffset = function toOddQOffset() {
     var r = this.z + (this.x - (this.x & 1)) / 2;
     return OddQOffset(q, r);
 };
+CubePoint.prototype.toOddQOffsetInto = function toOddQOffsetInto(oqo) {
+    oqo.q = this.x;
+    oqo.r = this.z + (this.x - (this.x & 1)) / 2;
+};
 
 function OddQOffset(q, r) {
     if (!(this instanceof OddQOffset)) {
@@ -193,6 +197,10 @@ OddQOffset.prototype.toScreen = function toScreen() {
 };
 OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
     return this;
+};
+OddQOffset.prototype.toOddQOffsetInto = function toOddQOffsetInto(oqo) {
+    oqo.q = this.q;
+    oqo.r = this.r;
 };
 OddQOffset.prototype.toCubeInto = function toCubeInto(other) {
     other.x = this.q;

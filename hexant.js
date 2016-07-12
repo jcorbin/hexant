@@ -124,7 +124,7 @@ function configure() {
     this.hash.bind('drawTrace')
         .setDefault(false)
         .addListener(function onDrawTraceChange(drawTrace) {
-            self.view.drawTrace = !!drawTrace;
+            self.view.setDrawTrace(!!drawTrace);
             self.view.redraw();
         });
 
@@ -269,11 +269,20 @@ function animate(time) {
         this.lastFrameTime = time;
     } else {
         var progress = time - this.lastFrameTime;
-        frames = Math.min(BatchLimit, progress / this.frameInterval);
+        frames = Math.min(BatchLimit, Math.round(progress / this.frameInterval));
     }
-
-    this.world.stepn(frames);
-    this.lastFrameTime += frames * this.frameInterval;
+    switch (frames) {
+    case 0:
+        break;
+    case 1:
+        this.world.step();
+        this.lastFrameTime += this.frameInterval;
+        break;
+    default:
+        this.world.stepn(frames);
+        this.lastFrameTime += frames * this.frameInterval;
+        break;
+    }
 };
 
 Hexant.prototype.play =
