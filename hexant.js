@@ -269,7 +269,7 @@ function animate(time) {
         this.lastFrameTime = time;
     } else {
         var progress = time - this.lastFrameTime;
-        frames = Math.min(BatchLimit, progress / this.frameInterval);
+        frames = Math.min(BatchLimit, Math.round(progress / this.frameInterval));
     }
 
     this.world.stepn(frames);
