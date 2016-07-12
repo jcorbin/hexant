@@ -34,6 +34,12 @@ function pointToIndex(point) {
            (this.oqo.q - this.origin.q);
 };
 
+OddQHexTile.prototype.update =
+function update(point, func) {
+    var i = this.pointToIndex(point);
+    this.data[i] = func(this.data[i], point);
+};
+
 OddQHexTile.prototype.get =
 function get(point) {
     return this.data[this.pointToIndex(point)];

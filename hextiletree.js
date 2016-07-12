@@ -90,6 +90,16 @@ function centerPoint() {
     return this.root.centerPoint();
 };
 
+HexTileTree.prototype.update =
+function update(point, func) {
+    point.toOddQOffsetInto(this.oqo);
+    while (!this.root.box.contains(this.oqo)) {
+        this.root = this.root.expand();
+    }
+    this.root.oqo.copyFrom(this.oqo);
+    return this.root._getOrCreateTile().update(this.oqo, func);
+};
+
 HexTileTree.prototype.get =
 function get(point) {
     return this.root.get(point);
@@ -193,6 +203,15 @@ function _fakeDataPoints(i, each) {
 HexTileTreeNode.prototype.centerPoint =
 function centerPoint() {
     return this.origin;
+};
+
+HexTileTreeNode.prototype.update =
+function update(point, func) {
+    point.toOddQOffsetInto(this.oqo);
+    if (!this.box.contains(this.oqo)) {
+        throw new Error('update out of bounds');
+    }
+    this._getOrCreateTile().update(this.oqo, func);
 };
 
 HexTileTreeNode.prototype.get =
