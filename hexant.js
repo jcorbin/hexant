@@ -276,8 +276,8 @@ function reset() {
     this.view.hexGrid.updateSize();
 
     var ent = this.world.ents[0];
-    ent.state = 0;
-    ent.dir = 0;
+    ent.reset();
+
     this.world.tile.centerPoint().toCubeInto(ent.pos);
     var data = this.world.tile.get(ent.pos);
     this.world.tile.set(ent.pos, World.FlagVisited | data);

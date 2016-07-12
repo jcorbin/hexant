@@ -47,6 +47,12 @@ function Turmite() {
     this.index = 0;
 }
 
+Turmite.prototype.reset =
+function reset() {
+    this.state = 0;
+    this.dir = 0;
+};
+
 Turmite.prototype.clearRules =
 function clearRules() {
     for (var i = 0; i < this.rules.length; i++) {
