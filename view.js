@@ -25,6 +25,7 @@ function View(world, canvas) {
     this.bodyColorGen = null;
     this.headColorGen = null;
 
+    this.cellColors = null;
     this.antCellColors = [];
     this.emptyCellColors = [];
     this.bodyColors = [];
@@ -41,6 +42,7 @@ function View(world, canvas) {
 View.prototype.setDrawTrace =
 function setDrawTrace(dt) {
     this.drawTrace = dt ? true : false;
+    this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 };
 
 View.prototype.resize =
@@ -51,21 +53,24 @@ function resize(width, height) {
 
 View.prototype.redraw =
 function redraw() {
+    if (this.cellColors === null) {
+        return;
+    }
+
     var self = this;
     var ents = self.world.ents;
-    var colors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 
     self.world.tile.eachDataPoint(this.drawUnvisited
     ? function drawEachCell(point, data) {
         self.drawCell(point,
                       data & World.MaskColor,
-                      colors);
+                      self.cellColors);
     }
     : function maybeDrawEachCell(point, data) {
         if (data & World.FlagVisited) {
             self.drawCell(point,
                           data & World.MaskColor,
-                          colors);
+                          self.cellColors);
         }
     });
 
@@ -135,6 +140,9 @@ View.prototype.updateColors = function updateColors(regen) {
                 this.emptyCellColors[this.emptyCellColors.length % N]
             );
         }
+        if (this.drawTrace) {
+            this.cellColors = this.emptyCellColors;
+        }
     }
 
     if (this.antCellColorGen &&
@@ -145,6 +153,9 @@ View.prototype.updateColors = function updateColors(regen) {
             this.antCellColors.push(
                 this.antCellColors[this.antCellColors.length % N]
             );
+        }
+        if (!this.drawTrace) {
+            this.cellColors = this.antCellColors;
         }
     }
 
