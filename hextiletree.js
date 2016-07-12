@@ -105,6 +105,11 @@ function get(point) {
     return this.root.get(point);
 };
 
+HexTileTree.prototype.gather =
+function gather(data, points) {
+    return this.root.gather(data, points);
+};
+
 HexTileTree.prototype.set =
 function set(point, datum) {
     point.toOddQOffsetInto(this.oqo);
@@ -257,6 +262,14 @@ function get(point) {
         return tile.get(this.oqo);
     }
     return 0;
+};
+
+HexTileTreeNode.prototype.gather =
+function gather(data, points) {
+    this.tiles[0].gather(data, points);
+    this.tiles[1].gather(data, points);
+    this.tiles[2].gather(data, points);
+    this.tiles[3].gather(data, points);
 };
 
 HexTileTreeNode.prototype.set =

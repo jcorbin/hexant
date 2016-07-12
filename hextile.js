@@ -45,6 +45,17 @@ function get(point) {
     return this.data[this.pointToIndex(point)];
 };
 
+OddQHexTile.prototype.gather =
+function gather(data, points) {
+    for (var i = 0; i < points.length; i++) {
+        var point = points[i];
+        var ii = this.pointToIndex(point);
+        if (ii > 0 && ii < this.data.length) {
+            data[i] = this.data[ii];
+        }
+    }
+};
+
 OddQHexTile.prototype.set =
 function set(point, datum) {
     this.data[this.pointToIndex(point)] = datum;

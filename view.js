@@ -289,10 +289,13 @@ function step() {
         return;
     }
 
+    var data = []; // TODO: re-use
+    this.world.tile.gather(data, this.lastEntPos);
+
     for (i = 0; i < ents.length; i++) {
-        var data = this.world.tile.get(this.lastEntPos[i]);
+        // var data = this.world.tile.get(this.lastEntPos[i]);
         this.drawCell(this.lastEntPos[i],
-                      data & World.MaskColor,
+                      data[i] & World.MaskColor,
                       this.antCellColors);
     }
 
