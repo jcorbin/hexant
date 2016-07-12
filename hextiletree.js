@@ -213,7 +213,7 @@ function get(point) {
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
     if (tile) {
-        return tile.get(point);
+        return tile.get(this.oqo);
     }
     return 0;
 };
