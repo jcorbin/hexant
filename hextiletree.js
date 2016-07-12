@@ -32,11 +32,13 @@ function HexTileTree(origin, tileWidth, tileHeight) {
     this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
 }
 
-HexTileTree.prototype.dump = function dump() {
+HexTileTree.prototype.dump =
+function dump() {
     return this.root.dump();
 };
 
-HexTileTreeNode.prototype.dump = function dump() {
+HexTileTreeNode.prototype.dump =
+function dump() {
     var parts = [
         'TreeNode @' + this.origin.toString(),
         '  box: ' + this.box.toString()
@@ -57,7 +59,8 @@ HexTileTreeNode.prototype.dump = function dump() {
     return parts.join('\n');
 };
 
-OddQHexTile.prototype.dump = function dump() {
+OddQHexTile.prototype.dump =
+function dump() {
     var parts = ['Tile @' + this.origin.toString()];
     var row = [];
     for (var i = 0; i < this.data.length; i++) {
@@ -71,23 +74,28 @@ OddQHexTile.prototype.dump = function dump() {
     return parts.join('\n');
 };
 
-HexTileTree.prototype.boundingBox = function boundingBox() {
+HexTileTree.prototype.boundingBox =
+function boundingBox() {
     return this.root.boundingBox();
 };
 
-HexTileTree.prototype.eachDataPoint = function eachDataPoint(each) {
+HexTileTree.prototype.eachDataPoint =
+function eachDataPoint(each) {
     this.root.eachDataPoint(each);
 };
 
-HexTileTree.prototype.centerPoint = function centerPoint() {
+HexTileTree.prototype.centerPoint =
+function centerPoint() {
     return this.root.centerPoint();
 };
 
-HexTileTree.prototype.get = function get(point) {
+HexTileTree.prototype.get =
+function get(point) {
     return this.root.get(point);
 };
 
-HexTileTree.prototype.set = function set(point, datum) {
+HexTileTree.prototype.set =
+function set(point, datum) {
     var offsetPoint = point.toOddQOffset();
 
     while (!this.root.box.contains(offsetPoint)) {
@@ -111,7 +119,8 @@ function HexTileTreeNode(origin, width, height) {
     this.box = OddQBox(topLeft, bottomRight);
 }
 
-HexTileTreeNode.prototype.expand = function expand() {
+HexTileTreeNode.prototype.expand =
+function expand() {
     var node = new HexTileTreeNode(
         this.origin.copy(), this.width * 2, this.height * 2);
     for (var i = 0; i < this.tiles.length; i++) {
@@ -120,7 +129,8 @@ HexTileTreeNode.prototype.expand = function expand() {
     return node;
 };
 
-HexTileTreeNode.prototype.growTile = function growTile(i) {
+HexTileTreeNode.prototype.growTile =
+function growTile(i) {
     var tile = this.tiles[i];
     if (!tile) {
         return null;
@@ -128,7 +138,8 @@ HexTileTreeNode.prototype.growTile = function growTile(i) {
     return tile.grow(i);
 };
 
-OddQHexTile.prototype.grow = function grow(i) {
+OddQHexTile.prototype.grow =
+function grow(i) {
     var offset = tileOriginOffset[i].copy()
         .mulBy(this.width, this.height);
     var origin = this.origin.copy().add(offset);
@@ -138,7 +149,8 @@ OddQHexTile.prototype.grow = function grow(i) {
     return node;
 };
 
-HexTileTreeNode.prototype.grow = function grow(i) {
+HexTileTreeNode.prototype.grow =
+function grow(i) {
     var offset = nodeOriginOffset[i].copy()
         .mulBy(this.tileWidth, this.tileHeight);
     var origin = this.origin.copy().add(offset);
@@ -148,11 +160,13 @@ HexTileTreeNode.prototype.grow = function grow(i) {
     return node;
 };
 
-HexTileTreeNode.prototype.boundingBox = function boundingBox() {
+HexTileTreeNode.prototype.boundingBox =
+function boundingBox() {
     return this.box;
 };
 
-HexTileTreeNode.prototype.eachDataPoint = function eachDataPoint(each) {
+HexTileTreeNode.prototype.eachDataPoint =
+function eachDataPoint(each) {
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile) {
@@ -163,7 +177,8 @@ HexTileTreeNode.prototype.eachDataPoint = function eachDataPoint(each) {
     }
 };
 
-HexTileTreeNode.prototype._fakeDataPoints = function _fakeDataPoints(i, each) {
+HexTileTreeNode.prototype._fakeDataPoints =
+function _fakeDataPoints(i, each) {
     var tileCol = i & 1;
     var tileRow = i >> 1;
 
@@ -180,11 +195,13 @@ HexTileTreeNode.prototype._fakeDataPoints = function _fakeDataPoints(i, each) {
     }
 };
 
-HexTileTreeNode.prototype.centerPoint = function centerPoint() {
+HexTileTreeNode.prototype.centerPoint =
+function centerPoint() {
     return this.origin;
 };
 
-HexTileTreeNode.prototype.get = function get(point) {
+HexTileTreeNode.prototype.get =
+function get(point) {
     var offsetPoint = point.toOddQOffset();
     if (!this.box.contains(offsetPoint)) {
         return NaN;
@@ -206,7 +223,8 @@ HexTileTreeNode.prototype.get = function get(point) {
     return 0;
 };
 
-HexTileTreeNode.prototype.set = function set(point, datum) {
+HexTileTreeNode.prototype.set =
+function set(point, datum) {
     var offsetPoint = point.toOddQOffset();
     if (!this.box.contains(offsetPoint)) {
         throw new Error('set out of bounds');
@@ -214,7 +232,8 @@ HexTileTreeNode.prototype.set = function set(point, datum) {
     return this._set(offsetPoint, datum);
 };
 
-HexTileTreeNode.prototype._set = function _set(point, datum) {
+HexTileTreeNode.prototype._set =
+function _set(point, datum) {
     // point known to be in bounds and correct type
 
     var tileCol = point.q < this.origin.q ? 0 : 1;
