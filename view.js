@@ -37,6 +37,25 @@ function View(world, canvas) {
         this.world.tile.boundingBox().copy());
 
     this.needsRedraw = false;
+
+    this.boundDrawEachCell = drawEachCell;
+    this.boundMaybeDrawEachCell = maybeDrawEachCell;
+
+    var self = this;
+
+    function drawEachCell(point, data) {
+        self.drawCell(point,
+                      data & World.MaskColor,
+                      self.cellColors);
+    }
+
+    function maybeDrawEachCell(point, data) {
+        if (data & World.FlagVisited) {
+            self.drawCell(point,
+                          data & World.MaskColor,
+                          self.cellColors);
+        }
+    }
 }
 
 View.prototype.setDrawTrace =
@@ -56,25 +75,8 @@ function redraw() {
     if (this.cellColors === null) {
         return;
     }
-
-    var self = this;
-
-    function drawEachCell(point, data) {
-        self.drawCell(point,
-                      data & World.MaskColor,
-                      self.cellColors);
-    }
-
-    function maybeDrawEachCell(point, data) {
-        if (data & World.FlagVisited) {
-            self.drawCell(point,
-                          data & World.MaskColor,
-                          self.cellColors);
-        }
-    }
-
     var ents = this.world.ents;
-    this.world.tile.eachDataPoint(this.drawUnvisited ? drawEachCell : maybeDrawEachCell);
+    this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
         this.drawEnt(ents[i]);
         for (i = 0; i < ents.length; i++) {
