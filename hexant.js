@@ -124,7 +124,7 @@ function configure() {
     this.hash.bind('drawTrace')
         .setDefault(false)
         .addListener(function onDrawTraceChange(drawTrace) {
-            self.view.drawTrace = !!drawTrace;
+            self.view.setDrawTrace(!!drawTrace);
             self.view.redraw();
         });
 

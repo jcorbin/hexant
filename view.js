@@ -38,6 +38,11 @@ function View(world, canvas) {
     this.needsRedraw = false;
 }
 
+View.prototype.setDrawTrace =
+function setDrawTrace(dt) {
+    this.drawTrace = dt ? true : false;
+};
+
 View.prototype.resize =
 function resize(width, height) {
     this.hexGrid.resize(width, height);
