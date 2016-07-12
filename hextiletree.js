@@ -201,17 +201,7 @@ function get(point) {
     if (!this.box.contains(this.oqo)) {
         return NaN;
     }
-
-    // TODO: assert
-    // - origin.q - tileWidth <= this.oqo.q <= origin.q + tileWidth
-    // - origin.r - tileHeight <= this.oqo.r <= origin.r + tileHeight
-
-    // TODO: bit hack: negated sign-bit of subtraction
-    var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
-    var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
-
-    var i = tileRow * 2 + tileCol;
-    var tile = this.tiles[i];
+    var tile = this._getTile();
     if (tile) {
         return tile.get(this.oqo);
     }
@@ -225,6 +215,15 @@ function set(point, datum) {
         throw new Error('set out of bounds');
     }
     return this._getOrCreateTile().set(this.oqo, datum);
+};
+
+HexTileTreeNode.prototype._getTile =
+function _getTile() {
+    // TODO: bit hack: negated sign-bit of subtraction
+    var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
+    var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
+    var i = tileRow * 2 + tileCol;
+    return this.tiles[i];
 };
 
 HexTileTreeNode.prototype._getOrCreateTile =
