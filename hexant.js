@@ -264,6 +264,16 @@ function reset() {
 
 Hexant.prototype.animate =
 function animate(time) {
+    try {
+        this._animate(time);
+    } catch(err) {
+        this.animator.cancelAnimation();
+        throw err;
+    }
+};
+
+Hexant.prototype._animate =
+function _animate(time) {
     var frames = 1;
     if (!this.lastFrameTime) {
         this.lastFrameTime = time;
