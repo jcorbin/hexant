@@ -45,6 +45,14 @@ function Turmite() {
     this.turn = 0;
 
     this.index = 0;
+
+    var self = this;
+
+    this.boundUpdate = boundUpdate;
+
+    function boundUpdate(data, point) {
+        return self.update(data, point);
+    }
 }
 
 Turmite.prototype.reset =
@@ -100,9 +108,7 @@ function update(data) {
 Turmite.prototype.step =
 function step(world) {
     var tile = world.tile;
-    var data = tile.get(this.pos);
-    data = this.update(data);
-    tile.set(this.pos, data);
+    tile.update(this.pos, this.boundUpdate);
     var turn = this.turn;
     this.turn = 0;
 
