@@ -102,7 +102,7 @@ function set(point, datum) {
         this.root = this.root.expand();
     }
     this.root.oqo.copyFrom(this.oqo);
-    return this.root._tile().set(this.oqo, datum);
+    return this.root._getOrCreateTile().set(this.oqo, datum);
 };
 
 function HexTileTreeNode(origin, width, height) {
@@ -224,11 +224,11 @@ function set(point, datum) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('set out of bounds');
     }
-    return this._tile().set(this.oqo, datum);
+    return this._getOrCreateTile().set(this.oqo, datum);
 };
 
-HexTileTreeNode.prototype._tile =
-function _tile() {
+HexTileTreeNode.prototype._getOrCreateTile =
+function _getOrCreateTile() {
     var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
     var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
     var i = tileRow * 2 + tileCol;
