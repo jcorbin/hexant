@@ -8,6 +8,7 @@ module.exports = OddQHexTile;
 
 function OddQHexTile(origin, width, height) {
     this.origin = origin.toOddQOffset();
+    this.oqo = new Coord.OddQOffset(0, 0);
     this.width = width;
     this.height = height;
     this.data = new Uint16Array(this.width * this.height);
@@ -28,9 +29,9 @@ function centerPoint() {
 
 OddQHexTile.prototype.pointToIndex =
 function pointToIndex(point) {
-    var offsetPoint = point.toOddQOffset();
-    return (offsetPoint.r - this.origin.r) * this.width +
-           (offsetPoint.q - this.origin.q);
+    point.toOddQOffsetInto(this.oqo);
+    return (this.oqo.r - this.origin.r) * this.width +
+           (this.oqo.q - this.origin.q);
 };
 
 OddQHexTile.prototype.get =

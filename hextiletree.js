@@ -30,6 +30,7 @@ var nodeOriginOffset = [
 
 function HexTileTree(origin, tileWidth, tileHeight) {
     this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
+    this.oqo = new Coord.OddQOffset(0, 0);
 }
 
 HexTileTree.prototype.dump =
@@ -96,13 +97,11 @@ function get(point) {
 
 HexTileTree.prototype.set =
 function set(point, datum) {
-    var offsetPoint = point.toOddQOffset();
-
-    while (!this.root.box.contains(offsetPoint)) {
+    point.toOddQOffsetInto(this.oqo);
+    while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
     }
-
-    return this.root._set(offsetPoint, datum);
+    return this.root._set(this.oqo, datum);
 };
 
 function HexTileTreeNode(origin, width, height) {
@@ -112,6 +111,7 @@ function HexTileTreeNode(origin, width, height) {
     this.tileWidth = Math.floor(this.width / 2);
     this.tileHeight = Math.floor(this.height / 2);
     this.tiles = [null, null, null, null];
+    this.oqo = new Coord.OddQOffset(0, 0);
     var topLeft = OddQOffset(this.origin.q - this.tileWidth,
                              this.origin.r - this.tileHeight);
     var bottomRight = OddQOffset(this.origin.q + this.tileWidth,
@@ -202,18 +202,18 @@ function centerPoint() {
 
 HexTileTreeNode.prototype.get =
 function get(point) {
-    var offsetPoint = point.toOddQOffset();
-    if (!this.box.contains(offsetPoint)) {
+    point.toOddQOffsetInto(this.oqo);
+    if (!this.box.contains(this.oqo)) {
         return NaN;
     }
 
     // TODO: assert
-    // - origin.q - tileWidth <= offsetPoint.q <= origin.q + tileWidth
-    // - origin.r - tileHeight <= offsetPoint.r <= origin.r + tileHeight
+    // - origin.q - tileWidth <= this.oqo.q <= origin.q + tileWidth
+    // - origin.r - tileHeight <= this.oqo.r <= origin.r + tileHeight
 
     // TODO: bit hack: negated sign-bit of subtraction
-    var tileCol = offsetPoint.q < this.origin.q ? 0 : 1;
-    var tileRow = offsetPoint.r < this.origin.r ? 0 : 1;
+    var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
+    var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
 
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
@@ -225,11 +225,11 @@ function get(point) {
 
 HexTileTreeNode.prototype.set =
 function set(point, datum) {
-    var offsetPoint = point.toOddQOffset();
-    if (!this.box.contains(offsetPoint)) {
+    point.toOddQOffsetInto(this.oqo);
+    if (!this.box.contains(this.oqo)) {
         throw new Error('set out of bounds');
     }
-    return this._set(offsetPoint, datum);
+    return this._set(this.oqo, datum);
 };
 
 HexTileTreeNode.prototype._set =
