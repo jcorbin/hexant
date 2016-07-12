@@ -42,6 +42,7 @@ function Turmite() {
 
     this.state = 0;
     this.stateKey = 0;
+    this.turn = 0;
 
     this.index = 0;
 }
@@ -76,27 +77,32 @@ function toString() {
     return '<UNKNOWN turmite>';
 };
 
-Turmite.prototype.step =
-function step(world) {
-    var tile = world.tile;
-    var data = tile.get(this.pos);
+Turmite.prototype.update =
+function update(data) {
     var color = data & 0x00ff;
     var flags = data & 0xff00;
-
     var ruleIndex = this.stateKey | color;
     var rule = this.rules[ruleIndex];
-    var turn = rule & 0x0000ffff;
+    this.turn = rule & 0x0000ffff;
     var write = (rule & 0x00ff0000) >> 16;
     var nextState = (rule & 0xff000000) >> 24;
-
     flags |= 0x0100; // TODO: World constant
     data = flags | write;
-    tile.set(this.pos, data);
-
     if (nextState !== this.state) {
         this.state = nextState;
         this.stateKey = nextState << 8;
     }
+    return data;
+};
+
+Turmite.prototype.step =
+function step(world) {
+    var tile = world.tile;
+    var data = tile.get(this.pos);
+    data = this.update(data);
+    tile.set(this.pos, data);
+    var turn = this.turn;
+    this.turn = 0;
 
     turn = this.executeTurn(turn);
     this.pos.add(CubePoint.basis[this.dir]);
