@@ -43,7 +43,6 @@ function Turmite() {
     this.state = 0;
     this.stateKey = 0;
 
-    this.size = 0.5;
     this.index = 0;
 }
 

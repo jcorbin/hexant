@@ -19,6 +19,7 @@ function View(world, canvas) {
     this.labeled = false;
     this.drawUnvisited = false;
     this.drawTrace = false;
+    this.entSize = 0.5;
 
     this.antCellColorGen = null;
     this.emptyCellColorGen = null;
@@ -269,7 +270,7 @@ function drawEnt(ent) {
     }
 
     var screenPoint = this.hexGrid.toScreen(ent.pos);
-    var size = this.hexGrid.cellSize * ent.size;
+    var size = this.hexGrid.cellSize * this.entSize;
 
     if (size <= 5) {
         this.drawSmallEnt(ent, screenPoint, size);
