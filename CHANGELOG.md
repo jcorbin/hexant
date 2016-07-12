@@ -1,4 +1,10 @@
-# v0.9.4
+# v0.9.5
+
+- Fixed animation step/frame rate
+- Modest performance gains
+- Many minor improvemnets
+
+## v0.9.4
 
 - Minor fixes and improvements
 
