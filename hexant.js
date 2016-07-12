@@ -271,9 +271,18 @@ function animate(time) {
         var progress = time - this.lastFrameTime;
         frames = Math.min(BatchLimit, Math.round(progress / this.frameInterval));
     }
-
-    this.world.stepn(frames);
-    this.lastFrameTime += frames * this.frameInterval;
+    switch (frames) {
+    case 0:
+        break;
+    case 1:
+        this.world.step();
+        this.lastFrameTime += this.frameInterval;
+        break;
+    default:
+        this.world.stepn(frames);
+        this.lastFrameTime += frames * this.frameInterval;
+        break;
+    }
 };
 
 Hexant.prototype.play =
