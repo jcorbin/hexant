@@ -83,6 +83,7 @@ function redraw() {
             this.lastEntPos[i].copyFrom(ents[i].pos);
         }
     }
+    this.needsRedraw = false;
 };
 
 View.prototype.updateEnts =
