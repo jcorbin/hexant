@@ -101,7 +101,8 @@ function set(point, datum) {
     while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
     }
-    return this.root._set(this.oqo, datum);
+    this.root.oqo.copyFrom(this.oqo);
+    return this.root._tile().set(this.oqo, datum);
 };
 
 function HexTileTreeNode(origin, width, height) {
@@ -223,24 +224,21 @@ function set(point, datum) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('set out of bounds');
     }
-    return this._set(this.oqo, datum);
+    return this._tile().set(this.oqo, datum);
 };
 
-HexTileTreeNode.prototype._set =
-function _set(point, datum) {
-    // point known to be in bounds and correct type
-
-    var tileCol = point.q < this.origin.q ? 0 : 1;
-    var tileRow = point.r < this.origin.r ? 0 : 1;
+HexTileTreeNode.prototype._tile =
+function _tile() {
+    var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
+    var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
     var i = tileRow * 2 + tileCol;
-
     var tile = this.tiles[i];
     if (!tile) {
         var origin = OddQOffset(this.origin.q, this.origin.r);
-        if (point.q < origin.q) {
+        if (this.oqo.q < origin.q) {
             origin.q -= this.tileWidth;
         }
-        if (point.r < origin.r) {
+        if (this.oqo.r < origin.r) {
             origin.r -= this.tileHeight;
         }
         // TODO: assert offset point in range
@@ -249,6 +247,5 @@ function _set(point, datum) {
         tile = new OddQHexTile(origin, this.tileWidth, this.tileHeight);
         this.tiles[i] = tile;
     }
-
-    return tile.set(point, datum);
+    return tile;
 };
