@@ -124,18 +124,12 @@ function expand() {
     var node = new HexTileTreeNode(
         this.origin.copy(), this.width * 2, this.height * 2);
     for (var i = 0; i < this.tiles.length; i++) {
-        node.tiles[i] = this.growTile(i);
+        var tile = this.tiles[i];
+        if (tile !== null) {
+            node.tiles[i] = tile.grow(i);
+        }
     }
     return node;
-};
-
-HexTileTreeNode.prototype.growTile =
-function growTile(i) {
-    var tile = this.tiles[i];
-    if (!tile) {
-        return null;
-    }
-    return tile.grow(i);
 };
 
 OddQHexTile.prototype.grow =
