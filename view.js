@@ -58,24 +58,25 @@ function redraw() {
     }
 
     var self = this;
-    var ents = self.world.ents;
 
-    self.world.tile.eachDataPoint(this.drawUnvisited
-    ? function drawEachCell(point, data) {
+    function drawEachCell(point, data) {
         self.drawCell(point,
                       data & World.MaskColor,
                       self.cellColors);
     }
-    : function maybeDrawEachCell(point, data) {
+
+    function maybeDrawEachCell(point, data) {
         if (data & World.FlagVisited) {
             self.drawCell(point,
                           data & World.MaskColor,
                           self.cellColors);
         }
-    });
+    }
 
+    var ents = this.world.ents;
+    this.world.tile.eachDataPoint(this.drawUnvisited ? drawEachCell : maybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
-        self.drawEnt(ents[i]);
+        this.drawEnt(ents[i]);
         for (i = 0; i < ents.length; i++) {
             this.lastEntPos[i].copyFrom(ents[i].pos);
         }
