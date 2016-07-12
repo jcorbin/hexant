@@ -85,14 +85,10 @@ function update(data) {
     var rule = this.rules[ruleIndex];
     this.turn = rule & 0x0000ffff;
     var write = (rule & 0x00ff0000) >> 16;
-    var nextState = (rule & 0xff000000) >> 24;
-    flags |= 0x0100; // TODO: World constant
-    data = flags | write;
-    if (nextState !== this.state) {
-        this.state = nextState;
-        this.stateKey = nextState << 8;
-    }
-    return data;
+    var state = (rule & 0xff000000) >> 24;
+    this.state = state;
+    this.stateKey = state << 8;
+    return flags | write | 0x0100; // TODO: World.FlagVisited
 };
 
 Turmite.prototype.step =
