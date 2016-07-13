@@ -184,6 +184,21 @@ function eachDataPoint(each) {
     }
 };
 
+HexTileTreeNode.prototype.compact =
+function compact() {
+    var newTile = new OddQHexTile(this.box.topLeft, this.width, this.height);
+    this.tiles[0].eachDataPoint(eachPoint);
+    this.tiles[1].eachDataPoint(eachPoint);
+    this.tiles[2].eachDataPoint(eachPoint);
+    this.tiles[3].eachDataPoint(eachPoint);
+    return newTile
+
+    function eachPoint(point, datum) {
+        // newTile.data[i++] = datum; TODO: should be able to do something like thing
+        newTile.set(point, datum);
+    }
+};
+
 HexTileTreeNode.prototype._fakeDataPoints =
 function _fakeDataPoints(i, each) {
     var tileCol = i & 1;
