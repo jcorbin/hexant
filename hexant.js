@@ -32,6 +32,7 @@ function Hexant(body, scope) {
 
     this.world = null;
     this.view = null;
+    this.int = null;
 
     this.window = scope.window;
     this.hash = new Hash(this.window, {
@@ -418,6 +419,14 @@ function play() {
     this.lastStepTime = null;
     this.animator.requestAnimation();
     this.paused = false;
+
+    this.world.timing.entStep.reset();
+    this.world.timing.viewStep.reset();
+    this.world.timing.viewRedraw.reset();
+    var self = this;
+    this.int = this.window.setInterval(function() {
+        self.world.reportTiming();
+    }, 1000);
 };
 
 Hexant.prototype.pause =
@@ -428,6 +437,7 @@ function pause() {
     this.lastStepTime = null;
     this.animator.cancelAnimation();
     this.paused = true;
+    this.window.clearInterval(this.int);
 };
 
 Hexant.prototype.playpause =

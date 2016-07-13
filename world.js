@@ -3,6 +3,7 @@
 var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
 var CubePoint = Coord.CubePoint;
+var TimeSample = require('./time_sample.js');
 
 var OddQOffset = Coord.OddQOffset;
 
@@ -29,8 +30,23 @@ function World() {
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
     this.ents = [];
     this.views = [];
+
+    // TODO: refactor TimeSample to keep [start, end] like this so we can unify
     this.redrawTiming = [];
+    this.timing = {
+        entStep: new TimeSample(),
+        viewStep: new TimeSample(),
+        viewRedraw: new TimeSample()
+    };
 }
+
+World.prototype.reportTiming =
+function reportTiming() {
+    var qs = [0.5, 0.75, 0.9];
+    console.log('entStep', this.timing.entStep.report(qs));
+    console.log('viewStep', this.timing.viewStep.report(qs));
+    console.log('viewRedraw', this.timing.viewRedraw.report(qs));
+};
 
 World.prototype.getEntPos =
 function getEntPos(i) {
@@ -61,12 +77,19 @@ function turnEnt(i, turnFunc) {
 World.prototype.step =
 function step() {
     var i;
+
     for (i = 0; i < this.ents.length; i++) {
+        this.timing.entStep.start();
         this.ents[i].step(this);
+        this.timing.entStep.end();
     }
+
     for (i = 0; i < this.views.length; i++) {
+        this.timing.viewStep.start();
         this.views[i].step();
+        this.timing.viewStep.end();
     }
+
     this.redraw();
 };
 
@@ -74,12 +97,19 @@ World.prototype.stepn =
 function stepn(n) {
     for (var i = 0; i < n; i++) {
         var j;
+
         for (j = 0; j < this.ents.length; j++) {
+            this.timing.entStep.start();
             this.ents[j].step(this);
+            this.timing.entStep.end();
         }
+
         for (j = 0; j < this.views.length; j++) {
+            this.timing.viewStep.start();
             this.views[j].step();
+            this.timing.viewStep.end();
         }
+
     }
     return this.redraw();
 };
@@ -88,10 +118,13 @@ World.prototype.redraw =
 function redraw() {
     var didredraw = false;
     var t0 = Date.now();
+
     for (var i = 0; i < this.views.length; i++) {
         var view = this.views[i];
         if (view.needsRedraw) {
+            this.timing.viewRedraw.start();
             view.redraw();
+            this.timing.viewRedraw.end();
             didredraw = true;
         }
     }
@@ -103,6 +136,7 @@ function redraw() {
         }
         this.redrawTiming.push(t0, t1);
     }
+
     return didredraw;
 };
 
