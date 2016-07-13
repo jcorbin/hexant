@@ -173,14 +173,29 @@ function boundingBox() {
 };
 
 HexTileTreeNode.prototype.eachDataPoint =
-function eachDataPoint(each) {
-    for (var i = 0; i < this.tiles.length; i++) {
+function eachDataPoint(each, replaceMe) {
+    var self = this;
+
+    var i = 0;
+    if (replaceMe && this.concrete == 4) {
+        var tile = this.compact();
+        replaceMe(tile);
+        tile.eachDataPoint(each);
+        return;
+    }
+
+    for (; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile) {
-            tile.eachDataPoint(each);
+            tile.eachDataPoint(each, replace);
         } else {
             this._fakeDataPoints(i, each);
         }
+    }
+
+    function replace(tile) {
+        self.tiles[i] = tile;
+        self.concrete++;
     }
 };
 
