@@ -16,7 +16,7 @@ function OddQHexTile(origin, width, height) {
 
 OddQHexTile.prototype.boundingBox =
 function boundingBox() {
-    return OddQBox(this.origin, OddQOffset(this.width, this.height));
+    return OddQBox(this.origin, this.origin.copy().addTo(this.width, this.height));
 };
 
 OddQHexTile.prototype.centerPoint =
