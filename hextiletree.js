@@ -122,6 +122,7 @@ function HexTileTreeNode(origin, width, height) {
     this.tileWidth = Math.floor(this.width / 2);
     this.tileHeight = Math.floor(this.height / 2);
     this.tiles = [null, null, null, null];
+    this.concrete = 0;
     this.oqo = new Coord.OddQOffset(0, 0);
     var topLeft = OddQOffset(this.origin.q - this.tileWidth,
                              this.origin.r - this.tileHeight);
@@ -151,6 +152,7 @@ function grow(i) {
     var node = new HexTileTreeNode(
         origin, 2 * this.width, 2 * this.height);
     node.tiles[zoomPerm[i]] = this;
+    node.concrete++;
     return node;
 };
 
@@ -264,6 +266,7 @@ function _getOrCreateTile() {
         // TODO: heuristic for when to create a sparse node instead
         tile = new OddQHexTile(origin, this.tileWidth, this.tileHeight);
         this.tiles[i] = tile;
+        this.concrete++;
     }
     return tile;
 };
