@@ -2,7 +2,7 @@
 
 - Fixed animation step/frame rate
 - Modest performance gains
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.9.4
 
@@ -41,7 +41,7 @@
 ## v0.8.3
 
 - Added support for absolute turns
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.8.2
 
@@ -58,7 +58,7 @@
 ## v0.7.7
 
 - Better error display in prompt
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.7.6
 
@@ -79,11 +79,11 @@
 
 ## v0.7.2
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.7.1
 
-- Many minor improvemnets
+- Many minor improvements
 
 # v0.7.0 -- Turmite Engine
 
@@ -117,7 +117,7 @@
 
 ## v0.6.11
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.6.10
 
@@ -126,11 +126,11 @@
 
 ## v0.6.9
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.6.8
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.6.7
 
