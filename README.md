@@ -17,6 +17,7 @@ only:
 - `+` -- double step rate
 - `-` -- half step rate
 - `*` -- reset to iteration 0 and pause
+- `f` -- show/hide frames and steps per second (fps and sps)
 - `#` -- toggle labels for debugging
 
 ## Specifying Ants

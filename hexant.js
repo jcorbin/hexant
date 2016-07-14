@@ -34,6 +34,7 @@ function Hexant(body, scope) {
     this.stepInterval = 0;
     this.paused = true;
     this.prompt = null;
+    this.showFPS = false;
     this.animTimes = [];
     this.stepTimes = [];
 
@@ -73,6 +74,9 @@ function hookup(id, component, scope) {
 
     this.prompt = scope.components.prompt;
     this.el = scope.components.view;
+    this.fpsOverlay = scope.components.fpsOverlay;
+    this.fps = scope.components.fps;
+    this.sps = scope.components.sps;
 
     this.titleBase = this.window.document.title;
     this.world = new World();
@@ -103,6 +107,14 @@ function configure() {
         .addListener(function onRuleChange(ent) {
             self.onRuleChange(ent);
         });
+
+    this.hash.bind('showFPS')
+        .setDefault(false)
+        .addListener(function onDrawTraceChange(showFPS) {
+            self.showFPS = !! showFPS;
+            self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
+        });
+
 
     this.hash.bind('stepRate')
         .setParse(Result.lift(parseInt))
@@ -209,6 +221,11 @@ function onKeyPress(e) {
         e.preventDefault();
         break;
 
+    case 0x46: // F
+    case 0x66: // f
+        this.hash.set('showFPS', !this.showFPS);
+        break;
+
     case 0x54:
     case 0x74:
         this.hash.set('drawTrace', !this.view.drawTrace);
@@ -307,6 +324,11 @@ function _animate(time) {
         this.stepTimes.shift();
         this.stepTimes.shift();
     }
+
+    if (this.showFPS) {
+        this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
+        this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+    }
 };
 
 Hexant.prototype.computeFPS =
@@ -327,6 +349,8 @@ Hexant.prototype.play =
 function play() {
     this.animTimes.length = 0;
     this.stepTimes.length = 0;
+    this.fps.innerText = '';
+    this.sps.innerText = '';
     this.lastFrameTime = null;
     this.animator.requestAnimation();
     this.paused = false;
@@ -334,6 +358,8 @@ function play() {
 
 Hexant.prototype.pause =
 function pause() {
+    this.fps.innerText = '<' + this.fps.innerText + '>';
+    this.sps.innerText = '<' + this.sps.innerText + '>';
     this.lastFrameTime = null;
     this.animator.cancelAnimation();
     this.paused = true;
@@ -372,3 +398,15 @@ Hexant.prototype.resize =
 function resize(width, height) {
     this.view.resize(width, height);
 };
+
+var siSuffix = ['K', 'M', 'G', 'T', 'E'];
+
+function toSI(n) {
+    if (n < 1000) {
+        return n.toFixed(0);
+    }
+    n /= 1000;
+    for (var si = 0; si < siSuffix.length && n > 1000; ++si, n /= 1000) {
+    }
+    return n.toPrecision(3) + siSuffix[si];
+}
