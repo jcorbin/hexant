@@ -12,6 +12,7 @@ var Turmite = require('./turmite/index.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
 
+var FPSInterval = 3 * 1000;
 var BatchLimit = 512;
 
 function Hexant(body, scope) {
@@ -33,6 +34,8 @@ function Hexant(body, scope) {
     this.stepInterval = 0;
     this.paused = true;
     this.prompt = null;
+    this.animTimes = [];
+    this.stepTimes = [];
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
@@ -286,17 +289,44 @@ function _animate(time) {
         break;
     case 1:
         this.world.step();
+        this.stepTimes.push(time, 1);
         this.lastFrameTime += this.stepInterval;
         break;
     default:
+        this.stepTimes.push(time, steps);
         this.world.stepn(steps);
         this.lastFrameTime += steps * this.stepInterval;
         break;
     }
+    this.animTimes.push(time);
+
+    while ((time - this.animTimes[0]) > FPSInterval) {
+        this.animTimes.shift();
+    }
+    while ((time - this.stepTimes[0]) > FPSInterval) {
+        this.stepTimes.shift();
+        this.stepTimes.shift();
+    }
+};
+
+Hexant.prototype.computeFPS =
+function computeFPS() {
+    return this.animTimes.length / FPSInterval * 1000;
+};
+
+Hexant.prototype.computeSPS =
+function computeSPS() {
+    var totalSteps = 0;
+    for (var i = 1; i < this.stepTimes.length; i += 2) {
+        totalSteps += this.stepTimes[i];
+    }
+    return totalSteps / FPSInterval * 1000;
 };
 
 Hexant.prototype.play =
 function play() {
+    this.animTimes.length = 0;
+    this.stepTimes.length = 0;
     this.lastFrameTime = null;
     this.animator.requestAnimation();
     this.paused = false;
