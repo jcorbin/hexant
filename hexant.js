@@ -11,8 +11,11 @@ var View = require('./view.js');
 var Turmite = require('./turmite/index.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
+var Sample = require('./sample.js');
 
 var FPSInterval = 3 * 1000;
+var NumTimingSamples = FPSInterval / 1000 * 60;
+var MinFPS = 20;
 
 function Hexant(body, scope) {
     var self = this;
@@ -29,12 +32,15 @@ function Hexant(body, scope) {
     });
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
+    this.goalStepRate = 0;
     this.stepRate = 0;
     this.paused = true;
     this.prompt = null;
     this.showFPS = false;
     this.animTimes = [];
     this.stepTimes = [];
+    this.animTiming = new Sample(NumTimingSamples);
+    this.throtLog = false;
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
@@ -298,6 +304,8 @@ function _animate(time) {
     } else {
         var progress = time - this.lastFrameTime;
         steps = Math.round(progress / 1000 * this.stepRate);
+        this.animTiming.collect(progress);
+        this.throttle()
     }
     switch (steps) {
     case 0:
@@ -328,6 +336,48 @@ function _animate(time) {
     }
 };
 
+Hexant.prototype.throttle =
+function throttle() {
+    if (!this.animTiming.complete()) {
+        return;
+    }
+
+    if (this.animTiming.sinceWeightedMark() <= 3) {
+        return;
+    }
+
+    if (this.stepRate > 1) {
+        var fps = this.computeFPS();
+        if (fps < MinFPS) {
+            this.animTiming.weightedMark(2);
+            this.stepRate /= 2;
+            if (this.throtLog) {
+                console.log('FPS SLOW DOWN', fps, this.stepRate);
+            }
+            return;
+        }
+    }
+
+    var as = this.animTiming.classifyAnomalies();
+    var i = as.length-1;
+    if (this.stepRate > 1 && as[i] > 0.5 && as[i-1] > 0.5 && as[i-2] > 0.5) {
+        this.stepRate /= 2;
+        if (this.throtLog) {
+            console.log('SLOW DOWN', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
+        }
+        this.animTiming.weightedMark(2);
+    } else if (
+        this.stepRate < this.goalStepRate &&
+        as[i] <= 0 && as[i-1] <= 0 && as[i-2] <= 0
+    ) {
+        this.stepRate *= 2;
+        this.animTiming.weightedMark(0.5);
+        if (this.throtLog) {
+            console.log('SPEED UP', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
+        }
+    }
+};
+
 Hexant.prototype.computeFPS =
 function computeFPS() {
     return this.animTimes.length / FPSInterval * 1000;
@@ -346,6 +396,7 @@ Hexant.prototype.play =
 function play() {
     this.animTimes.length = 0;
     this.stepTimes.length = 0;
+    this.animTiming.reset();
     this.fps.innerText = '';
     this.sps.innerText = '';
     this.lastFrameTime = null;
@@ -382,7 +433,10 @@ function stepit() {
 
 Hexant.prototype.setStepRate =
 function setStepRate(rate) {
-    this.stepRate = rate;
+    if (this.stepRate === this.goalStepRate) {
+        this.stepRate = rate;
+    }
+    this.goalStepRate = rate;
 };
 
 Hexant.prototype.toggleLabeled =
