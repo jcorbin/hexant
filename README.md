@@ -14,8 +14,8 @@ only:
 - `/` -- prompt and set new rule set
 - `c` -- prompt and set new color scheme
 - `t` -- toggle "trace mode" drawing
-- `+` -- double frame rate
-- `-` -- half frame rate
+- `+` -- double step rate
+- `-` -- half step rate
 - `*` -- reset to iteration 0 and pause
 - `#` -- toggle labels for debugging
 
@@ -136,7 +136,7 @@ Uses hue variaton for a fixed saturation and lightness in the HSL color space.
 
 - `rule` -- the rule spec to use
 - `colors` -- the color scheme to use
-- `frameRate` -- number of animation ticks attempted per second
+- `stepRate` -- goal number of turmite steps per second
 - `drawUnvisited` -- specify to draw every cell in the tree instead of only
   visited ones
 - `labeled` -- specify to add coordinate labels to cells (doesn't scale well,

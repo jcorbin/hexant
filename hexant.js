@@ -29,8 +29,8 @@ function Hexant(body, scope) {
     });
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
-    this.frameRate = 0;
-    this.frameInterval = 0;
+    this.stepRate = 0;
+    this.stepInterval = 0;
     this.paused = true;
     this.prompt = null;
 
@@ -101,11 +101,11 @@ function configure() {
             self.onRuleChange(ent);
         });
 
-    this.hash.bind('frameRate')
+    this.hash.bind('stepRate')
         .setParse(Result.lift(parseInt))
         .setDefault(4)
-        .addListener(function onFrameRateChange(rate) {
-            self.setFrameRate(rate);
+        .addListener(function onStepRateChange(rate) {
+            self.setStepRate(rate);
         });
 
     this.hash.bind('labeled')
@@ -183,10 +183,10 @@ function onKeyPress(e) {
         this.reset();
         break;
     case 0x2b: // +
-        this.hash.set('frameRate', this.frameRate * 2);
+        this.hash.set('stepRate', this.stepRate * 2);
         break;
     case 0x2d: // -
-        this.hash.set('frameRate', Math.max(1, Math.floor(this.frameRate / 2)));
+        this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)));
         break;
     case 0x2e: // .
         this.stepit();
@@ -274,23 +274,23 @@ function animate(time) {
 
 Hexant.prototype._animate =
 function _animate(time) {
-    var frames = 1;
+    var steps = 1;
     if (!this.lastFrameTime) {
         this.lastFrameTime = time;
     } else {
         var progress = time - this.lastFrameTime;
-        frames = Math.min(BatchLimit, Math.round(progress / this.frameInterval));
+        steps = Math.min(BatchLimit, Math.round(progress / this.stepInterval));
     }
-    switch (frames) {
+    switch (steps) {
     case 0:
         break;
     case 1:
         this.world.step();
-        this.lastFrameTime += this.frameInterval;
+        this.lastFrameTime += this.stepInterval;
         break;
     default:
-        this.world.stepn(frames);
-        this.lastFrameTime += frames * this.frameInterval;
+        this.world.stepn(steps);
+        this.lastFrameTime += steps * this.stepInterval;
         break;
     }
 };
@@ -327,10 +327,10 @@ function stepit() {
     }
 };
 
-Hexant.prototype.setFrameRate =
-function setFrameRate(rate) {
-    this.frameRate = rate;
-    this.frameInterval = 1000 / this.frameRate;
+Hexant.prototype.setStepRate =
+function setStepRate(rate) {
+    this.stepRate = rate;
+    this.stepInterval = 1000 / this.stepRate;
 };
 
 Hexant.prototype.toggleLabeled =
