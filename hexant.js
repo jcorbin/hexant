@@ -13,7 +13,6 @@ var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
 
 var FPSInterval = 3 * 1000;
-var BatchLimit = 512;
 
 function Hexant(body, scope) {
     var self = this;
@@ -299,7 +298,7 @@ function _animate(time) {
         this.lastFrameTime = time;
     } else {
         var progress = time - this.lastFrameTime;
-        steps = Math.min(BatchLimit, Math.round(progress / this.stepInterval));
+        steps = Math.round(progress / this.stepInterval);
     }
     switch (steps) {
     case 0:
