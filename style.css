@@ -28,6 +28,32 @@ html, body {
     left: 0;
 }
 
+.overlay.fps {
+    font-size: 0.8em;
+}
+
+.overlay {
+    color: #999;
+    padding: 0.25em 0.5em;
+    background-color: rgba(34, 34, 34, 0.5);
+}
+
+.overlay.red {
+    background-color: rgba(68, 34, 34, 0.75);
+}
+
+.overlay.yellow {
+    background-color: rgba(68, 68, 34, 0.75);
+}
+
+.overlay.green {
+    background-color: rgba(34, 68, 34, 0.75);
+}
+
+.overlay.right {
+    float: right;
+}
+
 .prompt {
     padding: 0 0.8em 0.5em 0.8em;
     display: block;

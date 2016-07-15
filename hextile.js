@@ -16,7 +16,7 @@ function OddQHexTile(origin, width, height) {
 
 OddQHexTile.prototype.boundingBox =
 function boundingBox() {
-    return OddQBox(this.origin, OddQOffset(this.width, this.height));
+    return OddQBox(this.origin, this.origin.copy().addTo(this.width, this.height));
 };
 
 OddQHexTile.prototype.centerPoint =
@@ -32,6 +32,12 @@ function pointToIndex(point) {
     point.toOddQOffsetInto(this.oqo);
     return (this.oqo.r - this.origin.r) * this.width +
            (this.oqo.q - this.origin.q);
+};
+
+OddQHexTile.prototype.update =
+function update(point, func) {
+    var i = this.pointToIndex(point);
+    this.data[i] = func(this.data[i], point);
 };
 
 OddQHexTile.prototype.get =

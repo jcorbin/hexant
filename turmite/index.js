@@ -42,9 +42,24 @@ function Turmite() {
 
     this.state = 0;
     this.stateKey = 0;
+    this.turn = 0;
 
     this.index = 0;
+
+    var self = this;
+
+    this.boundUpdate = boundUpdate;
+
+    function boundUpdate(data, point) {
+        return self.update(data, point);
+    }
 }
+
+Turmite.prototype.reset =
+function reset() {
+    this.state = 0;
+    this.dir = 0;
+};
 
 Turmite.prototype.clearRules =
 function clearRules() {
@@ -76,27 +91,26 @@ function toString() {
     return '<UNKNOWN turmite>';
 };
 
+Turmite.prototype.update =
+function update(data) {
+    var color = data & 0x00ff;
+    var flags = data & 0xff00;
+    var ruleIndex = this.stateKey | color;
+    var rule = this.rules[ruleIndex];
+    this.turn = rule & 0x0000ffff;
+    var write = (rule & 0x00ff0000) >> 16;
+    var state = (rule & 0xff000000) >> 24;
+    this.state = state;
+    this.stateKey = state << 8;
+    return flags | write | 0x0100; // TODO: World.FlagVisited
+};
+
 Turmite.prototype.step =
 function step(world) {
     var tile = world.tile;
-    var data = tile.get(this.pos);
-    var color = data & 0x00ff;
-    var flags = data & 0xff00;
-
-    var ruleIndex = this.stateKey | color;
-    var rule = this.rules[ruleIndex];
-    var turn = rule & 0x0000ffff;
-    var write = (rule & 0x00ff0000) >> 16;
-    var nextState = (rule & 0xff000000) >> 24;
-
-    flags |= 0x0100; // TODO: World constant
-    data = flags | write;
-    tile.set(this.pos, data);
-
-    if (nextState !== this.state) {
-        this.state = nextState;
-        this.stateKey = nextState << 8;
-    }
+    tile.update(this.pos, this.boundUpdate);
+    var turn = this.turn;
+    this.turn = 0;
 
     turn = this.executeTurn(turn);
     this.pos.add(CubePoint.basis[this.dir]);

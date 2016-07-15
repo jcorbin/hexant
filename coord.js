@@ -50,6 +50,11 @@ ScreenPoint.prototype.add = function add(other) {
     this.y += other.y;
     return this;
 };
+ScreenPoint.prototype.addTo = function addTo(x, y) {
+    this.x += x;
+    this.y += y;
+    return this;
+};
 ScreenPoint.prototype.sub = function sub(other) {
     if (other.type !== this.type) {
         other = other.toScreen();
@@ -106,6 +111,12 @@ CubePoint.prototype.add = function add(other) {
     this.x += other.x;
     this.y += other.y;
     this.z += other.z;
+    return this;
+};
+CubePoint.prototype.addTo = function addTo(x, y, z) {
+    this.x += x;
+    this.y += y;
+    this.z += z;
     return this;
 };
 CubePoint.prototype.sub = function sub(other) {
@@ -172,6 +183,11 @@ OddQOffset.prototype.add = function add(other) {
     }
     this.q += other.q;
     this.r += other.r;
+    return this;
+};
+OddQOffset.prototype.addTo = function addTo(q, r) {
+    this.q += q;
+    this.r += r;
     return this;
 };
 OddQOffset.prototype.sub = function sub(other) {

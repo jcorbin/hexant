@@ -11,8 +11,11 @@ var View = require('./view.js');
 var Turmite = require('./turmite/index.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
+var Sample = require('./sample.js');
 
-var BatchLimit = 512;
+var FPSInterval = 3 * 1000;
+var NumTimingSamples = FPSInterval / 1000 * 60;
+var MinFPS = 20;
 
 function Hexant(body, scope) {
     var self = this;
@@ -29,10 +32,15 @@ function Hexant(body, scope) {
     });
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
-    this.frameRate = 0;
-    this.frameInterval = 0;
+    this.goalStepRate = 0;
+    this.stepRate = 0;
     this.paused = true;
     this.prompt = null;
+    this.showFPS = false;
+    this.animTimes = [];
+    this.stepTimes = [];
+    this.animTiming = new Sample(NumTimingSamples);
+    this.throtLog = false;
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
@@ -70,6 +78,9 @@ function hookup(id, component, scope) {
 
     this.prompt = scope.components.prompt;
     this.el = scope.components.view;
+    this.fpsOverlay = scope.components.fpsOverlay;
+    this.fps = scope.components.fps;
+    this.sps = scope.components.sps;
 
     this.titleBase = this.window.document.title;
     this.world = new World();
@@ -101,11 +112,19 @@ function configure() {
             self.onRuleChange(ent);
         });
 
-    this.hash.bind('frameRate')
+    this.hash.bind('showFPS')
+        .setDefault(false)
+        .addListener(function onDrawTraceChange(showFPS) {
+            self.showFPS = !! showFPS;
+            self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
+        });
+
+
+    this.hash.bind('stepRate')
         .setParse(Result.lift(parseInt))
         .setDefault(4)
-        .addListener(function onFrameRateChange(rate) {
-            self.setFrameRate(rate);
+        .addListener(function onStepRateChange(rate) {
+            self.setStepRate(rate);
         });
 
     this.hash.bind('labeled')
@@ -183,10 +202,10 @@ function onKeyPress(e) {
         this.reset();
         break;
     case 0x2b: // +
-        this.hash.set('frameRate', this.frameRate * 2);
+        this.hash.set('stepRate', this.stepRate * 2);
         break;
     case 0x2d: // -
-        this.hash.set('frameRate', Math.max(1, Math.floor(this.frameRate / 2)));
+        this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)));
         break;
     case 0x2e: // .
         this.stepit();
@@ -204,6 +223,11 @@ function onKeyPress(e) {
     case 0x63: // c
         this.promptFor('colors', 'New Colors:');
         e.preventDefault();
+        break;
+
+    case 0x46: // F
+    case 0x66: // f
+        this.hash.set('showFPS', !this.showFPS);
         break;
 
     case 0x54:
@@ -252,8 +276,8 @@ function reset() {
     this.view.hexGrid.updateSize();
 
     var ent = this.world.ents[0];
-    ent.state = 0;
-    ent.dir = 0;
+    ent.reset();
+
     this.world.tile.centerPoint().toCubeInto(ent.pos);
     var data = this.world.tile.get(ent.pos);
     this.world.tile.set(ent.pos, World.FlagVisited | data);
@@ -264,29 +288,117 @@ function reset() {
 
 Hexant.prototype.animate =
 function animate(time) {
-    var frames = 1;
+    try {
+        this._animate(time);
+    } catch(err) {
+        this.animator.cancelAnimation();
+        throw err;
+    }
+};
+
+Hexant.prototype._animate =
+function _animate(time) {
+    var steps = 1;
     if (!this.lastFrameTime) {
         this.lastFrameTime = time;
     } else {
         var progress = time - this.lastFrameTime;
-        frames = Math.min(BatchLimit, Math.round(progress / this.frameInterval));
+        steps = Math.round(progress / 1000 * this.stepRate);
+        this.animTiming.collect(progress);
+        this.throttle()
     }
-    switch (frames) {
+    switch (steps) {
     case 0:
         break;
     case 1:
         this.world.step();
-        this.lastFrameTime += this.frameInterval;
+        this.stepTimes.push(time, 1);
         break;
     default:
-        this.world.stepn(frames);
-        this.lastFrameTime += frames * this.frameInterval;
+        this.stepTimes.push(time, steps);
+        this.world.stepn(steps);
         break;
     }
+    this.lastFrameTime = time;
+    this.animTimes.push(time);
+
+    while ((time - this.animTimes[0]) > FPSInterval) {
+        this.animTimes.shift();
+    }
+    while ((time - this.stepTimes[0]) > FPSInterval) {
+        this.stepTimes.shift();
+        this.stepTimes.shift();
+    }
+
+    if (this.showFPS) {
+        this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
+        this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+    }
+};
+
+Hexant.prototype.throttle =
+function throttle() {
+    if (!this.animTiming.complete()) {
+        return;
+    }
+
+    if (this.animTiming.sinceWeightedMark() <= 3) {
+        return;
+    }
+
+    if (this.stepRate > 1) {
+        var fps = this.computeFPS();
+        if (fps < MinFPS) {
+            this.animTiming.weightedMark(2);
+            this.stepRate /= 2;
+            if (this.throtLog) {
+                console.log('FPS SLOW DOWN', fps, this.stepRate);
+            }
+            return;
+        }
+    }
+
+    var as = this.animTiming.classifyAnomalies();
+    var i = as.length-1;
+    if (this.stepRate > 1 && as[i] > 0.5 && as[i-1] > 0.5 && as[i-2] > 0.5) {
+        this.stepRate /= 2;
+        if (this.throtLog) {
+            console.log('SLOW DOWN', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
+        }
+        this.animTiming.weightedMark(2);
+    } else if (
+        this.stepRate < this.goalStepRate &&
+        as[i] <= 0 && as[i-1] <= 0 && as[i-2] <= 0
+    ) {
+        this.stepRate *= 2;
+        this.animTiming.weightedMark(0.5);
+        if (this.throtLog) {
+            console.log('SPEED UP', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
+        }
+    }
+};
+
+Hexant.prototype.computeFPS =
+function computeFPS() {
+    return this.animTimes.length / FPSInterval * 1000;
+};
+
+Hexant.prototype.computeSPS =
+function computeSPS() {
+    var totalSteps = 0;
+    for (var i = 1; i < this.stepTimes.length; i += 2) {
+        totalSteps += this.stepTimes[i];
+    }
+    return totalSteps / FPSInterval * 1000;
 };
 
 Hexant.prototype.play =
 function play() {
+    this.animTimes.length = 0;
+    this.stepTimes.length = 0;
+    this.animTiming.reset();
+    this.fps.innerText = '';
+    this.sps.innerText = '';
     this.lastFrameTime = null;
     this.animator.requestAnimation();
     this.paused = false;
@@ -294,6 +406,8 @@ function play() {
 
 Hexant.prototype.pause =
 function pause() {
+    this.fps.innerText = '<' + this.fps.innerText + '>';
+    this.sps.innerText = '<' + this.sps.innerText + '>';
     this.lastFrameTime = null;
     this.animator.cancelAnimation();
     this.paused = true;
@@ -317,10 +431,12 @@ function stepit() {
     }
 };
 
-Hexant.prototype.setFrameRate =
-function setFrameRate(rate) {
-    this.frameRate = rate;
-    this.frameInterval = 1000 / this.frameRate;
+Hexant.prototype.setStepRate =
+function setStepRate(rate) {
+    if (this.stepRate === this.goalStepRate) {
+        this.stepRate = rate;
+    }
+    this.goalStepRate = rate;
 };
 
 Hexant.prototype.toggleLabeled =
@@ -332,3 +448,15 @@ Hexant.prototype.resize =
 function resize(width, height) {
     this.view.resize(width, height);
 };
+
+var siSuffix = ['K', 'M', 'G', 'T', 'E'];
+
+function toSI(n) {
+    if (n < 1000) {
+        return n.toFixed(0);
+    }
+    n /= 1000;
+    for (var si = 0; si < siSuffix.length && n > 1000; ++si, n /= 1000) {
+    }
+    return n.toPrecision(3) + siSuffix[si];
+}

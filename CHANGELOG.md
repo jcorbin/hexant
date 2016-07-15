@@ -1,8 +1,19 @@
-# v0.9.5
+# v0.9.6
+
+- Stop animation on exception
+- Renamed "frameRate" to "stepRate"
+- Added a Frames and Steps Per Second display
+- Added automatic step throttling based on step round timing and minimum-FPS
+  targeting; removed static step size limit
+- Added quad tree tile compaction
+- Combined get-and-set quad tree access pattern into a single update
+- Many small fixes and improvements
+
+## v0.9.5
 
 - Fixed animation step/frame rate
 - Modest performance gains
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.9.4
 
@@ -41,7 +52,7 @@
 ## v0.8.3
 
 - Added support for absolute turns
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.8.2
 
@@ -58,7 +69,7 @@
 ## v0.7.7
 
 - Better error display in prompt
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.7.6
 
@@ -79,11 +90,11 @@
 
 ## v0.7.2
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.7.1
 
-- Many minor improvemnets
+- Many minor improvements
 
 # v0.7.0 -- Turmite Engine
 
@@ -117,7 +128,7 @@
 
 ## v0.6.11
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.6.10
 
@@ -126,11 +137,11 @@
 
 ## v0.6.9
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.6.8
 
-- Many minor improvemnets
+- Many minor improvements
 
 ## v0.6.7
 
