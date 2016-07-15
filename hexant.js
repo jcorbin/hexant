@@ -30,7 +30,6 @@ function Hexant(body, scope) {
     this.animator = scope.animator.add(this);
     this.lastFrameTime = null;
     this.stepRate = 0;
-    this.stepInterval = 0;
     this.paused = true;
     this.prompt = null;
     this.showFPS = false;
@@ -298,7 +297,7 @@ function _animate(time) {
         this.lastFrameTime = time;
     } else {
         var progress = time - this.lastFrameTime;
-        steps = Math.round(progress / this.stepInterval);
+        steps = Math.round(progress / 1000 * this.stepRate);
     }
     switch (steps) {
     case 0:
@@ -384,7 +383,6 @@ function stepit() {
 Hexant.prototype.setStepRate =
 function setStepRate(rate) {
     this.stepRate = rate;
-    this.stepInterval = 1000 / this.stepRate;
 };
 
 Hexant.prototype.toggleLabeled =
