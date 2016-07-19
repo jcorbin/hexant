@@ -152,11 +152,10 @@ World.prototype.setEnts =
 function setEnts(ents) {
     this.pruneEnts(ents.length);
     for (var i = 0; i < ents.length; ++i) {
-        var ent = ents[i];
         if (i < this.ents.length) {
-            this.updateEnt(ent, i);
+            this.updateEnt(ents[i], i);
         } else {
-            this.addEnt(ent);
+            this.addEnt(ents[i]);
         }
     }
 };
