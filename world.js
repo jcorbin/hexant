@@ -150,8 +150,17 @@ function pruneEnts(n) {
 
 World.prototype.setEnts =
 function setEnts(ents) {
+    var cons = ents[0].constructor;
+    var i;
+    for (i = 1; i < ents.length; ++i) {
+        if (ents[i].constructor !== cons) {
+            throw new Error('setEnts must get a list of same-type ents');
+        }
+    }
+
     this.pruneEnts(ents.length);
-    for (var i = 0; i < ents.length; ++i) {
+
+    for (i = 0; i < ents.length; ++i) {
         if (i < this.ents.length) {
             this.updateEnt(ents[i], i);
         } else {
