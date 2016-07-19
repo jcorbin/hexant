@@ -80,9 +80,6 @@ function redraw() {
     this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
         this.drawEnt(ents[i]);
-        for (i = 0; i < ents.length; i++) {
-            this.lastEntPos[i].copyFrom(ents[i].pos);
-        }
     }
     this.needsRedraw = false;
 };
@@ -255,7 +252,6 @@ function step() {
 
     for (i = 0; i < ents.length; i++) {
         this.drawEnt(ents[i]);
-        this.lastEntPos[i].copyFrom(ents[i].pos);
     }
 };
 
@@ -281,6 +277,8 @@ function drawEnt(ent) {
     if (this.labeled) {
         this.drawCellLabel(ent.pos, screenPoint);
     }
+
+    this.lastEntPos[ent.index].copyFrom(ent.pos);
 };
 
 View.prototype.drawFullEnt =
