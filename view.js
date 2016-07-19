@@ -231,7 +231,7 @@ function step() {
 
     var expanded = false;
     for (i = 0; i < ents.length; i++) {
-        expanded = this.hexGrid.bounds.expandTo(ents[i].pos) || expanded;
+        expanded = this.hexGrid.bounds.expandTo(this.world.getEntPos(i)) || expanded;
     }
 
     if (expanded) {
