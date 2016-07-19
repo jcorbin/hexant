@@ -117,8 +117,12 @@ function removeEnt(ent) {
     if (this.ents[ent.index] !== ent) {
         throw new Error('removeEnt mismatch');
     }
+    this._removeEnt(ent.index);
+    return ent;
+};
 
-    var i = ent.index;
+World.prototype._removeEnt =
+function _removeEnt(i) {
     var j = i++;
     for (; j < this.ents.length; i++, j++) {
         this.ents[i] = this.ents[j];
@@ -129,8 +133,6 @@ function removeEnt(ent) {
     for (i = 0; i < this.views.length; i++) {
         this.views[i].removeEnt(ent);
     }
-
-    return ent;
 };
 
 World.prototype.pruneEnts =
