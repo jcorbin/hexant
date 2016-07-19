@@ -88,11 +88,11 @@ View.prototype.updateEnts =
 function updateEnts() {
     var i;
     for (i = 0; i < this.world.ents.length; i++) {
-        var ent = this.world.ents[i];
+        var pos = this.world.getEntPos(i);
         if (i < this.lastEntPos.length) {
-            this.lastEntPos[i].copyFrom(ent.pos);
+            this.lastEntPos[i].copyFrom(pos);
         } else {
-            this.lastEntPos.push(ent.pos.copy());
+            this.lastEntPos.push(pos.copy());
         }
     }
     while (i < this.lastEntPos.length) {
@@ -103,13 +103,13 @@ function updateEnts() {
 
 View.prototype.addEnt =
 function addEnt(ent) {
-    this.lastEntPos.push(ent.pos.copy());
+    this.lastEntPos.push(this.world.getEntPos(ent.index).copy());
     this.updateColors(false);
 };
 
 View.prototype.updateEnt =
 function updateEnt(ent) {
-    this.lastEntPos[ent.index].copyFrom(ent.pos);
+    this.lastEntPos[ent.index].copyFrom(this.world.getEntPos(ent.index));
     this.updateColors(false);
 };
 
@@ -257,15 +257,16 @@ function step() {
 
 View.prototype.drawEnt =
 function drawEnt(ent) {
-    var data = this.world.tile.get(ent.pos);
+    var pos = this.world.getEntPos(ent.index);
+    var data = this.world.tile.get(pos);
     if (!(data & World.FlagVisited)) {
-        data = this.world.tile.set(ent.pos, data | World.FlagVisited);
-        this.drawCell(ent.pos,
+        data = this.world.tile.set(pos, data | World.FlagVisited);
+        this.drawCell(pos,
                       data & World.MaskColor,
                       this.antCellColors);
     }
 
-    var screenPoint = this.hexGrid.toScreen(ent.pos);
+    var screenPoint = this.hexGrid.toScreen(pos);
     var size = this.hexGrid.cellSize * this.entSize;
 
     if (size <= 5) {
@@ -275,7 +276,7 @@ function drawEnt(ent) {
     }
 
     if (this.labeled) {
-        this.drawCellLabel(ent.pos, screenPoint);
+        this.drawCellLabel(pos, screenPoint);
     }
 
     this.lastEntPos[ent.index].copyFrom(ent.pos);
