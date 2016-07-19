@@ -102,20 +102,20 @@ function updateEnts() {
 };
 
 View.prototype.addEnt =
-function addEnt(ent) {
-    this.lastEntPos.push(this.world.getEntPos(ent.index).copy());
+function addEnt(i) {
+    this.lastEntPos.push(this.world.getEntPos(i).copy());
     this.updateColors(false);
 };
 
 View.prototype.updateEnt =
-function updateEnt(ent) {
-    this.lastEntPos[ent.index].copyFrom(this.world.getEntPos(ent.index));
+function updateEnt(i) {
+    this.lastEntPos[i].copyFrom(this.world.getEntPos(i));
     this.updateColors(false);
 };
 
 View.prototype.removeEnt =
-function removeEnt(ent) {
-    swapout(this.lastEntPos, ent.index);
+function removeEnt(i) {
+    swapout(this.lastEntPos, i);
     this.lastEntPos.pop();
     this.updateColors(false);
 };

@@ -92,7 +92,7 @@ function addEnt(ent) {
     }
 
     for (var i = 0; i < this.views.length; i++) {
-        this.views[i].addEnt(ent);
+        this.views[i].addEnt(i);
     }
 
     return ent;
@@ -118,7 +118,7 @@ function updateEnt(ent, i) {
     }
 
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].updateEnt(ent);
+        this.views[i].updateEnt(i);
     }
 
     return ent;
@@ -143,7 +143,7 @@ function _removeEnt(i) {
     this.ents.pop();
 
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].removeEnt(ent);
+        this.views[i].removeEnt(i);
     }
 };
 
@@ -154,7 +154,7 @@ function pruneEnts(n) {
     }
     for (var i = n; i < this.ents.length; i++) {
         for (var j = 0; j < this.views.length; ++j) {
-            this.views[j].removeEnt(this.ents[i]);
+            this.views[j].removeEnt(i);
         }
     }
     this.ents = this.ents.silce(0, n);
