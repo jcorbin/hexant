@@ -28,6 +28,18 @@ function World() {
     this.views = [];
 }
 
+World.prototype.getEntPos =
+function getEntPos(i) {
+    // TODO: take ownership of these
+    return this.ents[i].pos;
+};
+
+World.prototype.getEntDir =
+function getEntDir(i) {
+    // TODO: take ownership of these
+    return this.ents[i].dir;
+};
+
 World.prototype.step =
 function step() {
     var i;
