@@ -26,6 +26,9 @@ function World() {
     this.numStates = 0;
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
     this.ents = [];
+    this.entTypes = [];
+    this.stepNames = {};
+    this.steps = [];
     this.views = [];
 }
 
@@ -55,12 +58,36 @@ function turnEnt(i, turnFunc) {
     this.ents[i].pos.add(CubePoint.basis[dir]);
 };
 
+World.prototype._stepEnts =
+function _stepEnts() {
+    var stepEnts = [];
+    for (var i = 0; i < this.steps.length; i++) {
+        var ents = [];
+        for (var j = 0; j < this.entTypes.length; j++) {
+            if (this.entTypes[j] === i) {
+                ents.push(this.ents[j]);
+            }
+        }
+        stepEnts.push(ents);
+    }
+    return stepEnts;
+};
+
 World.prototype.step =
 function step() {
     var i;
-    for (i = 0; i < this.ents.length; i++) {
-        this.ents[i].step(this);
+    var stepEnts = this._stepEnts()
+
+    for (i = 0; i < this.steps.length; i++) {
+        var ents = stepEnts[i];
+        var step = this.steps[i];
+        var n = ents.length;
+        step(this, ents);
+        if (ents.length !== n) {
+            throw new Error('adding new ents during step not ');
+        }
     }
+
     for (i = 0; i < this.views.length; i++) {
         this.views[i].step();
     }
@@ -69,16 +96,19 @@ function step() {
 
 World.prototype.stepn =
 function stepn(n) {
-    for (var i = 0; i < n; i++) {
-        var j;
-        for (j = 0; j < this.ents.length; j++) {
-            this.ents[j].step(this);
-        }
-        for (j = 0; j < this.views.length; j++) {
-            this.views[j].step();
-        }
-    }
-    return this.redraw();
+    // XXX: re-implement using:
+    // var stepEnts = this._stepEnts()
+    throw new Error('World#stepn unimplement'd)
+    // for (var i = 0; i < n; i++) {
+    //     var j;
+    //     for (j = 0; j < this.ents.length; j++) {
+    //         this.ents[j].step(this);
+    //     }
+    //     for (j = 0; j < this.views.length; j++) {
+    //         this.views[j].step();
+    //     }
+    // }
+    // return this.redraw();
 };
 
 World.prototype.redraw =
@@ -92,6 +122,64 @@ function redraw() {
         }
     }
     return didredraw;
+};
+
+World.prototype.addEnt =
+function addEnt(ent) {
+    var cons = ent.constructor;
+    if (cons.Step) {
+        if (!this.stepNames[cons.name]) {
+            this.stepNames[cons.name] = this.steps.length;
+            this.steps.push(cons.Step);
+        }
+    }
+    this._addEnt(ent);
+};
+
+World.prototype._addEnt =
+function _addEnt(ent) {
+    // TODO: limit
+    this.numColors = Math.max(this.numColors, ent.numColors);
+    this.numStates = Math.max(this.numStates, ent.numStates);
+    ent.index = this.ents.length;
+    this.ents.push(ent);
+
+    var data = this.tile.get(ent.pos);
+    if (!(data & World.FlagVisited)) {
+        data = this.tile.set(ent.pos, data | World.FlagVisited);
+    }
+
+    for (var i = 0; i < this.views.length; i++) {
+        this.views[i].addEnt(i);
+    }
+
+    return ent;
+};
+
+World.prototype.updateEnt =
+function updateEnt(ent, i) {
+    if (i === undefined) {
+        i = ent.index;
+    } else {
+        ent.index = i;
+    }
+
+    if (this.ents[i] !== ent) {
+        this.ents[i] = ent;
+    }
+
+    this.numColors = 0;
+    this.numStates = 0;
+    for (i = 0; i < this.ents.length; i++) {
+        this.numColors = Math.max(this.numColors, this.ents[i].numColors);
+        this.numStates = Math.max(this.numStates, this.ents[i].numStates);
+    }
+
+    for (i = 0; i < this.views.length; i++) {
+        this.views[i].updateEnt(i);
+    }
+
+    return ent;
 };
 
 World.prototype.removeEnt =

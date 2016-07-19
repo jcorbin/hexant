@@ -6,6 +6,11 @@ var World = require('./world.js');
 
 module.exports = View;
 
+/* TODO:
+ * - drop all coupling to world.ents
+ * - finish id/index-based interface started around {add,update,remove}Ent
+ */
+
 function View(world, canvas) {
     if (!(this instanceof View)) {
         return new View(world, canvas);
