@@ -94,50 +94,6 @@ function redraw() {
     return didredraw;
 };
 
-World.prototype.addEnt =
-function addEnt(ent) {
-    var i = this.ents.length;
-
-    ent.index = i;
-    this.ents.push(ent);
-    this.tile.update(ent.pos, markVisited);
-
-    this.numColors = Math.max(this.numColors, ent.numColors);
-    this.numStates = Math.max(this.numStates, ent.numStates);
-
-    for (var i = 0; i < this.views.length; i++) {
-        this.views[i].addEnt(i);
-    }
-
-    return ent;
-};
-
-World.prototype.updateEnt =
-function updateEnt(ent, i) {
-    if (i === undefined) {
-        i = ent.index;
-    } else {
-        ent.index = i;
-    }
-
-    if (this.ents[i] !== ent) {
-        this.ents[i] = ent;
-    }
-
-    this.numColors = 0;
-    this.numStates = 0;
-    for (i = 0; i < this.ents.length; i++) {
-        this.numColors = Math.max(this.numColors, this.ents[i].numColors);
-        this.numStates = Math.max(this.numStates, this.ents[i].numStates);
-    }
-
-    for (i = 0; i < this.views.length; i++) {
-        this.views[i].updateEnt(i);
-    }
-
-    return ent;
-};
-
 World.prototype.removeEnt =
 function removeEnt(ent) {
     if (this.ents[ent.index] !== ent) {
@@ -161,38 +117,52 @@ function _removeEnt(i) {
     }
 };
 
-World.prototype.pruneEnts =
-function pruneEnts(n) {
-    if (n >= this.ents.length) {
-        return;
-    }
-    for (var i = n; i < this.ents.length; i++) {
-        for (var j = 0; j < this.views.length; ++j) {
-            this.views[j].removeEnt(i);
-        }
-    }
-    this.ents = this.ents.silce(0, n);
-};
-
 World.prototype.setEnts =
 function setEnts(ents) {
     var cons = ents[0].constructor;
     var i;
+    var j;
     for (i = 1; i < ents.length; ++i) {
         if (ents[i].constructor !== cons) {
             throw new Error('setEnts must get a list of same-type ents');
         }
     }
 
-    this.pruneEnts(ents.length);
+    if (ents.length < this.ents.length) {
+        for (i = ents.length; i < this.ents.length; i++) {
+            for (j = 0; j < this.views.length; j++) {
+                this.views[j].removeEnt(i);
+            }
+        }
+        this.ents.length = ents.length;
+    }
 
-    for (i = 0; i < ents.length; ++i) {
-        if (i < this.ents.length) {
-            this.updateEnt(ents[i], i);
-        } else {
-            this.addEnt(ents[i]);
+    var n = this.ents.length;
+    for (i = 0; i < ents.length; i++) {
+        var ent = ents[i];
+        ent.index = i;
+        this.ents[i] = ent;
+        this.tile.update(ent.pos, markVisited);
+    }
+
+    this.numColors = 0;
+    this.numStates = 0;
+    for (j = 0; j < this.ents.length; j++) {
+        this.numColors = Math.max(this.numColors, this.ents[j].numColors);
+        this.numStates = Math.max(this.numStates, this.ents[j].numStates);
+    }
+
+    for (i = 0; i < n; ++i) {
+        for (var j = 0; j < this.views.length; j++) {
+            this.views[j].updateEnt(j);
         }
     }
+    for (; i < ents.length; ++i) {
+        for (var j = 0; j < this.views.length; j++) {
+            this.views[j].addEnt(j);
+        }
+    }
+
 };
 
 World.prototype.addView =
