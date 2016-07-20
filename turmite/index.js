@@ -44,14 +44,6 @@ function Turmite() {
     this.turn = 0;
 
     this.index = 0;
-
-    var self = this;
-
-    this.boundUpdate = boundUpdate;
-
-    function boundUpdate(data, point) {
-        return self.update(data, point);
-    }
 }
 
 Turmite.prototype.reset =
@@ -90,23 +82,11 @@ function toString() {
     return '<UNKNOWN turmite>';
 };
 
-Turmite.prototype.update =
-function update(data) {
-    var color = data & 0x00ff;
-    var flags = data & 0xff00;
-    var ruleIndex = this.state << 8 | color;
-    var rule = this.rules[ruleIndex];
-    this.turn = rule & 0x0000ffff;
-    var write = (rule & 0x00ff0000) >> 16;
-    var state = (rule & 0xff000000) >> 24;
-    this.state = state;
-    return flags | write | 0x0100; // TODO: World.FlagVisited
-};
-
 Turmite.prototype.step =
 function step(world) {
+    var self = this;
     var tile = world.tile;
-    tile.update(this.pos, this.boundUpdate);
+    tile.update(this.pos, update);
     var turn = this.turn;
     this.turn = 0;
 
@@ -127,6 +107,18 @@ function step(world) {
     //     turn = self.executeTurn(turn);
     //     self.pos.add(CubePoint.basis[self.dir]);
     // }
+
+    function update(data) {
+        var color = data & 0x00ff;
+        var flags = data & 0xff00;
+        var ruleIndex = self.state << 8 | color;
+        var rule = self.rules[ruleIndex];
+        self.turn = rule & 0x0000ffff;
+        var write = (rule & 0x00ff0000) >> 16;
+        var state = (rule & 0xff000000) >> 24;
+        self.state = state;
+        return flags | write | 0x0100; // TODO: World.FlagVisited
+    }
 };
 
 // TODO: WIP
