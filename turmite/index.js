@@ -41,7 +41,6 @@ function Turmite() {
     this.pos = CubePoint(0, 0, 0);
 
     this.state = 0;
-    this.turn = 0;
 
     this.index = 0;
 }
@@ -87,8 +86,7 @@ function step(world) {
     var self = this;
     var tile = world.tile;
     tile.update(this.pos, update);
-    var turn = this.turn;
-    this.turn = 0;
+    var turn = 0;
 
     turn = this.executeTurn(turn);
     this.pos.add(CubePoint.basis[this.dir]);
@@ -113,7 +111,7 @@ function step(world) {
         var flags = data & 0xff00;
         var ruleIndex = self.state << 8 | color;
         var rule = self.rules[ruleIndex];
-        self.turn = rule & 0x0000ffff;
+        turn = rule & 0x0000ffff;
         var write = (rule & 0x00ff0000) >> 16;
         self.state = (rule & 0xff000000) >> 24;
         return flags | write | 0x0100; // TODO: World.FlagVisited
