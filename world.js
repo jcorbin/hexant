@@ -92,11 +92,7 @@ function addEnt(ent) {
     this.numStates = Math.max(this.numStates, ent.numStates);
     ent.index = this.ents.length;
     this.ents.push(ent);
-
-    var data = this.tile.get(ent.pos);
-    if (!(data & World.FlagVisited)) {
-        data = this.tile.set(ent.pos, data | World.FlagVisited);
-    }
+    this.tile.update(ent.pos, markVisited);
 
     for (var i = 0; i < this.views.length; i++) {
         this.views[i].addEnt(i);
@@ -194,3 +190,7 @@ function addView(view) {
     view.updateEnts();
     return view;
 };
+
+function markVisited(data) {
+    return World.FlagVisited | data;
+}
