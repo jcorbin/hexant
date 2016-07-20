@@ -115,8 +115,7 @@ function step(world) {
         var rule = self.rules[ruleIndex];
         self.turn = rule & 0x0000ffff;
         var write = (rule & 0x00ff0000) >> 16;
-        var state = (rule & 0xff000000) >> 24;
-        self.state = state;
+        self.state = (rule & 0xff000000) >> 24;
         return flags | write | 0x0100; // TODO: World.FlagVisited
     }
 };
