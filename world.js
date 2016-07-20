@@ -40,6 +40,12 @@ function getEntDir(i) {
     return this.ents[i].dir;
 };
 
+World.prototype.resetEnt =
+function resetEnt(i) {
+    this.ents[i].reset();
+    this.tile.centerPoint().toCubeInto(this.ents[i].pos);
+};
+
 World.prototype.step =
 function step() {
     var i;

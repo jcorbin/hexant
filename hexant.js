@@ -275,10 +275,7 @@ function reset() {
     this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
     this.view.updateSize();
 
-    var ent = this.world.ents[0];
-    ent.reset();
-
-    this.world.tile.centerPoint().toCubeInto(ent.pos);
+    this.world.resetEnt(0);
     this.world.tile.update(ent.pos, markVisited);
 
     this.el.width = this.el.width;
