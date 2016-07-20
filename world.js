@@ -44,6 +44,7 @@ World.prototype.resetEnt =
 function resetEnt(i) {
     this.ents[i].reset();
     this.tile.centerPoint().toCubeInto(this.ents[i].pos);
+    this.ents[i].dir = 0;
 };
 
 World.prototype.step =

@@ -48,7 +48,6 @@ function Turmite() {
 Turmite.prototype.reset =
 function reset() {
     this.state = 0;
-    this.dir = 0;
 };
 
 Turmite.prototype.clearRules =
