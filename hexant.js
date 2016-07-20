@@ -273,7 +273,7 @@ function reset() {
     this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
 
     this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
-    this.view.hexGrid.updateSize();
+    this.view.updateSize();
 
     var ent = this.world.ents[0];
     ent.reset();
