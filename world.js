@@ -2,6 +2,7 @@
 
 var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
+var CubePoint = Coord.CubePoint;
 
 var OddQOffset = Coord.OddQOffset;
 
@@ -45,6 +46,13 @@ function resetEnt(i) {
     this.ents[i].reset();
     this.tile.centerPoint().toCubeInto(this.ents[i].pos);
     this.ents[i].dir = 0;
+};
+
+World.prototype.turnEnt =
+function turnEnt(i, turnFunc) {
+    var dir = turnFunc(this.ents[i].dir);
+    this.ents[i].dir = dir;
+    this.ents[i].pos.add(CubePoint.basis[dir]);
 };
 
 World.prototype.step =

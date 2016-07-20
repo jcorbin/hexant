@@ -87,8 +87,7 @@ function step(world) {
     var turn = 0;
 
     tile.update(this.pos, update);
-    turn = executeTurn();
-    this.pos.add(CubePoint.basis[this.dir]);
+    world.turnEnt(this.index, executeTurn);
     if (turn !== 0) {
         throw new Error('turmite forking unimplemented');
     }
@@ -101,8 +100,7 @@ function step(world) {
     //     } else {
     //         self = this;
     //     }
-    //     turn = executeTurn();
-    //     self.pos.add(CubePoint.basis[self.dir]);
+    //     world.tuneEnt(self.index, executeTurn);
     // }
 
     function update(data) {
@@ -116,24 +114,24 @@ function step(world) {
         return flags | write | 0x0100; // TODO: World.FlagVisited
     }
 
-    function executeTurn() {
+    function executeTurn(dir) {
         var t = 1;
         for (; t <= 0x0020; t <<= 1) {
             if (turn & t) {
-                self.dir = (6 + self.dir + constants.RelTurnDelta[t]) % 6;
-                return turn & ~t;
+                turn &= ~t;
+                return (6 + dir + constants.RelTurnDelta[t]) % 6;
             }
         }
         for (; t <= 0x0800; t <<= 1) {
             if (turn & t) {
-                self.dir = constants.AbsTurnDir[t];
-                return turn & ~t;
+                turn &= ~t;
+                return constants.AbsTurnDir[t];
             }
         }
         if (turn !== 0) {
             throw new Error('unrecognized turning constant ' + turn);
         }
-        return 0;
+        return dir;
     }
 };
 
