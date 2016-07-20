@@ -276,7 +276,7 @@ function reset() {
     this.view.updateSize();
 
     this.world.resetEnt(0);
-    this.world.tile.update(ent.pos, markVisited);
+    this.world.tile.update(this.world.getEntPos(0), markVisited);
 
     this.el.width = this.el.width;
     this.view.redraw();
