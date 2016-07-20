@@ -85,9 +85,9 @@ Turmite.prototype.step =
 function step(world) {
     var self = this;
     var tile = world.tile;
-    tile.update(this.pos, update);
     var turn = 0;
 
+    tile.update(this.pos, update);
     turn = this.executeTurn(turn);
     this.pos.add(CubePoint.basis[this.dir]);
     if (turn !== 0) {
