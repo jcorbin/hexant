@@ -88,11 +88,14 @@ function redraw() {
 
 World.prototype.addEnt =
 function addEnt(ent) {
-    this.numColors = Math.max(this.numColors, ent.numColors);
-    this.numStates = Math.max(this.numStates, ent.numStates);
-    ent.index = this.ents.length;
+    var i = this.ents.length;
+
+    ent.index = i;
     this.ents.push(ent);
     this.tile.update(ent.pos, markVisited);
+
+    this.numColors = Math.max(this.numColors, ent.numColors);
+    this.numStates = Math.max(this.numStates, ent.numStates);
 
     for (var i = 0; i < this.views.length; i++) {
         this.views[i].addEnt(i);
