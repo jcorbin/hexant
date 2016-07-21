@@ -295,15 +295,13 @@ function drawFullEnt(i, screenPoint) {
     var ctx2d = ctxHex.ctx2d;
 
     var dir = this.world.getEntDir(i);
-    var start = dir;
-    var end = dir + 1;
 
     // head
     ctx2d.fillStyle = this.headColors[i];
     ctx2d.strokeStyle = this.headColors[i];
     ctx2d.lineWidth = this.featureSize / 2;
     ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, start, end, false);
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
     ctx2d.closePath();
     ctx2d.fill();
     ctx2d.stroke();
@@ -311,7 +309,7 @@ function drawFullEnt(i, screenPoint) {
     // body
     ctx2d.fillStyle = this.bodyColors[i];
     ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, start, end, true);
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
     ctx2d.closePath();
     ctx2d.fill();
 };
