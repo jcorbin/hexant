@@ -195,6 +195,11 @@ function setLabeled(labeled) {
     } else {
         this.drawCell = this.drawUnlabeledCell;
     }
+    if (this.labeled) {
+        this.drawEnt = this.drawLabeledFullEnt;
+    } else {
+        this.drawEnt = this.drawUnlabeledFullEnt;
+    }
 };
 
 View.prototype.drawUnlabeledCell =
@@ -258,7 +263,8 @@ function step() {
 };
 
 View.prototype.drawEnt =
-function drawEnt(i) {
+View.prototype.drawUnlabeledEnt =
+function drawUnlabeledEnt(i) {
     var ctx2d = this.ctx2d;
 
     var pos = this.world.getEntPos(i);
@@ -268,12 +274,25 @@ function drawEnt(i) {
     ctx2d.closePath();
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
-    if (this.labeled) {
-        ctx2d.lineWidth = 1;
-        ctx2d.strokeStyle = '#fff';
-        this._writeText(screenPoint, pos.toCube().toString(), 0);
-        this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
+    if (this.featureSize <= 5) {
+        this.drawSmallEnt(i, screenPoint);
+    } else {
+        this.drawFullEnt(i, screenPoint);
     }
+
+    this.lastEntPos[i].copyFrom(pos);
+};
+
+View.prototype.drawLabeledEnt =
+function drawLabeledEnt(i) {
+    var ctx2d = this.ctx2d;
+
+    var pos = this.world.getEntPos(i);
+
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
 
     if (this.featureSize <= 5) {
         this.drawSmallEnt(i, screenPoint);
@@ -281,12 +300,10 @@ function drawEnt(i) {
         this.drawFullEnt(i, screenPoint);
     }
 
-    if (this.labeled) {
-        ctx2d.lineWidth = 1;
-        ctx2d.strokeStyle = '#fff';
-        this._writeText(screenPoint, pos.toCube().toString(), 0);
-        this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
-    }
+    ctx2d.lineWidth = 1;
+    ctx2d.strokeStyle = '#fff';
+    this._writeText(screenPoint, pos.toCube().toString(), 0);
+    this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
 
     this.lastEntPos[i].copyFrom(pos);
 };
