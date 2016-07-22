@@ -1,7 +1,6 @@
 'use strict';
 
 var Coord = require('../coord.js');
-var CubePoint = Coord.CubePoint;
 var constants = require('./constants.js');
 var parseTurmite = require('./parse.js');
 
@@ -36,12 +35,7 @@ function Turmite() {
     this.numColors = 0;
     this.rules = new Uint32Array(64 * 1024);
     this.specString = '';
-
-    this.dir = 0;
-    this.pos = CubePoint(0, 0, 0);
-
     this.state = 0;
-
     this.index = 0;
 }
 

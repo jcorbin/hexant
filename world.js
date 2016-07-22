@@ -26,33 +26,34 @@ function World() {
     this.numStates = 0;
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
     this.ents = [];
+    // TODO: consider combining pos & dir
+    this.pos = [];
+    this.dir = [];
     this.views = [];
 }
 
 World.prototype.getEntPos =
 function getEntPos(i) {
-    // TODO: take ownership of these
-    return this.ents[i].pos;
+    return this.pos[i];
 };
 
 World.prototype.getEntDir =
 function getEntDir(i) {
-    // TODO: take ownership of these
-    return this.ents[i].dir;
+    return this.dir[i];
 };
 
 World.prototype.resetEnt =
 function resetEnt(i) {
     this.ents[i].reset();
-    this.tile.centerPoint().toCubeInto(this.ents[i].pos);
-    this.ents[i].dir = 0;
+    this.tile.centerPoint().toCubeInto(this.pos[i]);
+    this.dir[i] = 0;
 };
 
 World.prototype.turnEnt =
 function turnEnt(i, turnFunc) {
-    var dir = turnFunc(this.ents[i].dir);
-    this.ents[i].dir = dir;
-    this.ents[i].pos.add(CubePoint.basis[dir]);
+    var dir = turnFunc(this.dir[i]);
+    this.dir[i] = dir;
+    this.pos[i].add(CubePoint.basis[dir]);
 };
 
 World.prototype.step =
@@ -142,7 +143,9 @@ function setEnts(ents) {
         var ent = ents[i];
         ent.index = i;
         this.ents[i] = ent;
-        this.tile.update(ent.pos, markVisited);
+        this.pos[i] = CubePoint(0, 0, 0);
+        this.dir[i] = 0;
+        this.tile.update(this.pos[i], markVisited);
     }
 
     this.numColors = 0;
