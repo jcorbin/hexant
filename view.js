@@ -68,7 +68,7 @@ function updateSize() {
 
 View.prototype.setDrawTrace =
 function setDrawTrace(dt) {
-    this.drawTrace = dt ? true : false;
+    this.drawTrace = !!dt;
     this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 };
 
