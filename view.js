@@ -70,11 +70,7 @@ function updateSize() {
     this.hexGrid.updateSize();
     this.featureSize = this.hexGrid.cellSize * this.entSize;
     if (this.featureSize <= 5) {
-        if (this.labeled) {
-            this.drawEnt = this.drawLabeledSmallEnt;
-        } else {
-            this.drawEnt = this.drawUnlabeledSmallEnt;
-        }
+        this.drawEnt = this.drawSmallEnt;
     } else if (this.labeled) {
         this.drawEnt = this.drawLabeledFullEnt;
     } else {
@@ -207,11 +203,7 @@ function setLabeled(labeled) {
         this.drawCell = this.drawUnlabeledCell;
     }
     if (this.featureSize <= 5) {
-        if (this.labeled) {
-            this.drawEnt = this.drawLabeledSmallEnt;
-        } else {
-            this.drawEnt = this.drawUnlabeledSmallEnt;
-        }
+        this.drawEnt = this.drawSmallEnt;
     } else if (this.labeled) {
         this.drawEnt = this.drawLabeledFullEnt;
     } else {
@@ -313,8 +305,8 @@ function drawUnlabeledFullEnt(i) {
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype.drawUnlabeledSmallEnt =
-function drawUnlabeledSmallEnt(i) {
+View.prototype.drawSmallEnt =
+function drawSmallEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
 
@@ -361,32 +353,6 @@ function drawLabeledFullEnt(i) {
     ctx2d.fillStyle = this.bodyColors[i];
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
-    ctx2d.closePath();
-    ctx2d.fill();
-
-    ctx2d.lineWidth = 1;
-    ctx2d.strokeStyle = '#fff';
-    this._writeText(screenPoint, pos.toCube().toString(), 0);
-    this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
-
-    this.lastEntPos[i].copyFrom(pos);
-};
-
-View.prototype.drawLabeledSmallEnt =
-function drawLabeledSmallEnt(i) {
-    var ctx2d = this.ctx2d;
-    var ctxHex = this.hexGrid.ctxHex;
-
-    var pos = this.world.getEntPos(i);
-
-    ctx2d.beginPath();
-    var screenPoint = this.hexGrid.cellPath(pos);
-    ctx2d.closePath();
-    this.world.tile.update(pos, this.boundUpdateEntCell);
-
-    ctx2d.fillStyle = this.headColors[i];
-    ctx2d.beginPath();
-    ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
     ctx2d.fill();
 
