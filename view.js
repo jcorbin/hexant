@@ -204,17 +204,10 @@ function drawUnlabeledCell(point, color, colors) {
 
 View.prototype.drawLabeledCell =
 function drawLabeledCell(point, color, colors) {
-    var screenPoint = this.drawUnlabeledCell(point, color, colors);
-    this.drawCellLabel(point, screenPoint);
-};
-
-View.prototype.drawCellLabel =
-function drawCellLabel(point, screenPoint) {
-    if (!screenPoint) {
-        screenPoint = this.hexGrid.toScreen(point);
-    }
-
     var ctx2d = this.ctx2d;
+
+    var screenPoint = this.drawUnlabeledCell(point, color, colors);
+
     ctx2d.lineWidth = 1;
     ctx2d.strokeStyle = '#fff';
     this._writeText(screenPoint, point.toCube().toString(), 0);
@@ -257,6 +250,8 @@ function step() {
 
 View.prototype.drawEnt =
 function drawEnt(i) {
+    var ctx2d = this.ctx2d;
+
     var pos = this.world.getEntPos(i);
     var data = this.world.tile.get(pos);
     if (!(data & World.FlagVisited)) {
@@ -275,7 +270,10 @@ function drawEnt(i) {
     }
 
     if (this.labeled) {
-        this.drawCellLabel(pos, screenPoint);
+        ctx2d.lineWidth = 1;
+        ctx2d.strokeStyle = '#fff';
+        this._writeText(screenPoint, pos.toCube().toString(), 0);
+        this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
     }
 
     this.lastEntPos[i].copyFrom(pos);
