@@ -84,9 +84,10 @@ Turmite.prototype.step =
 function step(world) {
     var self = this;
     var tile = world.tile;
+    var pos = world.getEntPos(this.index);
     var turn = 0;
 
-    tile.update(this.pos, update);
+    tile.update(pos, update);
     world.turnEnt(this.index, executeTurn);
     if (turn !== 0) {
         throw new Error('turmite forking unimplemented');
