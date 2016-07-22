@@ -211,7 +211,11 @@ View.prototype.drawLabeledCell =
 function drawLabeledCell(point, color, colors) {
     var ctx2d = this.ctx2d;
 
-    var screenPoint = this.drawUnlabeledCell(point, color, colors);
+    this.ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(point);
+    this.ctx2d.closePath();
+    this.ctx2d.fillStyle = colors[color];
+    this.ctx2d.fill();
 
     ctx2d.lineWidth = 1;
     ctx2d.strokeStyle = '#fff';
