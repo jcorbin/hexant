@@ -217,16 +217,8 @@ function drawCellLabel(point, screenPoint) {
     var ctx2d = this.ctx2d;
     ctx2d.lineWidth = 1;
     ctx2d.strokeStyle = '#fff';
-    write(point.toCube().toString(), 0);
-    write(point.toOddQOffset().toString(), 14);
-
-    function write(mess, yoff) {
-        var textWidth = ctx2d.measureText(mess).width;
-        ctx2d.strokeText(
-            mess,
-            screenPoint.x - textWidth / 2,
-            screenPoint.y + yoff);
-    }
+    this._writeText(screenPoint, point.toCube().toString(), 0);
+    this._writeText(screenPoint, point.toOddQOffset().toString(), 14);
 };
 
 View.prototype.drawCell =
@@ -324,6 +316,15 @@ function drawSmallEnt(i, screenPoint) {
     ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
     ctx2d.fill();
+};
+
+View.prototype._writeText =
+function _writeText(screenPoint, mess, yoff) {
+    var textWidth = this.ctx2d.measureText(mess).width;
+    this.ctx2d.strokeText(
+        mess,
+        screenPoint.x - textWidth / 2,
+        screenPoint.y + yoff);
 };
 
 function swapout(ar, i) {
