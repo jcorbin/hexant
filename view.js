@@ -266,6 +266,7 @@ View.prototype.drawEnt =
 View.prototype.drawUnlabeledEnt =
 function drawUnlabeledEnt(i) {
     var ctx2d = this.ctx2d;
+    var ctxHex = this.hexGrid.ctxHex;
 
     var pos = this.world.getEntPos(i);
 
@@ -275,7 +276,11 @@ function drawUnlabeledEnt(i) {
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
     if (this.featureSize <= 5) {
-        this.drawSmallEnt(i, screenPoint);
+        ctx2d.fillStyle = this.headColors[i];
+        ctx2d.beginPath();
+        ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
+        ctx2d.closePath();
+        ctx2d.fill();
     } else {
         this.drawFullEnt(i, screenPoint);
     }
@@ -286,6 +291,7 @@ function drawUnlabeledEnt(i) {
 View.prototype.drawLabeledEnt =
 function drawLabeledEnt(i) {
     var ctx2d = this.ctx2d;
+    var ctxHex = this.hexGrid.ctxHex;
 
     var pos = this.world.getEntPos(i);
 
@@ -295,7 +301,11 @@ function drawLabeledEnt(i) {
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
     if (this.featureSize <= 5) {
-        this.drawSmallEnt(i, screenPoint);
+        ctx2d.fillStyle = this.headColors[i];
+        ctx2d.beginPath();
+        ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
+        ctx2d.closePath();
+        ctx2d.fill();
     } else {
         this.drawFullEnt(i, screenPoint);
     }
@@ -329,18 +339,6 @@ function drawFullEnt(i, screenPoint) {
     ctx2d.fillStyle = this.bodyColors[i];
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
-    ctx2d.closePath();
-    ctx2d.fill();
-};
-
-View.prototype.drawSmallEnt =
-function drawSmallEnt(i, screenPoint) {
-    var ctxHex = this.hexGrid.ctxHex;
-    var ctx2d = ctxHex.ctx2d;
-
-    ctx2d.fillStyle = this.headColors[i];
-    ctx2d.beginPath();
-    ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
     ctx2d.fill();
 };
