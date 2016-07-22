@@ -69,6 +69,17 @@ View.prototype.updateSize =
 function updateSize() {
     this.hexGrid.updateSize();
     this.featureSize = this.hexGrid.cellSize * this.entSize;
+    if (this.featureSize <= 5) {
+        if (this.labeled) {
+            this.drawEnt = this.drawLabeledSmallEnt;
+        } else {
+            this.drawEnt = this.drawUnlabeledSmallEnt;
+        }
+    } else if (this.labeled) {
+        this.drawEnt = this.drawLabeledFullEnt;
+    } else {
+        this.drawEnt = this.drawUnlabeledFullEnt;
+    }
 };
 
 View.prototype.setDrawTrace =
@@ -195,7 +206,13 @@ function setLabeled(labeled) {
     } else {
         this.drawCell = this.drawUnlabeledCell;
     }
-    if (this.labeled) {
+    if (this.featureSize <= 5) {
+        if (this.labeled) {
+            this.drawEnt = this.drawLabeledSmallEnt;
+        } else {
+            this.drawEnt = this.drawUnlabeledSmallEnt;
+        }
+    } else if (this.labeled) {
         this.drawEnt = this.drawLabeledFullEnt;
     } else {
         this.drawEnt = this.drawUnlabeledFullEnt;
@@ -263,8 +280,8 @@ function step() {
 };
 
 View.prototype.drawEnt =
-View.prototype.drawUnlabeledEnt =
-function drawUnlabeledEnt(i) {
+View.prototype.drawUnlabeledFullEnt =
+function drawUnlabeledFullEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
 
@@ -276,36 +293,49 @@ function drawUnlabeledEnt(i) {
     ctx2d.closePath();
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
-    if (this.featureSize <= 5) {
-        ctx2d.fillStyle = this.headColors[i];
-        ctx2d.beginPath();
-        ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
-        ctx2d.closePath();
-        ctx2d.fill();
-    } else {
-        // head
-        ctx2d.fillStyle = this.headColors[i];
-        ctx2d.strokeStyle = this.headColors[i];
-        ctx2d.lineWidth = this.featureSize / 2;
-        ctx2d.beginPath();
-        ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
-        ctx2d.closePath();
-        ctx2d.fill();
-        ctx2d.stroke();
+    // head
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.lineWidth = this.featureSize / 2;
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.stroke();
 
-        // body
-        ctx2d.fillStyle = this.bodyColors[i];
-        ctx2d.beginPath();
-        ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
-        ctx2d.closePath();
-        ctx2d.fill();
-    }
+    // body
+    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
+    ctx2d.closePath();
+    ctx2d.fill();
 
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype.drawLabeledEnt =
-function drawLabeledEnt(i) {
+View.prototype.drawUnlabeledSmallEnt =
+function drawUnlabeledSmallEnt(i) {
+    var ctx2d = this.ctx2d;
+    var ctxHex = this.hexGrid.ctxHex;
+
+    var pos = this.world.getEntPos(i);
+
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
+
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.beginPath();
+    ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
+    ctx2d.closePath();
+    ctx2d.fill();
+
+    this.lastEntPos[i].copyFrom(pos);
+};
+
+View.prototype.drawLabeledFullEnt =
+function drawLabeledFullEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
 
@@ -317,30 +347,48 @@ function drawLabeledEnt(i) {
     ctx2d.closePath();
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
-    if (this.featureSize <= 5) {
-        ctx2d.fillStyle = this.headColors[i];
-        ctx2d.beginPath();
-        ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
-        ctx2d.closePath();
-        ctx2d.fill();
-    } else {
-        // head
-        ctx2d.fillStyle = this.headColors[i];
-        ctx2d.strokeStyle = this.headColors[i];
-        ctx2d.lineWidth = this.featureSize / 2;
-        ctx2d.beginPath();
-        ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
-        ctx2d.closePath();
-        ctx2d.fill();
-        ctx2d.stroke();
+    // head
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.lineWidth = this.featureSize / 2;
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.stroke();
 
-        // body
-        ctx2d.fillStyle = this.bodyColors[i];
-        ctx2d.beginPath();
-        ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
-        ctx2d.closePath();
-        ctx2d.fill();
-    }
+    // body
+    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
+    ctx2d.closePath();
+    ctx2d.fill();
+
+    ctx2d.lineWidth = 1;
+    ctx2d.strokeStyle = '#fff';
+    this._writeText(screenPoint, pos.toCube().toString(), 0);
+    this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
+
+    this.lastEntPos[i].copyFrom(pos);
+};
+
+View.prototype.drawLabeledSmallEnt =
+function drawLabeledSmallEnt(i) {
+    var ctx2d = this.ctx2d;
+    var ctxHex = this.hexGrid.ctxHex;
+
+    var pos = this.world.getEntPos(i);
+
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
+
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.beginPath();
+    ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
+    ctx2d.closePath();
+    ctx2d.fill();
 
     ctx2d.lineWidth = 1;
     ctx2d.strokeStyle = '#fff';
