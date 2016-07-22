@@ -91,17 +91,42 @@ function resize(width, height) {
     this.redraw();
 };
 
+View.redraws = [];
+
+var last = 0;
+setInterval(function() {
+    if (View.redraws.length === last) {
+        return;
+    }
+    var rs = View.redraws.slice(last);
+    var mu = 0;
+    var max = 0;
+    for (var i = 0; i < rs.length; ++i) {
+        if (rs[i] > max) {
+            max = rs[i];
+        }
+        mu += rs[i] / rs.length;
+    }
+    console.log(
+        '%s redraws, µ=%sms, max=%sms, last %s: %j',
+        View.redraws.length, mu, max, rs.length, rs);
+    last = View.redraws.length;
+}, 1000);
+
 View.prototype.redraw =
 function redraw() {
     if (this.cellColors === null) {
         return;
     }
+    var t0 = Date.now();
     var ents = this.world.ents;
     this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
         this.drawEnt(i);
     }
     this.needsRedraw = false;
+    var t1 = Date.now();
+    View.redraws.push(t1 - t0);
 };
 
 View.prototype.updateEnts =
