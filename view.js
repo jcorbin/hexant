@@ -40,10 +40,15 @@ function View(world, canvas) {
 
     this.needsRedraw = false;
 
+    this.boundUpdateEntCell = updateEntCell;
     this.boundDrawEachCell = drawEachCell;
     this.boundMaybeDrawEachCell = maybeDrawEachCell;
 
     var self = this;
+
+    function updateEntCell(data) {
+        return self._updateEntCell(data);
+    }
 
     function drawEachCell(point, data) {
         self.drawCell(point,
@@ -253,15 +258,18 @@ function drawEnt(i) {
     var ctx2d = this.ctx2d;
 
     var pos = this.world.getEntPos(i);
-    var data = this.world.tile.get(pos);
-    if (!(data & World.FlagVisited)) {
-        data = this.world.tile.set(pos, data | World.FlagVisited);
-        this.drawCell(pos,
-                      data & World.MaskColor,
-                      this.antCellColors);
-    }
 
-    var screenPoint = this.hexGrid.toScreen(pos);
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
+
+    if (this.labeled) {
+        ctx2d.lineWidth = 1;
+        ctx2d.strokeStyle = '#fff';
+        this._writeText(screenPoint, pos.toCube().toString(), 0);
+        this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
+    }
 
     if (this.featureSize <= 5) {
         this.drawSmallEnt(i, screenPoint);
@@ -314,6 +322,15 @@ function drawSmallEnt(i, screenPoint) {
     ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
     ctx2d.fill();
+};
+
+View.prototype._updateEntCell =
+function _updateEntCell(data) {
+    if (!(data & World.FlagVisited)) {
+        this.ctx2d.fillStyle = this.antCellColors[data & World.MaskColor];
+        this.ctx2d.fill();
+    }
+    return data | World.FlagVisited;
 };
 
 View.prototype._writeText =
