@@ -32,6 +32,10 @@
 - refactor compiler
   - support error return
   - consistent composition shape between parts
+- debug the disparity between `ant(2L 13R 2L)` and it's turmite equivalent
+- add comment support to turmite lang
+- add further variable support to turmite lang
+- add higher level looping or qualification construct to turmite lang
 
 # UI
 
