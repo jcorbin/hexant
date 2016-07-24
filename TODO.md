@@ -1,4 +1,5 @@
-Features:
+# General
+
 - extend the current hack that is `drawTrace` to something like
   `trace=redraw|<number>` so that we can have "last-N" tracing
 - support forking -- see turmite/index.js circa L109
@@ -22,7 +23,8 @@ Features:
 - randomized starting cell values
 - generalize and borg github:jcorbin/ants
 
-Turmite Lang:
+# Turmite Lang
+
 - better when matching logic
 - bitwise operators
 - syntax for partial then spec
@@ -31,7 +33,8 @@ Turmite Lang:
   - support error return
   - consistent composition shape between parts
 
-UI:
+# UI
+
 - mobile
   - affordance for current keybinds
     - trigger rules/color dialog
@@ -41,10 +44,12 @@ UI:
   - rules editor that isn't as keyboard heavy
   - color editor that isn't as keyboard heavy
 
-Bugs:
+# View
+
 - fix minor view clipping error
 
-Performance
+# Performance
+
 - quad tree
   - compaction
   - optimistic pre-alloc under a threshold
