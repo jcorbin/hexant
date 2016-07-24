@@ -54,6 +54,7 @@
 
 # Performance
 
+- Switch to a GL context
 - optimistic quad-tree pre-alloc under a threshold
 - drawing:
   - actually measure redraws /sec, we're probably doing too many
