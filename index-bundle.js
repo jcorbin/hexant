@@ -1242,10 +1242,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_bracrt");
+        component.setAttribute("id", "view_x2fdv9");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_bracrt")
+       scope.componentsFor["view"].setAttribute("for", "view_x2fdv9")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1266,10 +1266,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_jtxm2g");
+        component.setAttribute("id", "prompt_n2a21d");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_jtxm2g")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_n2a21d")
     }
     node = document.createElement("DIV");
     parent.appendChild(node);
@@ -1279,10 +1279,10 @@ var $THIS = function HexantHexant(body, caller) {
     component.setAttribute("class", "overlay fps right");
     }
     if (component.setAttribute) {
-        component.setAttribute("id", "fpsOverlay_19wvr6");
+        component.setAttribute("id", "fpsOverlay_q50vkj");
     }
     if (scope.componentsFor["fpsOverlay"]) {
-       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_19wvr6")
+       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_q50vkj")
     }
     if (component.setAttribute) {
     component.setAttribute("style", "display: none");
@@ -1294,10 +1294,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("fps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "fps_qahqrs");
+            component.setAttribute("id", "fps_gpyrix");
         }
         if (scope.componentsFor["fps"]) {
-           scope.componentsFor["fps"].setAttribute("for", "fps_qahqrs")
+           scope.componentsFor["fps"].setAttribute("for", "fps_gpyrix")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1307,10 +1307,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("sps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "sps_aogbf5");
+            component.setAttribute("id", "sps_366a43");
         }
         if (scope.componentsFor["sps"]) {
-           scope.componentsFor["sps"].setAttribute("for", "sps_aogbf5")
+           scope.componentsFor["sps"].setAttribute("for", "sps_366a43")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1607,18 +1607,18 @@ function reset() {
     this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
 
     this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
-    this.view.hexGrid.updateSize();
+    this.view.updateSize();
 
-    var ent = this.world.ents[0];
-    ent.reset();
-
-    this.world.tile.centerPoint().toCubeInto(ent.pos);
-    var data = this.world.tile.get(ent.pos);
-    this.world.tile.set(ent.pos, World.FlagVisited | data);
+    this.world.resetEnt(0);
+    this.world.tile.update(this.world.getEntPos(0), markVisited);
 
     this.el.width = this.el.width;
     this.view.redraw();
 };
+
+function markVisited(data) {
+    return World.FlagVisited | data;
+}
 
 Hexant.prototype.animate =
 function animate(time) {
@@ -2358,10 +2358,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_3xlyqr");
+        component.setAttribute("id", "view_spp7lc");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_3xlyqr")
+       scope.componentsFor["view"].setAttribute("for", "view_spp7lc")
     }
     this.scope.hookup("this", this);
 };
@@ -2563,10 +2563,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_9liuew");
+        component.setAttribute("id", "box_oaibr8");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_9liuew")
+       scope.componentsFor["box"].setAttribute("for", "box_oaibr8")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2581,10 +2581,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_oto7je");
+            component.setAttribute("id", "help_bvhdxp");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_oto7je")
+           scope.componentsFor["help"].setAttribute("for", "help_bvhdxp")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2597,10 +2597,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_157clz");
+            component.setAttribute("id", "text_bcynl5");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_157clz")
+           scope.componentsFor["text"].setAttribute("for", "text_bcynl5")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2610,10 +2610,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_i88gbn");
+            component.setAttribute("id", "error_7453mq");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_i88gbn")
+           scope.componentsFor["error"].setAttribute("for", "error_7453mq")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -3051,24 +3051,13 @@ function Turmite() {
     this.pos = CubePoint(0, 0, 0);
 
     this.state = 0;
-    this.stateKey = 0;
-    this.turn = 0;
 
     this.index = 0;
-
-    var self = this;
-
-    this.boundUpdate = boundUpdate;
-
-    function boundUpdate(data, point) {
-        return self.update(data, point);
-    }
 }
 
 Turmite.prototype.reset =
 function reset() {
     this.state = 0;
-    this.dir = 0;
 };
 
 Turmite.prototype.clearRules =
@@ -3101,29 +3090,15 @@ function toString() {
     return '<UNKNOWN turmite>';
 };
 
-Turmite.prototype.update =
-function update(data) {
-    var color = data & 0x00ff;
-    var flags = data & 0xff00;
-    var ruleIndex = this.stateKey | color;
-    var rule = this.rules[ruleIndex];
-    this.turn = rule & 0x0000ffff;
-    var write = (rule & 0x00ff0000) >> 16;
-    var state = (rule & 0xff000000) >> 24;
-    this.state = state;
-    this.stateKey = state << 8;
-    return flags | write | 0x0100; // TODO: World.FlagVisited
-};
-
 Turmite.prototype.step =
 function step(world) {
+    var self = this;
     var tile = world.tile;
-    tile.update(this.pos, this.boundUpdate);
-    var turn = this.turn;
-    this.turn = 0;
+    var pos = world.getEntPos(this.index);
+    var turn = 0;
 
-    turn = this.executeTurn(turn);
-    this.pos.add(CubePoint.basis[this.dir]);
+    tile.update(pos, update);
+    world.turnEnt(this.index, executeTurn);
     if (turn !== 0) {
         throw new Error('turmite forking unimplemented');
     }
@@ -3136,9 +3111,39 @@ function step(world) {
     //     } else {
     //         self = this;
     //     }
-    //     turn = self.executeTurn(turn);
-    //     self.pos.add(CubePoint.basis[self.dir]);
+    //     world.tuneEnt(self.index, executeTurn);
     // }
+
+    function update(data) {
+        var color = data & 0x00ff;
+        var flags = data & 0xff00;
+        var ruleIndex = self.state << 8 | color;
+        var rule = self.rules[ruleIndex];
+        turn = rule & 0x0000ffff;
+        var write = (rule & 0x00ff0000) >> 16;
+        self.state = (rule & 0xff000000) >> 24;
+        return flags | write | 0x0100; // TODO: World.FlagVisited
+    }
+
+    function executeTurn(dir) {
+        var t = 1;
+        for (; t <= 0x0020; t <<= 1) {
+            if (turn & t) {
+                turn &= ~t;
+                return (6 + dir + constants.RelTurnDelta[t]) % 6;
+            }
+        }
+        for (; t <= 0x0800; t <<= 1) {
+            if (turn & t) {
+                turn &= ~t;
+                return constants.AbsTurnDir[t];
+            }
+        }
+        if (turn !== 0) {
+            throw new Error('unrecognized turning constant ' + turn);
+        }
+        return dir;
+    }
 };
 
 // TODO: WIP
@@ -3158,7 +3163,6 @@ function step(world) {
 //     self.pos.copyFrom(this.oldPos);
 //     self.oldPos.copyFrom(this.oldPos);
 //     self.state = this.state;
-//     self.stateKey = this.stateKey;
 //     self.size = this.size;
 //     self.index = this.index;
 
@@ -3166,27 +3170,6 @@ function step(world) {
 
 //     return self;
 // };
-
-Turmite.prototype.executeTurn =
-function executeTurn(turn) {
-    var t = 1;
-    for (; t <= 0x0020; t <<= 1) {
-        if (turn & t) {
-            this.dir = (6 + this.dir + constants.RelTurnDelta[t]) % 6;
-            return turn & ~t;
-        }
-    }
-    for (; t <= 0x0800; t <<= 1) {
-        if (turn & t) {
-            this.dir = constants.AbsTurnDir[t];
-            return turn & ~t;
-        }
-    }
-    if (turn !== 0) {
-        throw new Error('unrecognized turning constant ' + turn);
-    }
-    return 0;
-};
 
 }],["turmite/lang/analyze.js","hexant/turmite/lang","analyze.js",{"./walk.js":32},function (require, exports, module, __filename, __dirname){
 
@@ -4656,13 +4639,19 @@ function View(world, canvas) {
     this.hexGrid = new HexGrid(
         this.canvas, this.ctxHex,
         this.world.tile.boundingBox().copy());
+    this.updateSize();
 
     this.needsRedraw = false;
 
+    this.boundUpdateEntCell = updateEntCell;
     this.boundDrawEachCell = drawEachCell;
     this.boundMaybeDrawEachCell = maybeDrawEachCell;
 
     var self = this;
+
+    function updateEntCell(data) {
+        return self._updateEntCell(data);
+    }
 
     function drawEachCell(point, data) {
         self.drawCell(point,
@@ -4679,15 +4668,29 @@ function View(world, canvas) {
     }
 }
 
+View.prototype.updateSize =
+function updateSize() {
+    this.hexGrid.updateSize();
+    this.featureSize = this.hexGrid.cellSize * this.entSize;
+    if (this.featureSize <= 5) {
+        this.drawEnt = this.drawSmallEnt;
+    } else if (this.labeled) {
+        this.drawEnt = this.drawLabeledFullEnt;
+    } else {
+        this.drawEnt = this.drawUnlabeledFullEnt;
+    }
+};
+
 View.prototype.setDrawTrace =
 function setDrawTrace(dt) {
-    this.drawTrace = dt ? true : false;
+    this.drawTrace = !!dt;
     this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 };
 
 View.prototype.resize =
 function resize(width, height) {
     this.hexGrid.resize(width, height);
+    this.updateSize();
     this.redraw();
 };
 
@@ -4699,10 +4702,7 @@ function redraw() {
     var ents = this.world.ents;
     this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
-        this.drawEnt(ents[i]);
-        for (i = 0; i < ents.length; i++) {
-            this.lastEntPos[i].copyFrom(ents[i].pos);
-        }
+        this.drawEnt(i);
     }
     this.needsRedraw = false;
 };
@@ -4711,11 +4711,11 @@ View.prototype.updateEnts =
 function updateEnts() {
     var i;
     for (i = 0; i < this.world.ents.length; i++) {
-        var ent = this.world.ents[i];
+        var pos = this.world.getEntPos(i);
         if (i < this.lastEntPos.length) {
-            this.lastEntPos[i].copyFrom(ent.pos);
+            this.lastEntPos[i].copyFrom(pos);
         } else {
-            this.lastEntPos.push(ent.pos.copy());
+            this.lastEntPos.push(pos.copy());
         }
     }
     while (i < this.lastEntPos.length) {
@@ -4725,20 +4725,20 @@ function updateEnts() {
 };
 
 View.prototype.addEnt =
-function addEnt(ent) {
-    this.lastEntPos.push(ent.pos.copy());
+function addEnt(i) {
+    this.lastEntPos.push(this.world.getEntPos(i).copy());
     this.updateColors(false);
 };
 
 View.prototype.updateEnt =
-function updateEnt(ent) {
-    this.lastEntPos[ent.index].copyFrom(ent.pos);
+function updateEnt(i) {
+    this.lastEntPos[i].copyFrom(this.world.getEntPos(i));
     this.updateColors(false);
 };
 
 View.prototype.removeEnt =
-function removeEnt(ent) {
-    swapout(this.lastEntPos, ent.index);
+function removeEnt(i) {
+    swapout(this.lastEntPos, i);
     this.lastEntPos.pop();
     this.updateColors(false);
 };
@@ -4805,6 +4805,13 @@ function setLabeled(labeled) {
     } else {
         this.drawCell = this.drawUnlabeledCell;
     }
+    if (this.featureSize <= 5) {
+        this.drawEnt = this.drawSmallEnt;
+    } else if (this.labeled) {
+        this.drawEnt = this.drawLabeledFullEnt;
+    } else {
+        this.drawEnt = this.drawUnlabeledFullEnt;
+    }
 };
 
 View.prototype.drawUnlabeledCell =
@@ -4819,29 +4826,18 @@ function drawUnlabeledCell(point, color, colors) {
 
 View.prototype.drawLabeledCell =
 function drawLabeledCell(point, color, colors) {
-    var screenPoint = this.drawUnlabeledCell(point, color, colors);
-    this.drawCellLabel(point, screenPoint);
-};
-
-View.prototype.drawCellLabel =
-function drawCellLabel(point, screenPoint) {
-    if (!screenPoint) {
-        screenPoint = this.hexGrid.toScreen(point);
-    }
-
     var ctx2d = this.ctx2d;
+
+    this.ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(point);
+    this.ctx2d.closePath();
+    this.ctx2d.fillStyle = colors[color];
+    this.ctx2d.fill();
+
     ctx2d.lineWidth = 1;
     ctx2d.strokeStyle = '#fff';
-    write(point.toCube().toString(), 0);
-    write(point.toOddQOffset().toString(), 14);
-
-    function write(mess, yoff) {
-        var textWidth = ctx2d.measureText(mess).width;
-        ctx2d.strokeText(
-            mess,
-            screenPoint.x - textWidth / 2,
-            screenPoint.y + yoff);
-    }
+    this._writeText(screenPoint, point.toCube().toString(), 0);
+    this._writeText(screenPoint, point.toOddQOffset().toString(), 14);
 };
 
 View.prototype.drawCell =
@@ -4854,12 +4850,12 @@ function step() {
 
     var expanded = false;
     for (i = 0; i < ents.length; i++) {
-        expanded = this.hexGrid.bounds.expandTo(ents[i].pos) || expanded;
+        expanded = this.hexGrid.bounds.expandTo(this.world.getEntPos(i)) || expanded;
     }
 
     if (expanded) {
         this.needsRedraw = true;
-        this.hexGrid.updateSize();
+        this.updateSize();
     }
 
     if (this.needsRedraw) {
@@ -4874,71 +4870,119 @@ function step() {
     }
 
     for (i = 0; i < ents.length; i++) {
-        this.drawEnt(ents[i]);
-        this.lastEntPos[i].copyFrom(ents[i].pos);
+        this.drawEnt(i);
     }
 };
 
 View.prototype.drawEnt =
-function drawEnt(ent) {
-    var data = this.world.tile.get(ent.pos);
-    if (!(data & World.FlagVisited)) {
-        data = this.world.tile.set(ent.pos, data | World.FlagVisited);
-        this.drawCell(ent.pos,
-                      data & World.MaskColor,
-                      this.antCellColors);
-    }
-
-    var screenPoint = this.hexGrid.toScreen(ent.pos);
-    var size = this.hexGrid.cellSize * this.entSize;
-
-    if (size <= 5) {
-        this.drawSmallEnt(ent, screenPoint, size);
-    } else {
-        this.drawFullEnt(ent, screenPoint, size);
-    }
-
-    if (this.labeled) {
-        this.drawCellLabel(ent.pos, screenPoint);
-    }
-};
-
-View.prototype.drawFullEnt =
-function drawFullEnt(ent, screenPoint, size) {
+View.prototype.drawUnlabeledFullEnt =
+function drawUnlabeledFullEnt(i) {
+    var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
-    var ctx2d = ctxHex.ctx2d;
 
-    var start = ent.dir;
-    var end = ent.dir + 1;
+    var pos = this.world.getEntPos(i);
+    var dir = this.world.getEntDir(i);
+
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
 
     // head
-    ctx2d.fillStyle = this.headColors[ent.index];
-    ctx2d.strokeStyle = this.headColors[ent.index];
-    ctx2d.lineWidth = size / 2;
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.lineWidth = this.featureSize / 2;
     ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, false);
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
     ctx2d.closePath();
     ctx2d.fill();
     ctx2d.stroke();
 
     // body
-    ctx2d.fillStyle = this.bodyColors[ent.index];
+    ctx2d.fillStyle = this.bodyColors[i];
     ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
     ctx2d.closePath();
     ctx2d.fill();
+
+    this.lastEntPos[i].copyFrom(pos);
 };
 
 View.prototype.drawSmallEnt =
-function drawSmallEnt(ent, screenPoint, size) {
+function drawSmallEnt(i) {
+    var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
-    var ctx2d = ctxHex.ctx2d;
 
-    ctx2d.fillStyle = this.headColors[ent.index];
+    var pos = this.world.getEntPos(i);
+
     ctx2d.beginPath();
-    ctxHex.full(screenPoint.x, screenPoint.y, size);
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
+
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.beginPath();
+    ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
     ctx2d.fill();
+
+    this.lastEntPos[i].copyFrom(pos);
+};
+
+View.prototype.drawLabeledFullEnt =
+function drawLabeledFullEnt(i) {
+    var ctx2d = this.ctx2d;
+    var ctxHex = this.hexGrid.ctxHex;
+
+    var pos = this.world.getEntPos(i);
+    var dir = this.world.getEntDir(i);
+
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
+
+    // head
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.lineWidth = this.featureSize / 2;
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.stroke();
+
+    // body
+    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
+    ctx2d.closePath();
+    ctx2d.fill();
+
+    ctx2d.lineWidth = 1;
+    ctx2d.strokeStyle = '#fff';
+    this._writeText(screenPoint, pos.toCube().toString(), 0);
+    this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
+
+    this.lastEntPos[i].copyFrom(pos);
+};
+
+View.prototype._updateEntCell =
+function _updateEntCell(data) {
+    if (!(data & World.FlagVisited)) {
+        this.ctx2d.fillStyle = this.antCellColors[data & World.MaskColor];
+        this.ctx2d.fill();
+    }
+    return data | World.FlagVisited;
+};
+
+View.prototype._writeText =
+function _writeText(screenPoint, mess, yoff) {
+    var textWidth = this.ctx2d.measureText(mess).width;
+    this.ctx2d.strokeText(
+        mess,
+        screenPoint.x - textWidth / 2,
+        screenPoint.y + yoff);
 };
 
 function swapout(ar, i) {
@@ -4960,6 +5004,7 @@ function swapout(ar, i) {
 
 var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
+var CubePoint = Coord.CubePoint;
 
 var OddQOffset = Coord.OddQOffset;
 
@@ -4985,6 +5030,32 @@ function World() {
     this.ents = [];
     this.views = [];
 }
+
+World.prototype.getEntPos =
+function getEntPos(i) {
+    // TODO: take ownership of these
+    return this.ents[i].pos;
+};
+
+World.prototype.getEntDir =
+function getEntDir(i) {
+    // TODO: take ownership of these
+    return this.ents[i].dir;
+};
+
+World.prototype.resetEnt =
+function resetEnt(i) {
+    this.ents[i].reset();
+    this.tile.centerPoint().toCubeInto(this.ents[i].pos);
+    this.ents[i].dir = 0;
+};
+
+World.prototype.turnEnt =
+function turnEnt(i, turnFunc) {
+    var dir = turnFunc(this.ents[i].dir);
+    this.ents[i].dir = dir;
+    this.ents[i].pos.add(CubePoint.basis[dir]);
+};
 
 World.prototype.step =
 function step() {
@@ -5025,58 +5096,17 @@ function redraw() {
     return didredraw;
 };
 
-World.prototype.addEnt =
-function addEnt(ent) {
-    this.numColors = Math.max(this.numColors, ent.numColors);
-    this.numStates = Math.max(this.numStates, ent.numStates);
-    ent.index = this.ents.length;
-    this.ents.push(ent);
-
-    var data = this.tile.get(ent.pos);
-    if (!(data & World.FlagVisited)) {
-        data = this.tile.set(ent.pos, data | World.FlagVisited);
-    }
-
-    for (var i = 0; i < this.views.length; i++) {
-        this.views[i].addEnt(ent);
-    }
-
-    return ent;
-};
-
-World.prototype.updateEnt =
-function updateEnt(ent, i) {
-    if (i === undefined) {
-        i = ent.index;
-    } else {
-        ent.index = i;
-    }
-
-    if (this.ents[i] !== ent) {
-        this.ents[i] = ent;
-    }
-
-    this.numColors = 0;
-    this.numStates = 0;
-    for (i = 0; i < this.ents.length; i++) {
-        this.numColors = Math.max(this.numColors, this.ents[i].numColors);
-        this.numStates = Math.max(this.numStates, this.ents[i].numStates);
-    }
-
-    for (i = 0; i < this.views.length; i++) {
-        this.views[i].updateEnt(ent);
-    }
-
-    return ent;
-};
-
 World.prototype.removeEnt =
 function removeEnt(ent) {
     if (this.ents[ent.index] !== ent) {
         throw new Error('removeEnt mismatch');
     }
+    this._removeEnt(ent.index);
+    return ent;
+};
 
-    var i = ent.index;
+World.prototype._removeEnt =
+function _removeEnt(i) {
     var j = i++;
     for (; j < this.ents.length; i++, j++) {
         this.ents[i] = this.ents[j];
@@ -5085,36 +5115,56 @@ function removeEnt(ent) {
     this.ents.pop();
 
     for (i = 0; i < this.views.length; i++) {
-        this.views[i].removeEnt(ent);
+        this.views[i].removeEnt(i);
     }
-
-    return ent;
-};
-
-World.prototype.pruneEnts =
-function pruneEnts(n) {
-    if (n >= this.ents.length) {
-        return;
-    }
-    for (var i = n; i < this.ents.length; i++) {
-        for (var j = 0; j < this.views.length; ++j) {
-            this.views[j].removeEnt(this.ents[i]);
-        }
-    }
-    this.ents = this.ents.silce(0, n);
 };
 
 World.prototype.setEnts =
 function setEnts(ents) {
-    this.pruneEnts(ents.length);
-    for (var i = 0; i < ents.length; ++i) {
-        var ent = ents[i];
-        if (i < this.ents.length) {
-            this.updateEnt(ent, i);
-        } else {
-            this.addEnt(ent);
+    var cons = ents[0].constructor;
+    var i;
+    var j;
+    for (i = 1; i < ents.length; ++i) {
+        if (ents[i].constructor !== cons) {
+            throw new Error('setEnts must get a list of same-type ents');
         }
     }
+
+    if (ents.length < this.ents.length) {
+        for (i = ents.length; i < this.ents.length; i++) {
+            for (j = 0; j < this.views.length; j++) {
+                this.views[j].removeEnt(i);
+            }
+        }
+        this.ents.length = ents.length;
+    }
+
+    var n = this.ents.length;
+    for (i = 0; i < ents.length; i++) {
+        var ent = ents[i];
+        ent.index = i;
+        this.ents[i] = ent;
+        this.tile.update(ent.pos, markVisited);
+    }
+
+    this.numColors = 0;
+    this.numStates = 0;
+    for (j = 0; j < this.ents.length; j++) {
+        this.numColors = Math.max(this.numColors, this.ents[j].numColors);
+        this.numStates = Math.max(this.numStates, this.ents[j].numStates);
+    }
+
+    for (i = 0; i < n; ++i) {
+        for (var j = 0; j < this.views.length; j++) {
+            this.views[j].updateEnt(j);
+        }
+    }
+    for (; i < ents.length; ++i) {
+        for (var j = 0; j < this.views.length; j++) {
+            this.views[j].addEnt(j);
+        }
+    }
+
 };
 
 World.prototype.addView =
@@ -5123,6 +5173,10 @@ function addView(view) {
     view.updateEnts();
     return view;
 };
+
+function markVisited(data) {
+    return World.FlagVisited | data;
+}
 
 }],["husl.js","husl","husl.js",{},function (require, exports, module, __filename, __dirname){
 

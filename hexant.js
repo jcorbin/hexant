@@ -273,18 +273,18 @@ function reset() {
     this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
 
     this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
-    this.view.hexGrid.updateSize();
+    this.view.updateSize();
 
-    var ent = this.world.ents[0];
-    ent.reset();
-
-    this.world.tile.centerPoint().toCubeInto(ent.pos);
-    var data = this.world.tile.get(ent.pos);
-    this.world.tile.set(ent.pos, World.FlagVisited | data);
+    this.world.resetEnt(0);
+    this.world.tile.update(this.world.getEntPos(0), markVisited);
 
     this.el.width = this.el.width;
     this.view.redraw();
 };
+
+function markVisited(data) {
+    return World.FlagVisited | data;
+}
 
 Hexant.prototype.animate =
 function animate(time) {

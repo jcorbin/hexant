@@ -1,4 +1,11 @@
-# v0.9.6
+# v0.9.7
+
+- Collapsed world entity (re-)initialization code
+- Loosened coupling between turmite entities, world, and especially view
+- Improved view drawing code
+- Improved turmite step code
+
+## v0.9.6
 
 - Stop animation on exception
 - Renamed "frameRate" to "stepRate"

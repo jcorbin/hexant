@@ -36,13 +36,19 @@ function View(world, canvas) {
     this.hexGrid = new HexGrid(
         this.canvas, this.ctxHex,
         this.world.tile.boundingBox().copy());
+    this.updateSize();
 
     this.needsRedraw = false;
 
+    this.boundUpdateEntCell = updateEntCell;
     this.boundDrawEachCell = drawEachCell;
     this.boundMaybeDrawEachCell = maybeDrawEachCell;
 
     var self = this;
+
+    function updateEntCell(data) {
+        return self._updateEntCell(data);
+    }
 
     function drawEachCell(point, data) {
         self.drawCell(point,
@@ -59,15 +65,29 @@ function View(world, canvas) {
     }
 }
 
+View.prototype.updateSize =
+function updateSize() {
+    this.hexGrid.updateSize();
+    this.featureSize = this.hexGrid.cellSize * this.entSize;
+    if (this.featureSize <= 5) {
+        this.drawEnt = this.drawSmallEnt;
+    } else if (this.labeled) {
+        this.drawEnt = this.drawLabeledFullEnt;
+    } else {
+        this.drawEnt = this.drawUnlabeledFullEnt;
+    }
+};
+
 View.prototype.setDrawTrace =
 function setDrawTrace(dt) {
-    this.drawTrace = dt ? true : false;
+    this.drawTrace = !!dt;
     this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 };
 
 View.prototype.resize =
 function resize(width, height) {
     this.hexGrid.resize(width, height);
+    this.updateSize();
     this.redraw();
 };
 
@@ -79,10 +99,7 @@ function redraw() {
     var ents = this.world.ents;
     this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
-        this.drawEnt(ents[i]);
-        for (i = 0; i < ents.length; i++) {
-            this.lastEntPos[i].copyFrom(ents[i].pos);
-        }
+        this.drawEnt(i);
     }
     this.needsRedraw = false;
 };
@@ -91,11 +108,11 @@ View.prototype.updateEnts =
 function updateEnts() {
     var i;
     for (i = 0; i < this.world.ents.length; i++) {
-        var ent = this.world.ents[i];
+        var pos = this.world.getEntPos(i);
         if (i < this.lastEntPos.length) {
-            this.lastEntPos[i].copyFrom(ent.pos);
+            this.lastEntPos[i].copyFrom(pos);
         } else {
-            this.lastEntPos.push(ent.pos.copy());
+            this.lastEntPos.push(pos.copy());
         }
     }
     while (i < this.lastEntPos.length) {
@@ -105,20 +122,20 @@ function updateEnts() {
 };
 
 View.prototype.addEnt =
-function addEnt(ent) {
-    this.lastEntPos.push(ent.pos.copy());
+function addEnt(i) {
+    this.lastEntPos.push(this.world.getEntPos(i).copy());
     this.updateColors(false);
 };
 
 View.prototype.updateEnt =
-function updateEnt(ent) {
-    this.lastEntPos[ent.index].copyFrom(ent.pos);
+function updateEnt(i) {
+    this.lastEntPos[i].copyFrom(this.world.getEntPos(i));
     this.updateColors(false);
 };
 
 View.prototype.removeEnt =
-function removeEnt(ent) {
-    swapout(this.lastEntPos, ent.index);
+function removeEnt(i) {
+    swapout(this.lastEntPos, i);
     this.lastEntPos.pop();
     this.updateColors(false);
 };
@@ -185,6 +202,13 @@ function setLabeled(labeled) {
     } else {
         this.drawCell = this.drawUnlabeledCell;
     }
+    if (this.featureSize <= 5) {
+        this.drawEnt = this.drawSmallEnt;
+    } else if (this.labeled) {
+        this.drawEnt = this.drawLabeledFullEnt;
+    } else {
+        this.drawEnt = this.drawUnlabeledFullEnt;
+    }
 };
 
 View.prototype.drawUnlabeledCell =
@@ -199,29 +223,18 @@ function drawUnlabeledCell(point, color, colors) {
 
 View.prototype.drawLabeledCell =
 function drawLabeledCell(point, color, colors) {
-    var screenPoint = this.drawUnlabeledCell(point, color, colors);
-    this.drawCellLabel(point, screenPoint);
-};
-
-View.prototype.drawCellLabel =
-function drawCellLabel(point, screenPoint) {
-    if (!screenPoint) {
-        screenPoint = this.hexGrid.toScreen(point);
-    }
-
     var ctx2d = this.ctx2d;
+
+    this.ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(point);
+    this.ctx2d.closePath();
+    this.ctx2d.fillStyle = colors[color];
+    this.ctx2d.fill();
+
     ctx2d.lineWidth = 1;
     ctx2d.strokeStyle = '#fff';
-    write(point.toCube().toString(), 0);
-    write(point.toOddQOffset().toString(), 14);
-
-    function write(mess, yoff) {
-        var textWidth = ctx2d.measureText(mess).width;
-        ctx2d.strokeText(
-            mess,
-            screenPoint.x - textWidth / 2,
-            screenPoint.y + yoff);
-    }
+    this._writeText(screenPoint, point.toCube().toString(), 0);
+    this._writeText(screenPoint, point.toOddQOffset().toString(), 14);
 };
 
 View.prototype.drawCell =
@@ -234,12 +247,12 @@ function step() {
 
     var expanded = false;
     for (i = 0; i < ents.length; i++) {
-        expanded = this.hexGrid.bounds.expandTo(ents[i].pos) || expanded;
+        expanded = this.hexGrid.bounds.expandTo(this.world.getEntPos(i)) || expanded;
     }
 
     if (expanded) {
         this.needsRedraw = true;
-        this.hexGrid.updateSize();
+        this.updateSize();
     }
 
     if (this.needsRedraw) {
@@ -254,71 +267,119 @@ function step() {
     }
 
     for (i = 0; i < ents.length; i++) {
-        this.drawEnt(ents[i]);
-        this.lastEntPos[i].copyFrom(ents[i].pos);
+        this.drawEnt(i);
     }
 };
 
 View.prototype.drawEnt =
-function drawEnt(ent) {
-    var data = this.world.tile.get(ent.pos);
-    if (!(data & World.FlagVisited)) {
-        data = this.world.tile.set(ent.pos, data | World.FlagVisited);
-        this.drawCell(ent.pos,
-                      data & World.MaskColor,
-                      this.antCellColors);
-    }
-
-    var screenPoint = this.hexGrid.toScreen(ent.pos);
-    var size = this.hexGrid.cellSize * this.entSize;
-
-    if (size <= 5) {
-        this.drawSmallEnt(ent, screenPoint, size);
-    } else {
-        this.drawFullEnt(ent, screenPoint, size);
-    }
-
-    if (this.labeled) {
-        this.drawCellLabel(ent.pos, screenPoint);
-    }
-};
-
-View.prototype.drawFullEnt =
-function drawFullEnt(ent, screenPoint, size) {
+View.prototype.drawUnlabeledFullEnt =
+function drawUnlabeledFullEnt(i) {
+    var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
-    var ctx2d = ctxHex.ctx2d;
 
-    var start = ent.dir;
-    var end = ent.dir + 1;
+    var pos = this.world.getEntPos(i);
+    var dir = this.world.getEntDir(i);
+
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
 
     // head
-    ctx2d.fillStyle = this.headColors[ent.index];
-    ctx2d.strokeStyle = this.headColors[ent.index];
-    ctx2d.lineWidth = size / 2;
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.lineWidth = this.featureSize / 2;
     ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, false);
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
     ctx2d.closePath();
     ctx2d.fill();
     ctx2d.stroke();
 
     // body
-    ctx2d.fillStyle = this.bodyColors[ent.index];
+    ctx2d.fillStyle = this.bodyColors[i];
     ctx2d.beginPath();
-    ctxHex.wedge(screenPoint.x, screenPoint.y, size, start, end, true);
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
     ctx2d.closePath();
     ctx2d.fill();
+
+    this.lastEntPos[i].copyFrom(pos);
 };
 
 View.prototype.drawSmallEnt =
-function drawSmallEnt(ent, screenPoint, size) {
+function drawSmallEnt(i) {
+    var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
-    var ctx2d = ctxHex.ctx2d;
 
-    ctx2d.fillStyle = this.headColors[ent.index];
+    var pos = this.world.getEntPos(i);
+
     ctx2d.beginPath();
-    ctxHex.full(screenPoint.x, screenPoint.y, size);
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
+
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.beginPath();
+    ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
     ctx2d.fill();
+
+    this.lastEntPos[i].copyFrom(pos);
+};
+
+View.prototype.drawLabeledFullEnt =
+function drawLabeledFullEnt(i) {
+    var ctx2d = this.ctx2d;
+    var ctxHex = this.hexGrid.ctxHex;
+
+    var pos = this.world.getEntPos(i);
+    var dir = this.world.getEntDir(i);
+
+    ctx2d.beginPath();
+    var screenPoint = this.hexGrid.cellPath(pos);
+    ctx2d.closePath();
+    this.world.tile.update(pos, this.boundUpdateEntCell);
+
+    // head
+    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.lineWidth = this.featureSize / 2;
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.stroke();
+
+    // body
+    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.beginPath();
+    ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
+    ctx2d.closePath();
+    ctx2d.fill();
+
+    ctx2d.lineWidth = 1;
+    ctx2d.strokeStyle = '#fff';
+    this._writeText(screenPoint, pos.toCube().toString(), 0);
+    this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
+
+    this.lastEntPos[i].copyFrom(pos);
+};
+
+View.prototype._updateEntCell =
+function _updateEntCell(data) {
+    if (!(data & World.FlagVisited)) {
+        this.ctx2d.fillStyle = this.antCellColors[data & World.MaskColor];
+        this.ctx2d.fill();
+    }
+    return data | World.FlagVisited;
+};
+
+View.prototype._writeText =
+function _writeText(screenPoint, mess, yoff) {
+    var textWidth = this.ctx2d.measureText(mess).width;
+    this.ctx2d.strokeText(
+        mess,
+        screenPoint.x - textWidth / 2,
+        screenPoint.y + yoff);
 };
 
 function swapout(ar, i) {

@@ -41,24 +41,13 @@ function Turmite() {
     this.pos = CubePoint(0, 0, 0);
 
     this.state = 0;
-    this.stateKey = 0;
-    this.turn = 0;
 
     this.index = 0;
-
-    var self = this;
-
-    this.boundUpdate = boundUpdate;
-
-    function boundUpdate(data, point) {
-        return self.update(data, point);
-    }
 }
 
 Turmite.prototype.reset =
 function reset() {
     this.state = 0;
-    this.dir = 0;
 };
 
 Turmite.prototype.clearRules =
@@ -91,29 +80,15 @@ function toString() {
     return '<UNKNOWN turmite>';
 };
 
-Turmite.prototype.update =
-function update(data) {
-    var color = data & 0x00ff;
-    var flags = data & 0xff00;
-    var ruleIndex = this.stateKey | color;
-    var rule = this.rules[ruleIndex];
-    this.turn = rule & 0x0000ffff;
-    var write = (rule & 0x00ff0000) >> 16;
-    var state = (rule & 0xff000000) >> 24;
-    this.state = state;
-    this.stateKey = state << 8;
-    return flags | write | 0x0100; // TODO: World.FlagVisited
-};
-
 Turmite.prototype.step =
 function step(world) {
+    var self = this;
     var tile = world.tile;
-    tile.update(this.pos, this.boundUpdate);
-    var turn = this.turn;
-    this.turn = 0;
+    var pos = world.getEntPos(this.index);
+    var turn = 0;
 
-    turn = this.executeTurn(turn);
-    this.pos.add(CubePoint.basis[this.dir]);
+    tile.update(pos, update);
+    world.turnEnt(this.index, executeTurn);
     if (turn !== 0) {
         throw new Error('turmite forking unimplemented');
     }
@@ -126,9 +101,39 @@ function step(world) {
     //     } else {
     //         self = this;
     //     }
-    //     turn = self.executeTurn(turn);
-    //     self.pos.add(CubePoint.basis[self.dir]);
+    //     world.tuneEnt(self.index, executeTurn);
     // }
+
+    function update(data) {
+        var color = data & 0x00ff;
+        var flags = data & 0xff00;
+        var ruleIndex = self.state << 8 | color;
+        var rule = self.rules[ruleIndex];
+        turn = rule & 0x0000ffff;
+        var write = (rule & 0x00ff0000) >> 16;
+        self.state = (rule & 0xff000000) >> 24;
+        return flags | write | 0x0100; // TODO: World.FlagVisited
+    }
+
+    function executeTurn(dir) {
+        var t = 1;
+        for (; t <= 0x0020; t <<= 1) {
+            if (turn & t) {
+                turn &= ~t;
+                return (6 + dir + constants.RelTurnDelta[t]) % 6;
+            }
+        }
+        for (; t <= 0x0800; t <<= 1) {
+            if (turn & t) {
+                turn &= ~t;
+                return constants.AbsTurnDir[t];
+            }
+        }
+        if (turn !== 0) {
+            throw new Error('unrecognized turning constant ' + turn);
+        }
+        return dir;
+    }
 };
 
 // TODO: WIP
@@ -148,7 +153,6 @@ function step(world) {
 //     self.pos.copyFrom(this.oldPos);
 //     self.oldPos.copyFrom(this.oldPos);
 //     self.state = this.state;
-//     self.stateKey = this.stateKey;
 //     self.size = this.size;
 //     self.index = this.index;
 
@@ -156,24 +160,3 @@ function step(world) {
 
 //     return self;
 // };
-
-Turmite.prototype.executeTurn =
-function executeTurn(turn) {
-    var t = 1;
-    for (; t <= 0x0020; t <<= 1) {
-        if (turn & t) {
-            this.dir = (6 + this.dir + constants.RelTurnDelta[t]) % 6;
-            return turn & ~t;
-        }
-    }
-    for (; t <= 0x0800; t <<= 1) {
-        if (turn & t) {
-            this.dir = constants.AbsTurnDir[t];
-            return turn & ~t;
-        }
-    }
-    if (turn !== 0) {
-        throw new Error('unrecognized turning constant ' + turn);
-    }
-    return 0;
-};
