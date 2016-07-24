@@ -50,11 +50,8 @@
 
 # Performance
 
-- quad tree
-  - compaction
-  - optimistic pre-alloc under a threshold
+- optimistic quad-tree pre-alloc under a threshold
 - drawing:
   - actually measure redraws /sec, we're probably doing too many
   - make redraws faster; while an eye has been kept to performance throughout,
     no real optimization work has happened yet
-  - frameRate vs lag adaptation
