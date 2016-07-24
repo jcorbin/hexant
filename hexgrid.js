@@ -29,21 +29,11 @@ function HexGrid(canvas, ctxHex, bounds) {
     this.cellXYs = new Float64Array(12);
 }
 
-HexGrid.prototype.internalize =
-function internalize(point) {
-    // TODO: hack, better compromise than the broken-ness of doing the sub in
-    // odd-q space
-    return point
-        .toScreenInto(this.scratchPoint)
-        // .copy()
-        // .toOddQOffset()
-        .sub(this.boundTopLeft)
-        ;
-};
-
 HexGrid.prototype.toScreen =
 function toScreen(point) {
-    return this.internalize(point)
+    return point
+        .toScreenInto(this.scratchPoint)
+        .sub(this.boundTopLeft)
         .scale(this.cellSize)
         .add(this.origin)
         ;
