@@ -1,6 +1,5 @@
 'use strict';
 
-var Coord = require('../coord.js');
 var constants = require('./constants.js');
 var parseTurmite = require('./parse.js');
 
