@@ -22,7 +22,10 @@ function Hexant(body, scope) {
     var atob = scope.window.atob || Base64.atob;
     var btoa = scope.window.btoa || Base64.btoa;
 
+    // components
+    this.prompt = null;
     this.el = null;
+
     this.world = null;
     this.view = null;
 
@@ -35,7 +38,6 @@ function Hexant(body, scope) {
     this.goalStepRate = 0;
     this.stepRate = 0;
     this.paused = true;
-    this.prompt = null;
     this.showFPS = false;
     this.animTimes = [];
     this.stepTimes = [];
