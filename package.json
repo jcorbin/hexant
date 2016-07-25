@@ -43,6 +43,8 @@
     "rezult": "1.1.0"
   },
   "translators": {
-    "html": "gutentag/translate-html"
+    "html": "gutentag/translate-html",
+    "frag": "./translate-glsl",
+    "vert": "./translate-glsl"
   }
 }
