@@ -114,7 +114,7 @@ function configure() {
 
     this.hash.bind('showFPS')
         .setDefault(false)
-        .addListener(function onDrawTraceChange(showFPS) {
+        .addListener(function onDrawFPSChange(showFPS) {
             self.showFPS = !! showFPS;
             self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
         });
