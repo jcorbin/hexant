@@ -216,7 +216,7 @@ function drawUnlabeledCell(point, color, colors) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = colors[color];
+    this.ctx2d.fillStyle = rgb_a(colors[color], 1);
     this.ctx2d.fill();
     return screenPoint;
 };
@@ -228,7 +228,7 @@ function drawLabeledCell(point, color, colors) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = colors[color];
+    this.ctx2d.fillStyle = rgb_a(colors[color], 1);
     this.ctx2d.fill();
 
     ctx2d.lineWidth = 1;
@@ -286,8 +286,8 @@ function drawUnlabeledFullEnt(i) {
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
     // head
-    ctx2d.fillStyle = this.headColors[i];
-    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
+    ctx2d.strokeStyle = rgb_a(this.headColors[i], 1);
     ctx2d.lineWidth = this.featureSize / 2;
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
@@ -296,7 +296,7 @@ function drawUnlabeledFullEnt(i) {
     ctx2d.stroke();
 
     // body
-    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.fillStyle = rgb_a(this.bodyColors[i], 1);
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
     ctx2d.closePath();
@@ -317,7 +317,7 @@ function drawSmallEnt(i) {
     ctx2d.closePath();
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
-    ctx2d.fillStyle = this.headColors[i];
+    ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
     ctx2d.beginPath();
     ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
@@ -340,8 +340,8 @@ function drawLabeledFullEnt(i) {
     this.world.tile.update(pos, this.boundUpdateEntCell);
 
     // head
-    ctx2d.fillStyle = this.headColors[i];
-    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
+    ctx2d.strokeStyle = rgb_a(this.headColors[i], 1);
     ctx2d.lineWidth = this.featureSize / 2;
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
@@ -350,7 +350,7 @@ function drawLabeledFullEnt(i) {
     ctx2d.stroke();
 
     // body
-    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.fillStyle = rgb_a(this.bodyColors[i], 1);
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
     ctx2d.closePath();
@@ -367,7 +367,7 @@ function drawLabeledFullEnt(i) {
 View.prototype._updateEntCell =
 function _updateEntCell(data) {
     if (!(data & World.FlagVisited)) {
-        this.ctx2d.fillStyle = this.antCellColors[data & World.MaskColor];
+        this.ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
         this.ctx2d.fill();
     }
     return data | World.FlagVisited;
@@ -390,4 +390,12 @@ function swapout(ar, i) {
     }
     ar[j] = old;
     return j;
+}
+
+function rgb_a(rgb, a) {
+    return 'rgba(' +
+           Math.round(256 * rgb[0]) + ',' +
+           Math.round(256 * rgb[1]) + ',' +
+           Math.round(256 * rgb[2]) + ',' +
+           a.toString() + ')';
 }

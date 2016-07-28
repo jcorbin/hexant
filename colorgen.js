@@ -60,7 +60,7 @@ function LightWheelGenerator(hue, sat) {
             var r = [];
             var l = step;
             for (var i = 0; i < ncolors; l += step, i++) {
-                r.push(husl.toHex(h, sat, l));
+                r.push(husl.toRGB(h, sat, l));
             }
             return r;
         };
@@ -77,16 +77,15 @@ function HueWheelGenerator(sat, light) {
     return hueWheelGenGen;
 
     function hueWheelGenGen(intensity) {
-        var ss = (sat + satDelta * intensity).toFixed(1) + '%';
-        var sl = (light + lightDelta * intensity).toFixed(1) + '%';
+        var mySat = sat + satDelta * intensity;
+        var myLight = light + lightDelta * intensity;
 
         var suffix = ', ' + ss + ', ' + sl + ')';
         return function wheelGen(ncolors) {
             var scale = 360 / ncolors;
             var r = [];
             for (var i = 0; i < ncolors; i++) {
-                var sh = Math.round(i * scale).toString();
-                r.push('hsl(' + sh + suffix);
+                r.push([i * scale, mySat, myLight]);
             }
             return r;
         };
