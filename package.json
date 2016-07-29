@@ -23,6 +23,7 @@
     ]
   },
   "devDependencies": {
+    "gl-matrix": "^2.3.2",
     "hexer": "1.4.5",
     "html-inline": "1.1.1",
     "http-server": "0.8.0",
