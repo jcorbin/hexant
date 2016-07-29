@@ -4,12 +4,9 @@ var HexGrid = require('./hexgrid.js');
 var NGonContext = require('./ngoncontext.js');
 var World = require('./world.js');
 
-module.exports = View;
+module.exports = View2D;
 
-function View(world, canvas) {
-    if (!(this instanceof View)) {
-        return new View(world, canvas);
-    }
+function View2D(world, canvas) {
     this.world = world;
     this.canvas = canvas;
 
@@ -65,7 +62,7 @@ function View(world, canvas) {
     }
 }
 
-View.prototype.updateSize =
+View2D.prototype.updateSize =
 function updateSize() {
     this.hexGrid.updateSize();
     this.featureSize = this.hexGrid.cellSize * this.entSize;
@@ -78,20 +75,20 @@ function updateSize() {
     }
 };
 
-View.prototype.setDrawTrace =
+View2D.prototype.setDrawTrace =
 function setDrawTrace(dt) {
     this.drawTrace = !!dt;
     this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 };
 
-View.prototype.resize =
+View2D.prototype.resize =
 function resize(width, height) {
     this.hexGrid.resize(width, height);
     this.updateSize();
     this.redraw();
 };
 
-View.prototype.redraw =
+View2D.prototype.redraw =
 function redraw() {
     if (this.cellColors === null) {
         return;
@@ -104,7 +101,7 @@ function redraw() {
     this.needsRedraw = false;
 };
 
-View.prototype.updateEnts =
+View2D.prototype.updateEnts =
 function updateEnts() {
     var i;
     for (i = 0; i < this.world.ents.length; i++) {
@@ -121,26 +118,26 @@ function updateEnts() {
     this.updateColors(false);
 };
 
-View.prototype.addEnt =
+View2D.prototype.addEnt =
 function addEnt(i) {
     this.lastEntPos.push(this.world.getEntPos(i).copy());
     this.updateColors(false);
 };
 
-View.prototype.updateEnt =
+View2D.prototype.updateEnt =
 function updateEnt(i) {
     this.lastEntPos[i].copyFrom(this.world.getEntPos(i));
     this.updateColors(false);
 };
 
-View.prototype.removeEnt =
+View2D.prototype.removeEnt =
 function removeEnt(i) {
     swapout(this.lastEntPos, i);
     this.lastEntPos.pop();
     this.updateColors(false);
 };
 
-View.prototype.setColorGen =
+View2D.prototype.setColorGen =
 function setColorGen(colorGen) {
     this.emptyCellColorGen = colorGen(0);
     this.antCellColorGen = colorGen(1);
@@ -149,7 +146,7 @@ function setColorGen(colorGen) {
     this.updateColors(true);
 };
 
-View.prototype.updateColors = function updateColors(regen) {
+View2D.prototype.updateColors = function updateColors(regen) {
     var N = this.world.numColors;
     var M = this.world.ents.length;
 
@@ -194,7 +191,7 @@ View.prototype.updateColors = function updateColors(regen) {
     }
 };
 
-View.prototype.setLabeled =
+View2D.prototype.setLabeled =
 function setLabeled(labeled) {
     this.labeled = labeled;
     if (this.labeled) {
@@ -211,7 +208,7 @@ function setLabeled(labeled) {
     }
 };
 
-View.prototype.drawUnlabeledCell =
+View2D.prototype.drawUnlabeledCell =
 function drawUnlabeledCell(point, color, colors) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
@@ -221,7 +218,7 @@ function drawUnlabeledCell(point, color, colors) {
     return screenPoint;
 };
 
-View.prototype.drawLabeledCell =
+View2D.prototype.drawLabeledCell =
 function drawLabeledCell(point, color, colors) {
     var ctx2d = this.ctx2d;
 
@@ -237,10 +234,10 @@ function drawLabeledCell(point, color, colors) {
     this._writeText(screenPoint, point.toOddQOffset().toString(), 14);
 };
 
-View.prototype.drawCell =
-View.prototype.drawUnlabeledCell;
+View2D.prototype.drawCell =
+View2D.prototype.drawUnlabeledCell;
 
-View.prototype.step =
+View2D.prototype.step =
 function step() {
     var ents = this.world.ents;
     var i;
@@ -271,8 +268,8 @@ function step() {
     }
 };
 
-View.prototype.drawEnt =
-View.prototype.drawUnlabeledFullEnt =
+View2D.prototype.drawEnt =
+View2D.prototype.drawUnlabeledFullEnt =
 function drawUnlabeledFullEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
@@ -305,7 +302,7 @@ function drawUnlabeledFullEnt(i) {
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype.drawSmallEnt =
+View2D.prototype.drawSmallEnt =
 function drawSmallEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
@@ -326,7 +323,7 @@ function drawSmallEnt(i) {
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype.drawLabeledFullEnt =
+View2D.prototype.drawLabeledFullEnt =
 function drawLabeledFullEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
@@ -364,7 +361,7 @@ function drawLabeledFullEnt(i) {
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype._updateEntCell =
+View2D.prototype._updateEntCell =
 function _updateEntCell(data) {
     if (!(data & World.FlagVisited)) {
         this.ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
@@ -373,7 +370,7 @@ function _updateEntCell(data) {
     return data | World.FlagVisited;
 };
 
-View.prototype._writeText =
+View2D.prototype._writeText =
 function _writeText(screenPoint, mess, yoff) {
     var textWidth = this.ctx2d.measureText(mess).width;
     this.ctx2d.strokeText(

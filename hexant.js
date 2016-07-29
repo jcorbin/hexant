@@ -7,7 +7,7 @@ var Base64 = require('Base64');
 var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
-var View = require('./view.js');
+var View2D = require('./view_2d.js');
 var Turmite = require('./turmite/index.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
@@ -92,7 +92,7 @@ function hookup(id, component, scope) {
     this.titleBase = this.window.document.title;
     this.world = new World();
     this.view = this.world.addView(
-        new View(this.world, this.el));
+        new View2D(this.world, this.el));
 
     this.window.addEventListener('keypress', this.boundOnKeyPress);
     this.el.addEventListener('click', this.boundPlaypause);
