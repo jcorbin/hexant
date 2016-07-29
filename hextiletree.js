@@ -97,7 +97,8 @@ function update(point, func) {
         this.root = this.root.expand();
     }
     this.root.oqo.copyFrom(this.oqo);
-    return this.root._getOrCreateTile().update(this.oqo, func);
+    var tile = this.root._getOrCreateTile();
+    return tile.update(this.oqo, func);
 };
 
 HexTileTree.prototype.get =
@@ -112,7 +113,8 @@ function set(point, datum) {
         this.root = this.root.expand();
     }
     this.root.oqo.copyFrom(this.oqo);
-    return this.root._getOrCreateTile().set(this.oqo, datum);
+    var tile = this.root._getOrCreateTile();
+    return tile.set(this.oqo, datum);
 };
 
 function HexTileTreeNode(origin, width, height) {

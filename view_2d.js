@@ -146,7 +146,8 @@ function setColorGen(colorGen) {
     this.updateColors(true);
 };
 
-View2D.prototype.updateColors = function updateColors(regen) {
+View2D.prototype.updateColors =
+function updateColors(regen) {
     var N = this.world.numColors;
     var M = this.world.ents.length;
 
@@ -208,6 +209,7 @@ function setLabeled(labeled) {
     }
 };
 
+View2D.prototype.drawCell =
 View2D.prototype.drawUnlabeledCell =
 function drawUnlabeledCell(point, color, colors) {
     this.ctx2d.beginPath();
@@ -233,9 +235,6 @@ function drawLabeledCell(point, color, colors) {
     this._writeText(screenPoint, point.toCube().toString(), 0);
     this._writeText(screenPoint, point.toOddQOffset().toString(), 14);
 };
-
-View2D.prototype.drawCell =
-View2D.prototype.drawUnlabeledCell;
 
 View2D.prototype.step =
 function step() {
