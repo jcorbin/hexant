@@ -62,6 +62,12 @@ function View2D(world, canvas) {
     }
 }
 
+View2D.prototype.reset =
+function reset() {
+    this.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    this.updateSize();
+};
+
 View2D.prototype.updateSize =
 function updateSize() {
     this.hexGrid.updateSize();
