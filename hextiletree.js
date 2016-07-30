@@ -30,7 +30,23 @@ var nodeOriginOffset = [
 
 function HexTileTree(origin, tileWidth, tileHeight) {
     this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
-    this.oqo = new Coord.OddQOffset(0, 0);
+    this.oqo = new OddQOffset(0, 0);
+}
+
+function HexTileTreeNode(origin, width, height) {
+    this.origin = origin;
+    this.width = width;
+    this.height = height;
+    this.tileWidth = Math.floor(this.width / 2);
+    this.tileHeight = Math.floor(this.height / 2);
+    this.tiles = [null, null, null, null];
+    this.concrete = 0;
+    this.oqo = new OddQOffset(0, 0);
+    var topLeft = OddQOffset(this.origin.q - this.tileWidth,
+                             this.origin.r - this.tileHeight);
+    var bottomRight = OddQOffset(this.origin.q + this.tileWidth,
+                                 this.origin.r + this.tileHeight);
+    this.box = OddQBox(topLeft, bottomRight);
 }
 
 HexTileTree.prototype.dump =
@@ -117,22 +133,6 @@ function set(point, datum) {
     return tile.set(this.oqo, datum);
 };
 
-function HexTileTreeNode(origin, width, height) {
-    this.origin = origin;
-    this.width = width;
-    this.height = height;
-    this.tileWidth = Math.floor(this.width / 2);
-    this.tileHeight = Math.floor(this.height / 2);
-    this.tiles = [null, null, null, null];
-    this.concrete = 0;
-    this.oqo = new Coord.OddQOffset(0, 0);
-    var topLeft = OddQOffset(this.origin.q - this.tileWidth,
-                             this.origin.r - this.tileHeight);
-    var bottomRight = OddQOffset(this.origin.q + this.tileWidth,
-                                 this.origin.r + this.tileHeight);
-    this.box = OddQBox(topLeft, bottomRight);
-}
-
 HexTileTreeNode.prototype.expand =
 function expand() {
     var node = new HexTileTreeNode(
@@ -208,7 +208,7 @@ function compact() {
     this.tiles[1].eachDataPoint(eachPoint);
     this.tiles[2].eachDataPoint(eachPoint);
     this.tiles[3].eachDataPoint(eachPoint);
-    return newTile
+    return newTile;
 
     function eachPoint(point, datum) {
         // newTile.data[i++] = datum; TODO: should be able to do something like thing
@@ -286,7 +286,7 @@ function _getOrCreateTile() {
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
     if (!tile) {
-        var origin = OddQOffset(this.origin.q, this.origin.r);
+        var origin = this.origin.copy();
         if (this.oqo.q < origin.q) {
             origin.q -= this.tileWidth;
         }
