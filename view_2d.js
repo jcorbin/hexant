@@ -38,15 +38,10 @@ function View2D(world, canvas) {
 
     this.needsRedraw = false;
 
-    this.boundUpdateEntCell = updateEntCell;
     this.boundDrawEachCell = drawEachCell;
     this.boundMaybeDrawEachCell = maybeDrawEachCell;
 
     var self = this;
-
-    function updateEntCell(data) {
-        return self._updateEntCell(data);
-    }
 
     function drawEachCell(point, data) {
         self.drawCell(point,
@@ -312,11 +307,13 @@ function drawUnlabeledFullEnt(i) {
 
     var pos = this.world.getEntPos(i);
     var dir = this.world.getEntDir(i);
+    var data = this.world.tile.get(pos);
 
     ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(pos);
     ctx2d.closePath();
-    this.world.tile.update(pos, this.boundUpdateEntCell);
+    ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
+    ctx2d.fill();
 
     // head
     ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
@@ -344,11 +341,14 @@ function drawSmallEnt(i) {
     var ctxHex = this.hexGrid.ctxHex;
 
     var pos = this.world.getEntPos(i);
+    var data = this.world.tile.get(pos);
 
     ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(pos);
     ctx2d.closePath();
-    this.world.tile.update(pos, this.boundUpdateEntCell);
+    ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
+    ctx2d.fill();
+
 
     ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
     ctx2d.beginPath();
@@ -366,11 +366,14 @@ function drawLabeledFullEnt(i) {
 
     var pos = this.world.getEntPos(i);
     var dir = this.world.getEntDir(i);
+    var data = this.world.tile.get(pos);
 
     ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(pos);
     ctx2d.closePath();
     this.world.tile.update(pos, this.boundUpdateEntCell);
+    ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
+    ctx2d.fill();
 
     // head
     ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
@@ -395,15 +398,6 @@ function drawLabeledFullEnt(i) {
     this._writeText(screenPoint, pos.toOddQOffset().toString(), 14);
 
     this.lastEntPos[i].copyFrom(pos);
-};
-
-View2D.prototype._updateEntCell =
-function _updateEntCell(data) {
-    if (!(data & World.FlagVisited)) {
-        this.ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
-        this.ctx2d.fill();
-    }
-    return data | World.FlagVisited;
 };
 
 View2D.prototype._writeText =
