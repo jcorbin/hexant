@@ -143,6 +143,32 @@ function reset() {
     this.root = null;
 };
 
+HexTileTree.prototype.dataLength =
+function dataLength() {
+    if (this.root === null) {
+        return 0;
+    }
+    return this.root.dataLength();
+};
+
+HexTileTreeNode.prototype.dataLength =
+function dataLength() {
+    var n = 0;
+    if (this.tiles[0] !== null) {
+        n += this.tiles[0].dataLength();
+    }
+    if (this.tiles[1] !== null) {
+        n += this.tiles[1].dataLength();
+    }
+    if (this.tiles[2] !== null) {
+        n += this.tiles[2].dataLength();
+    }
+    if (this.tiles[3] !== null) {
+        n += this.tiles[3].dataLength();
+    }
+    return n;
+};
+
 HexTileTree.prototype.dump =
 function dump() {
     if (this.root !== null) {

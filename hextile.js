@@ -40,6 +40,11 @@ function init(origin, width, height) {
     return this;
 };
 
+OddQHexTile.prototype.dataLength =
+function dataLength() {
+    return this.data.length;
+};
+
 OddQHexTile.prototype.boundingBox =
 function boundingBox() {
     return OddQBox(this.origin, this.origin.copy().addTo(this.width, this.height));
