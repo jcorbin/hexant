@@ -96,7 +96,7 @@ function boundingBox() {
 
 HexTileTree.prototype.eachDataPoint =
 function eachDataPoint(each) {
-    this.root.eachDataPoint(each, null);
+    this.root.eachDataPoint(each, null, null);
 };
 
 HexTileTree.prototype.centerPoint =
@@ -168,23 +168,23 @@ function boundingBox() {
 };
 
 HexTileTreeNode.prototype.eachDataPoint =
-function eachDataPoint(each, replaceMe) {
+function eachDataPoint(each, fill, replaceMe) {
     var self = this;
 
     var i = 0;
     if (replaceMe && this.concrete == 4) {
         var tile = this.compact();
         replaceMe(tile);
-        tile.eachDataPoint(each, null);
+        tile.eachDataPoint(each, fill, null);
         return;
     }
 
     for (; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile) {
-            tile.eachDataPoint(each, replace);
-        } else {
-            this._fakeDataPoints(i, each);
+            tile.eachDataPoint(each, fill, replace);
+        } else if (typeof fill === 'number') {
+            this._fakeDataPoints(i, each, fill);
         }
     }
 
@@ -197,10 +197,10 @@ function eachDataPoint(each, replaceMe) {
 HexTileTreeNode.prototype.compact =
 function compact() {
     var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
-    this.tiles[0].eachDataPoint(eachPoint, null);
-    this.tiles[1].eachDataPoint(eachPoint, null);
-    this.tiles[2].eachDataPoint(eachPoint, null);
-    this.tiles[3].eachDataPoint(eachPoint, null);
+    this.tiles[0].eachDataPoint(eachPoint, null, null);
+    this.tiles[1].eachDataPoint(eachPoint, null, null);
+    this.tiles[2].eachDataPoint(eachPoint, null, null);
+    this.tiles[3].eachDataPoint(eachPoint, null, null);
     return newTile;
 
     function eachPoint(point, datum) {
@@ -210,7 +210,7 @@ function compact() {
 };
 
 HexTileTreeNode.prototype._fakeDataPoints =
-function _fakeDataPoints(i, each) {
+function _fakeDataPoints(i, each, fill) {
     var tileCol = i & 1;
     var tileRow = i >> 1;
 
@@ -222,7 +222,7 @@ function _fakeDataPoints(i, each) {
     var point = OddQOffset(loQ, loR);
     for (point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++) {
-            each(point, 0);
+            each(point, fill);
         }
     }
 };
