@@ -28,6 +28,7 @@ function Hexant(body, scope) {
     this.fpsOverlay = null;
     this.fps = null;
     this.sps = null;
+    this.redrawTiming = null;
 
     this.world = null;
     this.view = null;
@@ -86,6 +87,7 @@ function hookup(id, component, scope) {
     this.fpsOverlay = scope.components.fpsOverlay;
     this.fps = scope.components.fps;
     this.sps = scope.components.sps;
+    this.redrawTiming = scope.components.redrawTiming;
 
     this.titleBase = this.window.document.title;
     this.world = new World();
@@ -340,6 +342,12 @@ function _animate(time) {
     if (this.showFPS) {
         this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
         this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+        var stats = this.world.redrawTimingStats();
+        if (stats) {
+            this.redrawTiming.innerText = 'µ=' + toSI(stats.m1/1e3) + 's 𝜎=' + toSI(Math.sqrt(stats.m2/1e3)) + 's';
+        } else {
+            this.redrawTiming.innerText = '';
+        }
     }
 };
 
@@ -406,6 +414,7 @@ function play() {
     this.animTiming.reset();
     this.fps.innerText = '';
     this.sps.innerText = '';
+    this.redrawTiming.innerText = '';
     this.lastStepTime = null;
     this.animator.requestAnimation();
     this.paused = false;
@@ -415,6 +424,7 @@ Hexant.prototype.pause =
 function pause() {
     this.fps.innerText = '<' + this.fps.innerText + '>';
     this.sps.innerText = '<' + this.sps.innerText + '>';
+    this.redrawTiming.innerText = '<' + this.redrawTiming.innerText + '>';
     this.lastStepTime = null;
     this.animator.cancelAnimation();
     this.paused = true;
@@ -456,14 +466,20 @@ function resize(width, height) {
     this.view.resize(width, height);
 };
 
+var nsiSuffix = ['', 'm', 'µ', 'n'];
 var siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
 function toSI(n) {
-    if (n < 1000) {
+    if (n < 1) {
+        for (var nsi = 0; nsi < nsiSuffix.length && n < 1; ++nsi, n *= 1e3) {
+        }
+        return n.toPrecision(3) + nsiSuffix[nsi];
+    }
+    if (n < 1e3) {
         return n.toFixed(0);
     }
-    n /= 1000;
-    for (var si = 0; si < siSuffix.length && n > 1000; ++si, n /= 1000) {
+    n /= 1e3;
+    for (var si = 0; si < siSuffix.length && n > 1e3; ++si, n /= 1e3) {
     }
     return n.toPrecision(3) + siSuffix[si];
 }
