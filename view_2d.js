@@ -93,8 +93,12 @@ function redraw() {
     if (this.cellColors === null) {
         return;
     }
+    if (this.drawUnvisited) {
+        this.world.tile.eachDataPoint(this.boundDrawEachCell, 0);
+    } else {
+        this.world.tile.eachDataPoint(this.boundMaybeDrawEachCell, null);
+    }
     var ents = this.world.ents;
-    this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
         this.drawEnt(i);
     }
