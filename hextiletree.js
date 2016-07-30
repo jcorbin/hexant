@@ -96,7 +96,7 @@ function boundingBox() {
 
 HexTileTree.prototype.eachDataPoint =
 function eachDataPoint(each) {
-    this.root.eachDataPoint(each);
+    this.root.eachDataPoint(each, null);
 };
 
 HexTileTree.prototype.centerPoint =
@@ -175,7 +175,7 @@ function eachDataPoint(each, replaceMe) {
     if (replaceMe && this.concrete == 4) {
         var tile = this.compact();
         replaceMe(tile);
-        tile.eachDataPoint(each);
+        tile.eachDataPoint(each, null);
         return;
     }
 
@@ -197,10 +197,10 @@ function eachDataPoint(each, replaceMe) {
 HexTileTreeNode.prototype.compact =
 function compact() {
     var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
-    this.tiles[0].eachDataPoint(eachPoint);
-    this.tiles[1].eachDataPoint(eachPoint);
-    this.tiles[2].eachDataPoint(eachPoint);
-    this.tiles[3].eachDataPoint(eachPoint);
+    this.tiles[0].eachDataPoint(eachPoint, null);
+    this.tiles[1].eachDataPoint(eachPoint, null);
+    this.tiles[2].eachDataPoint(eachPoint, null);
+    this.tiles[3].eachDataPoint(eachPoint, null);
     return newTile;
 
     function eachPoint(point, datum) {

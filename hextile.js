@@ -52,7 +52,7 @@ function set(point, datum) {
 };
 
 OddQHexTile.prototype.eachDataPoint =
-function eachDataPoint(each) {
+function eachDataPoint(each, replace) {
     var loQ = this.origin.q;
     var loR = this.origin.r;
     var hiQ = loQ + this.width;
