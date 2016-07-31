@@ -300,15 +300,17 @@ function animate(time) {
 
 Hexant.prototype._animate =
 function _animate(time) {
-    var steps = 1;
     if (!this.lastStepTime) {
         this.lastStepTime = time;
-    } else {
-        var progress = time - this.lastStepTime;
-        steps = Math.round(progress / 1000 * this.stepRate);
-        this.animTiming.collect(progress);
-        this.throttle()
+        return;
     }
+
+    var steps = 1;
+    var progress = time - this.lastStepTime;
+    steps = Math.round(progress / 1000 * this.stepRate);
+    this.animTiming.collect(progress);
+    this.throttle()
+
     switch (steps) {
     case 0:
         break;
