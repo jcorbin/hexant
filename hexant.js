@@ -306,9 +306,9 @@ function _animate(time) {
     }
 
     var steps = 1;
-    var progress = time - this.lastStepTime;
-    steps = Math.round(progress / 1000 * this.stepRate);
-    this.animTiming.collect(progress);
+    var sinceLast = time - this.lastStepTime;
+    steps = Math.round(sinceLast / 1000 * this.stepRate);
+    this.animTiming.collect(sinceLast);
     this.throttle()
 
     switch (steps) {
