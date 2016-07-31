@@ -332,7 +332,6 @@ function _animate(time) {
     }
     while ((time - this.stepTimes[0]) > FPSInterval) {
         this.stepTimes.shift();
-        this.stepTimes.shift();
     }
 
     if (this.showFPS) {
