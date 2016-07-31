@@ -317,13 +317,14 @@ function _animate(time) {
     case 1:
         this.world.step();
         this.stepTimes.push(time, 1);
+        this.lastStepTime = time;
         break;
     default:
         this.stepTimes.push(time, steps);
         this.world.stepn(steps);
+        this.lastStepTime = time;
         break;
     }
-    this.lastStepTime = time;
     this.animTimes.push(time);
 
     while ((time - this.animTimes[0]) > FPSInterval) {
