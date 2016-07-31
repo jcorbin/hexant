@@ -34,7 +34,7 @@ function Hexant(body, scope) {
         decode: decodeHash
     });
     this.animator = scope.animator.add(this);
-    this.lastFrameTime = null;
+    this.lastStepTime = null;
     this.goalStepRate = 0;
     this.stepRate = 0;
     this.paused = true;
@@ -301,10 +301,10 @@ function animate(time) {
 Hexant.prototype._animate =
 function _animate(time) {
     var steps = 1;
-    if (!this.lastFrameTime) {
-        this.lastFrameTime = time;
+    if (!this.lastStepTime) {
+        this.lastStepTime = time;
     } else {
-        var progress = time - this.lastFrameTime;
+        var progress = time - this.lastStepTime;
         steps = Math.round(progress / 1000 * this.stepRate);
         this.animTiming.collect(progress);
         this.throttle()
@@ -321,7 +321,7 @@ function _animate(time) {
         this.world.stepn(steps);
         break;
     }
-    this.lastFrameTime = time;
+    this.lastStepTime = time;
     this.animTimes.push(time);
 
     while ((time - this.animTimes[0]) > FPSInterval) {
@@ -401,7 +401,7 @@ function play() {
     this.animTiming.reset();
     this.fps.innerText = '';
     this.sps.innerText = '';
-    this.lastFrameTime = null;
+    this.lastStepTime = null;
     this.animator.requestAnimation();
     this.paused = false;
 };
@@ -410,7 +410,7 @@ Hexant.prototype.pause =
 function pause() {
     this.fps.innerText = '<' + this.fps.innerText + '>';
     this.sps.innerText = '<' + this.sps.innerText + '>';
-    this.lastFrameTime = null;
+    this.lastStepTime = null;
     this.animator.cancelAnimation();
     this.paused = true;
 };
