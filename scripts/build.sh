@@ -4,6 +4,7 @@ set -x
 
 desc=$(git describe HEAD)
 mess=$(git show HEAD --no-decorate --pretty=oneline | cut -d ' ' -f2-)
+src=index-bundle-min.js
 
 case "$mess" in
 Merge\ tag*)
@@ -17,11 +18,12 @@ Merge\ branch*)
     ;;
 *)
     base=.
+    src=index-bundle.js
     ;;
 esac
 
 sed \
-    -e "/data-import/s/src=[^>]*>/src=\"index-bundle-min.js\">/" \
+    -e "/data-import/s/src=[^>]*>/src=\"$src\">/" \
     -e "s~BASE~$base~" \
     -e "s/DEV/$desc/" \
     -e "/PROJECT LINK/d" \
@@ -29,7 +31,9 @@ sed \
 
 npm run grammar
 bundle index.js >index-bundle.js
-minify index-bundle.js >index-bundle-min.js
+if [ "$src" == "index-bundle-min.js" ]; then
+    minify index-bundle.js >index-bundle-min.js
+fi
 
 html-inline -i index-tmp.html -o index.html
 rm -f index-tmp.html
