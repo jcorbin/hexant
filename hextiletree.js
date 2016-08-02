@@ -59,6 +59,14 @@ function HexTileTreeNode() {
     ];
 }
 
+HexTileTree.prototype.boundedLength =
+function boundedLength() {
+    if (this.root === null) {
+        return 0;
+    }
+    return this.root.size * this.root.size;
+};
+
 HexTileTreeNode.prototype.init =
 function init(tree, origin, size, replaceme) {
     this.tree = tree;
