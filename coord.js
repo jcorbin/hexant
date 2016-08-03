@@ -198,6 +198,11 @@ OddQOffset.prototype.sub = function sub(other) {
     this.r -= other.r;
     return this;
 };
+OddQOffset.prototype.scale = function scale(n) {
+    this.q *= n;
+    this.r *= n;
+    return this;
+};
 OddQOffset.prototype.mulBy = function mulBy(q, r) {
     this.q *= q;
     this.r *= r;
