@@ -183,7 +183,7 @@ OddQOffset.prototype.copy = function copy() {
 };
 OddQOffset.prototype.copyFrom = function copyFrom(other) {
     if (other.type !== this.type) {
-        return this.copyFrom(other.toOddQOffset());
+        return other.toOddQOffsetInto(this);
     }
     this.q = other.q;
     this.r = other.r;
