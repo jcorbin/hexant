@@ -47,6 +47,11 @@ function HexTileTreeNode(origin, size) {
     this.box = OddQBox(topLeft, bottomRight);
 }
 
+HexTileTree.prototype.reset =
+function reset() {
+    this.root = null;
+};
+
 HexTileTree.prototype.dump =
 function dump() {
     if (this.root !== null) {
