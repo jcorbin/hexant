@@ -28,9 +28,9 @@ var nodeOriginOffset = [
     OddQOffset(1, 1)
 ];
 
-function HexTileTree(origin, tileWidth, tileHeight) {
-    this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
+function HexTileTree() {
     this.oqo = new OddQOffset(0, 0);
+    this.root = new HexTileTreeNode(new OddQOffset(0, 0), 2, 2);
 }
 
 function HexTileTreeNode(origin, width, height) {

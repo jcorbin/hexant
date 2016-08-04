@@ -26,7 +26,7 @@ World.MaskResultTurn  = 0x0000ffff;
 function World() {
     this.numColors = 0;
     this.numStates = 0;
-    this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.tile = new HexTileTree();
     this.ents = [];
     this.views = [];
     this.redrawTiming = [];
