@@ -128,6 +128,18 @@ CubePoint.prototype.sub = function sub(other) {
     this.z -= other.z;
     return this;
 };
+CubePoint.prototype.scale = function scale(n) {
+    this.x *= n;
+    this.y *= n;
+    this.z *= n;
+    return this;
+};
+CubePoint.prototype.mulBy = function mulBy(x, y, z) {
+    this.x *= x;
+    this.y *= y;
+    this.z *= z;
+    return this;
+};
 CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
     screenPoint.x = 3 / 2 * this.x;
     screenPoint.y = Math.sqrt(3) * (this.z + this.x / 2);
