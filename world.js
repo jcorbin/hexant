@@ -47,7 +47,7 @@ function getEntDir(i) {
 World.prototype.resetEnt =
 function resetEnt(i) {
     this.ents[i].reset();
-    this.tile.centerPoint().toCubeInto(this.ents[i].pos);
+    this.ents[i].pos.scale(0); // reset to 0,0
     this.ents[i].dir = 0;
 };
 
