@@ -171,14 +171,14 @@ function expand() {
 OddQHexTile.prototype.growthOrigin =
 function growthOrigin(i) {
     return this.origin.copy().add(
-        tileOriginOffset[i].copy().scale(this.width)
+        this.oqo.copyFrom(tileOriginOffset[i]).scale(this.width)
     );
 };
 
 HexTileTreeNode.prototype.growthOrigin =
 function growthOrigin(i) {
     return this.origin.copy().add(
-        nodeOriginOffset[i].copy().scale(this.tileSize)
+        this.oqo.copyFrom(nodeOriginOffset[i]).scale(this.tileSize)
     );
 };
 
