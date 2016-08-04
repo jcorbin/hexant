@@ -32,7 +32,8 @@ function View2D(world, canvas) {
 
     this.hexGrid = new HexGrid(
         this.canvas, this.ctxHex,
-        this.world.tile.boundingBox().copy());
+        this.world.tile.boundingBox());
+
     this.updateSize();
 
     this.needsRedraw = false;
