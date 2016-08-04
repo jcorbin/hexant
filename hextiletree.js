@@ -29,6 +29,7 @@ var nodeOriginOffset = [
 ];
 
 function HexTileTree() {
+    this.minTileArea = 4;
     this.oqo = new OddQOffset(0, 0);
     this.root = null;
 }
@@ -141,7 +142,8 @@ function centerPoint() {
 HexTileTree.prototype._ensureRoot =
 function _ensureRoot() {
     if (this.root === null) {
-        this.root = new HexTileTreeNode(this, null, 2, null);
+        var s = Math.ceil(Math.sqrt(this.minTileArea))*2;
+        this.root = new HexTileTreeNode(this, null, s, null);
     }
 };
 
