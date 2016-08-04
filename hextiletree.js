@@ -30,7 +30,7 @@ var nodeOriginOffset = [
 
 function HexTileTree() {
     this.oqo = new OddQOffset(0, 0);
-    this.root = new HexTileTreeNode(new OddQOffset(0, 0), 2);
+    this.root = null;
 }
 
 function HexTileTreeNode(origin, size) {
@@ -114,8 +114,16 @@ function centerPoint() {
     return this.root.centerPoint();
 };
 
+HexTileTree.prototype._ensureRoot =
+function _ensureRoot() {
+    if (this.root === null) {
+        this.root = new HexTileTreeNode(new OddQOffset(0, 0), 2);
+    }
+};
+
 HexTileTree.prototype.update =
 function update(point, func) {
+    this._ensureRoot();
     point.toOddQOffsetInto(this.oqo);
     while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
@@ -127,11 +135,13 @@ function update(point, func) {
 
 HexTileTree.prototype.get =
 function get(point) {
+    this._ensureRoot();
     return this.root.get(point);
 };
 
 HexTileTree.prototype.set =
 function set(point, datum) {
+    this._ensureRoot();
     point.toOddQOffsetInto(this.oqo);
     while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
