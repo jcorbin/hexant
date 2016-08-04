@@ -30,22 +30,20 @@ var nodeOriginOffset = [
 
 function HexTileTree() {
     this.oqo = new OddQOffset(0, 0);
-    this.root = new HexTileTreeNode(new OddQOffset(0, 0), 2, 2);
+    this.root = new HexTileTreeNode(new OddQOffset(0, 0), 2);
 }
 
-function HexTileTreeNode(origin, width, height) {
+function HexTileTreeNode(origin, size) {
     this.origin = origin;
-    this.width = width;
-    this.height = height;
-    this.tileWidth = Math.floor(this.width / 2);
-    this.tileHeight = Math.floor(this.height / 2);
+    this.size = size;
+    this.tileSize = Math.floor(this.size / 2);
     this.tiles = [null, null, null, null];
     this.concrete = 0;
     this.oqo = new OddQOffset(0, 0);
-    var topLeft = OddQOffset(this.origin.q - this.tileWidth,
-                             this.origin.r - this.tileHeight);
-    var bottomRight = OddQOffset(this.origin.q + this.tileWidth,
-                                 this.origin.r + this.tileHeight);
+    var topLeft = OddQOffset(this.origin.q - this.tileSize,
+                             this.origin.r - this.tileSize);
+    var bottomRight = OddQOffset(this.origin.q + this.tileSize,
+                                 this.origin.r + this.tileSize);
     this.box = OddQBox(topLeft, bottomRight);
 }
 
@@ -81,7 +79,7 @@ function dump() {
     var parts = ['Tile @' + this.origin.toString()];
     var row = [];
     for (var i = 0; i < this.data.length; i++) {
-        if (i && i % this.width === 0) {
+        if (i && i % this.size === 0) {
             parts.push(row.join(' '));
             row = [];
         }
@@ -135,8 +133,7 @@ function set(point, datum) {
 
 HexTileTreeNode.prototype.expand =
 function expand() {
-    var node = new HexTileTreeNode(
-        this.origin.copy(), this.width * 2, this.height * 2);
+    var node = new HexTileTreeNode(this.origin.copy(), this.size * 2);
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
@@ -148,11 +145,9 @@ function expand() {
 
 OddQHexTile.prototype.grow =
 function grow(i) {
-    var offset = tileOriginOffset[i].copy()
-        .mulBy(this.width, this.height);
+    var offset = tileOriginOffset[i].copy().scale(this.width);
     var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(
-        origin, 2 * this.width, 2 * this.height);
+    var node = new HexTileTreeNode(origin, 2 * this.width);
     node.tiles[zoomPerm[i]] = this;
     node.concrete++;
     return node;
@@ -160,11 +155,9 @@ function grow(i) {
 
 HexTileTreeNode.prototype.grow =
 function grow(i) {
-    var offset = nodeOriginOffset[i].copy()
-        .mulBy(this.tileWidth, this.tileHeight);
+    var offset = nodeOriginOffset[i].copy().scale(this.tileSize);
     var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(
-        origin, 2 * this.width, 2 * this.height);
+    var node = new HexTileTreeNode(origin, 2 * this.size);
     node.tiles[zoomPerm[i]] = this;
     return node;
 };
@@ -203,7 +196,7 @@ function eachDataPoint(each, replaceMe) {
 
 HexTileTreeNode.prototype.compact =
 function compact() {
-    var newTile = new OddQHexTile(this.box.topLeft, this.width, this.height);
+    var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
     this.tiles[0].eachDataPoint(eachPoint);
     this.tiles[1].eachDataPoint(eachPoint);
     this.tiles[2].eachDataPoint(eachPoint);
@@ -221,10 +214,10 @@ function _fakeDataPoints(i, each) {
     var tileCol = i & 1;
     var tileRow = i >> 1;
 
-    var loQ = this.origin.q + (tileCol ? 0 : -this.tileWidth);
-    var loR = this.origin.r + (tileRow ? 0 : -this.tileHeight);
-    var hiQ = loQ + this.tileWidth;
-    var hiR = loR + this.tileHeight;
+    var loQ = this.origin.q + (tileCol ? 0 : -this.tileSize);
+    var loR = this.origin.r + (tileRow ? 0 : -this.tileSize);
+    var hiQ = loQ + this.tileSize;
+    var hiR = loR + this.tileSize;
 
     var point = OddQOffset(loQ, loR);
     for (point.r = loR; point.r < hiR; point.r++) {
@@ -288,15 +281,15 @@ function _getOrCreateTile() {
     if (!tile) {
         var origin = this.origin.copy();
         if (this.oqo.q < origin.q) {
-            origin.q -= this.tileWidth;
+            origin.q -= this.tileSize;
         }
         if (this.oqo.r < origin.r) {
-            origin.r -= this.tileHeight;
+            origin.r -= this.tileSize;
         }
         // TODO: assert offset point in range
 
         // TODO: heuristic for when to create a sparse node instead
-        tile = new OddQHexTile(origin, this.tileWidth, this.tileHeight);
+        tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
         this.tiles[i] = tile;
         this.concrete++;
     }
