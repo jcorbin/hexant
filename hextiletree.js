@@ -168,6 +168,20 @@ function expand() {
     return node;
 };
 
+OddQHexTile.prototype.growthOrigin =
+function growthOrigin(i) {
+    return this.origin.copy().add(
+        tileOriginOffset[i].copy().scale(this.width)
+    );
+};
+
+HexTileTreeNode.prototype.growthOrigin =
+function growthOrigin(i) {
+    return this.origin.copy().add(
+        nodeOriginOffset[i].copy().scale(this.tileSize)
+    );
+};
+
 OddQHexTile.prototype.grow =
 function grow(i) {
     var offset = tileOriginOffset[i].copy().scale(this.width);
