@@ -49,7 +49,9 @@ function HexTileTreeNode(origin, size) {
 
 HexTileTree.prototype.dump =
 function dump() {
-    return this.root.dump();
+    if (this.root !== null) {
+        return this.root.dump();
+    }
 };
 
 HexTileTreeNode.prototype.dump =
@@ -91,16 +93,24 @@ function dump() {
 
 HexTileTree.prototype.boundingBox =
 function boundingBox() {
+    if (this.root === null) {
+        return null;
+    }
     return this.root.boundingBox();
 };
 
 HexTileTree.prototype.eachDataPoint =
 function eachDataPoint(each) {
-    this.root.eachDataPoint(each, null, null);
+    if (this.root !== null) {
+        this.root.eachDataPoint(each, null, null);
+    }
 };
 
 HexTileTree.prototype.centerPoint =
 function centerPoint() {
+    if (this.root === null) {
+        return null;
+    }
     return this.root.centerPoint();
 };
 
