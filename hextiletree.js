@@ -162,7 +162,12 @@ function expand() {
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            node.tiles[i] = tile.grow(i);
+            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), node.tileSize);
+            tileNode.tiles[zoomPerm[i]] = tile;
+            if (tile.data !== undefined) {
+                tileNode.concrete++;
+            }
+            node.tiles[i] = tileNode;
         }
     }
     return node;
@@ -180,25 +185,6 @@ function growthOrigin(i) {
     return this.origin.copy().add(
         this.oqo.copyFrom(nodeOriginOffset[i]).scale(this.tileSize)
     );
-};
-
-OddQHexTile.prototype.grow =
-function grow(i) {
-    var offset = tileOriginOffset[i].copy().scale(this.width);
-    var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(origin, 2 * this.width);
-    node.tiles[zoomPerm[i]] = this;
-    node.concrete++;
-    return node;
-};
-
-HexTileTreeNode.prototype.grow =
-function grow(i) {
-    var offset = nodeOriginOffset[i].copy().scale(this.tileSize);
-    var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(origin, 2 * this.size);
-    node.tiles[zoomPerm[i]] = this;
-    return node;
 };
 
 HexTileTreeNode.prototype.boundingBox =
