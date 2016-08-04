@@ -33,8 +33,9 @@ function HexTileTree() {
     this.root = null;
 }
 
-function HexTileTreeNode(origin, size, replaceme) {
+function HexTileTreeNode(tree, origin, size, replaceme) {
     var self = this;
+    this.tree = tree;
     this.origin = new OddQOffset(0, 0);
     this.size = 0;
     this.tileSize = 0;;
@@ -140,7 +141,7 @@ function centerPoint() {
 HexTileTree.prototype._ensureRoot =
 function _ensureRoot() {
     if (this.root === null) {
-        this.root = new HexTileTreeNode(null, 2, null);
+        this.root = new HexTileTreeNode(this, null, 2, null);
     }
 };
 
@@ -180,7 +181,8 @@ function expand() {
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize, this._replace[i]);
+            var tileNode = new HexTileTreeNode(this.tree,
+                tile.growthOrigin(i), this.tileSize, this._replace[i]);
             tileNode._setTile(zoomPerm[i], tile);
             this.tiles[i] = tileNode;
         }
