@@ -47,7 +47,7 @@ function getEntDir(i) {
 World.prototype.reset =
 function reset() {
     this.resetEnt(0);
-    this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.tile.reset();
     for (var i = 0; i < this.views.length; ++i) {
         this.views[i].reset();
     }
