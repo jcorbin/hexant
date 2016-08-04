@@ -30,6 +30,7 @@ var nodeOriginOffset = [
 
 function HexTileTree() {
     this.minTileArea = 4;
+    this.maxTileArea = 64;
     this.oqo = new OddQOffset(0, 0);
     this.root = null;
 }
@@ -250,6 +251,10 @@ function _mayCompact(replaceMe) {
 
 HexTileTreeNode.prototype.compact =
 function compact() {
+    if (this.size * this.size > this.tree.maxTileArea) {
+        return null;
+    }
+
     var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
     this.tiles[0].eachDataPoint(eachPoint, null, null);
     this.tiles[1].eachDataPoint(eachPoint, null, null);
@@ -336,17 +341,22 @@ function _getOrCreateTile() {
     var tile = this.tiles[i];
     if (!tile) {
         var origin = this.origin.copy();
-        if (this.oqo.q < origin.q) {
-            origin.q -= this.tileSize;
+        if (this.tileSize * this.tileSize > this.tree.maxTileArea) {
+            origin.q += this.tileSize / (this.oqo.q < origin.q ? -2 : 2);
+            origin.r += this.tileSize / (this.oqo.r < origin.r ? -2 : 2);
+            tile = new HexTileTreeNode(this.tree,
+                origin, this.tileSize, this._replace[i]);
+            this.tiles[i] = tile;
+        } else {
+            if (this.oqo.q < origin.q) {
+                origin.q -= this.tileSize;
+            }
+            if (this.oqo.r < origin.r) {
+                origin.r -= this.tileSize;
+            }
+            tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
+            this._setTile(i, tile);
         }
-        if (this.oqo.r < origin.r) {
-            origin.r -= this.tileSize;
-        }
-        // TODO: assert offset point in range
-
-        // TODO: heuristic for when to create a sparse node instead
-        tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
-        this._setTile(i, tile);
     }
     return tile;
 };
