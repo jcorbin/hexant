@@ -34,18 +34,28 @@ function HexTileTree() {
 }
 
 function HexTileTreeNode(origin, size) {
-    this.origin = origin;
-    this.size = size;
-    this.tileSize = Math.floor(this.size / 2);
+    this.origin = new OddQOffset(0, 0);
+    this.size = 0;
+    this.tileSize = 0;;
     this.tiles = [null, null, null, null];
     this.concrete = 0;
     this.oqo = new OddQOffset(0, 0);
-    var topLeft = OddQOffset(this.origin.q - this.tileSize,
-                             this.origin.r - this.tileSize);
-    var bottomRight = OddQOffset(this.origin.q + this.tileSize,
-                                 this.origin.r + this.tileSize);
-    this.box = OddQBox(topLeft, bottomRight);
+    this.box = OddQBox(null, null);
+    this.init(origin, size);
 }
+
+HexTileTreeNode.prototype.init =
+function init(origin, size) {
+    if (origin && origin !== this.origin) {
+        origin.toOddQOffsetInto(this.origin);
+    }
+    this.size = size;
+    this.tileSize = Math.floor(this.size / 2);
+    this.box.topLeft.q = this.origin.q - this.tileSize;
+    this.box.topLeft.r = this.origin.r - this.tileSize;
+    this.box.bottomRight.q = this.origin.q + this.tileSize;
+    this.box.bottomRight.r = this.origin.r + this.tileSize;
+};
 
 HexTileTree.prototype.reset =
 function reset() {
