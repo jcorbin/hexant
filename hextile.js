@@ -12,6 +12,7 @@ function OddQHexTile(origin, width, height) {
     this.width = width;
     this.height = height;
     this.data = new Uint16Array(this.width * this.height);
+    this.dirty = false;
 }
 
 OddQHexTile.prototype.boundingBox =

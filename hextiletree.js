@@ -33,6 +33,7 @@ function HexTileTree() {
     this.maxTileArea = 64;
     this.oqo = new OddQOffset(0, 0);
     this.root = null;
+    this.dirtyTiles = [];
     this.tileRemoved = noop;
     this.tileAdded = noop;
 }
@@ -72,16 +73,32 @@ function init(origin, size) {
 
 HexTileTree.prototype.addTile =
 function addTile(tile) {
+    tile.dirty = true;
+    this.dirtyTiles.push(tile);
     this.tileAdded(tile);
 };
 
 HexTileTree.prototype.removeTile =
 function removeTile(tile) {
+    if (tile.dirty) {
+        var j = 0, k = 0;
+        for (; k < this.dirtyTiles.length; ++j, ++k) {
+            if (this.dirtyTiles[j] === tile) {
+                ++k;
+                break;
+            }
+        }
+        while (k < this.dirtyTiles.length) {
+            this.dirtyTiles[j++] = this.dirtyTiles[k++];
+        }
+        this.dirtyTiles.length = j;
+    }
     this.tileRemoved(tile);
 };
 
 HexTileTree.prototype.reset =
 function reset() {
+    this.dirtyTiles.length = 0;
     this.root = null;
 };
 
@@ -169,6 +186,10 @@ function update(point, func) {
     }
     this.root.oqo.copyFrom(this.oqo);
     var tile = this.root._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.dirtyTiles.push(tile);
+    }
     return tile.update(this.oqo, func);
 };
 
@@ -187,6 +208,10 @@ function set(point, datum) {
     }
     this.root.oqo.copyFrom(this.oqo);
     var tile = this.root._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.dirtyTiles.push(tile);
+    }
     return tile.set(this.oqo, datum);
 };
 
@@ -316,6 +341,10 @@ function update(point, func) {
         throw new Error('update out of bounds');
     }
     var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.tree.dirtyTiles.push(tile);
+    }
     return tile.update(this.oqo, func);
 };
 
@@ -339,6 +368,10 @@ function set(point, datum) {
         throw new Error('set out of bounds');
     }
     var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.tree.dirtyTiles.push(tile);
+    }
     return tile.set(this.oqo, datum);
 };
 
