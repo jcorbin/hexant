@@ -168,19 +168,19 @@ function set(point, datum) {
 
 HexTileTreeNode.prototype.expand =
 function expand() {
-    var node = new HexTileTreeNode(this.origin, this.size * 2);
+    this.init(null, this.size * 2);
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), node.tileSize);
+            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize);
             tileNode.tiles[zoomPerm[i]] = tile;
             if (tile.data !== undefined) {
                 tileNode.concrete++;
             }
-            node.tiles[i] = tileNode;
+            this.tiles[i] = tileNode;
         }
     }
-    return node;
+    return this;
 };
 
 OddQHexTile.prototype.growthOrigin =
