@@ -211,14 +211,12 @@ function boundingBox() {
 
 HexTileTreeNode.prototype.eachDataPoint =
 function eachDataPoint(each, fill) {
-    var self = this;
-
-    if (replaceMe && this.concrete == 4) {
-        var tile = this.compact();
-        replaceMe(tile);
+    var tile;
+    if (this._replaceMe && (tile = this._mayCompact())) {
         tile.eachDataPoint(each, fill, null);
         return;
     }
+    var self = this;
 
     if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
@@ -228,6 +226,22 @@ function eachDataPoint(each, fill) {
     else if (typeof fill === 'number') this._fakeDataPoints(2, each, fill);
     if (this.tiles[3]) this.tiles[3].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(3, each, fill);
+};
+
+HexTileTreeNode.prototype._mayCompact =
+function _mayCompact(replaceMe) {
+    if (this.concrete != 4) {
+        return null;
+    }
+
+    var tile = this.compact();
+    if (tile === null) {
+        this.concrete = 5;
+        return null;
+    }
+
+    this._replaceme(tile);
+    return tile;
 };
 
 HexTileTreeNode.prototype.compact =
