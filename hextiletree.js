@@ -173,10 +173,7 @@ function expand() {
         var tile = this.tiles[i];
         if (tile !== null) {
             var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize);
-            tileNode.tiles[zoomPerm[i]] = tile;
-            if (tile.data !== undefined) {
-                tileNode.concrete++;
-            }
+            tileNode._setTile(zoomPerm[i], tile);
             this.tiles[i] = tileNode;
         }
     }
@@ -226,8 +223,7 @@ function eachDataPoint(each, fill, replaceMe) {
     }
 
     function replace(tile) {
-        self.tiles[i] = tile;
-        self.concrete++;
+        self._setTile(i, tile);
     }
 };
 
@@ -327,8 +323,15 @@ function _getOrCreateTile() {
 
         // TODO: heuristic for when to create a sparse node instead
         tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
-        this.tiles[i] = tile;
-        this.concrete++;
+        this._setTile(i, tile);
     }
     return tile;
+};
+
+HexTileTreeNode.prototype._setTile =
+function _setTile(i, tile) {
+    this.tiles[i] = tile;
+    if (tile instanceof OddQHexTile) {
+        this.concrete++;
+    }
 };
