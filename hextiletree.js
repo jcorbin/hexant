@@ -288,7 +288,8 @@ function update(point, func) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('update out of bounds');
     }
-    this._getOrCreateTile().update(this.oqo, func);
+    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    return tile.update(this.oqo, func);
 };
 
 HexTileTreeNode.prototype.get =
