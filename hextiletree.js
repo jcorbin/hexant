@@ -185,16 +185,18 @@ function expand() {
 
 OddQHexTile.prototype.growthOrigin =
 function growthOrigin(i) {
-    return this.origin.copy().add(
-        this.oqo.copyFrom(tileOriginOffset[i]).scale(this.width)
-    );
+    return this.oqo
+        .copyFrom(tileOriginOffset[i])
+        .scale(this.width)
+        .add(this.origin);
 };
 
 HexTileTreeNode.prototype.growthOrigin =
 function growthOrigin(i) {
-    return this.origin.copy().add(
-        this.oqo.copyFrom(nodeOriginOffset[i]).scale(this.tileSize)
-    );
+    return this.oqo
+        .copyFrom(nodeOriginOffset[i])
+        .scale(this.tileSize)
+        .add(this.origin);
 };
 
 HexTileTreeNode.prototype.boundingBox =
