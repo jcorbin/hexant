@@ -310,7 +310,8 @@ function set(point, datum) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('set out of bounds');
     }
-    return this._getOrCreateTile().set(this.oqo, datum);
+    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    return tile.set(this.oqo, datum);
 };
 
 HexTileTreeNode.prototype._getTile =
