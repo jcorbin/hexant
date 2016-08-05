@@ -33,7 +33,7 @@ function HexTileTree() {
     this.root = null;
 }
 
-function HexTileTreeNode(origin, size) {
+function HexTileTreeNode(origin, size, replaceme) {
     var self = this;
     this.origin = new OddQOffset(0, 0);
     this.size = 0;
@@ -42,6 +42,7 @@ function HexTileTreeNode(origin, size) {
     this.concrete = 0;
     this.oqo = new OddQOffset(0, 0);
     this.box = OddQBox(null, null);
+    this._replaceme = replaceme;
     this._replace = [
         function replace0(tile) {self._setTile(0, tile);},
         function replace1(tile) {self._setTile(1, tile);},
@@ -139,7 +140,7 @@ function centerPoint() {
 HexTileTree.prototype._ensureRoot =
 function _ensureRoot() {
     if (this.root === null) {
-        this.root = new HexTileTreeNode(null, 2);
+        this.root = new HexTileTreeNode(null, 2, null);
     }
 };
 
@@ -179,7 +180,7 @@ function expand() {
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize);
+            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize, this._replace[i]);
             tileNode._setTile(zoomPerm[i], tile);
             this.tiles[i] = tileNode;
         }
@@ -209,7 +210,7 @@ function boundingBox() {
 };
 
 HexTileTreeNode.prototype.eachDataPoint =
-function eachDataPoint(each, fill, replaceMe) {
+function eachDataPoint(each, fill) {
     var self = this;
 
     if (replaceMe && this.concrete == 4) {
@@ -219,13 +220,13 @@ function eachDataPoint(each, fill, replaceMe) {
         return;
     }
 
-    if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill, this._replace[0]);
+    if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
-    if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill, this._replace[1]);
+    if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(1, each, fill);
-    if (this.tiles[2]) this.tiles[2].eachDataPoint(each, fill, this._replace[2]);
+    if (this.tiles[2]) this.tiles[2].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(2, each, fill);
-    if (this.tiles[3]) this.tiles[3].eachDataPoint(each, fill, this._replace[3]);
+    if (this.tiles[3]) this.tiles[3].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(3, each, fill);
 };
 
@@ -335,5 +336,7 @@ function _setTile(i, tile) {
     this.tiles[i] = tile;
     if (tile instanceof OddQHexTile) {
         this.concrete++;
+    } else if (tile instanceof HexTileTreeNode) {
+        tile._replaceme = this._replace[i];
     }
 };
