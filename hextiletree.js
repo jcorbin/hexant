@@ -34,6 +34,7 @@ function HexTileTree() {
 }
 
 function HexTileTreeNode(origin, size) {
+    var self = this;
     this.origin = new OddQOffset(0, 0);
     this.size = 0;
     this.tileSize = 0;;
@@ -41,6 +42,12 @@ function HexTileTreeNode(origin, size) {
     this.concrete = 0;
     this.oqo = new OddQOffset(0, 0);
     this.box = OddQBox(null, null);
+    this._replace = [
+        function replace0(tile) {self._setTile(0, tile);},
+        function replace1(tile) {self._setTile(1, tile);},
+        function replace2(tile) {self._setTile(2, tile);},
+        function replace3(tile) {self._setTile(3, tile);},
+    ];
     this.init(origin, size);
 }
 
@@ -216,14 +223,10 @@ function eachDataPoint(each, fill, replaceMe) {
     for (; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile) {
-            tile.eachDataPoint(each, fill, replace);
+            tile.eachDataPoint(each, fill, this._replace[i]);
         } else if (typeof fill === 'number') {
             this._fakeDataPoints(i, each, fill);
         }
-    }
-
-    function replace(tile) {
-        self._setTile(i, tile);
     }
 };
 
