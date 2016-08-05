@@ -33,6 +33,8 @@ function HexTileTree() {
     this.maxTileArea = 64;
     this.oqo = new OddQOffset(0, 0);
     this.root = null;
+    this.tileRemoved = noop;
+    this.tileAdded = noop;
 }
 
 function HexTileTreeNode(tree, origin, size, replaceme) {
@@ -246,6 +248,12 @@ function _mayCompact(replaceMe) {
     }
 
     this._replaceme(tile);
+    for (var i = 0; i < this.tiles.length; ++i) {
+        this.tree.tileRemoved(this.tiles[i]);
+    }
+    if (tile instanceof OddQHexTile) {
+        this.tree.tileAdded(tile);
+    }
     return tile;
 };
 
@@ -356,6 +364,7 @@ function _getOrCreateTile() {
             }
             tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
             this._setTile(i, tile);
+            this.tree.tileAdded(tile);
         }
     }
     return tile;
@@ -370,3 +379,6 @@ function _setTile(i, tile) {
         tile._replaceme = this._replace[i];
     }
 };
+
+function noop() {
+}
