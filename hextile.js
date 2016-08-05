@@ -55,6 +55,11 @@ function set(point, datum) {
     return datum;
 };
 
+OddQHexTile.prototype.eachTile =
+function eachTile(each) {
+    each(this);
+};
+
 OddQHexTile.prototype.eachDataPoint =
 function eachDataPoint(each, fill, replace) {
     var point = this.oqo;
