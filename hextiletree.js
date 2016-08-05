@@ -70,6 +70,16 @@ function init(origin, size) {
     this.box.bottomRight.r = this.origin.r + this.tileSize;
 };
 
+HexTileTree.prototype.addTile =
+function addTile(tile) {
+    this.tileAdded(tile);
+};
+
+HexTileTree.prototype.removeTile =
+function removeTile(tile) {
+    this.tileRemoved(tile);
+};
+
 HexTileTree.prototype.reset =
 function reset() {
     this.root = null;
@@ -249,10 +259,10 @@ function _mayCompact(replaceMe) {
 
     this._replaceme(tile);
     for (var i = 0; i < this.tiles.length; ++i) {
-        this.tree.tileRemoved(this.tiles[i]);
+        this.tree.removeTile(this.tiles[i]);
     }
     if (tile instanceof OddQHexTile) {
-        this.tree.tileAdded(tile);
+        this.tree.addTile(tile);
     }
     return tile;
 };
@@ -364,7 +374,7 @@ function _getOrCreateTile() {
             }
             tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
             this._setTile(i, tile);
-            this.tree.tileAdded(tile);
+            this.tree.addTile(tile);
         }
     }
     return tile;
