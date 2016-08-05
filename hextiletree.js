@@ -168,7 +168,7 @@ function set(point, datum) {
 
 HexTileTreeNode.prototype.expand =
 function expand() {
-    var node = new HexTileTreeNode(this.origin.copy(), this.size * 2);
+    var node = new HexTileTreeNode(this.origin, this.size * 2);
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
