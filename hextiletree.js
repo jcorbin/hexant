@@ -212,7 +212,6 @@ HexTileTreeNode.prototype.eachDataPoint =
 function eachDataPoint(each, fill, replaceMe) {
     var self = this;
 
-    var i = 0;
     if (replaceMe && this.concrete == 4) {
         var tile = this.compact();
         replaceMe(tile);
@@ -220,14 +219,14 @@ function eachDataPoint(each, fill, replaceMe) {
         return;
     }
 
-    for (; i < this.tiles.length; i++) {
-        var tile = this.tiles[i];
-        if (tile) {
-            tile.eachDataPoint(each, fill, this._replace[i]);
-        } else if (typeof fill === 'number') {
-            this._fakeDataPoints(i, each, fill);
-        }
-    }
+    if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill, this._replace[0]);
+    else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
+    if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill, this._replace[1]);
+    else if (typeof fill === 'number') this._fakeDataPoints(1, each, fill);
+    if (this.tiles[2]) this.tiles[2].eachDataPoint(each, fill, this._replace[2]);
+    else if (typeof fill === 'number') this._fakeDataPoints(2, each, fill);
+    if (this.tiles[3]) this.tiles[3].eachDataPoint(each, fill, this._replace[3]);
+    else if (typeof fill === 'number') this._fakeDataPoints(3, each, fill);
 };
 
 HexTileTreeNode.prototype.compact =
