@@ -7,6 +7,7 @@ var OddQBox = Coord.OddQBox;
 module.exports = OddQHexTile;
 
 function OddQHexTile(origin, width, height) {
+    this.id = OddQHexTile.NextId++;
     this.origin = origin.toOddQOffset();
     this.oqo = new Coord.OddQOffset(0, 0);
     this.width = width;
@@ -14,6 +15,8 @@ function OddQHexTile(origin, width, height) {
     this.data = new Uint16Array(this.width * this.height);
     this.dirty = false;
 }
+
+OddQHexTile.NextId = 0;
 
 OddQHexTile.prototype.boundingBox =
 function boundingBox() {
