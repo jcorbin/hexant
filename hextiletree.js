@@ -132,7 +132,7 @@ function centerPoint() {
 HexTileTree.prototype._ensureRoot =
 function _ensureRoot() {
     if (this.root === null) {
-        this.root = new HexTileTreeNode(new OddQOffset(0, 0), 2);
+        this.root = new HexTileTreeNode(null, 2);
     }
 };
 
