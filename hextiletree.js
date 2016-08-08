@@ -183,6 +183,13 @@ function eachTile(each) {
     if (this.tiles[3]) this.tiles[3].eachTile(each);
 };
 
+HexTileTree.prototype.eachTile =
+function eachTile(each) {
+    if (this.root !== null) {
+        this.root.eachTile(each);
+    }
+};
+
 HexTileTree.prototype.eachDataPoint =
 function eachDataPoint(each) {
     if (this.root !== null) {
@@ -278,6 +285,19 @@ function growthOrigin(i) {
 HexTileTreeNode.prototype.boundingBox =
 function boundingBox() {
     return this.box;
+};
+
+HexTileTreeNode.prototype.eachTile =
+function eachTile(each) {
+    var tile;
+    if (this.replaceme && (tile = this._mayCompact())) {
+        tile.eachTile(each);
+        return;
+    }
+    if (this.tiles[0]) this.tiles[0].eachTile(each);
+    if (this.tiles[1]) this.tiles[1].eachTile(each);
+    if (this.tiles[2]) this.tiles[2].eachTile(each);
+    if (this.tiles[3]) this.tiles[3].eachTile(each);
 };
 
 HexTileTreeNode.prototype.eachDataPoint =
