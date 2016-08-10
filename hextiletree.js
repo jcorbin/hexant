@@ -33,6 +33,7 @@ function HexTileTree() {
     this.maxTileArea = 64;
     this.oqo = new OddQOffset(0, 0);
     this.root = null;
+    this.tiles = {};
     this.dirtyTiles = [];
     this.tileRemoved = noop;
     this.tileAdded = noop;
@@ -71,8 +72,14 @@ function init(origin, size) {
     this.box.bottomRight.r = this.origin.r + this.tileSize;
 };
 
+HexTileTree.prototype.getTile =
+function getTile(id) {
+    return this.tiles[id];
+};
+
 HexTileTree.prototype.addTile =
 function addTile(tile) {
+    this.tiles[tile.id] = tile;
     tile.dirty = true;
     this.dirtyTiles.push(tile);
     this.tileAdded(tile);
@@ -94,11 +101,13 @@ function removeTile(tile) {
         this.dirtyTiles.length = j;
     }
     this.tileRemoved(tile);
+    delete this.tiles[tile.id];
 };
 
 HexTileTree.prototype.reset =
 function reset() {
     this.dirtyTiles.length = 0;
+    this.tiles = {};
     this.root = null;
 };
 
