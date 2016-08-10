@@ -97,7 +97,10 @@ function hookup(id, component, scope) {
     this.world.tile.maxTileArea = this.view.maxCellsPerTile;
 
     this.window.addEventListener('keypress', this.boundOnKeyPress);
-    this.el.addEventListener('click', this.boundPlaypause);
+    var self = this;
+    this.el.addEventListener('click', function boundStepIt() {
+        self.stepit();
+    });
 
     this.configure();
 };
