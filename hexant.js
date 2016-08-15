@@ -282,11 +282,8 @@ function promptFor(name, desc) {
 
 Hexant.prototype.reset =
 function reset() {
-    this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-    this.world.resetEnt(0);
-    this.world.tile.update(this.world.getEntPos(0), markVisited);
+    this.world.reset();
     this.el.width = this.el.width;
-    this.view.reset();
     this.view.redraw();
 };
 

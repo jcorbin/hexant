@@ -44,6 +44,16 @@ function getEntDir(i) {
     return this.ents[i].dir;
 };
 
+World.prototype.reset =
+function reset() {
+    this.resetEnt(0);
+    this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    for (var i = 0; i < this.views.length; ++i) {
+        this.views[i].reset();
+    }
+    this.tile.update(this.getEntPos(0), markVisited);
+};
+
 World.prototype.resetEnt =
 function resetEnt(i) {
     this.ents[i].reset();
