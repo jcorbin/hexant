@@ -2,7 +2,6 @@
 
 var Coord = require('../coord.js');
 var CubePoint = Coord.CubePoint;
-var World = require('../world.js');
 var constants = require('./constants.js');
 var parseTurmite = require('./parse.js');
 
@@ -113,7 +112,7 @@ function step(world) {
         turn = rule & 0x0000ffff;
         var write = (rule & 0x00ff0000) >> 16;
         self.state = (rule & 0xff000000) >> 24;
-        return World.FlagVisited | flags | write | 0x0100;
+        return flags | write | 0x0100;
     }
 
     function executeTurn(dir) {
