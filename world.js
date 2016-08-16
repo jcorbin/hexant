@@ -65,7 +65,9 @@ World.prototype.turnEnt =
 function turnEnt(i, turnFunc) {
     var dir = turnFunc(this.ents[i].dir);
     this.ents[i].dir = dir;
-    this.ents[i].pos.add(CubePoint.basis[dir]);
+    this.tile.update(
+        this.ents[i].pos.add(CubePoint.basis[dir]),
+        markVisited);
 };
 
 World.prototype.step =
