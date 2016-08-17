@@ -65,12 +65,19 @@ function View2D(world, canvas) {
 
 View2D.prototype.reset =
 function reset() {
-    this.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    this.hexGrid.bounds = null;
     this.updateSize();
 };
 
 View2D.prototype.updateSize =
 function updateSize() {
+    if (this.hexGrid.bounds === null) {
+        var box = this.world.tile.boundingBox();
+        if (box === null) {
+            return;
+        }
+        this.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    }
     this.hexGrid.updateSize();
     this.featureSize = this.hexGrid.cellSize * this.entSize;
     if (this.featureSize <= 5) {
@@ -97,6 +104,13 @@ function resize(width, height) {
 
 View2D.prototype.redraw =
 function redraw() {
+    if (this.hexGrid.bounds === null) {
+        this.updateSize();
+        if (this.hexGrid.bounds === null) {
+            return;
+        }
+    }
+
     if (this.cellColors === null) {
         return;
     }
@@ -255,6 +269,12 @@ function drawLabeledCell(point, color, colors) {
 
 View2D.prototype.step =
 function step() {
+    if (this.hexGrid.bounds === null) {
+        this.needsRedraw = true;
+        this.updateSize();
+        return;
+    }
+
     var ents = this.world.ents;
     var i;
 
