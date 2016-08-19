@@ -127,6 +127,7 @@ function addTile(tile) {
 HexTileTree.prototype.removeTile =
 function removeTile(tile) {
     if (tile.dirty) {
+        // TODO: use copyWithin
         var j = 0, k = 0;
         for (; k < this.dirtyTiles.length; ++j, ++k) {
             if (this.dirtyTiles[j] === tile) {
