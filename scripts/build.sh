@@ -8,11 +8,11 @@ src=index-bundle-min.js
 
 case "$mess" in
 Merge\ tag*)
-    desc=$(echo $mess | cut -d"'" -f2)
+    desc=$(echo "$mess" | cut -d"'" -f2)
     base=//github.com/jcorbin/hexant/blob/master
     ;;
 Merge\ branch*)
-    branch=$(echo $mess | cut -d"'" -f2)
+    branch=$(echo "$mess" | cut -d"'" -f2)
     base=//github.com/jcorbin/hexant/blob/$branch
     desc="#$branch $desc"
     ;;
