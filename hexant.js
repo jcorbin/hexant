@@ -144,7 +144,7 @@ function configure() {
     this.hash.bind('drawUnvisited')
         .setDefault(false)
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.view.drawUnvisited = !!drawUnvisited;
+            self.view.setDrawUnvisited(!!drawUnvisited);
         });
 
     this.hash.bind('drawTrace')
