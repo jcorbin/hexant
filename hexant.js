@@ -237,8 +237,8 @@ function onKeyPress(e) {
         this.hash.set('showFPS', !this.showFPS);
         break;
 
-    case 0x54:
-    case 0x74:
+    case 0x54: // T
+    case 0x74: // t
         this.hash.set('drawTrace', !this.view.drawTrace);
         break;
 
