@@ -209,6 +209,12 @@ function setLabeled(labeled) {
     }
 };
 
+View2D.prototype.setDrawUnvisited =
+function setDrawUnvisited(drawUnvisited) {
+    this.drawUnvisited = drawUnvisited;
+    this.needsRedraw = true;
+};
+
 View2D.prototype.drawCell =
 View2D.prototype.drawUnlabeledCell =
 function drawUnlabeledCell(point, color, colors) {
