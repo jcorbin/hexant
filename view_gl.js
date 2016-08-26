@@ -6,8 +6,8 @@ var vec3 = require('gl-matrix').vec3;
 var mat4 = require('gl-matrix').mat4;
 
 var GLProgram = require('./glprogram.js');
-var oddqDXYShader = require('./oddq_dxy.vert');
-var passFragShader = require('./pass.frag');
+var oddqPointShader = require('./oddq_point.vert');
+var hexFragShader = require('./hex.frag');
 var rangeListAdd = require('./rangelist.js').add;
 var collectTombstone = require('./tileglbuffer.js').collectTombstone;
 var placeTile = require('./tileglbuffer.js').placeTile;
@@ -15,37 +15,12 @@ var placeTile = require('./tileglbuffer.js').placeTile;
 module.exports = ViewGL;
 
 // TODO:
-// - in redraw lazily only draw dirty tiles, expand permitting
 // - draw ents
+// - in redraw lazily only draw dirty tiles, expand permitting
 // - switch to uint32 elements array if supported by extension
 // - switch to uint32 for q,r, use a highp in the shader
-// - can we get away with int16, or even int8 for dx,dy?
-// - separate the tile mapping, building, etc from any one view
-// - LoD scaling (points at large scale should give ~6x data reduction)
-// - bonus if we can do point verts without any explicit dx,dy data
 
 /* eslint-disable max-statements */
-
-/* For our canonical hex:
- *
- *           2     1
- *
- *            q , r
- *     3                 0
- *            color
- *
- *           4     5
- *
- * We generate the triangle strip:
- *     1, 2, 0, 3, 5, 4
- * So that means these triangles:
- *     1 2 0
- *     0 2 3
- *     0 3 5
- *     5 3 4
- *
- * TODO: share vertices between adjacent hexes, color allowing
- */
 
 function ViewGL(world, canvas) {
     this.world = world;
@@ -70,7 +45,7 @@ function ViewGL(world, canvas) {
 
     this.perspectiveMatrix = mat4.identity(new Float32Array(16));
     this.hexShader = new GLProgram(this.gl,
-        oddqDXYShader.linkWith(passFragShader),
+        oddqPointShader.linkWith(hexFragShader),
         ['uPMatrix', 'uVP', 'uRadius'],
         ['vert', 'color']
     );
@@ -95,6 +70,8 @@ function ViewGL(world, canvas) {
 
     this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
     this.hexShader.use();
+
+    this.gl.uniform1f(this.hexShader.uniform.uRadius, 1);
 
     this.updateSize();
 }
@@ -214,6 +191,7 @@ function resize(width, height) {
     this.canvas.width = width;
     this.canvas.height = height;
     this.gl.viewport(0, 0, width, height);
+    this.gl.uniform2f(this.hexShader.uniform.uVP, this.canvas.width, this.canvas.height);
 
     this.updateSize();
     this.redraw();
@@ -240,7 +218,7 @@ function redraw() {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tileBuffer.colors.buf);
         this.gl.vertexAttribPointer(this.hexShader.attr.color, tileBuffer.colors.width, this.gl.UNSIGNED_BYTE, true, 0, 0);
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, tileBuffer.elements.buf);
-        this.gl.drawElements(this.gl.TRIANGLE_STRIP, tileBuffer.usedElements, this.gl.UNSIGNED_SHORT, 0);
+        this.gl.drawElements(this.gl.POINTS, tileBuffer.usedElements, this.gl.UNSIGNED_SHORT, 0);
     }
 
     this.hexShader.disable();
@@ -304,7 +282,7 @@ function drawEnt(i) {
     // TODO
 };
 
-// TODO: smaller LOD draw{Cell,Ent} variants
+// TODO: smaller LOD drawEnt variant
 
 ViewGL.prototype.step =
 function step() {
@@ -322,9 +300,9 @@ function step() {
 
 function TileWriter(bufferSize) {
     this.bufferSize = bufferSize;
-    this.vertSize = 4;
+    this.vertSize = 2;
     this.colorSize = 3;
-    this.cellSize = 6;
+    this.cellSize = 1;
     this.maxCells = Math.floor(this.bufferSize / this.cellSize);
     if (this.maxCells < 1) {
         throw new Error("can't fit any tiles in that bufferSize");
@@ -387,13 +365,9 @@ function writeTileVerts(tile, tileBuffer, start) {
     var end = start;
     for (var r = loR; r < hiR; r++) {
         for (var q = loQ; q < hiQ; q++) {
-            for (var xyi = 0; xyi < this.cellXYs.length;) {
-                glData[vi++] = q;
-                glData[vi++] = r;
-                glData[vi++] = this.cellXYs[xyi++];
-                glData[vi++] = this.cellXYs[xyi++];
-                end++;
-            }
+            glData[vi++] = q;
+            glData[vi++] = r;
+            end++;
         }
     }
     tileBuffer.verts.invalidate(start, end);
@@ -405,18 +379,12 @@ function writeTileColors(tile, tileBuffer, start) {
     var glData = tileBuffer.colors.data;
     var ci = start * this.colorSize;
     var end = start;
-    var c = new Uint8Array(3);
     for (var i = 0; i < tile.data.length; ++i) {
-        var color = this.colors[tile.data[i] & World.MaskColor];
-        c[0] = Math.round(255 * color[0]);
-        c[1] = Math.round(255 * color[1]);
-        c[2] = Math.round(255 * color[2]);
-        for (var j = 0; j < this.cellSize; j++) {
-            glData[ci++] = c[0];
-            glData[ci++] = c[1];
-            glData[ci++] = c[2];
-            end++;
-        }
+        var j = (tile.data[i] & World.MaskColor) * 3;
+        glData[ci++] = this.colorValues[j++];
+        glData[ci++] = this.colorValues[j++];
+        glData[ci++] = this.colorValues[j++];
+        end++;
     }
     tileBuffer.colors.invalidate(start, end);
     return end;
@@ -426,22 +394,11 @@ TileWriter.prototype.writeTileElements =
 function writeTileElements(tileBuffer, tile, offset) {
     var glData = tileBuffer.elements.data;
     var ei = tileBuffer.usedElements;
-    var prior = ei > 0 ? glData[ei-1] : 0;
     for (var i = 0; i < tile.data.length; ++i) {
         if (this.drawUnvisited || tile.data[i] & World.FlagVisited) {
-            if (prior > 0) {
-                glData[ei++] = prior;
-                glData[ei++] = offset + 1;
-            }
-            glData[ei++] = offset + 1;
-            glData[ei++] = offset + 2;
             glData[ei++] = offset;
-            glData[ei++] = offset + 3;
-            glData[ei++] = offset + 5;
-            glData[ei++] = offset + 4;
-            prior = offset + 4;
         }
-        offset += 6;
+        offset++;
     }
     tileBuffer.usedElements = ei;
 };
