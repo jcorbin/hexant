@@ -2,7 +2,7 @@
  * sprites.
  */
 
-varying lowp vec4 vertColor;
+varying lowp float vertColor;
 varying mediump vec2 varAng;
 
 const mediump float pi = 3.141592653589793;
@@ -13,8 +13,9 @@ const mediump vec2 P1 = vec2(0.5, sqrt(3.0)/2.0) / 2.0;
 const mediump float M10 = (P1.y - P0.y) / (P1.x - P0.x);
 const mediump float B10 = P1.y - M10 * P1.x;
 
+uniform sampler2D uSampler;
+
 void main(void) {
-    gl_FragColor = vertColor;
     mediump vec2 p = gl_PointCoord - off;
     if (varAng.x != varAng.y) {
         mediump float a = mod(atan(p.y, p.x), tau);
@@ -32,4 +33,5 @@ void main(void) {
     if (p.y > P1.y || p.y > M10 * p.x + B10) {
         discard;
     }
+    gl_FragColor = texture2D(uSampler, vec2(vertColor, 0));
 }

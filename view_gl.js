@@ -6,6 +6,7 @@ var vec3 = require('gl-matrix').vec3;
 var mat4 = require('gl-matrix').mat4;
 
 var GLProgram = require('./glprogram.js');
+var GLPalette = require('./glpalette.js');
 var oddqPointShader = require('./oddq_point.vert');
 var hexFragShader = require('./hex.frag');
 var rangeListAdd = require('./rangelist.js').add;
@@ -29,6 +30,7 @@ var float2 = 2 * Float32Array.BYTES_PER_ELEMENT;
 function ViewGL(world, canvas) {
     this.world = world;
     this.canvas = canvas;
+
     this.topLeftQ = new Coord.OddQOffset();
     this.bottomRightQ = new Coord.OddQOffset();
     this.topLeft = new Coord.ScreenPoint();
@@ -53,32 +55,32 @@ function ViewGL(world, canvas) {
         ['uPMatrix', 'uVP', 'uRadius'],
         ['vert', 'ang', 'color']
     );
+    this.uSampler = this.gl.getUniformLocation(this.hexShader.prog, 'uSampler'); // TODO: GLProgram borg
 
     this.tileWriter = new TileWriter(this.maxElement + 1);
     this.tileBufferer = new TileBufferer(this.gl, this.world, this.tileWriter);
     this.entBuffer = new EntGLBuffer(this.gl, this.hexShader);
     this.maxCellsPerTile = Math.floor((this.maxElement + 1) / this.tileWriter.cellSize);
 
-    this.cellColors = null;
-    this.needsRedraw = false;
+    this.cellPallete = new GLPalette(this.gl, 0, false);
+    this.bodyPallete = new GLPalette(this.gl, 1, false);
+    this.headPallete = new GLPalette(this.gl, 2, false);
 
+    // TODO: subsume into GLPalette
     this.colorGen = null;
     this.antCellColorGen = null;
     this.emptyCellColorGen = null;
     this.bodyColorGen = null;
     this.headColorGen = null;
 
-    this.antCellColors = [];
-    this.emptyCellColors = [];
-    this.bodyColors = [];
-    this.headColors = [];
+    this.needsRedraw = false;
 
     this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
     this.hexShader.use();
 
     this.gl.uniform1f(this.hexShader.uniform.uRadius, 1);
 
-    this.updateSize();
+    this.updateSize(); // XXX: drop?
 }
 
 ViewGL.prototype.reset =
@@ -130,7 +132,7 @@ function expandTo(pointArg) {
 
 ViewGL.prototype.updateSize =
 function updateSize() {
-    this.qrToScreen();
+    this.qrToScreen(this.tileWriter.cellHalfWidth, this.tileWriter.cellHalfHeight);
     fixAspectRatio(
         this.gl.drawingBufferWidth / this.gl.drawingBufferHeight,
         this.topLeft, this.bottomRight);
@@ -142,25 +144,22 @@ function updateSize() {
 };
 
 ViewGL.prototype.qrToScreen =
-function qrToScreen() {
+function qrToScreen(rx, ry) {
     this.topLeftQ.toScreenInto(this.topLeft);
     this.bottomRightQ.toScreenInto(this.bottomRight);
 
-    var w = this.tileWriter.cellHalfWidth;
-    var h = this.tileWriter.cellHalfHeight;
-
-    this.topLeft.x -= w;
-    this.topLeft.y -= h;
-    this.bottomRight.x += w;
-    this.bottomRight.y += h;
+    this.topLeft.x -= rx;
+    this.topLeft.y -= ry;
+    this.bottomRight.x += rx;
+    this.bottomRight.y += ry;
 
     // TODO: sometimes over tweaks, but only noticable at small scale
     var oddEnough = (this.bottomRightQ.q - this.topLeftQ.q) > 0;
     if (this.topLeftQ.q & 1) {
-        this.topLeft.y -= h;
+        this.topLeft.y -= ry;
     }
     if (this.bottomRightQ.q & 1 || oddEnough) {
-        this.bottomRight.y += h;
+        this.bottomRight.y += ry;
     }
 };
 
@@ -178,12 +177,6 @@ function fixAspectRatio(aspectRatio, topLeft, bottomRight) {
         bottomRight.y += dy;
     }
 }
-
-ViewGL.prototype.setColors =
-function setColors(colors) {
-    this.cellColors = colors;
-    this.tileWriter.setColors(colors);
-};
 
 ViewGL.prototype.setDrawTrace =
 function setDrawTrace(dt) {
@@ -212,8 +205,31 @@ function redraw() {
     this.hexShader.enable();
 
     // tiles
-    this.gl.disableVertexAttribArray(this.hexShader.attr.ang);
+    this.cellPallete.use(this.uSampler);
     this.gl.uniform1f(this.hexShader.uniform.uRadius, 1.0);
+    this.drawTiles();
+
+    this.gl.enableVertexAttribArray(this.hexShader.attr.ang);
+
+    // ents bodies
+    this.bodyPallete.use(this.uSampler);
+    this.gl.uniform1f(this.hexShader.uniform.uRadius, 0.5);
+    this.entBuffer.drawBodies(this.world);
+
+    // ents heads
+    this.headPallete.use(this.uSampler);
+    this.gl.uniform1f(this.hexShader.uniform.uRadius, 0.75);
+    this.entBuffer.drawHeads(this.world);
+
+    this.hexShader.disable();
+    this.gl.finish();
+
+    this.needsRedraw = false;
+};
+
+ViewGL.prototype.drawTiles =
+function drawTiles() {
+    this.gl.disableVertexAttribArray(this.hexShader.attr.ang);
     for (var i = 0; i < this.tileBufferer.tileBuffers.length; ++i) {
         var tileBuffer = this.tileBufferer.tileBuffers[i];
         if (!tileBuffer.tiles.length) {
@@ -226,16 +242,6 @@ function redraw() {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, tileBuffer.elements.buf);
         this.gl.drawElements(this.gl.POINTS, tileBuffer.usedElements, this.gl.UNSIGNED_SHORT, 0);
     }
-
-    // ents
-    this.gl.enableVertexAttribArray(this.hexShader.attr.ang);
-    this.entBuffer.drawBodies(this.world, this.bodyColors);
-    this.entBuffer.drawHeads(this.world, this.headColors);
-
-    this.hexShader.disable();
-    this.gl.finish();
-
-    this.needsRedraw = false;
 };
 
 ViewGL.prototype.updateEnts =
@@ -271,11 +277,11 @@ function setColorGen(colorGen) {
 ViewGL.prototype.updateColors =
 function updateColors() {
     if (this.colorGen == null) return;
-    this.emptyCellColors = this.emptyCellColorGen(this.world.numColors);
-    this.antCellColors = this.antCellColorGen(this.world.numColors);
-    this.setColors(this.drawTrace ? this.emptyCellColors : this.antCellColors);
-    this.bodyColors = this.bodyColorGen(this.world.ents.length);
-    this.headColors = this.headColorGen(this.world.ents.length);
+    this.cellPallete.setColorsRGB(this.drawTrace
+        ? this.emptyCellColorGen(this.world.numColors)
+        : this.antCellColorGen(this.world.numColors));
+    this.bodyPallete.setColorsRGB(this.bodyColorGen(this.world.ents.length));
+    this.headPallete.setColorsRGB(this.headColorGen(this.world.ents.length));
 };
 
 ViewGL.prototype.setLabeled =
@@ -305,8 +311,6 @@ function step() {
 function EntGLBuffer(gl, hexShader) {
     this.gl = gl;
     this.hexShader = hexShader;
-    this.bodySize = 0.5;
-    this.headSize = 0.75;
     this.len = 0;
     this.cap = 0;
     this.verts = null;
@@ -329,7 +333,7 @@ EntGLBuffer.prototype.alloc =
 function alloc(cap) {
     this.cap = cap;
     this.verts = new Float32Array(this.cap * 4);
-    this.colors = new Uint8Array(this.cap * 3);
+    this.colors = new Uint8Array(this.cap * 1);
     this.bodyVertsBuf = this.gl.createBuffer();
     this.bodyColorsBuf = this.gl.createBuffer();
     this.headVertsBuf = this.gl.createBuffer();
@@ -337,20 +341,19 @@ function alloc(cap) {
 };
 
 EntGLBuffer.prototype.draw =
-function draw(hexShader, size, vertBuf, colorBuf) {
-    this.gl.uniform1f(hexShader.uniform.uRadius, size);
+function draw(hexShader, vertBuf, colorBuf) {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertBuf);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, this.verts, this.gl.STATIC_DRAW);
     this.gl.vertexAttribPointer(hexShader.attr.vert, 2, this.gl.FLOAT, false, float2, 0);
     this.gl.vertexAttribPointer(hexShader.attr.ang, 2, this.gl.FLOAT, false, float2, float2);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuf);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, this.colors, this.gl.STATIC_DRAW);
-    this.gl.vertexAttribPointer(hexShader.attr.color, 3, this.gl.UNSIGNED_BYTE, true, 0, 0);
+    this.gl.vertexAttribPointer(hexShader.attr.color, 1, this.gl.UNSIGNED_BYTE, true, 0, 0);
     this.gl.drawArrays(this.gl.POINTS, 0, this.len);
 };
 
 EntGLBuffer.prototype.drawBodies =
-function drawBodies(world, colors) {
+function drawBodies(world) {
     var n = world.ents.length;
     if (n > this.len) {
         if (this.len > 0) {
@@ -361,44 +364,38 @@ function drawBodies(world, colors) {
     var pos = new Coord.OddQOffset(0, 0);
     var i = 0, j = 0, k = 0;
     while (i < n) {
-        var bodyColor = colors[i];
         world.getEntPos(i).toOddQOffsetInto(pos);
         var ang = world.getEntDir(i) * hexAngStep;
         this.verts[j++] = pos.q;
         this.verts[j++] = pos.r;
         this.verts[j++] = ang + hexAngStep;
         this.verts[j++] = ang;
-        this.colors[k++] = Math.round(255 * bodyColor[0]);
-        this.colors[k++] = Math.round(255 * bodyColor[1]);
-        this.colors[k++] = Math.round(255 * bodyColor[2]);
+        this.colors[k++] = i;
         i++;
     }
     this.len = n;
-    this.draw(this.hexShader, this.bodySize, this.bodyVertsBuf, this.bodyColorsBuf);
+    this.draw(this.hexShader, this.bodyVertsBuf, this.bodyColorsBuf);
 };
 
 EntGLBuffer.prototype.drawHeads =
-function drawHeads(world, colors) {
+function drawHeads(world) {
     var i = 0, j = 0, k = 0;
     while (i < this.len) {
-        var headColor = colors[i];
         j += 2;
         var tmp = this.verts[j];
         this.verts[j] = this.verts[j+1];
         this.verts[j+1] = tmp;
         j += 2;
-        this.colors[k++] = Math.round(255 * headColor[0]);
-        this.colors[k++] = Math.round(255 * headColor[1]);
-        this.colors[k++] = Math.round(255 * headColor[2]);
+        this.colors[k++] = i;
         i++;
     }
-    this.draw(this.hexShader, this.headSize, this.headVertsBuf, this.headColorsBuf);
+    this.draw(this.hexShader, this.headVertsBuf, this.headColorsBuf);
 };
 
 function TileWriter(bufferSize) {
     this.bufferSize = bufferSize;
     this.vertSize = 2;
-    this.colorSize = 3;
+    this.colorSize = 1;
     this.cellSize = 1;
     this.maxCells = Math.floor(this.bufferSize / this.cellSize);
     if (this.maxCells < 1) {
@@ -406,7 +403,6 @@ function TileWriter(bufferSize) {
     }
     this.elementsSize = this.cellSize * this.maxCells + 2 * (this.maxCells - 1);
     this.colors = null;
-    this.colorValues = null;
 
     /* The vertex order in cellXYs is:
      *       2 1
@@ -427,18 +423,6 @@ function TileWriter(bufferSize) {
     this.cellHalfWidth = this.cellWidth / 2;
     this.cellHalfHeight = this.cellHeight / 2;
 }
-
-TileWriter.prototype.setColors =
-function setColors(colors) {
-    this.colors = colors;
-    this.colorValues = new Uint8Array(3 * colors.length);
-    for (var i = 0, j = 0; i < colors.length; ++i) {
-        var color = colors[i];
-        this.colorValues[j++] = Math.round(255 * color[0]);
-        this.colorValues[j++] = Math.round(255 * color[1]);
-        this.colorValues[j++] = Math.round(255 * color[2]);
-    }
-};
 
 TileWriter.prototype.newTileBuffer =
 function newTileBuffer(id, gl) {
@@ -477,10 +461,7 @@ function writeTileColors(tile, tileBuffer, start) {
     var ci = start * this.colorSize;
     var end = start;
     for (var i = 0; i < tile.data.length; ++i) {
-        var j = (tile.data[i] & World.MaskColor) * 3;
-        glData[ci++] = this.colorValues[j++];
-        glData[ci++] = this.colorValues[j++];
-        glData[ci++] = this.colorValues[j++];
+        glData[ci++] = tile.data[i] & World.MaskColor;
         end++;
     }
     tileBuffer.colors.invalidate(start, end);
