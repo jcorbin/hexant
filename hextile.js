@@ -53,11 +53,11 @@ function set(point, datum) {
 
 OddQHexTile.prototype.eachDataPoint =
 function eachDataPoint(each, fill, replace) {
+    var point = this.oqo;
     var loQ = this.origin.q;
     var loR = this.origin.r;
     var hiQ = loQ + this.width;
     var hiR = loR + this.height;
-    var point = OddQOffset(loQ, loR);
     var i;
     for (i = 0, point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++, i++) {
