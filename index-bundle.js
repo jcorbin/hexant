@@ -1242,10 +1242,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_x2fdv9");
+        component.setAttribute("id", "view_xzwk50");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_x2fdv9")
+       scope.componentsFor["view"].setAttribute("for", "view_xzwk50")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1266,10 +1266,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_n2a21d");
+        component.setAttribute("id", "prompt_v0tq8b");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_n2a21d")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_v0tq8b")
     }
     node = document.createElement("DIV");
     parent.appendChild(node);
@@ -1279,10 +1279,10 @@ var $THIS = function HexantHexant(body, caller) {
     component.setAttribute("class", "overlay fps right");
     }
     if (component.setAttribute) {
-        component.setAttribute("id", "fpsOverlay_q50vkj");
+        component.setAttribute("id", "fpsOverlay_d57z5q");
     }
     if (scope.componentsFor["fpsOverlay"]) {
-       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_q50vkj")
+       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_d57z5q")
     }
     if (component.setAttribute) {
     component.setAttribute("style", "display: none");
@@ -1294,10 +1294,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("fps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "fps_gpyrix");
+            component.setAttribute("id", "fps_nc0v5e");
         }
         if (scope.componentsFor["fps"]) {
-           scope.componentsFor["fps"].setAttribute("for", "fps_gpyrix")
+           scope.componentsFor["fps"].setAttribute("for", "fps_nc0v5e")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1307,10 +1307,23 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("sps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "sps_366a43");
+            component.setAttribute("id", "sps_cxnl8l");
         }
         if (scope.componentsFor["sps"]) {
-           scope.componentsFor["sps"].setAttribute("for", "sps_366a43")
+           scope.componentsFor["sps"].setAttribute("for", "sps_cxnl8l")
+        }
+        parents[parents.length] = parent; parent = node;
+        // DIV
+        node = parent; parent = parents[parents.length - 1]; parents.length--;
+        node = document.createElement("DIV");
+        parent.appendChild(node);
+        component = node.actualNode;
+        scope.hookup("redrawTiming", component);
+        if (component.setAttribute) {
+            component.setAttribute("id", "redrawTiming_4rjfgm");
+        }
+        if (scope.componentsFor["redrawTiming"]) {
+           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_4rjfgm")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1356,7 +1369,14 @@ function Hexant(body, scope) {
     var atob = scope.window.atob || Base64.atob;
     var btoa = scope.window.btoa || Base64.btoa;
 
+    // components
+    this.prompt = null;
     this.el = null;
+    this.fpsOverlay = null;
+    this.fps = null;
+    this.sps = null;
+    this.redrawTiming = null;
+
     this.world = null;
     this.view = null;
 
@@ -1365,11 +1385,10 @@ function Hexant(body, scope) {
         decode: decodeHash
     });
     this.animator = scope.animator.add(this);
-    this.lastFrameTime = null;
+    this.lastStepTime = null;
     this.goalStepRate = 0;
     this.stepRate = 0;
     this.paused = true;
-    this.prompt = null;
     this.showFPS = false;
     this.animTimes = [];
     this.stepTimes = [];
@@ -1415,6 +1434,7 @@ function hookup(id, component, scope) {
     this.fpsOverlay = scope.components.fpsOverlay;
     this.fps = scope.components.fps;
     this.sps = scope.components.sps;
+    this.redrawTiming = scope.components.redrawTiming;
 
     this.titleBase = this.window.document.title;
     this.world = new World();
@@ -1448,7 +1468,7 @@ function configure() {
 
     this.hash.bind('showFPS')
         .setDefault(false)
-        .addListener(function onDrawTraceChange(showFPS) {
+        .addListener(function onDrawFPSChange(showFPS) {
             self.showFPS = !! showFPS;
             self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
         });
@@ -1632,28 +1652,31 @@ function animate(time) {
 
 Hexant.prototype._animate =
 function _animate(time) {
-    var steps = 1;
-    if (!this.lastFrameTime) {
-        this.lastFrameTime = time;
-    } else {
-        var progress = time - this.lastFrameTime;
-        steps = Math.round(progress / 1000 * this.stepRate);
-        this.animTiming.collect(progress);
-        this.throttle()
+    if (!this.lastStepTime) {
+        this.lastStepTime = time;
+        return;
     }
+
+    var steps = 1;
+    var sinceLast = time - this.lastStepTime;
+    steps = Math.round(sinceLast / 1000 * this.stepRate);
+    this.animTiming.collect(sinceLast);
+    this.throttle()
+
     switch (steps) {
     case 0:
         break;
     case 1:
         this.world.step();
         this.stepTimes.push(time, 1);
+        this.lastStepTime = time;
         break;
     default:
         this.stepTimes.push(time, steps);
         this.world.stepn(steps);
+        this.lastStepTime = time;
         break;
     }
-    this.lastFrameTime = time;
     this.animTimes.push(time);
 
     while ((time - this.animTimes[0]) > FPSInterval) {
@@ -1661,12 +1684,17 @@ function _animate(time) {
     }
     while ((time - this.stepTimes[0]) > FPSInterval) {
         this.stepTimes.shift();
-        this.stepTimes.shift();
     }
 
     if (this.showFPS) {
         this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
         this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+        var stats = this.world.redrawTimingStats();
+        if (stats) {
+            this.redrawTiming.innerText = 'µ=' + toSI(stats.m1/1e3) + 's 𝜎=' + toSI(Math.sqrt(stats.m2/1e3)) + 's';
+        } else {
+            this.redrawTiming.innerText = '';
+        }
     }
 };
 
@@ -1733,7 +1761,8 @@ function play() {
     this.animTiming.reset();
     this.fps.innerText = '';
     this.sps.innerText = '';
-    this.lastFrameTime = null;
+    this.redrawTiming.innerText = '';
+    this.lastStepTime = null;
     this.animator.requestAnimation();
     this.paused = false;
 };
@@ -1742,7 +1771,8 @@ Hexant.prototype.pause =
 function pause() {
     this.fps.innerText = '<' + this.fps.innerText + '>';
     this.sps.innerText = '<' + this.sps.innerText + '>';
-    this.lastFrameTime = null;
+    this.redrawTiming.innerText = '<' + this.redrawTiming.innerText + '>';
+    this.lastStepTime = null;
     this.animator.cancelAnimation();
     this.paused = true;
 };
@@ -1783,14 +1813,20 @@ function resize(width, height) {
     this.view.resize(width, height);
 };
 
+var nsiSuffix = ['', 'm', 'µ', 'n'];
 var siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
 function toSI(n) {
-    if (n < 1000) {
+    if (n < 1) {
+        for (var nsi = 0; nsi < nsiSuffix.length && n < 1; ++nsi, n *= 1e3) {
+        }
+        return n.toPrecision(3) + nsiSuffix[nsi];
+    }
+    if (n < 1e3) {
         return n.toFixed(0);
     }
-    n /= 1000;
-    for (var si = 0; si < siSuffix.length && n > 1000; ++si, n /= 1000) {
+    n /= 1e3;
+    for (var si = 0; si < siSuffix.length && n > 1e3; ++si, n /= 1e3) {
     }
     return n.toPrecision(3) + siSuffix[si];
 }
@@ -2358,10 +2394,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_spp7lc");
+        component.setAttribute("id", "view_vqfw8b");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_spp7lc")
+       scope.componentsFor["view"].setAttribute("for", "view_vqfw8b")
     }
     this.scope.hookup("this", this);
 };
@@ -2563,10 +2599,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_oaibr8");
+        component.setAttribute("id", "box_p29obu");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_oaibr8")
+       scope.componentsFor["box"].setAttribute("for", "box_p29obu")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2581,10 +2617,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_bvhdxp");
+            component.setAttribute("id", "help_576hen");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_bvhdxp")
+           scope.componentsFor["help"].setAttribute("for", "help_576hen")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2597,10 +2633,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_bcynl5");
+            component.setAttribute("id", "text_94j7kn");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_bcynl5")
+           scope.componentsFor["text"].setAttribute("for", "text_94j7kn")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2610,10 +2646,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_7453mq");
+            component.setAttribute("id", "error_cd06ms");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_7453mq")
+           scope.componentsFor["error"].setAttribute("for", "error_cd06ms")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -5008,6 +5044,8 @@ var CubePoint = Coord.CubePoint;
 
 var OddQOffset = Coord.OddQOffset;
 
+var REDRAW_TIMING_WINDOW = 5000;
+
 module.exports = World;
 
 World.StateShift      = 8;
@@ -5029,6 +5067,7 @@ function World() {
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
     this.ents = [];
     this.views = [];
+    this.redrawTiming = [];
 }
 
 World.prototype.getEntPos =
@@ -5086,6 +5125,7 @@ function stepn(n) {
 World.prototype.redraw =
 function redraw() {
     var didredraw = false;
+    var t0 = Date.now();
     for (var i = 0; i < this.views.length; i++) {
         var view = this.views[i];
         if (view.needsRedraw) {
@@ -5093,7 +5133,37 @@ function redraw() {
             didredraw = true;
         }
     }
+    var t1 = Date.now();
+    if (didredraw) {
+        while (t0 - this.redrawTiming[0] > REDRAW_TIMING_WINDOW) {
+            this.redrawTiming.shift();
+            this.redrawTiming.shift();
+        }
+        this.redrawTiming.push(t0, t1);
+    }
     return didredraw;
+};
+
+World.prototype.redrawTimingStats =
+function redrawTimingStats() {
+    var n = 0, m1 = 0, m2 = 0;
+    for (var i = 0; i < this.redrawTiming.length;) {
+        var t0 = this.redrawTiming[i++];
+        var t1 = this.redrawTiming[i++];
+        var dur = t1 - t0;
+        var delta = dur - m1;
+        m1 += delta / ++n;
+        m2 += delta * (dur - m1);
+    }
+    if (n < 2) {
+        return null;
+    }
+    m2 /= n - 1;
+    return {
+        n: n,
+        m1: m1,
+        m2: m2
+    };
 };
 
 World.prototype.removeEnt =

@@ -52,6 +52,7 @@ html, body {
 
 .overlay.right {
     float: right;
+    text-align: right;
 }
 
 .prompt {

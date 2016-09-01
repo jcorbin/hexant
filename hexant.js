@@ -22,7 +22,14 @@ function Hexant(body, scope) {
     var atob = scope.window.atob || Base64.atob;
     var btoa = scope.window.btoa || Base64.btoa;
 
+    // components
+    this.prompt = null;
     this.el = null;
+    this.fpsOverlay = null;
+    this.fps = null;
+    this.sps = null;
+    this.redrawTiming = null;
+
     this.world = null;
     this.view = null;
 
@@ -31,11 +38,10 @@ function Hexant(body, scope) {
         decode: decodeHash
     });
     this.animator = scope.animator.add(this);
-    this.lastFrameTime = null;
+    this.lastStepTime = null;
     this.goalStepRate = 0;
     this.stepRate = 0;
     this.paused = true;
-    this.prompt = null;
     this.showFPS = false;
     this.animTimes = [];
     this.stepTimes = [];
@@ -81,6 +87,7 @@ function hookup(id, component, scope) {
     this.fpsOverlay = scope.components.fpsOverlay;
     this.fps = scope.components.fps;
     this.sps = scope.components.sps;
+    this.redrawTiming = scope.components.redrawTiming;
 
     this.titleBase = this.window.document.title;
     this.world = new World();
@@ -114,7 +121,7 @@ function configure() {
 
     this.hash.bind('showFPS')
         .setDefault(false)
-        .addListener(function onDrawTraceChange(showFPS) {
+        .addListener(function onDrawFPSChange(showFPS) {
             self.showFPS = !! showFPS;
             self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
         });
@@ -298,28 +305,31 @@ function animate(time) {
 
 Hexant.prototype._animate =
 function _animate(time) {
-    var steps = 1;
-    if (!this.lastFrameTime) {
-        this.lastFrameTime = time;
-    } else {
-        var progress = time - this.lastFrameTime;
-        steps = Math.round(progress / 1000 * this.stepRate);
-        this.animTiming.collect(progress);
-        this.throttle()
+    if (!this.lastStepTime) {
+        this.lastStepTime = time;
+        return;
     }
+
+    var steps = 1;
+    var sinceLast = time - this.lastStepTime;
+    steps = Math.round(sinceLast / 1000 * this.stepRate);
+    this.animTiming.collect(sinceLast);
+    this.throttle()
+
     switch (steps) {
     case 0:
         break;
     case 1:
         this.world.step();
         this.stepTimes.push(time, 1);
+        this.lastStepTime = time;
         break;
     default:
         this.stepTimes.push(time, steps);
         this.world.stepn(steps);
+        this.lastStepTime = time;
         break;
     }
-    this.lastFrameTime = time;
     this.animTimes.push(time);
 
     while ((time - this.animTimes[0]) > FPSInterval) {
@@ -327,12 +337,17 @@ function _animate(time) {
     }
     while ((time - this.stepTimes[0]) > FPSInterval) {
         this.stepTimes.shift();
-        this.stepTimes.shift();
     }
 
     if (this.showFPS) {
         this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
         this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+        var stats = this.world.redrawTimingStats();
+        if (stats) {
+            this.redrawTiming.innerText = 'µ=' + toSI(stats.m1/1e3) + 's 𝜎=' + toSI(Math.sqrt(stats.m2/1e3)) + 's';
+        } else {
+            this.redrawTiming.innerText = '';
+        }
     }
 };
 
@@ -399,7 +414,8 @@ function play() {
     this.animTiming.reset();
     this.fps.innerText = '';
     this.sps.innerText = '';
-    this.lastFrameTime = null;
+    this.redrawTiming.innerText = '';
+    this.lastStepTime = null;
     this.animator.requestAnimation();
     this.paused = false;
 };
@@ -408,7 +424,8 @@ Hexant.prototype.pause =
 function pause() {
     this.fps.innerText = '<' + this.fps.innerText + '>';
     this.sps.innerText = '<' + this.sps.innerText + '>';
-    this.lastFrameTime = null;
+    this.redrawTiming.innerText = '<' + this.redrawTiming.innerText + '>';
+    this.lastStepTime = null;
     this.animator.cancelAnimation();
     this.paused = true;
 };
@@ -449,14 +466,20 @@ function resize(width, height) {
     this.view.resize(width, height);
 };
 
+var nsiSuffix = ['', 'm', 'µ', 'n'];
 var siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
 function toSI(n) {
-    if (n < 1000) {
+    if (n < 1) {
+        for (var nsi = 0; nsi < nsiSuffix.length && n < 1; ++nsi, n *= 1e3) {
+        }
+        return n.toPrecision(3) + nsiSuffix[nsi];
+    }
+    if (n < 1e3) {
         return n.toFixed(0);
     }
-    n /= 1000;
-    for (var si = 0; si < siSuffix.length && n > 1000; ++si, n /= 1000) {
+    n /= 1e3;
+    for (var si = 0; si < siSuffix.length && n > 1e3; ++si, n /= 1e3) {
     }
     return n.toPrecision(3) + siSuffix[si];
 }

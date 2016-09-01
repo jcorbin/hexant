@@ -6,6 +6,8 @@ var CubePoint = Coord.CubePoint;
 
 var OddQOffset = Coord.OddQOffset;
 
+var REDRAW_TIMING_WINDOW = 5000;
+
 module.exports = World;
 
 World.StateShift      = 8;
@@ -27,6 +29,7 @@ function World() {
     this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
     this.ents = [];
     this.views = [];
+    this.redrawTiming = [];
 }
 
 World.prototype.getEntPos =
@@ -84,6 +87,7 @@ function stepn(n) {
 World.prototype.redraw =
 function redraw() {
     var didredraw = false;
+    var t0 = Date.now();
     for (var i = 0; i < this.views.length; i++) {
         var view = this.views[i];
         if (view.needsRedraw) {
@@ -91,7 +95,37 @@ function redraw() {
             didredraw = true;
         }
     }
+    var t1 = Date.now();
+    if (didredraw) {
+        while (t0 - this.redrawTiming[0] > REDRAW_TIMING_WINDOW) {
+            this.redrawTiming.shift();
+            this.redrawTiming.shift();
+        }
+        this.redrawTiming.push(t0, t1);
+    }
     return didredraw;
+};
+
+World.prototype.redrawTimingStats =
+function redrawTimingStats() {
+    var n = 0, m1 = 0, m2 = 0;
+    for (var i = 0; i < this.redrawTiming.length;) {
+        var t0 = this.redrawTiming[i++];
+        var t1 = this.redrawTiming[i++];
+        var dur = t1 - t0;
+        var delta = dur - m1;
+        m1 += delta / ++n;
+        m2 += delta * (dur - m1);
+    }
+    if (n < 2) {
+        return null;
+    }
+    m2 /= n - 1;
+    return {
+        n: n,
+        m1: m1,
+        m2: m2
+    };
 };
 
 World.prototype.removeEnt =

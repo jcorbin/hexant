@@ -1,4 +1,11 @@
-# v0.9.7
+# v0.9.8
+
+- Updated build and dev tooling
+- Added redraw timing to he FPS overlay
+- FIxed animation when step rate is slower than one-per-frame
+- Small fixes and improvements
+
+## v0.9.7
 
 - Collapsed world entity (re-)initialization code
 - Loosened coupling between turmite entities, world, and especially view
