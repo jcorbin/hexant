@@ -74,3 +74,69 @@ function eachDataPoint(each, fill, replace) {
         }
     }
 };
+
+OddQHexTile.prototype.expandBoxTo =
+function expandBoxTo(tl, br, mask) {
+    var tlq = this.origin.q;
+    var tlr = this.origin.r;
+    var brq = tlq + this.width;
+    var brr = tlr + this.height;
+    if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
+        tl.q = tlq;
+        tl.r = tlr;
+        br.q = brq;
+        br.r = brr;
+    } else {
+        if (tlq < tl.q) tl.q = tlq;
+        if (tlr < tl.r) tl.r = tlr;
+        if (brq > br.q) br.q = brq;
+        if (brr > br.r) br.r = brr;
+    }
+};
+
+OddQHexTile.prototype.expandBoxToIf =
+function expandBoxToIf(tl, br, mask) {
+    var q = this.origin.q, r = this.origin.r, i = 0;
+
+    // if any part of the box isn't defined, initialize from the first masked
+    // point
+    if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
+        while (i < this.data.length) {
+            if (this.data[i] & mask) {
+                tl.q = q;
+                br.q = q;
+                tl.r = r;
+                br.r = r;
+                break;
+            }
+            i++;
+            q++;
+            if (q >= this.origin.q + this.width) {
+                q = this.origin.q;
+                r++;
+            }
+        }
+    }
+
+    // now just expand to each masked point
+    while (i < this.data.length) {
+        if (this.data[i] & mask) {
+            if (q < tl.q) {
+                tl.q = q;
+            } else if (q >= br.q) {
+                br.q = q;
+            }
+            if (r < tl.r) {
+                tl.r = r;
+            } else if (r >= br.r) {
+                br.r = r;
+            }
+        }
+        i++;
+        q++;
+        if (q >= this.origin.q + this.width) {
+            q = this.origin.q;
+            r++;
+        }
+    }
+};
