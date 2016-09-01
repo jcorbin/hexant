@@ -25,6 +25,9 @@ function Hexant(body, scope) {
     // components
     this.prompt = null;
     this.el = null;
+    this.fpsOverlay = null;
+    this.fps = null;
+    this.sps = null;
 
     this.world = null;
     this.view = null;
