@@ -6,6 +6,9 @@ version=$(jq .version package.json -r)
 build="build-v$version"
 
 git checkout -f gh-pages
+last_version=$(jq .version package.json -r)
+last_build="build-v$last_version"
+git reset --hard "$last_build"
 git merge --no-edit "v$version"
 
 npm run build
