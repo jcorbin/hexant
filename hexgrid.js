@@ -18,7 +18,7 @@ module.exports = HexGrid;
 function HexGrid(canvas, ctxHex, bounds) {
     this.canvas = canvas;
     this.ctxHex = ctxHex;
-    this.bounds = bounds || OddQBox();
+    this.bounds = bounds ? bounds.copy() : OddQBox();
     this.view = ScreenPoint();
     this.cell = ScreenPoint();
     this.origin = ScreenPoint();

@@ -14,6 +14,7 @@ only:
 - `/` -- prompt and set new rule set
 - `c` -- prompt and set new color scheme
 - `t` -- toggle "trace mode" drawing
+- `t` -- toggle drawing of unvisited cells
 - `+` -- double step rate
 - `-` -- half step rate
 - `*` -- reset to iteration 0 and pause

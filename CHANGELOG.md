@@ -1,4 +1,13 @@
-# v0.9.8
+# v0.9.9
+
+- Improved quad tree tile compaction
+- Improved visited cell handling, and added a key bind to toggle drawing
+  unvisited cells
+- Lock in to always square world tiles
+- Minor performance gains
+- Small fixes and improvements
+
+## v0.9.8
 
 - Updated build and dev tooling
 - Added redraw timing to he FPS overlay

@@ -7,7 +7,7 @@ var Base64 = require('Base64');
 var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
-var View = require('./view.js');
+var View2D = require('./view_2d.js');
 var Turmite = require('./turmite/index.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
@@ -92,7 +92,7 @@ function hookup(id, component, scope) {
     this.titleBase = this.window.document.title;
     this.world = new World();
     this.view = this.world.addView(
-        new View(this.world, this.el));
+        new View2D(this.world, this.el));
 
     this.window.addEventListener('keypress', this.boundOnKeyPress);
     this.el.addEventListener('click', this.boundPlaypause);
@@ -144,7 +144,7 @@ function configure() {
     this.hash.bind('drawUnvisited')
         .setDefault(false)
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.view.drawUnvisited = !!drawUnvisited;
+            self.view.setDrawUnvisited(!!drawUnvisited);
         });
 
     this.hash.bind('drawTrace')
@@ -237,8 +237,13 @@ function onKeyPress(e) {
         this.hash.set('showFPS', !this.showFPS);
         break;
 
-    case 0x54:
-    case 0x74:
+    case 0x55: // U
+    case 0x75: // u
+        this.hash.set('drawUnvisited', !this.view.drawUnvisited);
+        break;
+
+    case 0x54: // T
+    case 0x74: // t
         this.hash.set('drawTrace', !this.view.drawTrace);
         break;
 
@@ -277,14 +282,7 @@ function promptFor(name, desc) {
 
 Hexant.prototype.reset =
 function reset() {
-    this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-
-    this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
-    this.view.updateSize();
-
-    this.world.resetEnt(0);
-    this.world.tile.update(this.world.getEntPos(0), markVisited);
-
+    this.world.reset();
     this.el.width = this.el.width;
     this.view.redraw();
 };

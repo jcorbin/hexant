@@ -26,7 +26,7 @@ World.MaskResultTurn  = 0x0000ffff;
 function World() {
     this.numColors = 0;
     this.numStates = 0;
-    this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.tile = new HexTileTree();
     this.ents = [];
     this.views = [];
     this.redrawTiming = [];
@@ -44,10 +44,20 @@ function getEntDir(i) {
     return this.ents[i].dir;
 };
 
+World.prototype.reset =
+function reset() {
+    this.resetEnt(0);
+    this.tile.reset();
+    for (var i = 0; i < this.views.length; ++i) {
+        this.views[i].reset();
+    }
+    this.tile.update(this.getEntPos(0), markVisited);
+};
+
 World.prototype.resetEnt =
 function resetEnt(i) {
     this.ents[i].reset();
-    this.tile.centerPoint().toCubeInto(this.ents[i].pos);
+    this.ents[i].pos.scale(0); // reset to 0,0
     this.ents[i].dir = 0;
 };
 
@@ -55,7 +65,9 @@ World.prototype.turnEnt =
 function turnEnt(i, turnFunc) {
     var dir = turnFunc(this.ents[i].dir);
     this.ents[i].dir = dir;
-    this.ents[i].pos.add(CubePoint.basis[dir]);
+    this.tile.update(
+        this.ents[i].pos.add(CubePoint.basis[dir]),
+        markVisited);
 };
 
 World.prototype.step =

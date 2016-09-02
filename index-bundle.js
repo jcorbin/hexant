@@ -882,7 +882,7 @@ function LightWheelGenerator(hue, sat) {
             var r = [];
             var l = step;
             for (var i = 0; i < ncolors; l += step, i++) {
-                r.push(husl.toHex(h, sat, l));
+                r.push(husl.toRGB(h, sat, l));
             }
             return r;
         };
@@ -899,16 +899,15 @@ function HueWheelGenerator(sat, light) {
     return hueWheelGenGen;
 
     function hueWheelGenGen(intensity) {
-        var ss = (sat + satDelta * intensity).toFixed(1) + '%';
-        var sl = (light + lightDelta * intensity).toFixed(1) + '%';
+        var mySat = sat + satDelta * intensity;
+        var myLight = light + lightDelta * intensity;
 
         var suffix = ', ' + ss + ', ' + sl + ')';
         return function wheelGen(ncolors) {
             var scale = 360 / ncolors;
             var r = [];
             for (var i = 0; i < ncolors; i++) {
-                var sh = Math.round(i * scale).toString();
-                r.push('hsl(' + sh + suffix);
+                r.push([i * scale, mySat, myLight]);
             }
             return r;
         };
@@ -1054,6 +1053,18 @@ CubePoint.prototype.sub = function sub(other) {
     this.z -= other.z;
     return this;
 };
+CubePoint.prototype.scale = function scale(n) {
+    this.x *= n;
+    this.y *= n;
+    this.z *= n;
+    return this;
+};
+CubePoint.prototype.mulBy = function mulBy(x, y, z) {
+    this.x *= x;
+    this.y *= y;
+    this.z *= z;
+    return this;
+};
 CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
     screenPoint.x = 3 / 2 * this.x;
     screenPoint.y = Math.sqrt(3) * (this.z + this.x / 2);
@@ -1097,7 +1108,7 @@ OddQOffset.prototype.copy = function copy() {
 };
 OddQOffset.prototype.copyFrom = function copyFrom(other) {
     if (other.type !== this.type) {
-        return this.copyFrom(other.toOddQOffset());
+        return other.toOddQOffsetInto(this);
     }
     this.q = other.q;
     this.r = other.r;
@@ -1122,6 +1133,11 @@ OddQOffset.prototype.sub = function sub(other) {
     }
     this.q -= other.q;
     this.r -= other.r;
+    return this;
+};
+OddQOffset.prototype.scale = function scale(n) {
+    this.q *= n;
+    this.r *= n;
     return this;
 };
 OddQOffset.prototype.mulBy = function mulBy(q, r) {
@@ -1242,10 +1258,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_xzwk50");
+        component.setAttribute("id", "view_umk1vh");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_xzwk50")
+       scope.componentsFor["view"].setAttribute("for", "view_umk1vh")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1266,10 +1282,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_v0tq8b");
+        component.setAttribute("id", "prompt_sxavzf");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_v0tq8b")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_sxavzf")
     }
     node = document.createElement("DIV");
     parent.appendChild(node);
@@ -1279,10 +1295,10 @@ var $THIS = function HexantHexant(body, caller) {
     component.setAttribute("class", "overlay fps right");
     }
     if (component.setAttribute) {
-        component.setAttribute("id", "fpsOverlay_d57z5q");
+        component.setAttribute("id", "fpsOverlay_sobrb6");
     }
     if (scope.componentsFor["fpsOverlay"]) {
-       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_d57z5q")
+       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_sobrb6")
     }
     if (component.setAttribute) {
     component.setAttribute("style", "display: none");
@@ -1294,10 +1310,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("fps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "fps_nc0v5e");
+            component.setAttribute("id", "fps_gj0ba3");
         }
         if (scope.componentsFor["fps"]) {
-           scope.componentsFor["fps"].setAttribute("for", "fps_nc0v5e")
+           scope.componentsFor["fps"].setAttribute("for", "fps_gj0ba3")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1307,10 +1323,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("sps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "sps_cxnl8l");
+            component.setAttribute("id", "sps_20x4zu");
         }
         if (scope.componentsFor["sps"]) {
-           scope.componentsFor["sps"].setAttribute("for", "sps_cxnl8l")
+           scope.componentsFor["sps"].setAttribute("for", "sps_20x4zu")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1320,10 +1336,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("redrawTiming", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "redrawTiming_4rjfgm");
+            component.setAttribute("id", "redrawTiming_3ctayy");
         }
         if (scope.componentsFor["redrawTiming"]) {
-           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_4rjfgm")
+           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_3ctayy")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1340,7 +1356,7 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
     var scope = this.scope = caller;
 };
 
-}],["hexant.js","hexant","hexant.js",{"hashbind":8,"Base64":0,"rezult":42,"./colorgen.js":9,"./world.js":36,"./view.js":35,"./turmite/index.js":24,"./coord.js":10,"./hextiletree.js":15,"./sample.js":22},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"hashbind":8,"Base64":0,"rezult":42,"./colorgen.js":9,"./world.js":36,"./view_2d.js":35,"./turmite/index.js":24,"./coord.js":10,"./hextiletree.js":15,"./sample.js":22},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1354,7 +1370,7 @@ var Base64 = require('Base64');
 var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
-var View = require('./view.js');
+var View2D = require('./view_2d.js');
 var Turmite = require('./turmite/index.js');
 var OddQOffset = require('./coord.js').OddQOffset;
 var HexTileTree = require('./hextiletree.js');
@@ -1439,7 +1455,7 @@ function hookup(id, component, scope) {
     this.titleBase = this.window.document.title;
     this.world = new World();
     this.view = this.world.addView(
-        new View(this.world, this.el));
+        new View2D(this.world, this.el));
 
     this.window.addEventListener('keypress', this.boundOnKeyPress);
     this.el.addEventListener('click', this.boundPlaypause);
@@ -1491,7 +1507,7 @@ function configure() {
     this.hash.bind('drawUnvisited')
         .setDefault(false)
         .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.view.drawUnvisited = !!drawUnvisited;
+            self.view.setDrawUnvisited(!!drawUnvisited);
         });
 
     this.hash.bind('drawTrace')
@@ -1584,8 +1600,13 @@ function onKeyPress(e) {
         this.hash.set('showFPS', !this.showFPS);
         break;
 
-    case 0x54:
-    case 0x74:
+    case 0x55: // U
+    case 0x75: // u
+        this.hash.set('drawUnvisited', !this.view.drawUnvisited);
+        break;
+
+    case 0x54: // T
+    case 0x74: // t
         this.hash.set('drawTrace', !this.view.drawTrace);
         break;
 
@@ -1624,14 +1645,7 @@ function promptFor(name, desc) {
 
 Hexant.prototype.reset =
 function reset() {
-    this.world.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
-
-    this.view.hexGrid.bounds = this.world.tile.boundingBox().copy();
-    this.view.updateSize();
-
-    this.world.resetEnt(0);
-    this.world.tile.update(this.world.getEntPos(0), markVisited);
-
+    this.world.reset();
     this.el.width = this.el.width;
     this.view.redraw();
 };
@@ -1856,7 +1870,7 @@ module.exports = HexGrid;
 function HexGrid(canvas, ctxHex, bounds) {
     this.canvas = canvas;
     this.ctxHex = ctxHex;
-    this.bounds = bounds || OddQBox();
+    this.bounds = bounds ? bounds.copy() : OddQBox();
     this.view = ScreenPoint();
     this.cell = ScreenPoint();
     this.origin = ScreenPoint();
@@ -2005,7 +2019,7 @@ function set(point, datum) {
 };
 
 OddQHexTile.prototype.eachDataPoint =
-function eachDataPoint(each) {
+function eachDataPoint(each, fill, replace) {
     var loQ = this.origin.q;
     var loR = this.origin.r;
     var hiQ = loQ + this.width;
@@ -2054,14 +2068,53 @@ var nodeOriginOffset = [
     OddQOffset(1, 1)
 ];
 
-function HexTileTree(origin, tileWidth, tileHeight) {
-    this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
-    this.oqo = new Coord.OddQOffset(0, 0);
+function HexTileTree() {
+    this.oqo = new OddQOffset(0, 0);
+    this.root = null;
 }
+
+function HexTileTreeNode(origin, size, replaceme) {
+    var self = this;
+    this.origin = new OddQOffset(0, 0);
+    this.size = 0;
+    this.tileSize = 0;;
+    this.tiles = [null, null, null, null];
+    this.concrete = 0;
+    this.oqo = new OddQOffset(0, 0);
+    this.box = OddQBox(null, null);
+    this._replaceme = replaceme;
+    this._replace = [
+        function replace0(tile) {self._setTile(0, tile);},
+        function replace1(tile) {self._setTile(1, tile);},
+        function replace2(tile) {self._setTile(2, tile);},
+        function replace3(tile) {self._setTile(3, tile);},
+    ];
+    this.init(origin, size);
+}
+
+HexTileTreeNode.prototype.init =
+function init(origin, size) {
+    if (origin && origin !== this.origin) {
+        origin.toOddQOffsetInto(this.origin);
+    }
+    this.size = size;
+    this.tileSize = Math.floor(this.size / 2);
+    this.box.topLeft.q = this.origin.q - this.tileSize;
+    this.box.topLeft.r = this.origin.r - this.tileSize;
+    this.box.bottomRight.q = this.origin.q + this.tileSize;
+    this.box.bottomRight.r = this.origin.r + this.tileSize;
+};
+
+HexTileTree.prototype.reset =
+function reset() {
+    this.root = null;
+};
 
 HexTileTree.prototype.dump =
 function dump() {
-    return this.root.dump();
+    if (this.root !== null) {
+        return this.root.dump();
+    }
 };
 
 HexTileTreeNode.prototype.dump =
@@ -2091,7 +2144,7 @@ function dump() {
     var parts = ['Tile @' + this.origin.toString()];
     var row = [];
     for (var i = 0; i < this.data.length; i++) {
-        if (i && i % this.width === 0) {
+        if (i && i % this.size === 0) {
             parts.push(row.join(' '));
             row = [];
         }
@@ -2103,94 +2156,92 @@ function dump() {
 
 HexTileTree.prototype.boundingBox =
 function boundingBox() {
+    if (this.root === null) {
+        return null;
+    }
     return this.root.boundingBox();
 };
 
 HexTileTree.prototype.eachDataPoint =
 function eachDataPoint(each) {
-    this.root.eachDataPoint(each);
+    if (this.root !== null) {
+        this.root.eachDataPoint(each, null, null);
+    }
 };
 
 HexTileTree.prototype.centerPoint =
 function centerPoint() {
+    if (this.root === null) {
+        return null;
+    }
     return this.root.centerPoint();
+};
+
+HexTileTree.prototype._ensureRoot =
+function _ensureRoot() {
+    if (this.root === null) {
+        this.root = new HexTileTreeNode(null, 2, null);
+    }
 };
 
 HexTileTree.prototype.update =
 function update(point, func) {
+    this._ensureRoot();
     point.toOddQOffsetInto(this.oqo);
     while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
     }
     this.root.oqo.copyFrom(this.oqo);
-    return this.root._getOrCreateTile().update(this.oqo, func);
+    var tile = this.root._getOrCreateTile();
+    return tile.update(this.oqo, func);
 };
 
 HexTileTree.prototype.get =
 function get(point) {
+    this._ensureRoot();
     return this.root.get(point);
 };
 
 HexTileTree.prototype.set =
 function set(point, datum) {
+    this._ensureRoot();
     point.toOddQOffsetInto(this.oqo);
     while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
     }
     this.root.oqo.copyFrom(this.oqo);
-    return this.root._getOrCreateTile().set(this.oqo, datum);
+    var tile = this.root._getOrCreateTile();
+    return tile.set(this.oqo, datum);
 };
-
-function HexTileTreeNode(origin, width, height) {
-    this.origin = origin;
-    this.width = width;
-    this.height = height;
-    this.tileWidth = Math.floor(this.width / 2);
-    this.tileHeight = Math.floor(this.height / 2);
-    this.tiles = [null, null, null, null];
-    this.concrete = 0;
-    this.oqo = new Coord.OddQOffset(0, 0);
-    var topLeft = OddQOffset(this.origin.q - this.tileWidth,
-                             this.origin.r - this.tileHeight);
-    var bottomRight = OddQOffset(this.origin.q + this.tileWidth,
-                                 this.origin.r + this.tileHeight);
-    this.box = OddQBox(topLeft, bottomRight);
-}
 
 HexTileTreeNode.prototype.expand =
 function expand() {
-    var node = new HexTileTreeNode(
-        this.origin.copy(), this.width * 2, this.height * 2);
+    this.init(null, this.size * 2);
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            node.tiles[i] = tile.grow(i);
+            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize, this._replace[i]);
+            tileNode._setTile(zoomPerm[i], tile);
+            this.tiles[i] = tileNode;
         }
     }
-    return node;
+    return this;
 };
 
-OddQHexTile.prototype.grow =
-function grow(i) {
-    var offset = tileOriginOffset[i].copy()
-        .mulBy(this.width, this.height);
-    var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(
-        origin, 2 * this.width, 2 * this.height);
-    node.tiles[zoomPerm[i]] = this;
-    node.concrete++;
-    return node;
+OddQHexTile.prototype.growthOrigin =
+function growthOrigin(i) {
+    return this.oqo
+        .copyFrom(tileOriginOffset[i])
+        .scale(this.width)
+        .add(this.origin);
 };
 
-HexTileTreeNode.prototype.grow =
-function grow(i) {
-    var offset = nodeOriginOffset[i].copy()
-        .mulBy(this.tileWidth, this.tileHeight);
-    var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(
-        origin, 2 * this.width, 2 * this.height);
-    node.tiles[zoomPerm[i]] = this;
-    return node;
+HexTileTreeNode.prototype.growthOrigin =
+function growthOrigin(i) {
+    return this.oqo
+        .copyFrom(nodeOriginOffset[i])
+        .scale(this.tileSize)
+        .add(this.origin);
 };
 
 HexTileTreeNode.prototype.boundingBox =
@@ -2199,40 +2250,48 @@ function boundingBox() {
 };
 
 HexTileTreeNode.prototype.eachDataPoint =
-function eachDataPoint(each, replaceMe) {
-    var self = this;
-
-    var i = 0;
-    if (replaceMe && this.concrete == 4) {
-        var tile = this.compact();
-        replaceMe(tile);
-        tile.eachDataPoint(each);
+function eachDataPoint(each, fill) {
+    var tile;
+    if (this._replaceMe && (tile = this._mayCompact())) {
+        tile.eachDataPoint(each, fill, null);
         return;
     }
+    var self = this;
 
-    for (; i < this.tiles.length; i++) {
-        var tile = this.tiles[i];
-        if (tile) {
-            tile.eachDataPoint(each, replace);
-        } else {
-            this._fakeDataPoints(i, each);
-        }
+    if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
+    if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(1, each, fill);
+    if (this.tiles[2]) this.tiles[2].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(2, each, fill);
+    if (this.tiles[3]) this.tiles[3].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(3, each, fill);
+};
+
+HexTileTreeNode.prototype._mayCompact =
+function _mayCompact(replaceMe) {
+    if (this.concrete != 4) {
+        return null;
     }
 
-    function replace(tile) {
-        self.tiles[i] = tile;
-        self.concrete++;
+    var tile = this.compact();
+    if (tile === null) {
+        this.concrete = 5;
+        return null;
     }
+
+    this._replaceme(tile);
+    return tile;
 };
 
 HexTileTreeNode.prototype.compact =
 function compact() {
-    var newTile = new OddQHexTile(this.box.topLeft, this.width, this.height);
-    this.tiles[0].eachDataPoint(eachPoint);
-    this.tiles[1].eachDataPoint(eachPoint);
-    this.tiles[2].eachDataPoint(eachPoint);
-    this.tiles[3].eachDataPoint(eachPoint);
-    return newTile
+    var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
+    this.tiles[0].eachDataPoint(eachPoint, null, null);
+    this.tiles[1].eachDataPoint(eachPoint, null, null);
+    this.tiles[2].eachDataPoint(eachPoint, null, null);
+    this.tiles[3].eachDataPoint(eachPoint, null, null);
+    return newTile;
 
     function eachPoint(point, datum) {
         // newTile.data[i++] = datum; TODO: should be able to do something like thing
@@ -2241,19 +2300,19 @@ function compact() {
 };
 
 HexTileTreeNode.prototype._fakeDataPoints =
-function _fakeDataPoints(i, each) {
+function _fakeDataPoints(i, each, fill) {
     var tileCol = i & 1;
     var tileRow = i >> 1;
 
-    var loQ = this.origin.q + (tileCol ? 0 : -this.tileWidth);
-    var loR = this.origin.r + (tileRow ? 0 : -this.tileHeight);
-    var hiQ = loQ + this.tileWidth;
-    var hiR = loR + this.tileHeight;
+    var loQ = this.origin.q + (tileCol ? 0 : -this.tileSize);
+    var loR = this.origin.r + (tileRow ? 0 : -this.tileSize);
+    var hiQ = loQ + this.tileSize;
+    var hiR = loR + this.tileSize;
 
     var point = OddQOffset(loQ, loR);
     for (point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++) {
-            each(point, 0);
+            each(point, fill);
         }
     }
 };
@@ -2269,7 +2328,8 @@ function update(point, func) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('update out of bounds');
     }
-    this._getOrCreateTile().update(this.oqo, func);
+    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    return tile.update(this.oqo, func);
 };
 
 HexTileTreeNode.prototype.get =
@@ -2291,7 +2351,8 @@ function set(point, datum) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('set out of bounds');
     }
-    return this._getOrCreateTile().set(this.oqo, datum);
+    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    return tile.set(this.oqo, datum);
 };
 
 HexTileTreeNode.prototype._getTile =
@@ -2310,21 +2371,30 @@ function _getOrCreateTile() {
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
     if (!tile) {
-        var origin = OddQOffset(this.origin.q, this.origin.r);
+        var origin = this.origin.copy();
         if (this.oqo.q < origin.q) {
-            origin.q -= this.tileWidth;
+            origin.q -= this.tileSize;
         }
         if (this.oqo.r < origin.r) {
-            origin.r -= this.tileHeight;
+            origin.r -= this.tileSize;
         }
         // TODO: assert offset point in range
 
         // TODO: heuristic for when to create a sparse node instead
-        tile = new OddQHexTile(origin, this.tileWidth, this.tileHeight);
-        this.tiles[i] = tile;
-        this.concrete++;
+        tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
+        this._setTile(i, tile);
     }
     return tile;
+};
+
+HexTileTreeNode.prototype._setTile =
+function _setTile(i, tile) {
+    this.tiles[i] = tile;
+    if (tile instanceof OddQHexTile) {
+        this.concrete++;
+    } else if (tile instanceof HexTileTreeNode) {
+        tile._replaceme = this._replace[i];
+    }
 };
 
 }],["index.js","hexant","index.js",{"domready":2,"global/window":3,"gutentag/scope":5,"gutentag/document":4,"blick":1,"./main.html":17},function (require, exports, module, __filename, __dirname){
@@ -2394,10 +2464,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_vqfw8b");
+        component.setAttribute("id", "view_jzrl5x");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_vqfw8b")
+       scope.componentsFor["view"].setAttribute("for", "view_jzrl5x")
     }
     this.scope.hookup("this", this);
 };
@@ -2599,10 +2669,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_p29obu");
+        component.setAttribute("id", "box_z6ad6b");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_p29obu")
+       scope.componentsFor["box"].setAttribute("for", "box_z6ad6b")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2617,10 +2687,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_576hen");
+            component.setAttribute("id", "help_qiq97r");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_576hen")
+           scope.componentsFor["help"].setAttribute("for", "help_qiq97r")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2633,10 +2703,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_94j7kn");
+            component.setAttribute("id", "text_lf6o2e");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_94j7kn")
+           scope.componentsFor["text"].setAttribute("for", "text_lf6o2e")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2646,10 +2716,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_cd06ms");
+            component.setAttribute("id", "error_k858vh");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_cd06ms")
+           scope.componentsFor["error"].setAttribute("for", "error_k858vh")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -3158,7 +3228,7 @@ function step(world) {
         turn = rule & 0x0000ffff;
         var write = (rule & 0x00ff0000) >> 16;
         self.state = (rule & 0xff000000) >> 24;
-        return flags | write | 0x0100; // TODO: World.FlagVisited
+        return flags | write | 0x0100;
     }
 
     function executeTurn(dir) {
@@ -4632,10 +4702,10 @@ function RLEBuilder(prefix, sep, suffix) {
     }
 }
 
-}],["view.js","hexant","view.js",{"./hexgrid.js":13,"./ngoncontext.js":19,"./world.js":36},function (require, exports, module, __filename, __dirname){
+}],["view_2d.js","hexant","view_2d.js",{"./hexgrid.js":13,"./ngoncontext.js":19,"./world.js":36},function (require, exports, module, __filename, __dirname){
 
-// hexant/view.js
-// --------------
+// hexant/view_2d.js
+// -----------------
 
 'use strict';
 
@@ -4643,12 +4713,9 @@ var HexGrid = require('./hexgrid.js');
 var NGonContext = require('./ngoncontext.js');
 var World = require('./world.js');
 
-module.exports = View;
+module.exports = View2D;
 
-function View(world, canvas) {
-    if (!(this instanceof View)) {
-        return new View(world, canvas);
-    }
+function View2D(world, canvas) {
     this.world = world;
     this.canvas = canvas;
 
@@ -4674,20 +4741,16 @@ function View(world, canvas) {
 
     this.hexGrid = new HexGrid(
         this.canvas, this.ctxHex,
-        this.world.tile.boundingBox().copy());
+        this.world.tile.boundingBox());
+
     this.updateSize();
 
     this.needsRedraw = false;
 
-    this.boundUpdateEntCell = updateEntCell;
     this.boundDrawEachCell = drawEachCell;
     this.boundMaybeDrawEachCell = maybeDrawEachCell;
 
     var self = this;
-
-    function updateEntCell(data) {
-        return self._updateEntCell(data);
-    }
 
     function drawEachCell(point, data) {
         self.drawCell(point,
@@ -4704,8 +4767,21 @@ function View(world, canvas) {
     }
 }
 
-View.prototype.updateSize =
+View2D.prototype.reset =
+function reset() {
+    this.hexGrid.bounds = null;
+    this.updateSize();
+};
+
+View2D.prototype.updateSize =
 function updateSize() {
+    if (this.hexGrid.bounds === null) {
+        var box = this.world.tile.boundingBox();
+        if (box === null) {
+            return;
+        }
+        this.hexGrid.bounds = this.world.tile.boundingBox().copy();
+    }
     this.hexGrid.updateSize();
     this.featureSize = this.hexGrid.cellSize * this.entSize;
     if (this.featureSize <= 5) {
@@ -4717,33 +4793,44 @@ function updateSize() {
     }
 };
 
-View.prototype.setDrawTrace =
+View2D.prototype.setDrawTrace =
 function setDrawTrace(dt) {
     this.drawTrace = !!dt;
     this.cellColors = this.drawTrace ? this.emptyCellColors : this.antCellColors;
 };
 
-View.prototype.resize =
+View2D.prototype.resize =
 function resize(width, height) {
     this.hexGrid.resize(width, height);
     this.updateSize();
     this.redraw();
 };
 
-View.prototype.redraw =
+View2D.prototype.redraw =
 function redraw() {
+    if (this.hexGrid.bounds === null) {
+        this.updateSize();
+        if (this.hexGrid.bounds === null) {
+            return;
+        }
+    }
+
     if (this.cellColors === null) {
         return;
     }
+    if (this.drawUnvisited) {
+        this.world.tile.eachDataPoint(this.boundDrawEachCell, 0);
+    } else {
+        this.world.tile.eachDataPoint(this.boundMaybeDrawEachCell, null);
+    }
     var ents = this.world.ents;
-    this.world.tile.eachDataPoint(this.drawUnvisited ? this.boundDrawEachCell : this.boundMaybeDrawEachCell);
     for (var i = 0; i < ents.length; i++) {
         this.drawEnt(i);
     }
     this.needsRedraw = false;
 };
 
-View.prototype.updateEnts =
+View2D.prototype.updateEnts =
 function updateEnts() {
     var i;
     for (i = 0; i < this.world.ents.length; i++) {
@@ -4760,26 +4847,26 @@ function updateEnts() {
     this.updateColors(false);
 };
 
-View.prototype.addEnt =
+View2D.prototype.addEnt =
 function addEnt(i) {
     this.lastEntPos.push(this.world.getEntPos(i).copy());
     this.updateColors(false);
 };
 
-View.prototype.updateEnt =
+View2D.prototype.updateEnt =
 function updateEnt(i) {
     this.lastEntPos[i].copyFrom(this.world.getEntPos(i));
     this.updateColors(false);
 };
 
-View.prototype.removeEnt =
+View2D.prototype.removeEnt =
 function removeEnt(i) {
     swapout(this.lastEntPos, i);
     this.lastEntPos.pop();
     this.updateColors(false);
 };
 
-View.prototype.setColorGen =
+View2D.prototype.setColorGen =
 function setColorGen(colorGen) {
     this.emptyCellColorGen = colorGen(0);
     this.antCellColorGen = colorGen(1);
@@ -4788,7 +4875,8 @@ function setColorGen(colorGen) {
     this.updateColors(true);
 };
 
-View.prototype.updateColors = function updateColors(regen) {
+View2D.prototype.updateColors =
+function updateColors(regen) {
     var N = this.world.numColors;
     var M = this.world.ents.length;
 
@@ -4833,7 +4921,7 @@ View.prototype.updateColors = function updateColors(regen) {
     }
 };
 
-View.prototype.setLabeled =
+View2D.prototype.setLabeled =
 function setLabeled(labeled) {
     this.labeled = labeled;
     if (this.labeled) {
@@ -4850,24 +4938,31 @@ function setLabeled(labeled) {
     }
 };
 
-View.prototype.drawUnlabeledCell =
+View2D.prototype.setDrawUnvisited =
+function setDrawUnvisited(drawUnvisited) {
+    this.drawUnvisited = drawUnvisited;
+    this.needsRedraw = true;
+};
+
+View2D.prototype.drawCell =
+View2D.prototype.drawUnlabeledCell =
 function drawUnlabeledCell(point, color, colors) {
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = colors[color];
+    this.ctx2d.fillStyle = rgb_a(colors[color], 1);
     this.ctx2d.fill();
     return screenPoint;
 };
 
-View.prototype.drawLabeledCell =
+View2D.prototype.drawLabeledCell =
 function drawLabeledCell(point, color, colors) {
     var ctx2d = this.ctx2d;
 
     this.ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(point);
     this.ctx2d.closePath();
-    this.ctx2d.fillStyle = colors[color];
+    this.ctx2d.fillStyle = rgb_a(colors[color], 1);
     this.ctx2d.fill();
 
     ctx2d.lineWidth = 1;
@@ -4876,11 +4971,14 @@ function drawLabeledCell(point, color, colors) {
     this._writeText(screenPoint, point.toOddQOffset().toString(), 14);
 };
 
-View.prototype.drawCell =
-View.prototype.drawUnlabeledCell;
-
-View.prototype.step =
+View2D.prototype.step =
 function step() {
+    if (this.hexGrid.bounds === null) {
+        this.needsRedraw = true;
+        this.updateSize();
+        return;
+    }
+
     var ents = this.world.ents;
     var i;
 
@@ -4910,23 +5008,25 @@ function step() {
     }
 };
 
-View.prototype.drawEnt =
-View.prototype.drawUnlabeledFullEnt =
+View2D.prototype.drawEnt =
+View2D.prototype.drawUnlabeledFullEnt =
 function drawUnlabeledFullEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
 
     var pos = this.world.getEntPos(i);
     var dir = this.world.getEntDir(i);
+    var data = this.world.tile.get(pos);
 
     ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(pos);
     ctx2d.closePath();
-    this.world.tile.update(pos, this.boundUpdateEntCell);
+    ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
+    ctx2d.fill();
 
     // head
-    ctx2d.fillStyle = this.headColors[i];
-    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
+    ctx2d.strokeStyle = rgb_a(this.headColors[i], 1);
     ctx2d.lineWidth = this.featureSize / 2;
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
@@ -4935,7 +5035,7 @@ function drawUnlabeledFullEnt(i) {
     ctx2d.stroke();
 
     // body
-    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.fillStyle = rgb_a(this.bodyColors[i], 1);
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
     ctx2d.closePath();
@@ -4944,19 +5044,22 @@ function drawUnlabeledFullEnt(i) {
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype.drawSmallEnt =
+View2D.prototype.drawSmallEnt =
 function drawSmallEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
 
     var pos = this.world.getEntPos(i);
+    var data = this.world.tile.get(pos);
 
     ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(pos);
     ctx2d.closePath();
-    this.world.tile.update(pos, this.boundUpdateEntCell);
+    ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
+    ctx2d.fill();
 
-    ctx2d.fillStyle = this.headColors[i];
+
+    ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
     ctx2d.beginPath();
     ctxHex.full(screenPoint.x, screenPoint.y, this.featureSize);
     ctx2d.closePath();
@@ -4965,22 +5068,25 @@ function drawSmallEnt(i) {
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype.drawLabeledFullEnt =
+View2D.prototype.drawLabeledFullEnt =
 function drawLabeledFullEnt(i) {
     var ctx2d = this.ctx2d;
     var ctxHex = this.hexGrid.ctxHex;
 
     var pos = this.world.getEntPos(i);
     var dir = this.world.getEntDir(i);
+    var data = this.world.tile.get(pos);
 
     ctx2d.beginPath();
     var screenPoint = this.hexGrid.cellPath(pos);
     ctx2d.closePath();
     this.world.tile.update(pos, this.boundUpdateEntCell);
+    ctx2d.fillStyle = rgb_a(this.antCellColors[data & World.MaskColor], 1);
+    ctx2d.fill();
 
     // head
-    ctx2d.fillStyle = this.headColors[i];
-    ctx2d.strokeStyle = this.headColors[i];
+    ctx2d.fillStyle = rgb_a(this.headColors[i], 1);
+    ctx2d.strokeStyle = rgb_a(this.headColors[i], 1);
     ctx2d.lineWidth = this.featureSize / 2;
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, false);
@@ -4989,7 +5095,7 @@ function drawLabeledFullEnt(i) {
     ctx2d.stroke();
 
     // body
-    ctx2d.fillStyle = this.bodyColors[i];
+    ctx2d.fillStyle = rgb_a(this.bodyColors[i], 1);
     ctx2d.beginPath();
     ctxHex.wedge(screenPoint.x, screenPoint.y, this.featureSize, dir, dir + 1, true);
     ctx2d.closePath();
@@ -5003,16 +5109,7 @@ function drawLabeledFullEnt(i) {
     this.lastEntPos[i].copyFrom(pos);
 };
 
-View.prototype._updateEntCell =
-function _updateEntCell(data) {
-    if (!(data & World.FlagVisited)) {
-        this.ctx2d.fillStyle = this.antCellColors[data & World.MaskColor];
-        this.ctx2d.fill();
-    }
-    return data | World.FlagVisited;
-};
-
-View.prototype._writeText =
+View2D.prototype._writeText =
 function _writeText(screenPoint, mess, yoff) {
     var textWidth = this.ctx2d.measureText(mess).width;
     this.ctx2d.strokeText(
@@ -5029,6 +5126,14 @@ function swapout(ar, i) {
     }
     ar[j] = old;
     return j;
+}
+
+function rgb_a(rgb, a) {
+    return 'rgba(' +
+           Math.round(256 * rgb[0]) + ',' +
+           Math.round(256 * rgb[1]) + ',' +
+           Math.round(256 * rgb[2]) + ',' +
+           a.toString() + ')';
 }
 
 }],["world.js","hexant","world.js",{"./coord.js":10,"./hextiletree.js":15},function (require, exports, module, __filename, __dirname){
@@ -5064,7 +5169,7 @@ World.MaskResultTurn  = 0x0000ffff;
 function World() {
     this.numColors = 0;
     this.numStates = 0;
-    this.tile = new HexTileTree(OddQOffset(0, 0), 2, 2);
+    this.tile = new HexTileTree();
     this.ents = [];
     this.views = [];
     this.redrawTiming = [];
@@ -5082,10 +5187,20 @@ function getEntDir(i) {
     return this.ents[i].dir;
 };
 
+World.prototype.reset =
+function reset() {
+    this.resetEnt(0);
+    this.tile.reset();
+    for (var i = 0; i < this.views.length; ++i) {
+        this.views[i].reset();
+    }
+    this.tile.update(this.getEntPos(0), markVisited);
+};
+
 World.prototype.resetEnt =
 function resetEnt(i) {
     this.ents[i].reset();
-    this.tile.centerPoint().toCubeInto(this.ents[i].pos);
+    this.ents[i].pos.scale(0); // reset to 0,0
     this.ents[i].dir = 0;
 };
 
@@ -5093,7 +5208,9 @@ World.prototype.turnEnt =
 function turnEnt(i, turnFunc) {
     var dir = turnFunc(this.ents[i].dir);
     this.ents[i].dir = dir;
-    this.ents[i].pos.add(CubePoint.basis[dir]);
+    this.tile.update(
+        this.ents[i].pos.add(CubePoint.basis[dir]),
+        markVisited);
 };
 
 World.prototype.step =

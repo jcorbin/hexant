@@ -28,14 +28,53 @@ var nodeOriginOffset = [
     OddQOffset(1, 1)
 ];
 
-function HexTileTree(origin, tileWidth, tileHeight) {
-    this.root = new HexTileTreeNode(origin, tileWidth, tileHeight);
-    this.oqo = new Coord.OddQOffset(0, 0);
+function HexTileTree() {
+    this.oqo = new OddQOffset(0, 0);
+    this.root = null;
 }
+
+function HexTileTreeNode(origin, size, replaceme) {
+    var self = this;
+    this.origin = new OddQOffset(0, 0);
+    this.size = 0;
+    this.tileSize = 0;;
+    this.tiles = [null, null, null, null];
+    this.concrete = 0;
+    this.oqo = new OddQOffset(0, 0);
+    this.box = OddQBox(null, null);
+    this._replaceme = replaceme;
+    this._replace = [
+        function replace0(tile) {self._setTile(0, tile);},
+        function replace1(tile) {self._setTile(1, tile);},
+        function replace2(tile) {self._setTile(2, tile);},
+        function replace3(tile) {self._setTile(3, tile);},
+    ];
+    this.init(origin, size);
+}
+
+HexTileTreeNode.prototype.init =
+function init(origin, size) {
+    if (origin && origin !== this.origin) {
+        origin.toOddQOffsetInto(this.origin);
+    }
+    this.size = size;
+    this.tileSize = Math.floor(this.size / 2);
+    this.box.topLeft.q = this.origin.q - this.tileSize;
+    this.box.topLeft.r = this.origin.r - this.tileSize;
+    this.box.bottomRight.q = this.origin.q + this.tileSize;
+    this.box.bottomRight.r = this.origin.r + this.tileSize;
+};
+
+HexTileTree.prototype.reset =
+function reset() {
+    this.root = null;
+};
 
 HexTileTree.prototype.dump =
 function dump() {
-    return this.root.dump();
+    if (this.root !== null) {
+        return this.root.dump();
+    }
 };
 
 HexTileTreeNode.prototype.dump =
@@ -65,7 +104,7 @@ function dump() {
     var parts = ['Tile @' + this.origin.toString()];
     var row = [];
     for (var i = 0; i < this.data.length; i++) {
-        if (i && i % this.width === 0) {
+        if (i && i % this.size === 0) {
             parts.push(row.join(' '));
             row = [];
         }
@@ -77,94 +116,92 @@ function dump() {
 
 HexTileTree.prototype.boundingBox =
 function boundingBox() {
+    if (this.root === null) {
+        return null;
+    }
     return this.root.boundingBox();
 };
 
 HexTileTree.prototype.eachDataPoint =
 function eachDataPoint(each) {
-    this.root.eachDataPoint(each);
+    if (this.root !== null) {
+        this.root.eachDataPoint(each, null, null);
+    }
 };
 
 HexTileTree.prototype.centerPoint =
 function centerPoint() {
+    if (this.root === null) {
+        return null;
+    }
     return this.root.centerPoint();
+};
+
+HexTileTree.prototype._ensureRoot =
+function _ensureRoot() {
+    if (this.root === null) {
+        this.root = new HexTileTreeNode(null, 2, null);
+    }
 };
 
 HexTileTree.prototype.update =
 function update(point, func) {
+    this._ensureRoot();
     point.toOddQOffsetInto(this.oqo);
     while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
     }
     this.root.oqo.copyFrom(this.oqo);
-    return this.root._getOrCreateTile().update(this.oqo, func);
+    var tile = this.root._getOrCreateTile();
+    return tile.update(this.oqo, func);
 };
 
 HexTileTree.prototype.get =
 function get(point) {
+    this._ensureRoot();
     return this.root.get(point);
 };
 
 HexTileTree.prototype.set =
 function set(point, datum) {
+    this._ensureRoot();
     point.toOddQOffsetInto(this.oqo);
     while (!this.root.box.contains(this.oqo)) {
         this.root = this.root.expand();
     }
     this.root.oqo.copyFrom(this.oqo);
-    return this.root._getOrCreateTile().set(this.oqo, datum);
+    var tile = this.root._getOrCreateTile();
+    return tile.set(this.oqo, datum);
 };
-
-function HexTileTreeNode(origin, width, height) {
-    this.origin = origin;
-    this.width = width;
-    this.height = height;
-    this.tileWidth = Math.floor(this.width / 2);
-    this.tileHeight = Math.floor(this.height / 2);
-    this.tiles = [null, null, null, null];
-    this.concrete = 0;
-    this.oqo = new Coord.OddQOffset(0, 0);
-    var topLeft = OddQOffset(this.origin.q - this.tileWidth,
-                             this.origin.r - this.tileHeight);
-    var bottomRight = OddQOffset(this.origin.q + this.tileWidth,
-                                 this.origin.r + this.tileHeight);
-    this.box = OddQBox(topLeft, bottomRight);
-}
 
 HexTileTreeNode.prototype.expand =
 function expand() {
-    var node = new HexTileTreeNode(
-        this.origin.copy(), this.width * 2, this.height * 2);
+    this.init(null, this.size * 2);
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            node.tiles[i] = tile.grow(i);
+            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize, this._replace[i]);
+            tileNode._setTile(zoomPerm[i], tile);
+            this.tiles[i] = tileNode;
         }
     }
-    return node;
+    return this;
 };
 
-OddQHexTile.prototype.grow =
-function grow(i) {
-    var offset = tileOriginOffset[i].copy()
-        .mulBy(this.width, this.height);
-    var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(
-        origin, 2 * this.width, 2 * this.height);
-    node.tiles[zoomPerm[i]] = this;
-    node.concrete++;
-    return node;
+OddQHexTile.prototype.growthOrigin =
+function growthOrigin(i) {
+    return this.oqo
+        .copyFrom(tileOriginOffset[i])
+        .scale(this.width)
+        .add(this.origin);
 };
 
-HexTileTreeNode.prototype.grow =
-function grow(i) {
-    var offset = nodeOriginOffset[i].copy()
-        .mulBy(this.tileWidth, this.tileHeight);
-    var origin = this.origin.copy().add(offset);
-    var node = new HexTileTreeNode(
-        origin, 2 * this.width, 2 * this.height);
-    node.tiles[zoomPerm[i]] = this;
-    return node;
+HexTileTreeNode.prototype.growthOrigin =
+function growthOrigin(i) {
+    return this.oqo
+        .copyFrom(nodeOriginOffset[i])
+        .scale(this.tileSize)
+        .add(this.origin);
 };
 
 HexTileTreeNode.prototype.boundingBox =
@@ -173,40 +210,48 @@ function boundingBox() {
 };
 
 HexTileTreeNode.prototype.eachDataPoint =
-function eachDataPoint(each, replaceMe) {
-    var self = this;
-
-    var i = 0;
-    if (replaceMe && this.concrete == 4) {
-        var tile = this.compact();
-        replaceMe(tile);
-        tile.eachDataPoint(each);
+function eachDataPoint(each, fill) {
+    var tile;
+    if (this._replaceMe && (tile = this._mayCompact())) {
+        tile.eachDataPoint(each, fill, null);
         return;
     }
+    var self = this;
 
-    for (; i < this.tiles.length; i++) {
-        var tile = this.tiles[i];
-        if (tile) {
-            tile.eachDataPoint(each, replace);
-        } else {
-            this._fakeDataPoints(i, each);
-        }
+    if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
+    if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(1, each, fill);
+    if (this.tiles[2]) this.tiles[2].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(2, each, fill);
+    if (this.tiles[3]) this.tiles[3].eachDataPoint(each, fill);
+    else if (typeof fill === 'number') this._fakeDataPoints(3, each, fill);
+};
+
+HexTileTreeNode.prototype._mayCompact =
+function _mayCompact(replaceMe) {
+    if (this.concrete != 4) {
+        return null;
     }
 
-    function replace(tile) {
-        self.tiles[i] = tile;
-        self.concrete++;
+    var tile = this.compact();
+    if (tile === null) {
+        this.concrete = 5;
+        return null;
     }
+
+    this._replaceme(tile);
+    return tile;
 };
 
 HexTileTreeNode.prototype.compact =
 function compact() {
-    var newTile = new OddQHexTile(this.box.topLeft, this.width, this.height);
-    this.tiles[0].eachDataPoint(eachPoint);
-    this.tiles[1].eachDataPoint(eachPoint);
-    this.tiles[2].eachDataPoint(eachPoint);
-    this.tiles[3].eachDataPoint(eachPoint);
-    return newTile
+    var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
+    this.tiles[0].eachDataPoint(eachPoint, null, null);
+    this.tiles[1].eachDataPoint(eachPoint, null, null);
+    this.tiles[2].eachDataPoint(eachPoint, null, null);
+    this.tiles[3].eachDataPoint(eachPoint, null, null);
+    return newTile;
 
     function eachPoint(point, datum) {
         // newTile.data[i++] = datum; TODO: should be able to do something like thing
@@ -215,19 +260,19 @@ function compact() {
 };
 
 HexTileTreeNode.prototype._fakeDataPoints =
-function _fakeDataPoints(i, each) {
+function _fakeDataPoints(i, each, fill) {
     var tileCol = i & 1;
     var tileRow = i >> 1;
 
-    var loQ = this.origin.q + (tileCol ? 0 : -this.tileWidth);
-    var loR = this.origin.r + (tileRow ? 0 : -this.tileHeight);
-    var hiQ = loQ + this.tileWidth;
-    var hiR = loR + this.tileHeight;
+    var loQ = this.origin.q + (tileCol ? 0 : -this.tileSize);
+    var loR = this.origin.r + (tileRow ? 0 : -this.tileSize);
+    var hiQ = loQ + this.tileSize;
+    var hiR = loR + this.tileSize;
 
     var point = OddQOffset(loQ, loR);
     for (point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++) {
-            each(point, 0);
+            each(point, fill);
         }
     }
 };
@@ -243,7 +288,8 @@ function update(point, func) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('update out of bounds');
     }
-    this._getOrCreateTile().update(this.oqo, func);
+    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    return tile.update(this.oqo, func);
 };
 
 HexTileTreeNode.prototype.get =
@@ -265,7 +311,8 @@ function set(point, datum) {
     if (!this.box.contains(this.oqo)) {
         throw new Error('set out of bounds');
     }
-    return this._getOrCreateTile().set(this.oqo, datum);
+    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    return tile.set(this.oqo, datum);
 };
 
 HexTileTreeNode.prototype._getTile =
@@ -284,19 +331,28 @@ function _getOrCreateTile() {
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
     if (!tile) {
-        var origin = OddQOffset(this.origin.q, this.origin.r);
+        var origin = this.origin.copy();
         if (this.oqo.q < origin.q) {
-            origin.q -= this.tileWidth;
+            origin.q -= this.tileSize;
         }
         if (this.oqo.r < origin.r) {
-            origin.r -= this.tileHeight;
+            origin.r -= this.tileSize;
         }
         // TODO: assert offset point in range
 
         // TODO: heuristic for when to create a sparse node instead
-        tile = new OddQHexTile(origin, this.tileWidth, this.tileHeight);
-        this.tiles[i] = tile;
-        this.concrete++;
+        tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
+        this._setTile(i, tile);
     }
     return tile;
+};
+
+HexTileTreeNode.prototype._setTile =
+function _setTile(i, tile) {
+    this.tiles[i] = tile;
+    if (tile instanceof OddQHexTile) {
+        this.concrete++;
+    } else if (tile instanceof HexTileTreeNode) {
+        tile._replaceme = this._replace[i];
+    }
 };

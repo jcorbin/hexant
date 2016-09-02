@@ -128,6 +128,18 @@ CubePoint.prototype.sub = function sub(other) {
     this.z -= other.z;
     return this;
 };
+CubePoint.prototype.scale = function scale(n) {
+    this.x *= n;
+    this.y *= n;
+    this.z *= n;
+    return this;
+};
+CubePoint.prototype.mulBy = function mulBy(x, y, z) {
+    this.x *= x;
+    this.y *= y;
+    this.z *= z;
+    return this;
+};
 CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
     screenPoint.x = 3 / 2 * this.x;
     screenPoint.y = Math.sqrt(3) * (this.z + this.x / 2);
@@ -171,7 +183,7 @@ OddQOffset.prototype.copy = function copy() {
 };
 OddQOffset.prototype.copyFrom = function copyFrom(other) {
     if (other.type !== this.type) {
-        return this.copyFrom(other.toOddQOffset());
+        return other.toOddQOffsetInto(this);
     }
     this.q = other.q;
     this.r = other.r;
@@ -196,6 +208,11 @@ OddQOffset.prototype.sub = function sub(other) {
     }
     this.q -= other.q;
     this.r -= other.r;
+    return this;
+};
+OddQOffset.prototype.scale = function scale(n) {
+    this.q *= n;
+    this.r *= n;
     return this;
 };
 OddQOffset.prototype.mulBy = function mulBy(q, r) {
