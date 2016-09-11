@@ -69,3 +69,47 @@ var rangeListAdd = require('../rangelist.js').add;
         assert.end();
     });
 });
+
+var rangeListSub = require('../rangelist.js').sub;
+
+[
+    // sub zero-width -> noop
+    [[], [10, 10], []],
+
+    // empty -> sub one
+    [[], [10, 20], []],
+
+    // one -> sub middle -> two
+    [[10, 40], [21, 29], [10, 20, 30, 40]],
+
+    // one -> sub tail -> one
+    [[10, 40], [30, 40], [10, 29]],
+
+    // one -> sub head -> one
+    [[10, 40], [10, 20], [21, 40]],
+
+    // two -> sub span -> two
+    [[10, 20, 30, 40], [15, 35], [10, 14, 36, 40]],
+
+    // three -> sub exact middle -> two
+    [[10, 20, 30, 40, 50, 60], [30, 40], [10, 20, 50, 60]],
+
+    // three -> sub span middle -> two
+    [[10, 20, 30, 40, 50, 60], [25, 45], [10, 20, 50, 60]],
+    [[10, 20, 30, 40, 50, 60], [15, 55], [10, 14, 56, 60]],
+
+].forEach(function testEachCase(testCase) {
+    var start = testCase[0];
+    var sub = testCase[1];
+    var expect = testCase[2];
+    var desc = JSON.stringify(start) + ' -> sub ' + JSON.stringify(sub);
+
+    test(desc, function t(assert) {
+        var rl = start.slice(0);
+        for (var i = 0; i < sub.length; i+=2) {
+            rangeListSub(rl, sub[i], sub[i+1]);
+        }
+        assert.deepEquals(rl, expect);
+        assert.end();
+    });
+});
