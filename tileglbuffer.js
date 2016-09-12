@@ -2,6 +2,51 @@
 
 // TODO: take over more code, currently this module only has code to be tested
 
+function placeTile(tiles, capacity, length) {
+    var bestIndex = -1, bestOffset = -1, best = -1;
+    var offset = 0, start = -1;
+
+    var freeIndex = -1, freeOffset = -1, freeLength = 0;
+    for (var i = 0; i < tiles.length; i+=2) {
+        var tileId = tiles[i];
+        var tileLength = tiles[i+1];
+        if (tileId === null) {
+            if (freeLength === 0) {
+                freeIndex = i;
+                freeOffset = offset;
+            }
+            freeLength += tileLength;
+            if (length <= freeLength) {
+                var waste = freeLength - length;
+                if (best < 0 || waste < best) {
+                    bestIndex = freeIndex;
+                    bestOffset = freeOffset;
+                    best = waste;
+                }
+            }
+        } else if (freeLength !== 0) {
+            freeIndex = -1;
+            freeOffset = -1;
+            freeLength = 0;
+        }
+        offset += tileLength;
+    }
+
+    var free = capacity - offset;
+    if (length <= free) {
+        var waste = free - length;
+        if (best < 0 || waste < best) {
+            bestIndex = tiles.length;
+            bestOffset = offset;
+            best = waste;
+        }
+    }
+
+    return [bestIndex, bestOffset, best];
+}
+
+module.exports.placeTile = placeTile;
+
 function collectTombstone(tiles, i, length) {
     if (tiles[i] !== null) {
         throw new Error('not a tombstone');
