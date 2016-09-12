@@ -640,6 +640,15 @@ function TileGLBuffer(id, tileWriter) {
     this.capacity = 0;
 }
 
+// TODO:
+// TileGLBuffer.prototype.compact =
+// function compact() {
+//     var start, end = someFreeRange[0,1];
+//     var target = start - (end - start);
+//     this.verts.copyWithin(target, start, end);
+//     this.colors.copyWithin(target, start, end);
+// };
+
 TileGLBuffer.prototype.reset =
 function reset() {
     this.tiles.length = 0;
@@ -713,6 +722,12 @@ function LazyGLBuffer(gl, type, width, data) {
     this.inval = [];
     GLBuffer.call(this, gl, type, width, data);
 }
+
+LazyGLBuffer.prototype.copyWithin =
+function copyWithin(target, start, end) {
+    this.data.copyWithin(target * this.width, start * this.width, end * this.width);
+    this.invalidate(target, target + end - start);
+};
 
 LazyGLBuffer.prototype.invalidate =
 function invalidate(lo, hi) {
