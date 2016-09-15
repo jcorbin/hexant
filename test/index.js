@@ -2,3 +2,4 @@
 
 require('./hextiletree.js');
 require('./rangelist.js');
+require('./tileglbuffer.js');
