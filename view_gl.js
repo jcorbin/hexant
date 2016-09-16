@@ -492,6 +492,8 @@ function TileBufferer(gl, world, tileWriter) {
     this.world = world;
     this.tileWriter = tileWriter;
     this.drawUnvisited = false;
+    this.totalUsed = 0;
+    this.totalFree = 0;
 
     this.tileBuffers = [];
     this.bufferForTileId = {};
@@ -537,6 +539,28 @@ function flush() {
         this.flushTileBuffer(tileBuffer);
     }
     this.dirtyTileBuffers.length = 0;
+
+    this.totalUsed = 0;
+    this.totalFree = 0;
+    for (var i = 0; i < this.tileBuffers.length; ++i) {
+        var tileBuffer = this.tileBuffers[i];
+        var used = 0;
+        var free = 0;
+        for (var j = 0; j < tileBuffer.tiles.length; j+=2) {
+            var offset = 0;
+            var tileId = tileBuffer.tiles[j];
+            var tileLength = tileBuffer.tiles[j+1];
+            if (tileId === null) {
+                free += tileLength;
+            } else {
+                used += tileLength;
+            }
+            offset += tileLength;
+        }
+        free += tileBuffer.capacity - offset;
+        this.totalUsed += used;
+        this.totalFree += free;
+    }
 };
 
 TileBufferer.prototype.flushTile =

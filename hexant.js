@@ -351,6 +351,17 @@ function _animate(time) {
         } else {
             this.redrawTiming.innerText = '';
         }
+
+        var totalBuffer = this.view.tileBufferer.totalUsed + this.view.tileBufferer.totalFree;
+        var usage = 100 * this.view.tileBufferer.totalUsed / totalBuffer;
+
+        this.redrawTiming.innerText +=
+            '\nbuffers: ' +
+            usage.toFixed(1) +
+            '% used of ' +
+            this.view.tileBufferer.tileBuffers.length +
+            '\nused: ' + toSI(this.view.tileBufferer.totalUsed) +
+            '\nfree: ' + toSI(this.view.tileBufferer.totalFree);
     }
 };
 
