@@ -443,18 +443,20 @@ function _getOrCreateTile() {
         if (this.tileSize * this.tileSize > this.tree.maxTileArea) {
             tile = this._allocNode(i);
         } else {
-            var origin = this.origin.copy();
-            if (this.oqo.q < origin.q) {
-                origin.q -= this.tileSize;
-            }
-            if (this.oqo.r < origin.r) {
-                origin.r -= this.tileSize;
-            }
-            tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
-            this._setTile(i, tile);
-            this.tree.addTile(tile);
+            tile = this._allocTile(i);
         }
     }
+    return tile;
+};
+
+HexTileTreeNode.prototype._allocTile =
+function _allocTile(i) {
+    var origin = this.origin.copy();
+    if (this.oqo.q < origin.q) origin.q -= this.tileSize;
+    if (this.oqo.r < origin.r) origin.r -= this.tileSize;
+    var tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
+    this._setTile(i, tile);
+    this.tree.addTile(tile);
     return tile;
 };
 
