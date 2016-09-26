@@ -43,12 +43,12 @@ function HexTileTreeNode(tree, origin, size, replaceme) {
     var self = this;
     this.tree = tree;
     this.origin = new OddQOffset(0, 0);
-    this.size = 0;
-    this.tileSize = 0;;
-    this.tiles = [null, null, null, null];
-    this.concrete = 0;
     this.oqo = new OddQOffset(0, 0);
     this.box = OddQBox(null, null);
+    this.size = 0;
+    this.tileSize = 0;
+    this.tiles = [null, null, null, null];
+    this.concrete = 0;
     this._replaceme = replaceme;
     this._replace = [
         function replace0(tile) {self._setTile(0, tile);},
