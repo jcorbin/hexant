@@ -439,14 +439,13 @@ function _getOrCreateTile() {
     var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
-    if (!tile) {
-        if (this.tileSize * this.tileSize > this.tree.maxTileArea) {
-            tile = this._allocNode(i);
-        } else {
-            tile = this._allocTile(i);
-        }
+    if (tile) {
+        return tile;
     }
-    return tile;
+    if (this.tileSize * this.tileSize > this.tree.maxTileArea) {
+        return this._allocNode(i);
+    }
+    return this._allocTile(i);
 };
 
 HexTileTreeNode.prototype._allocTile =
