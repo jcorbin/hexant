@@ -22,11 +22,19 @@ OddQHexTile.NextId = 0;
 OddQHexTile.prototype.init =
 function init(origin, width, height) {
     var need = width * height;
+    var needBytes = need * Uint16Array.BYTES_PER_ELEMENT;
     origin.toOddQOffsetInto(this.origin);
     this.width = width;
     this.height = height;
-    if (this.data === null || this.data.length !== need) {
+    if (this.data === null || this.data.buffer.byteLength < needBytes) {
         this.data = new Uint16Array(need);
+    } else {
+        if (this.data.length !== need) {
+            this.data = new Uint16Array(this.data.buffer, 0, need);
+        }
+        for (var i = 0; i < this.data.length; ++i) {
+            this.data[i] = 0;
+        }
     }
     this.dirty = false;
     return this;
