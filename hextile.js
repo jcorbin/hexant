@@ -21,10 +21,13 @@ OddQHexTile.NextId = 0;
 
 OddQHexTile.prototype.init =
 function init(origin, width, height) {
+    var need = width * height;
     origin.toOddQOffsetInto(this.origin);
     this.width = width;
     this.height = height;
-    this.data = new Uint16Array(this.width * this.height);
+    if (this.data === null || this.data.length !== need) {
+        this.data = new Uint16Array(need);
+    }
     this.dirty = false;
     return this;
 };
