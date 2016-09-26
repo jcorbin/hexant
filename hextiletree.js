@@ -440,14 +440,10 @@ function _getOrCreateTile() {
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
     if (!tile) {
-        var origin = this.origin.copy();
         if (this.tileSize * this.tileSize > this.tree.maxTileArea) {
-            origin.q += this.tileSize / (this.oqo.q < origin.q ? -2 : 2);
-            origin.r += this.tileSize / (this.oqo.r < origin.r ? -2 : 2);
-            tile = new HexTileTreeNode(this.tree,
-                origin, this.tileSize, this._replace[i]);
-            this.tiles[i] = tile;
+            tile = this._allocNode(i);
         } else {
+            var origin = this.origin.copy();
             if (this.oqo.q < origin.q) {
                 origin.q -= this.tileSize;
             }
@@ -460,6 +456,17 @@ function _getOrCreateTile() {
         }
     }
     return tile;
+};
+
+HexTileTreeNode.prototype._allocNode =
+function _allocNode(i) {
+    var origin = this.origin.copy();
+    origin.q += this.tileSize / (this.oqo.q < origin.q ? -2 : 2);
+    origin.r += this.tileSize / (this.oqo.r < origin.r ? -2 : 2);
+    var node = new HexTileTreeNode(this.tree,
+        origin, this.tileSize, this._replace[i]);
+    this.tiles[i] = node;
+    return node;
 };
 
 HexTileTreeNode.prototype._setTile =
