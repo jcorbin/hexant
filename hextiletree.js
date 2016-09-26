@@ -147,6 +147,7 @@ function removeTile(tile) {
 
 HexTileTree.prototype.reset =
 function reset() {
+    // TODO: free each tile
     this.dirtyTiles.length = 0;
     this.tiles = {};
     this.root = null;
