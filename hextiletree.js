@@ -442,10 +442,10 @@ function _getOrCreateTile() {
     if (tile) {
         return tile;
     }
-    if (this.tileSize * this.tileSize > this.tree.maxTileArea) {
-        return this._allocNode(i);
+    if (this.tileSize * this.tileSize <= this.tree.minTileArea) {
+        return this._allocTile(i);
     }
-    return this._allocTile(i);
+    return this._allocNode(i);
 };
 
 HexTileTreeNode.prototype._allocTile =
