@@ -3,20 +3,31 @@
 var Coord = require('./coord.js');
 var OddQOffset = Coord.OddQOffset;
 var OddQBox = Coord.OddQBox;
+var installPool = require('./pool.js');
 
 module.exports = OddQHexTile;
 
-function OddQHexTile(origin, width, height) {
+function OddQHexTile() {
     this.id = OddQHexTile.NextId++;
-    this.origin = origin.toOddQOffset();
+    this.origin = new Coord.OddQOffset(0, 0);
     this.oqo = new Coord.OddQOffset(0, 0);
-    this.width = width;
-    this.height = height;
-    this.data = new Uint16Array(this.width * this.height);
+    this.width = 0;
+    this.height = 0;
+    this.data = null;
     this.dirty = false;
 }
 
 OddQHexTile.NextId = 0;
+
+OddQHexTile.prototype.init =
+function init(origin, width, height) {
+    origin.toOddQOffsetInto(this.origin);
+    this.width = width;
+    this.height = height;
+    this.data = new Uint16Array(this.width * this.height);
+    this.dirty = false;
+    return this;
+};
 
 OddQHexTile.prototype.boundingBox =
 function boundingBox() {
@@ -140,3 +151,5 @@ function expandBoxToIf(tl, br, mask) {
         }
     }
 };
+
+installPool(OddQHexTile);
