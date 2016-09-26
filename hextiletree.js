@@ -259,8 +259,8 @@ function expand() {
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            var tileNode = new HexTileTreeNode(this.tree,
-                tile.growthOrigin(i), this.tileSize, this._replace[i]);
+            var tileNode = new HexTileTreeNode(
+                this.tree, tile.growthOrigin(i), this.tileSize, this._replace[i]);
             tileNode._setTile(zoomPerm[i], tile);
             this.tiles[i] = tileNode;
         }
@@ -349,7 +349,8 @@ function compact() {
         return null;
     }
 
-    var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
+    var newTile = new OddQHexTile(
+        this.box.topLeft, this.size, this.size);
     this.tiles[0].eachDataPoint(eachPoint, null, null);
     this.tiles[1].eachDataPoint(eachPoint, null, null);
     this.tiles[2].eachDataPoint(eachPoint, null, null);
@@ -455,7 +456,8 @@ function _allocTile(i) {
     var origin = this.origin.copy();
     if (this.oqo.q < origin.q) origin.q -= this.tileSize;
     if (this.oqo.r < origin.r) origin.r -= this.tileSize;
-    var tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
+    var tile = new OddQHexTile(
+        origin, this.tileSize, this.tileSize);
     this._setTile(i, tile);
     this.tree.addTile(tile);
     return tile;
@@ -466,8 +468,8 @@ function _allocNode(i) {
     var origin = this.origin.copy();
     origin.q += this.tileSize / (this.oqo.q < origin.q ? -2 : 2);
     origin.r += this.tileSize / (this.oqo.r < origin.r ? -2 : 2);
-    var node = new HexTileTreeNode(this.tree,
-        origin, this.tileSize, this._replace[i]);
+    var node = new HexTileTreeNode(
+        this.tree, origin, this.tileSize, this._replace[i]);
     this.tiles[i] = node;
     return node;
 };
