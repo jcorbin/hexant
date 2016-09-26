@@ -56,14 +56,16 @@ function HexTileTreeNode(tree, origin, size, replaceme) {
         function replace2(tile) {self._setTile(2, tile);},
         function replace3(tile) {self._setTile(3, tile);},
     ];
-    this.init(origin, size);
+    if (origin !== null) {
+        origin.toOddQOffsetInto(this.origin);
+    } else {
+        this.origin.q = this.origin.r = 0;
+    }
+    this._setSize(size);
 }
 
-HexTileTreeNode.prototype.init =
-function init(origin, size) {
-    if (origin && origin !== this.origin) {
-        origin.toOddQOffsetInto(this.origin);
-    }
+HexTileTreeNode.prototype._setSize =
+function _setSize(size) {
     this.size = size;
     this.tileSize = Math.floor(this.size / 2);
     this.box.topLeft.q = this.origin.q - this.tileSize;
@@ -253,7 +255,7 @@ function set(point, datum) {
 
 HexTileTreeNode.prototype.expand =
 function expand() {
-    this.init(null, this.size * 2);
+    this._setSize(this.size * 2);
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
