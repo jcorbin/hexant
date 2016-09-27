@@ -125,7 +125,7 @@ global = this;
 
 }());
 
-}],["animator.js","blick","animator.js",{"raf":41},function (require, exports, module, __filename, __dirname){
+}],["animator.js","blick","animator.js",{"raf":42},function (require, exports, module, __filename, __dirname){
 
 // blick/animator.js
 // -----------------
@@ -349,7 +349,7 @@ if (typeof window !== "undefined") {
     module.exports = {};
 }
 
-}],["document.js","gutentag","document.js",{"koerper":38},function (require, exports, module, __filename, __dirname){
+}],["document.js","gutentag","document.js",{"koerper":39},function (require, exports, module, __filename, __dirname){
 
 // gutentag/document.js
 // --------------------
@@ -447,7 +447,7 @@ Object.defineProperty(Text.prototype, "value", {
     }
 });
 
-}],["index.js","hashbind","index.js",{"rezult":42},function (require, exports, module, __filename, __dirname){
+}],["index.js","hashbind","index.js",{"rezult":43},function (require, exports, module, __filename, __dirname){
 
 // hashbind/index.js
 // -----------------
@@ -815,7 +815,7 @@ function escapeMatch(part) {
     return escape(part);
 }
 
-}],["colorgen.js","hexant","colorgen.js",{"rezult":42,"husl":37},function (require, exports, module, __filename, __dirname){
+}],["colorgen.js","hexant","colorgen.js",{"rezult":43,"husl":38},function (require, exports, module, __filename, __dirname){
 
 // hexant/colorgen.js
 // ------------------
@@ -1238,7 +1238,7 @@ OddQBox.prototype.expandTo = function expandTo(pointArg) {
     return expanded;
 };
 
-}],["hexant.html","hexant","hexant.html",{"./hexant.js":12,"./prompt.html":20},function (require, exports, module, __filename, __dirname){
+}],["hexant.html","hexant","hexant.html",{"./hexant.js":12,"./prompt.html":21},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.html
 // ------------------
@@ -1258,10 +1258,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_umk1vh");
+        component.setAttribute("id", "view_6qyu7i");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_umk1vh")
+       scope.componentsFor["view"].setAttribute("for", "view_6qyu7i")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -1282,10 +1282,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_sxavzf");
+        component.setAttribute("id", "prompt_q51gfx");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_sxavzf")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_q51gfx")
     }
     node = document.createElement("DIV");
     parent.appendChild(node);
@@ -1295,10 +1295,10 @@ var $THIS = function HexantHexant(body, caller) {
     component.setAttribute("class", "overlay fps right");
     }
     if (component.setAttribute) {
-        component.setAttribute("id", "fpsOverlay_sobrb6");
+        component.setAttribute("id", "fpsOverlay_ucvo1u");
     }
     if (scope.componentsFor["fpsOverlay"]) {
-       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_sobrb6")
+       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_ucvo1u")
     }
     if (component.setAttribute) {
     component.setAttribute("style", "display: none");
@@ -1310,10 +1310,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("fps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "fps_gj0ba3");
+            component.setAttribute("id", "fps_txwnfv");
         }
         if (scope.componentsFor["fps"]) {
-           scope.componentsFor["fps"].setAttribute("for", "fps_gj0ba3")
+           scope.componentsFor["fps"].setAttribute("for", "fps_txwnfv")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1323,10 +1323,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("sps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "sps_20x4zu");
+            component.setAttribute("id", "sps_lb6t9j");
         }
         if (scope.componentsFor["sps"]) {
-           scope.componentsFor["sps"].setAttribute("for", "sps_20x4zu")
+           scope.componentsFor["sps"].setAttribute("for", "sps_lb6t9j")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1336,10 +1336,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("redrawTiming", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "redrawTiming_3ctayy");
+            component.setAttribute("id", "redrawTiming_83zcbf");
         }
         if (scope.componentsFor["redrawTiming"]) {
-           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_3ctayy")
+           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_83zcbf")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -1356,7 +1356,7 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
     var scope = this.scope = caller;
 };
 
-}],["hexant.js","hexant","hexant.js",{"hashbind":8,"Base64":0,"rezult":42,"./colorgen.js":9,"./world.js":36,"./view_2d.js":35,"./turmite/index.js":24,"./coord.js":10,"./hextiletree.js":15,"./sample.js":22},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"hashbind":8,"Base64":0,"rezult":43,"./colorgen.js":9,"./world.js":37,"./view_2d.js":36,"./turmite/index.js":25,"./coord.js":10,"./hextiletree.js":15,"./sample.js":23},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -1960,7 +1960,7 @@ function updateSize() {
     this.canvas.style.height = this.canvas.height + 'px';
 };
 
-}],["hextile.js","hexant","hextile.js",{"./coord.js":10},function (require, exports, module, __filename, __dirname){
+}],["hextile.js","hexant","hextile.js",{"./coord.js":10,"./pool.js":20},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextile.js
 // -----------------
@@ -1970,16 +1970,42 @@ function updateSize() {
 var Coord = require('./coord.js');
 var OddQOffset = Coord.OddQOffset;
 var OddQBox = Coord.OddQBox;
+var installPool = require('./pool.js');
 
 module.exports = OddQHexTile;
 
-function OddQHexTile(origin, width, height) {
-    this.origin = origin.toOddQOffset();
+function OddQHexTile() {
+    this.id = OddQHexTile.NextId++;
+    this.origin = new Coord.OddQOffset(0, 0);
     this.oqo = new Coord.OddQOffset(0, 0);
+    this.width = 0;
+    this.height = 0;
+    this.data = null;
+    this.dirty = false;
+}
+
+OddQHexTile.NextId = 0;
+
+OddQHexTile.prototype.init =
+function init(origin, width, height) {
+    var need = width * height;
+    var needBytes = need * Uint16Array.BYTES_PER_ELEMENT;
+    origin.toOddQOffsetInto(this.origin);
     this.width = width;
     this.height = height;
-    this.data = new Uint16Array(this.width * this.height);
-}
+    if (this.data === null || this.data.buffer.byteLength < needBytes) {
+        this.data = new Uint16Array(need);
+    } else {
+        if (this.data.length !== need) {
+            this.data = new Uint16Array(this.data.buffer, 0, need);
+        }
+        for (var i = 0; i < this.data.length; ++i) {
+            this.data[i] = 0;
+        }
+    }
+    this.dirty = false;
+    return this;
+};
 
 OddQHexTile.prototype.boundingBox =
 function boundingBox() {
@@ -2018,22 +2044,95 @@ function set(point, datum) {
     return datum;
 };
 
+OddQHexTile.prototype.eachTile =
+function eachTile(each) {
+    each(this);
+};
+
 OddQHexTile.prototype.eachDataPoint =
 function eachDataPoint(each, fill, replace) {
+    var point = this.oqo;
     var loQ = this.origin.q;
     var loR = this.origin.r;
     var hiQ = loQ + this.width;
     var hiR = loR + this.height;
-    var point = OddQOffset(loQ, loR);
-    var i;
-    for (i = 0, point.r = loR; point.r < hiR; point.r++) {
+    var i = 0;
+    for (point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++, i++) {
             each(point, this.data[i]);
         }
     }
 };
 
-}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":10,"./hextile.js":14},function (require, exports, module, __filename, __dirname){
+OddQHexTile.prototype.expandBoxTo =
+function expandBoxTo(tl, br, mask) {
+    var tlq = this.origin.q;
+    var tlr = this.origin.r;
+    var brq = tlq + this.width;
+    var brr = tlr + this.height;
+    if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
+        tl.q = tlq;
+        tl.r = tlr;
+        br.q = brq;
+        br.r = brr;
+    } else {
+        if (tlq < tl.q) tl.q = tlq;
+        if (tlr < tl.r) tl.r = tlr;
+        if (brq > br.q) br.q = brq;
+        if (brr > br.r) br.r = brr;
+    }
+};
+
+OddQHexTile.prototype.expandBoxToIf =
+function expandBoxToIf(tl, br, mask) {
+    var q = this.origin.q, r = this.origin.r, i = 0;
+
+    // if any part of the box isn't defined, initialize from the first masked
+    // point
+    if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
+        while (i < this.data.length) {
+            if (this.data[i] & mask) {
+                tl.q = q;
+                br.q = q;
+                tl.r = r;
+                br.r = r;
+                break;
+            }
+            i++;
+            q++;
+            if (q >= this.origin.q + this.width) {
+                q = this.origin.q;
+                r++;
+            }
+        }
+    }
+
+    // now just expand to each masked point
+    while (i < this.data.length) {
+        if (this.data[i] & mask) {
+            if (q < tl.q) {
+                tl.q = q;
+            } else if (q >= br.q) {
+                br.q = q;
+            }
+            if (r < tl.r) {
+                tl.r = r;
+            } else if (r >= br.r) {
+                br.r = r;
+            }
+        }
+        i++;
+        q++;
+        if (q >= this.origin.q + this.width) {
+            q = this.origin.q;
+            r++;
+        }
+    }
+};
+
+installPool(OddQHexTile);
+
+}],["hextiletree.js","hexant","hextiletree.js",{"./coord.js":10,"./hextile.js":14,"./pool.js":20},function (require, exports, module, __filename, __dirname){
 
 // hexant/hextiletree.js
 // ---------------------
@@ -2044,6 +2143,7 @@ var Coord = require('./coord.js');
 var OddQHexTile = require('./hextile.js');
 var OddQOffset = Coord.OddQOffset;
 var OddQBox = Coord.OddQBox;
+var installPool = require('./pool.js');
 
 module.exports = HexTileTree;
 
@@ -2069,34 +2169,71 @@ var nodeOriginOffset = [
 ];
 
 function HexTileTree() {
+    this.minTileArea = 4;
+    this.maxTileArea = 64;
     this.oqo = new OddQOffset(0, 0);
     this.root = null;
+    this.tiles = {};
+    this.dirtyTiles = [];
+    this.tileRemoved = noop;
+    this.tileAdded = noop;
 }
 
-function HexTileTreeNode(origin, size, replaceme) {
+function HexTileTreeNode() {
     var self = this;
+    this.tree = null;
     this.origin = new OddQOffset(0, 0);
-    this.size = 0;
-    this.tileSize = 0;;
-    this.tiles = [null, null, null, null];
-    this.concrete = 0;
     this.oqo = new OddQOffset(0, 0);
     this.box = OddQBox(null, null);
-    this._replaceme = replaceme;
+    this.size = 0;
+    this.tileSize = 0;
+    this.tiles = [null, null, null, null];
+    this.concrete = 0;
+    this._replaceme = null;
     this._replace = [
         function replace0(tile) {self._setTile(0, tile);},
         function replace1(tile) {self._setTile(1, tile);},
         function replace2(tile) {self._setTile(2, tile);},
         function replace3(tile) {self._setTile(3, tile);},
     ];
-    this.init(origin, size);
 }
 
 HexTileTreeNode.prototype.init =
-function init(origin, size) {
-    if (origin && origin !== this.origin) {
+function init(tree, origin, size, replaceme) {
+    this.tree = tree;
+    this.concrete = 0;
+    this._replaceme = replaceme;
+    if (origin !== null) {
         origin.toOddQOffsetInto(this.origin);
+    } else {
+        this.origin.q = this.origin.r = 0;
     }
+    this._setSize(size);
+    return this;
+};
+
+HexTileTreeNode.prototype.reset =
+function reset() {
+    if (this.tiles[0] !== null) {
+        this.tiles[0].free();
+        this.tiles[0] = null;
+    }
+    if (this.tiles[1] !== null) {
+        this.tiles[1].free();
+        this.tiles[1] = null;
+    }
+    if (this.tiles[2] !== null) {
+        this.tiles[2].free();
+        this.tiles[2] = null;
+    }
+    if (this.tiles[3] !== null) {
+        this.tiles[3].free();
+        this.tiles[3] = null;
+    }
+};
+
+HexTileTreeNode.prototype._setSize =
+function _setSize(size) {
     this.size = size;
     this.tileSize = Math.floor(this.size / 2);
     this.box.topLeft.q = this.origin.q - this.tileSize;
@@ -2105,8 +2242,43 @@ function init(origin, size) {
     this.box.bottomRight.r = this.origin.r + this.tileSize;
 };
 
+HexTileTree.prototype.getTile =
+function getTile(id) {
+    return this.tiles[id];
+};
+
+HexTileTree.prototype.addTile =
+function addTile(tile) {
+    this.tiles[tile.id] = tile;
+    tile.dirty = true;
+    this.dirtyTiles.push(tile);
+    this.tileAdded(tile);
+};
+
+HexTileTree.prototype.removeTile =
+function removeTile(tile) {
+    if (tile.dirty) {
+        var j = 0, k = 0;
+        for (; k < this.dirtyTiles.length; ++j, ++k) {
+            if (this.dirtyTiles[j] === tile) {
+                ++k;
+                break;
+            }
+        }
+        while (k < this.dirtyTiles.length) {
+            this.dirtyTiles[j++] = this.dirtyTiles[k++];
+        }
+        this.dirtyTiles.length = j;
+    }
+    this.tileRemoved(tile);
+    delete this.tiles[tile.id];
+    tile.free();
+};
+
 HexTileTree.prototype.reset =
 function reset() {
+    this.dirtyTiles.length = 0;
+    this.tiles = {};
     this.root = null;
 };
 
@@ -2162,6 +2334,33 @@ function boundingBox() {
     return this.root.boundingBox();
 };
 
+HexTileTree.prototype.eachTile =
+function eachTile(each) {
+    if (this.root !== null) {
+        this.root.eachTile(each);
+    }
+};
+
+HexTileTreeNode.prototype.eachTile =
+function eachTile(each) {
+    var tile;
+    if (this.replaceme && (tile = this._mayCompact())) {
+        tile.eachTile(each);
+        return;
+    }
+    if (this.tiles[0]) this.tiles[0].eachTile(each);
+    if (this.tiles[1]) this.tiles[1].eachTile(each);
+    if (this.tiles[2]) this.tiles[2].eachTile(each);
+    if (this.tiles[3]) this.tiles[3].eachTile(each);
+};
+
+HexTileTree.prototype.eachTile =
+function eachTile(each) {
+    if (this.root !== null) {
+        this.root.eachTile(each);
+    }
+};
+
 HexTileTree.prototype.eachDataPoint =
 function eachDataPoint(each) {
     if (this.root !== null) {
@@ -2180,7 +2379,8 @@ function centerPoint() {
 HexTileTree.prototype._ensureRoot =
 function _ensureRoot() {
     if (this.root === null) {
-        this.root = new HexTileTreeNode(null, 2, null);
+        var s = Math.ceil(Math.sqrt(this.minTileArea))*2;
+        this.root = HexTileTreeNode.alloc().init(this, null, s, null);
     }
 };
 
@@ -2193,6 +2393,10 @@ function update(point, func) {
     }
     this.root.oqo.copyFrom(this.oqo);
     var tile = this.root._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.dirtyTiles.push(tile);
+    }
     return tile.update(this.oqo, func);
 };
 
@@ -2211,16 +2415,21 @@ function set(point, datum) {
     }
     this.root.oqo.copyFrom(this.oqo);
     var tile = this.root._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.dirtyTiles.push(tile);
+    }
     return tile.set(this.oqo, datum);
 };
 
 HexTileTreeNode.prototype.expand =
 function expand() {
-    this.init(null, this.size * 2);
+    this._setSize(this.size * 2);
     for (var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
         if (tile !== null) {
-            var tileNode = new HexTileTreeNode(tile.growthOrigin(i), this.tileSize, this._replace[i]);
+            var tileNode = HexTileTreeNode.alloc().init(
+                this.tree, tile.growthOrigin(i), this.tileSize, this._replace[i]);
             tileNode._setTile(zoomPerm[i], tile);
             this.tiles[i] = tileNode;
         }
@@ -2247,6 +2456,19 @@ function growthOrigin(i) {
 HexTileTreeNode.prototype.boundingBox =
 function boundingBox() {
     return this.box;
+};
+
+HexTileTreeNode.prototype.eachTile =
+function eachTile(each) {
+    var tile;
+    if (this.replaceme && (tile = this._mayCompact())) {
+        tile.eachTile(each);
+        return;
+    }
+    if (this.tiles[0]) this.tiles[0].eachTile(each);
+    if (this.tiles[1]) this.tiles[1].eachTile(each);
+    if (this.tiles[2]) this.tiles[2].eachTile(each);
+    if (this.tiles[3]) this.tiles[3].eachTile(each);
 };
 
 HexTileTreeNode.prototype.eachDataPoint =
@@ -2281,12 +2503,23 @@ function _mayCompact(replaceMe) {
     }
 
     this._replaceme(tile);
+    for (var i = 0; i < this.tiles.length; ++i) {
+        this.tree.removeTile(this.tiles[i]);
+    }
+    if (tile instanceof OddQHexTile) {
+        this.tree.addTile(tile);
+    }
     return tile;
 };
 
 HexTileTreeNode.prototype.compact =
 function compact() {
-    var newTile = new OddQHexTile(this.box.topLeft, this.size, this.size);
+    if (this.size * this.size > this.tree.maxTileArea) {
+        return null;
+    }
+
+    var newTile = OddQHexTile.alloc().init(
+        this.box.topLeft, this.size, this.size);
     this.tiles[0].eachDataPoint(eachPoint, null, null);
     this.tiles[1].eachDataPoint(eachPoint, null, null);
     this.tiles[2].eachDataPoint(eachPoint, null, null);
@@ -2329,6 +2562,10 @@ function update(point, func) {
         throw new Error('update out of bounds');
     }
     var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.tree.dirtyTiles.push(tile);
+    }
     return tile.update(this.oqo, func);
 };
 
@@ -2352,6 +2589,10 @@ function set(point, datum) {
         throw new Error('set out of bounds');
     }
     var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+        tile.dirty = true;
+        this.tree.dirtyTiles.push(tile);
+    }
     return tile.set(this.oqo, datum);
 };
 
@@ -2370,21 +2611,36 @@ function _getOrCreateTile() {
     var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
     var i = tileRow * 2 + tileCol;
     var tile = this.tiles[i];
-    if (!tile) {
-        var origin = this.origin.copy();
-        if (this.oqo.q < origin.q) {
-            origin.q -= this.tileSize;
-        }
-        if (this.oqo.r < origin.r) {
-            origin.r -= this.tileSize;
-        }
-        // TODO: assert offset point in range
-
-        // TODO: heuristic for when to create a sparse node instead
-        tile = new OddQHexTile(origin, this.tileSize, this.tileSize);
-        this._setTile(i, tile);
+    if (tile) {
+        return tile;
     }
+    if (this.tileSize * this.tileSize <= this.tree.minTileArea) {
+        return this._allocTile(i);
+    }
+    return this._allocNode(i);
+};
+
+HexTileTreeNode.prototype._allocTile =
+function _allocTile(i) {
+    var origin = this.origin.copy();
+    if (this.oqo.q < origin.q) origin.q -= this.tileSize;
+    if (this.oqo.r < origin.r) origin.r -= this.tileSize;
+    var tile = OddQHexTile.alloc().init(
+        origin, this.tileSize, this.tileSize);
+    this._setTile(i, tile);
+    this.tree.addTile(tile);
     return tile;
+};
+
+HexTileTreeNode.prototype._allocNode =
+function _allocNode(i) {
+    var origin = this.origin.copy();
+    origin.q += this.tileSize / (this.oqo.q < origin.q ? -2 : 2);
+    origin.r += this.tileSize / (this.oqo.r < origin.r ? -2 : 2);
+    var node = HexTileTreeNode.alloc().init(
+        this.tree, origin, this.tileSize, this._replace[i]);
+    this.tiles[i] = node;
+    return node;
 };
 
 HexTileTreeNode.prototype._setTile =
@@ -2396,6 +2652,11 @@ function _setTile(i, tile) {
         tile._replaceme = this._replace[i];
     }
 };
+
+installPool(HexTileTreeNode);
+
+function noop() {
+}
 
 }],["index.js","hexant","index.js",{"domready":2,"global/window":3,"gutentag/scope":5,"gutentag/document":4,"blick":1,"./main.html":17},function (require, exports, module, __filename, __dirname){
 
@@ -2464,10 +2725,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_jzrl5x");
+        component.setAttribute("id", "view_jscenj");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_jzrl5x")
+       scope.componentsFor["view"].setAttribute("for", "view_jscenj")
     }
     this.scope.hookup("this", this);
 };
@@ -2649,7 +2910,33 @@ function wedge(x, y, radius, startArg, endArg, complement) {
 };
 
 
-}],["prompt.html","hexant","prompt.html",{"./prompt.js":21,"gutentag/text.html":6},function (require, exports, module, __filename, __dirname){
+}],["pool.js","hexant","pool.js",{},function (require, exports, module, __filename, __dirname){
+
+// hexant/pool.js
+// --------------
+
+'use strict';
+
+module.exports = function installPool(cons) {
+    var pool = [];
+    cons.alloc = function alloc() {
+        if (pool.length > 0) {
+            return pool.shift();
+        }
+        return new cons();
+    };
+    cons.prototype.free = typeof cons.prototype.reset === 'function'
+        ? function resetAndFree() {
+            this.reset();
+            pool.push(this);
+        }
+        : function justFree() {
+            pool.push(this);
+        };
+    return cons;
+};
+
+}],["prompt.html","hexant","prompt.html",{"./prompt.js":22,"gutentag/text.html":6},function (require, exports, module, __filename, __dirname){
 
 // hexant/prompt.html
 // ------------------
@@ -2669,10 +2956,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_z6ad6b");
+        component.setAttribute("id", "box_3lg9v7");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_z6ad6b")
+       scope.componentsFor["box"].setAttribute("for", "box_3lg9v7")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -2687,10 +2974,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_qiq97r");
+            component.setAttribute("id", "help_1ydsxd");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_qiq97r")
+           scope.componentsFor["help"].setAttribute("for", "help_1ydsxd")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -2703,10 +2990,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_lf6o2e");
+            component.setAttribute("id", "text_war18g");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_lf6o2e")
+           scope.componentsFor["text"].setAttribute("for", "text_war18g")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -2716,10 +3003,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_k858vh");
+            component.setAttribute("id", "error_ln1oad");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_k858vh")
+           scope.componentsFor["error"].setAttribute("for", "error_ln1oad")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -3109,7 +3396,7 @@ module.exports.RelTurnSymbols = RelTurnSymbols;
 module.exports.RelSymbolTurns = RelSymbolTurns;
 module.exports.AbsSymbolTurns = AbsSymbolTurns;
 
-}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":10,"./constants.js":23,"./parse.js":33},function (require, exports, module, __filename, __dirname){
+}],["turmite/index.js","hexant/turmite","index.js",{"../coord.js":10,"./constants.js":24,"./parse.js":34},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/index.js
 // -----------------------
@@ -3277,7 +3564,7 @@ function step(world) {
 //     return self;
 // };
 
-}],["turmite/lang/analyze.js","hexant/turmite/lang","analyze.js",{"./walk.js":32},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/analyze.js","hexant/turmite/lang","analyze.js",{"./walk.js":33},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/analyze.js
 // ------------------------------
@@ -3540,7 +3827,7 @@ module.exports.just = function just(val) {
     };
 };
 
-}],["turmite/lang/compile.js","hexant/turmite/lang","compile.js",{"../constants.js":23,"./analyze.js":25,"./tostring.js":31,"./solve.js":30,"./walk.js":32},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/compile.js","hexant/turmite/lang","compile.js",{"../constants.js":24,"./analyze.js":26,"./tostring.js":32,"./solve.js":31,"./walk.js":33},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/compile.js
 // ------------------------------
@@ -3938,7 +4225,7 @@ module.exports.whenExprMatch = compileWhenExprMatch;
 module.exports.whenLoop      = compileWhenLoop;
 module.exports.whenMatch     = compileWhenMatch;
 
-}],["turmite/lang/grammar.js","hexant/turmite/lang","grammar.js",{"./build.js":26},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/grammar.js","hexant/turmite/lang","grammar.js",{"./build.js":27},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/grammar.js
 // ------------------------------
@@ -4113,7 +4400,7 @@ if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
 }
 })();
 
-}],["turmite/lang/parse.js","hexant/turmite/lang","parse.js",{"nearley":39,"rezult":42,"./grammar.js":28,"./compile.js":27},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/parse.js","hexant/turmite/lang","parse.js",{"nearley":40,"rezult":43,"./grammar.js":29,"./compile.js":28},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/parse.js
 // ----------------------------
@@ -4169,7 +4456,7 @@ function compileGrammarResult(value, World) {
     return new Result(null, func);
 }
 
-}],["turmite/lang/solve.js","hexant/turmite/lang","solve.js",{"./compile.js":27,"./walk.js":32},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/solve.js","hexant/turmite/lang","solve.js",{"./compile.js":28,"./walk.js":33},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/solve.js
 // ----------------------------
@@ -4274,7 +4561,7 @@ function hasSym(node, name) {
     return has;
 }
 
-}],["turmite/lang/tostring.js","hexant/turmite/lang","tostring.js",{"../rle-builder.js":34,"./walk.js":32},function (require, exports, module, __filename, __dirname){
+}],["turmite/lang/tostring.js","hexant/turmite/lang","tostring.js",{"../rle-builder.js":35,"./walk.js":33},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/lang/tostring.js
 // -------------------------------
@@ -4511,7 +4798,7 @@ function collect(node, filter) {
     return syms;
 }
 
-}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":42,"../world.js":36,"./rle-builder.js":34,"./constants.js":23,"./lang/parse.js":29},function (require, exports, module, __filename, __dirname){
+}],["turmite/parse.js","hexant/turmite","parse.js",{"rezult":43,"../world.js":37,"./rle-builder.js":35,"./constants.js":24,"./lang/parse.js":30},function (require, exports, module, __filename, __dirname){
 
 // hexant/turmite/parse.js
 // -----------------------
@@ -4702,7 +4989,7 @@ function RLEBuilder(prefix, sep, suffix) {
     }
 }
 
-}],["view_2d.js","hexant","view_2d.js",{"./hexgrid.js":13,"./ngoncontext.js":19,"./world.js":36},function (require, exports, module, __filename, __dirname){
+}],["view_2d.js","hexant","view_2d.js",{"./hexgrid.js":13,"./ngoncontext.js":19,"./world.js":37},function (require, exports, module, __filename, __dirname){
 
 // hexant/view_2d.js
 // -----------------
@@ -5753,7 +6040,7 @@ function markVisited(data) {
 
 }).call(this);
 
-}],["koerper.js","koerper","koerper.js",{"wizdom":43},function (require, exports, module, __filename, __dirname){
+}],["koerper.js","koerper","koerper.js",{"wizdom":44},function (require, exports, module, __filename, __dirname){
 
 // koerper/koerper.js
 // ------------------
@@ -6333,7 +6620,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 //@ sourceMappingURL=performance-now.map
 */
 
-}],["index.js","raf","index.js",{"performance-now":40},function (require, exports, module, __filename, __dirname){
+}],["index.js","raf","index.js",{"performance-now":41},function (require, exports, module, __filename, __dirname){
 
 // raf/index.js
 // ------------
