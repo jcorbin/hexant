@@ -9,6 +9,7 @@
     "lint": "uber-standard",
     "grammar": "nearleyc turmite/lang/grammar.ne >turmite/lang/grammar.js",
     "build": "bash scripts/build.sh",
+    "postinstall": "npm run grammar",
     "wip": "bash scripts/update_wip.sh",
     "preversion": "bash scripts/preversion.sh",
     "version": "bash scripts/version.sh",
