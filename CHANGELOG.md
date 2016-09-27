@@ -1,4 +1,8 @@
-# v0.9.9
+# v0.9.10
+
+- Performance improvements and other preparations for the great view rewrite
+
+## v0.9.9
 
 - Improved quad tree tile compaction
 - Improved visited cell handling, and added a key bind to toggle drawing
