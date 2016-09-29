@@ -11,16 +11,20 @@ var hexFragShader = require('./hex.frag');
 var rangeListAdd = require('./rangelist.js').add;
 var collectTombstone = require('./tileglbuffer.js').collectTombstone;
 var placeTile = require('./tileglbuffer.js').placeTile;
+var Coord = require('./coord.js');
 
 module.exports = ViewGL;
 
 // TODO:
-// - draw ents
 // - in redraw lazily only draw dirty tiles, expand permitting
 // - switch to uint32 elements array if supported by extension
 // - switch to uint32 for q,r, use a highp in the shader
 
 /* eslint-disable max-statements */
+
+var tau = 2 * Math.PI;
+var hexAngStep = tau / 6;
+var float2 = 2 * Float32Array.BYTES_PER_ELEMENT;
 
 function ViewGL(world, canvas) {
     this.world = world;
@@ -52,6 +56,7 @@ function ViewGL(world, canvas) {
 
     this.tileWriter = new TileWriter(this.maxElement + 1);
     this.tileBufferer = new TileBufferer(this.gl, this.world, this.tileWriter);
+    this.entBuffer = new EntGLBuffer(this.gl, this.hexShader);
     this.maxCellsPerTile = Math.floor((this.maxElement + 1) / this.tileWriter.cellSize);
 
     this.cellColors = null;
@@ -222,6 +227,11 @@ function redraw() {
         this.gl.drawElements(this.gl.POINTS, tileBuffer.usedElements, this.gl.UNSIGNED_SHORT, 0);
     }
 
+    // ents
+    this.gl.enableVertexAttribArray(this.hexShader.attr.ang);
+    this.entBuffer.drawBodies(this.world, this.bodyColors);
+    this.entBuffer.drawHeads(this.world, this.headColors);
+
     this.hexShader.disable();
     this.gl.finish();
 
@@ -278,13 +288,6 @@ function setDrawUnvisited(drawUnvisited) {
     this.tileBufferer.drawUnvisited = drawUnvisited;
 };
 
-ViewGL.prototype.drawEnt =
-function drawEnt(i) {
-    // TODO
-};
-
-// TODO: smaller LOD drawEnt variant
-
 ViewGL.prototype.step =
 function step() {
     var expanded = false;
@@ -297,6 +300,99 @@ function step() {
     this.needsRedraw = true;
 
     // TODO: consider restoring partial updates
+};
+
+function EntGLBuffer(gl, hexShader) {
+    this.gl = gl;
+    this.hexShader = hexShader;
+    this.bodySize = 0.5;
+    this.headSize = 0.75;
+    this.len = 0;
+    this.cap = 0;
+    this.verts = null;
+    this.colors = null;
+    this.bodyVertsBuf = null;
+    this.bodyColorsBuf = null;
+    this.headVertsBuf = null;
+    this.headColorsBuf = null;
+}
+
+EntGLBuffer.prototype.free =
+function free() {
+    this.gl.deleteBuffer(this.bodyVertsBuf);
+    this.gl.deleteBuffer(this.bodyColorsBuf);
+    this.gl.deleteBuffer(this.headVertsBuf);
+    this.gl.deleteBuffer(this.headColorsBuf);
+};
+
+EntGLBuffer.prototype.alloc =
+function alloc(cap) {
+    this.cap = cap;
+    this.verts = new Float32Array(this.cap * 4);
+    this.colors = new Uint8Array(this.cap * 3);
+    this.bodyVertsBuf = this.gl.createBuffer();
+    this.bodyColorsBuf = this.gl.createBuffer();
+    this.headVertsBuf = this.gl.createBuffer();
+    this.headColorsBuf = this.gl.createBuffer();
+};
+
+EntGLBuffer.prototype.draw =
+function draw(hexShader, size, vertBuf, colorBuf) {
+    this.gl.uniform1f(hexShader.uniform.uRadius, size);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertBuf);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, this.verts, this.gl.STATIC_DRAW);
+    this.gl.vertexAttribPointer(hexShader.attr.vert, 2, this.gl.FLOAT, false, float2, 0);
+    this.gl.vertexAttribPointer(hexShader.attr.ang, 2, this.gl.FLOAT, false, float2, float2);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuf);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, this.colors, this.gl.STATIC_DRAW);
+    this.gl.vertexAttribPointer(hexShader.attr.color, 3, this.gl.UNSIGNED_BYTE, true, 0, 0);
+    this.gl.drawArrays(this.gl.POINTS, 0, this.len);
+};
+
+EntGLBuffer.prototype.drawBodies =
+function drawBodies(world, colors) {
+    var n = world.ents.length;
+    if (n > this.len) {
+        if (this.len > 0) {
+            this.free();
+        }
+        this.alloc(n);
+    }
+    var pos = new Coord.OddQOffset(0, 0);
+    var i = 0, j = 0, k = 0;
+    while (i < n) {
+        var bodyColor = colors[i];
+        world.getEntPos(i).toOddQOffsetInto(pos);
+        var ang = world.getEntDir(i) * hexAngStep;
+        this.verts[j++] = pos.q;
+        this.verts[j++] = pos.r;
+        this.verts[j++] = ang + hexAngStep;
+        this.verts[j++] = ang;
+        this.colors[k++] = Math.round(255 * bodyColor[0]);
+        this.colors[k++] = Math.round(255 * bodyColor[1]);
+        this.colors[k++] = Math.round(255 * bodyColor[2]);
+        i++;
+    }
+    this.len = n;
+    this.draw(this.hexShader, this.bodySize, this.bodyVertsBuf, this.bodyColorsBuf);
+};
+
+EntGLBuffer.prototype.drawHeads =
+function drawHeads(world, colors) {
+    var i = 0, j = 0, k = 0;
+    while (i < this.len) {
+        var headColor = colors[i];
+        j += 2;
+        var tmp = this.verts[j];
+        this.verts[j] = this.verts[j+1];
+        this.verts[j+1] = tmp;
+        j += 2;
+        this.colors[k++] = Math.round(255 * headColor[0]);
+        this.colors[k++] = Math.round(255 * headColor[1]);
+        this.colors[k++] = Math.round(255 * headColor[2]);
+        i++;
+    }
+    this.draw(this.hexShader, this.headSize, this.headVertsBuf, this.headColorsBuf);
 };
 
 function TileWriter(bufferSize) {
