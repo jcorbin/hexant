@@ -7,6 +7,10 @@
  * on the viewport and radius uniforms.
  *
  * The color is simply passed along at full opacity.
+ *
+ * The optional ang attribute makes the hex partial, its two components are
+ * just a lo and hi value between 0 and 2*π.  If hi < lo, then the
+ * complementing range is drawn.
  */
 
 uniform mat4 uPMatrix;
@@ -14,11 +18,13 @@ uniform vec2 uVP;
 uniform float uRadius;
 
 attribute vec2 vert; // q, r
+attribute vec2 ang; // aLo, aHi
 attribute vec3 color; // r, g, b
 
 const vec2 scale = vec2(1.5, sqrt(3.0));
 
 varying lowp vec4 vertColor;
+varying mediump vec2 varAng;
 
 void main(void) {
     gl_PointSize = uVP.y * abs(uPMatrix[1][1]) * uRadius;
@@ -31,4 +37,5 @@ void main(void) {
         1.0
     );
     vertColor = vec4(color, 1.0);
+    varAng = ang;
 }

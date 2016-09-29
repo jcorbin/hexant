@@ -47,7 +47,7 @@ function ViewGL(world, canvas) {
     this.hexShader = new GLProgram(this.gl,
         oddqPointShader.linkWith(hexFragShader),
         ['uPMatrix', 'uVP', 'uRadius'],
-        ['vert', 'color']
+        ['vert', 'ang', 'color']
     );
 
     this.tileWriter = new TileWriter(this.maxElement + 1);
@@ -207,6 +207,7 @@ function redraw() {
     this.hexShader.enable();
 
     // tiles
+    this.gl.disableVertexAttribArray(this.hexShader.attr.ang);
     this.gl.uniform1f(this.hexShader.uniform.uRadius, 1.0);
     for (var i = 0; i < this.tileBufferer.tileBuffers.length; ++i) {
         var tileBuffer = this.tileBufferer.tileBuffers[i];
