@@ -31,30 +31,6 @@
       "from": "domready@1.0.8",
       "resolved": "https://registry.npmjs.org/domready/-/domready-1.0.8.tgz"
     },
-    "global": {
-      "version": "4.3.0",
-      "from": "global@4.3.0",
-      "resolved": "https://registry.npmjs.org/global/-/global-4.3.0.tgz",
-      "dependencies": {
-        "min-document": {
-          "version": "2.18.0",
-          "from": "min-document@>=2.6.1 <3.0.0",
-          "resolved": "https://registry.npmjs.org/min-document/-/min-document-2.18.0.tgz",
-          "dependencies": {
-            "dom-walk": {
-              "version": "0.1.1",
-              "from": "dom-walk@>=0.1.0 <0.2.0",
-              "resolved": "https://registry.npmjs.org/dom-walk/-/dom-walk-0.1.1.tgz"
-            }
-          }
-        },
-        "process": {
-          "version": "0.5.2",
-          "from": "process@>=0.5.1 <0.6.0",
-          "resolved": "https://registry.npmjs.org/process/-/process-0.5.2.tgz"
-        }
-      }
-    },
     "gutentag": {
       "version": "2.1.1",
       "from": "gutentag@2.1.1",

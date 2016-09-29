@@ -1,7 +1,6 @@
 'use strict';
 
 var domready = require('domready');
-var window = require('global/window');
 
 var Scope = require('gutentag/scope');
 var Document = require('gutentag/document');
@@ -12,22 +11,22 @@ domready(setup);
 
 function setup() {
     var scope = new Scope();
-    scope.window = window;
+    scope.window = this;
     scope.animator = new Animator();
-    var document = window.document;
+    var document = scope.window.document;
     var bodyDocument = new Document(document.body);
-    window.hexant = new Main(bodyDocument.documentElement, scope);
+    scope.window.hexant = new Main(bodyDocument.documentElement, scope);
 
-    window.addEventListener('resize', onResize);
+    scope.window.addEventListener('resize', onResize);
     onResize();
 
     function onResize() {
         var width = Math.max(
             document.documentElement.clientWidth,
-            window.innerWidth || 0);
+            scope.window.innerWidth || 0);
         var height = Math.max(
             document.documentElement.clientHeight,
-            window.innerHeight || 0);
-        window.hexant.resize(width, height);
+            scope.window.innerHeight || 0);
+        scope.window.hexant.resize(width, height);
     }
 }
