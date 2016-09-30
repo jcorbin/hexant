@@ -1,8 +1,8 @@
 html, body {
     margin: 0;
     padding: 0;
-    background-color: #222;
-    color: #ddd;
+    background-color: #111;
+    color: #ccc;
     overflow: clip;
     height: 100%;
     font-family: monospace;
@@ -64,7 +64,7 @@ html, body {
     left: 25%;
     bottom: 0;
 
-    background-color: #333;
+    background-color: #222;
     color: #eee;
     border: none;
 }
@@ -74,7 +74,7 @@ html, body {
     margin: 0;
     width: 100%;
     border: none;
-    background-color: #334;
+    background-color: #223;
     color: #eee;
 }
 
@@ -85,29 +85,29 @@ html, body {
 .prompt .error {
     word-wrap: pre;
     font-family: monospace;
-    background-color: #433;
-    border-top: 0.1em solid #433;
-    border-bottom: 0.1em solid #433;
+    background-color: #322;
+    border-top: 0.1em solid #322;
+    border-bottom: 0.1em solid #322;
     margin: 0.1em 0;
     padding: 0.1em 0;
 }
 .prompt .error,
 .prompt .error * {
-    color: #ecc;
+    color: #dbb;
 }
 
 a, a:visited {
     text-decoration: none;
-    color: #aad;
+    color: #99c;
 }
 
 a:hover {
     text-decoration: underline;
-    color: #bbe;
+    color: #aad;
 }
 
 a:active {
-    color: #ccf;
+    color: #bbe;
 }
 
 footer {
