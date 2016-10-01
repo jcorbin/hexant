@@ -54,11 +54,12 @@ function LightWheelGenerator(hue, sat) {
     return wheelGenGen;
 
     function wheelGenGen(intensity) {
-        var h = hue * (1 + (intensity - 1) / 3) % 360;
+        var h = hue * (1 + (intensity - 1) / 4) % 360;
+        // var h = hue * Math.pow(1.05, intensity) % 360;
         return function wheelGen(ncolors) {
-            var step = 100 / (ncolors + 1);
+            var step = 60 / ncolors;
             var r = [];
-            var l = step;
+            var l = 20 * Math.pow(1.5, intensity);
             for (var i = 0; i < ncolors; l += step, i++) {
                 r.push(husl.toRGB(h, sat, l));
             }
