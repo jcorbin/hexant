@@ -1,4 +1,9 @@
-# v0.9.10
+# v0.10.0 -- GL Fugue
+
+- Rewrite the view to use WebGL rather than serial 2d drawing.
+- Other minor improvements.
+
+## v0.9.10
 
 - Performance improvements and other preparations for the great view rewrite
 

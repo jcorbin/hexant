@@ -1,6 +1,6 @@
 {
   "name": "hexant",
-  "version": "0.9.10",
+  "version": "0.10.0",
   "description": "Hexagonal Ants",
   "main": "hexant.js",
   "scripts": {
@@ -9,6 +9,7 @@
     "lint": "uber-standard",
     "grammar": "nearleyc turmite/lang/grammar.ne >turmite/lang/grammar.js",
     "build": "bash scripts/build.sh",
+    "postinstall": "npm run grammar",
     "wip": "bash scripts/update_wip.sh",
     "preversion": "bash scripts/preversion.sh",
     "version": "bash scripts/version.sh",
@@ -22,6 +23,7 @@
     ]
   },
   "devDependencies": {
+    "gl-matrix": "^2.3.2",
     "hexer": "1.4.5",
     "html-inline": "1.1.1",
     "http-server": "0.8.0",
@@ -42,6 +44,8 @@
     "rezult": "1.1.0"
   },
   "translators": {
-    "html": "gutentag/translate-html"
+    "html": "gutentag/translate-html",
+    "frag": "./translate-glsl",
+    "vert": "./translate-glsl"
   }
 }
