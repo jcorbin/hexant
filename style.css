@@ -35,19 +35,19 @@ html, body {
 .overlay {
     color: #999;
     padding: 0.25em 0.5em;
-    background-color: rgba(34, 34, 34, 0.5);
+    background-color: rgba(17, 17, 17, 0.5);
 }
 
 .overlay.red {
-    background-color: rgba(68, 34, 34, 0.75);
+    background-color: rgba(34, 17, 17, 0.75);
 }
 
 .overlay.yellow {
-    background-color: rgba(68, 68, 34, 0.75);
+    background-color: rgba(34, 34, 17, 0.75);
 }
 
 .overlay.green {
-    background-color: rgba(34, 68, 34, 0.75);
+    background-color: rgba(17, 34, 17, 0.75);
 }
 
 .overlay.right {
