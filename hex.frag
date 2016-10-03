@@ -33,5 +33,10 @@ void main(void) {
     if (p.y > P1.y || p.y > M10 * p.x + B10) {
         discard;
     }
-    gl_FragColor = texture2D(uSampler, vec2(vertColor, 0));
+
+    mediump float gamma = 2.2;
+    gl_FragColor.rgb = pow(
+        texture2D(uSampler, vec2(vertColor, 0)).rgb,
+        vec3(1.0/gamma)
+    );
 }
