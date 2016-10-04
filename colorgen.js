@@ -79,8 +79,6 @@ function HueWheelGenerator(sat, light) {
     function hueWheelGenGen(intensity) {
         var mySat = sat + satDelta * intensity;
         var myLight = light + lightDelta * intensity;
-
-        var suffix = ', ' + ss + ', ' + sl + ')';
         return function wheelGen(ncolors) {
             var scale = 360 / ncolors;
             var r = [];
