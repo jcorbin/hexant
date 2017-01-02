@@ -7427,8 +7427,6 @@ function HueWheelGenerator(sat, light) {
     function hueWheelGenGen(intensity) {
         var mySat = sat + satDelta * intensity;
         var myLight = light + lightDelta * intensity;
-
-        var suffix = ', ' + ss + ', ' + sl + ')';
         return function wheelGen(ncolors) {
             var scale = 360 / ncolors;
             var r = [];
@@ -8062,10 +8060,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_f4j6ug");
+        component.setAttribute("id", "view_21w3gw");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_f4j6ug")
+       scope.componentsFor["view"].setAttribute("for", "view_21w3gw")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -8086,10 +8084,10 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_jsqm2s");
+        component.setAttribute("id", "prompt_qtmlw5");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_jsqm2s")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_qtmlw5")
     }
     node = document.createElement("DIV");
     parent.appendChild(node);
@@ -8099,10 +8097,10 @@ var $THIS = function HexantHexant(body, caller) {
     component.setAttribute("class", "overlay fps right");
     }
     if (component.setAttribute) {
-        component.setAttribute("id", "fpsOverlay_u0diak");
+        component.setAttribute("id", "fpsOverlay_154w17");
     }
     if (scope.componentsFor["fpsOverlay"]) {
-       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_u0diak")
+       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_154w17")
     }
     if (component.setAttribute) {
     component.setAttribute("style", "display: none");
@@ -8114,10 +8112,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("fps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "fps_4v0v4t");
+            component.setAttribute("id", "fps_z1rtx3");
         }
         if (scope.componentsFor["fps"]) {
-           scope.componentsFor["fps"].setAttribute("for", "fps_4v0v4t")
+           scope.componentsFor["fps"].setAttribute("for", "fps_z1rtx3")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -8127,10 +8125,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("sps", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "sps_fy6ud9");
+            component.setAttribute("id", "sps_78f45d");
         }
         if (scope.componentsFor["sps"]) {
-           scope.componentsFor["sps"].setAttribute("for", "sps_fy6ud9")
+           scope.componentsFor["sps"].setAttribute("for", "sps_78f45d")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -8140,10 +8138,10 @@ var $THIS = function HexantHexant(body, caller) {
         component = node.actualNode;
         scope.hookup("redrawTiming", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "redrawTiming_rtfl2o");
+            component.setAttribute("id", "redrawTiming_v5g1ii");
         }
         if (scope.componentsFor["redrawTiming"]) {
-           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_rtfl2o")
+           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_v5g1ii")
         }
         parents[parents.length] = parent; parent = node;
         // DIV
@@ -9416,10 +9414,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_lrf50y");
+        component.setAttribute("id", "view_zd13yi");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_lrf50y")
+       scope.componentsFor["view"].setAttribute("for", "view_zd13yi")
     }
     this.scope.hookup("this", this);
 };
@@ -9553,10 +9551,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_gyhlyc");
+        component.setAttribute("id", "box_4p0l71");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_gyhlyc")
+       scope.componentsFor["box"].setAttribute("for", "box_4p0l71")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -9571,10 +9569,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_2zoh6z");
+            component.setAttribute("id", "help_qjdw9z");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_2zoh6z")
+           scope.componentsFor["help"].setAttribute("for", "help_qjdw9z")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -9587,10 +9585,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_1ze05a");
+            component.setAttribute("id", "text_infml4");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_1ze05a")
+           scope.componentsFor["text"].setAttribute("for", "text_infml4")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -9600,10 +9598,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_ebvl9w");
+            component.setAttribute("id", "error_d4wpxx");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_ebvl9w")
+           scope.componentsFor["error"].setAttribute("for", "error_d4wpxx")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -12054,6 +12052,10 @@ function removeEnt(i) {
 
 ViewGL.prototype.setColorGen =
 function setColorGen(colorGen) {
+    if (typeof colorGen !== 'function') {
+        this.colorGen = null;
+        return;
+    }
     this.colorGen = colorGen;
     this.emptyCellColorGen = extendColorGen(colorGen(0), World.MaxColor);
     this.antCellColorGen = extendColorGen(colorGen(1), World.MaxColor);

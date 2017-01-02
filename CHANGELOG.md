@@ -1,4 +1,9 @@
-# v0.10.0 -- GL Fugue
+# v0.10.1
+
+- Fixed hue colorgen
+- Better degradation for invalid colorgen parse
+
+## v0.10.0 -- GL Fugue
 
 - Rewrite the view to use WebGL rather than serial 2d drawing.
 - Other minor improvements.
