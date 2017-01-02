@@ -266,6 +266,10 @@ function removeEnt(i) {
 
 ViewGL.prototype.setColorGen =
 function setColorGen(colorGen) {
+    if (typeof colorGen !== 'function') {
+        this.colorGen = null;
+        return;
+    }
     this.colorGen = colorGen;
     this.emptyCellColorGen = extendColorGen(colorGen(0), World.MaxColor);
     this.antCellColorGen = extendColorGen(colorGen(1), World.MaxColor);
