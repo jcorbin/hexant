@@ -24,6 +24,7 @@ World.MaskResultTurn  = 0x0000ffff;
 function World() {
     this.numColors = 0;
     this.numStates = 0;
+    this.stepCount = 0;
     this.tile = new HexTileTree();
     this.ents = [];
     this.views = [];
@@ -51,6 +52,7 @@ function reset() {
         this.ents[0].dir = 0;
     }
     this.tile.reset();
+    this.stepCount = 0;
     var i = 0;
     for (; i < this.views.length; ++i) {
         this.views[i].reset();
@@ -78,6 +80,7 @@ function step() {
     for (i = 0; i < this.views.length; i++) {
         this.views[i].step();
     }
+    this.stepCount++;
     this.redraw();
 };
 
@@ -92,6 +95,7 @@ function stepn(n) {
             this.views[j].step();
         }
     }
+    this.stepCount += n;
     return this.redraw();
 };
 
