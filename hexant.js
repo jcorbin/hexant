@@ -24,6 +24,7 @@ function Hexant(body, scope) {
     this.prompt = null;
     this.el = null;
     this.fpsOverlay = null;
+    this.step = null;
     this.fps = null;
     this.sps = null;
     this.redrawTiming = null;
@@ -82,6 +83,7 @@ function hookup(id, component, scope) {
     this.prompt = scope.components.prompt;
     this.el = scope.components.view;
     this.fpsOverlay = scope.components.fpsOverlay;
+    this.step = scope.components.step;
     this.fps = scope.components.fps;
     this.sps = scope.components.sps;
     this.redrawTiming = scope.components.redrawTiming;
@@ -346,6 +348,7 @@ function updateFPS(time) {
         this.stepTimes.shift();
     }
     if (!this.showFPS) return;
+    this.step.innerText = '#' + this.world.stepCount;
     this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
     this.sps.innerText = toSI(this.computeSPS()) + 'sps';
     var stats = this.world.redrawTimingStats();
