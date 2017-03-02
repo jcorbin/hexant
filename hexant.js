@@ -297,27 +297,7 @@ function _animate(time) {
         return;
     }
     this.stepWorld(time);
-
-    this.animTimes.push(time);
-    while (time - this.animTimes[0] > FPSInterval) {
-        this.animTimes.shift();
-    }
-    while (time - this.stepTimes[0] > FPSInterval) {
-        this.stepTimes.shift();
-    }
-
-    if (this.showFPS) {
-        this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
-        this.sps.innerText = toSI(this.computeSPS()) + 'sps';
-        var stats = this.world.redrawTimingStats();
-        if (stats) {
-            this.redrawTiming.innerText =
-                'µ=' + toSI(stats.m1 / 1e3) + 's ' +
-                '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
-        } else {
-            this.redrawTiming.innerText = '';
-        }
-    }
+    this.updateFPS(time);
 };
 
 Hexant.prototype.stepWorld =
@@ -342,6 +322,29 @@ function stepWorld(time) {
         break;
     }
     return steps;
+};
+
+Hexant.prototype.updateFPS =
+function updateFPS(time) {
+    this.animTimes.push(time);
+    while (time - this.animTimes[0] > FPSInterval) {
+        this.animTimes.shift();
+    }
+    while (time - this.stepTimes[0] > FPSInterval) {
+        this.stepTimes.shift();
+    }
+    if (this.showFPS) {
+        this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
+        this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+        var stats = this.world.redrawTimingStats();
+        if (stats) {
+            this.redrawTiming.innerText =
+                'µ=' + toSI(stats.m1 / 1e3) + 's ' +
+                '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
+        } else {
+            this.redrawTiming.innerText = '';
+        }
+    }
 };
 
 Hexant.prototype.throttle =
