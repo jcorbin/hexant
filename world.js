@@ -44,19 +44,14 @@ function getEntDir(i) {
 
 World.prototype.reset =
 function reset() {
-    this.resetEnt(0);
+    this.ents[0].reset();
+    this.ents[0].pos.scale(0); // reset to 0,0
+    this.ents[0].dir = 0;
     this.tile.reset();
     for (var i = 0; i < this.views.length; ++i) {
         this.views[i].reset();
     }
     this.tile.update(this.getEntPos(0), markVisited);
-};
-
-World.prototype.resetEnt =
-function resetEnt(i) {
-    this.ents[i].reset();
-    this.ents[i].pos.scale(0); // reset to 0,0
-    this.ents[i].dir = 0;
 };
 
 World.prototype.turnEnt =
