@@ -185,18 +185,18 @@ function onRuleChange(ent) {
 
 Hexant.prototype.setEnts =
 function setEnts(ents) {
-    var title = this.titleBase + ': ';
+    var title = '';
     for (var i = 0; i < ents.length; ++i) {
         if (i > 0) {
             title += ', ';
         }
         title += ents[i];
     }
-    this.window.document.title = title;
     this.world.setEnts(ents);
     this.world.reset();
     this.el.width = this.el.width;
     this.view.redraw();
+    this.window.document.title = this.titleBase + ': ' + title;
 };
 
 Hexant.prototype.onKeyPress =
