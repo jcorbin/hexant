@@ -185,10 +185,14 @@ function onRuleChange(ent) {
 
 Hexant.prototype.setEnts =
 function setEnts(ents) {
-    if (ents.length === 1) {
-        var ent = ents[0];
-        this.window.document.title = this.titleBase + ': ' + ent;
+    var title = this.titleBase + ': ';
+    for (var i = 0; i < ents.length; ++i) {
+        if (i > 0) {
+            title += ', ';
+        }
+        title += ents[i];
     }
+    this.window.document.title = title;
     this.world.setEnts(ents);
     this.world.reset();
     this.el.width = this.el.width;
