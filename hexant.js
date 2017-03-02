@@ -333,17 +333,16 @@ function updateFPS(time) {
     while (time - this.stepTimes[0] > FPSInterval) {
         this.stepTimes.shift();
     }
-    if (this.showFPS) {
-        this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
-        this.sps.innerText = toSI(this.computeSPS()) + 'sps';
-        var stats = this.world.redrawTimingStats();
-        if (stats) {
-            this.redrawTiming.innerText =
-                'µ=' + toSI(stats.m1 / 1e3) + 's ' +
-                '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
-        } else {
-            this.redrawTiming.innerText = '';
-        }
+    if (!this.showFPS) return;
+    this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
+    this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+    var stats = this.world.redrawTimingStats();
+    if (stats) {
+        this.redrawTiming.innerText =
+            'µ=' + toSI(stats.m1 / 1e3) + 's ' +
+            '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
+    } else {
+        this.redrawTiming.innerText = '';
     }
 };
 
