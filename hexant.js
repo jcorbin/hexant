@@ -7,6 +7,7 @@ var Base64 = require('Base64');
 var Result = require('rezult');
 var colorGen = require('./colorgen.js');
 var World = require('./world.js');
+var Deity = require('./deity.js');
 var ViewGL = require('./view_gl.js');
 var Turmite = require('./turmite/index.js');
 var Sample = require('./sample.js');
@@ -135,6 +136,12 @@ function configure() {
             self.setStepRate(rate);
         });
 
+    this.hash.bind('deity')
+        .setDefault(false)
+        .addListener(function onDeityChange(deity) {
+            self.setDeity(deity);
+        });
+
     this.hash.bind('labeled')
         .setDefault(false)
         .addListener(function onLabeledChange(labeled) {
@@ -239,6 +246,10 @@ function onKeyPress(e) {
         this.stepit();
         break;
 
+    case 0x5e: // ^
+        this.hash.set('deity', this.deus === null);
+        break;
+
     case 0x42: // B
     case 0x62: // b
         this.hash.encode =
@@ -272,6 +283,18 @@ function onKeyPress(e) {
         this.promptFor('rule', Turmite.ruleHelp);
         e.preventDefault();
         break;
+    }
+};
+
+Hexant.prototype.setDeity =
+function setDeity(deity) {
+    this.deusState = null;
+    if (deity && this.deus === null) {
+        this.deus = new Deity();
+        this.onRuleChange(this.hash.get('rule'));
+    } else if (!deity && this.deus !== null) {
+        this.deus = null;
+        this.onRuleChange(this.hash.get('rule'));
     }
 };
 

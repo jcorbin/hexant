@@ -18,6 +18,7 @@ only:
 - `+` -- double step rate
 - `-` -- half step rate
 - `*` -- reset to iteration 0 and pause
+- `^` -- summon/dismiss a mysterious deity
 - `f` -- show/hide frames and steps per second (fps and sps)
 - `#` -- toggle labels for debugging
 
