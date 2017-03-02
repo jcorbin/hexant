@@ -205,9 +205,7 @@ function onKeyPress(e) {
         break;
     case 0x2a: // *
         this.pause();
-        this.world.reset();
-        this.el.width = this.el.width;
-        this.view.redraw();
+        this.onRuleChange(this.hash.get('rule'));
         break;
     case 0x2b: // +
         this.hash.set('stepRate', this.stepRate * 2);
