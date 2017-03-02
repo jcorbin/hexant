@@ -213,7 +213,7 @@ function onKeyPress(e) {
         this.playpause();
         break;
     case 0x23: // #
-        this.toggleLabeled();
+        this.hash.set('labeled', !this.view.labeled);
         break;
     case 0x2a: // *
         this.pause();
@@ -454,11 +454,6 @@ function setStepRate(rate) {
         this.stepRate = rate;
     }
     this.goalStepRate = rate;
-};
-
-Hexant.prototype.toggleLabeled =
-function toggleLabeled() {
-    this.hash.set('labeled', !this.view.labeled);
 };
 
 Hexant.prototype.resize =
