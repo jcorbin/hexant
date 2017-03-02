@@ -182,7 +182,9 @@ Hexant.prototype.onRuleChange =
 function onRuleChange(ent) {
     this.window.document.title = this.titleBase + ': ' + ent;
     this.world.setEnts([ent]);
-    this.reset();
+    this.world.reset();
+    this.el.width = this.el.width;
+    this.view.redraw();
 };
 
 Hexant.prototype.onKeyPress =
@@ -203,7 +205,9 @@ function onKeyPress(e) {
         break;
     case 0x2a: // *
         this.pause();
-        this.reset();
+        this.world.reset();
+        this.el.width = this.el.width;
+        this.view.redraw();
         break;
     case 0x2b: // +
         this.hash.set('stepRate', this.stepRate * 2);
@@ -275,13 +279,6 @@ function promptFor(name, desc) {
             callback(err);
         });
     }
-};
-
-Hexant.prototype.reset =
-function reset() {
-    this.world.reset();
-    this.el.width = this.el.width;
-    this.view.redraw();
 };
 
 Hexant.prototype.animate =
