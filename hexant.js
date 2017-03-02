@@ -296,29 +296,9 @@ function _animate(time) {
         this.lastStepTime = time;
         return;
     }
+    this.stepWorld(time);
 
-    var steps = 1;
-    var sinceLast = time - this.lastStepTime;
-    steps = Math.round(sinceLast / 1000 * this.stepRate);
-    this.animTiming.collect(sinceLast);
-    this.throttle();
-
-    switch (steps) {
-    case 0:
-        break;
-    case 1:
-        this.world.step();
-        this.stepTimes.push(time, 1);
-        this.lastStepTime = time;
-        break;
-    default:
-        this.stepTimes.push(time, steps);
-        this.world.stepn(steps);
-        this.lastStepTime = time;
-        break;
-    }
     this.animTimes.push(time);
-
     while (time - this.animTimes[0] > FPSInterval) {
         this.animTimes.shift();
     }
@@ -338,6 +318,30 @@ function _animate(time) {
             this.redrawTiming.innerText = '';
         }
     }
+};
+
+Hexant.prototype.stepWorld =
+function stepWorld(time) {
+    var steps = 1;
+    var sinceLast = time - this.lastStepTime;
+    steps = Math.round(sinceLast / 1000 * this.stepRate);
+    this.animTiming.collect(sinceLast);
+    this.throttle();
+    switch (steps) {
+    case 0:
+        break;
+    case 1:
+        this.world.step();
+        this.stepTimes.push(time, 1);
+        this.lastStepTime = time;
+        break;
+    default:
+        this.stepTimes.push(time, steps);
+        this.world.stepn(steps);
+        this.lastStepTime = time;
+        break;
+    }
+    return steps;
 };
 
 Hexant.prototype.throttle =
