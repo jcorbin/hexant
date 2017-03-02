@@ -29,8 +29,10 @@ function Hexant(body, scope) {
     this.sps = null;
     this.redrawTiming = null;
 
+    this.deus = null;
     this.world = new World();
     this.view = null;
+    this.deusState = null;
 
     this.window = scope.window;
     this.hash = new Hash(this.window, {
@@ -196,8 +198,14 @@ function setEnts(ents) {
     }
     this.world.setEnts(ents);
     this.world.reset();
+    if (this.deus !== null) {
+        this.deusState = this.deus.incept(this.world, this.deusState);
+    }
     this.el.width = this.el.width;
     this.view.redraw();
+    if (this.deusState !== null) {
+        title = this.deusState.wrapTitle(title);
+    }
     this.window.document.title = this.titleBase + ': ' + title;
 };
 
@@ -312,6 +320,7 @@ function _animate(time) {
     }
     this.stepWorld(time);
     this.updateFPS(time);
+    this.updateDeus(time);
 };
 
 Hexant.prototype.stepWorld =
@@ -358,6 +367,18 @@ function updateFPS(time) {
             '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
     } else {
         this.redrawTiming.innerText = '';
+    }
+};
+
+Hexant.prototype.updateDeus =
+function updateDeus(time) {
+    if (this.deusState === null) {
+        return;
+    }
+    this.deusState.update(this.world);
+    var ents = this.deusState.nextEnts(this.world);
+    if (ents !== null) {
+        this.setEnts(ents);
     }
 };
 
