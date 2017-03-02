@@ -180,8 +180,16 @@ function onColorGenChange(gen) {
 
 Hexant.prototype.onRuleChange =
 function onRuleChange(ent) {
-    this.window.document.title = this.titleBase + ': ' + ent;
-    this.world.setEnts([ent]);
+    this.setEnts([ent]);
+};
+
+Hexant.prototype.setEnts =
+function setEnts(ents) {
+    if (ents.length === 1) {
+        var ent = ents[0];
+        this.window.document.title = this.titleBase + ': ' + ent;
+    }
+    this.world.setEnts(ents);
     this.world.reset();
     this.el.width = this.el.width;
     this.view.redraw();
