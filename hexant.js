@@ -28,7 +28,7 @@ function Hexant(body, scope) {
     this.sps = null;
     this.redrawTiming = null;
 
-    this.world = null;
+    this.world = new World();
     this.view = null;
 
     this.window = scope.window;
@@ -87,7 +87,6 @@ function hookup(id, component, scope) {
     this.redrawTiming = scope.components.redrawTiming;
 
     this.titleBase = this.window.document.title;
-    this.world = new World();
     this.view = this.world.addView(
         new ViewGL(this.world, this.el));
 
