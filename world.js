@@ -51,10 +51,13 @@ function reset() {
         this.ents[0].dir = 0;
     }
     this.tile.reset();
-    for (var i = 0; i < this.views.length; ++i) {
+    var i = 0;
+    for (; i < this.views.length; ++i) {
         this.views[i].reset();
     }
-    this.tile.update(this.getEntPos(0), markVisited);
+    for (i = 0; i < this.ents.length; ++i) {
+        this.tile.update(this.getEntPos(i), markVisited);
+    }
 };
 
 World.prototype.turnEnt =
