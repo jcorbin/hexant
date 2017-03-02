@@ -77,6 +77,17 @@ function set(point, datum) {
     return datum;
 };
 
+OddQHexTile.prototype.count =
+function count(mask) {
+    var n = 0;
+    for (var i = 0; i < this.data.length; i++) {
+        if (this.data[i] & mask) {
+            n++;
+        }
+    }
+    return n;
+};
+
 OddQHexTile.prototype.eachTile =
 function eachTile(each) {
     each(this);
