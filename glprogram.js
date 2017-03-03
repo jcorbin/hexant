@@ -12,12 +12,13 @@ function GLProgram(gl, shaderLoader, uniformNames, attrNames) {
     this.attrs = [];
     this.uniform = {};
     this.attr = {};
-    for (var i = 0; i < uniformNames.length; ++i) {
-        var name = uniformNames[i];
+    var name, i;
+    for (i = 0; i < uniformNames.length; ++i) {
+        name = uniformNames[i];
         this.uniform[name] = this.gl.getUniformLocation(this.prog, name);
     }
-    for (var i = 0; i < attrNames.length; ++i) {
-        var name = attrNames[i];
+    for (i = 0; i < attrNames.length; ++i) {
+        name = attrNames[i];
         var attr = this.gl.getAttribLocation(this.prog, name);
         this.attr[name] = attr;
         this.attrs.push(attr);

@@ -9,8 +9,6 @@ var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var ViewGL = require('./view_gl.js');
 var Turmite = require('./turmite/index.js');
-var OddQOffset = require('./coord.js').OddQOffset;
-var HexTileTree = require('./hextiletree.js');
 var Sample = require('./sample.js');
 
 var FPSInterval = 3 * 1000;
@@ -123,10 +121,9 @@ function configure() {
     this.hash.bind('showFPS')
         .setDefault(false)
         .addListener(function onDrawFPSChange(showFPS) {
-            self.showFPS = !! showFPS;
+            self.showFPS = !!showFPS;
             self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
         });
-
 
     this.hash.bind('stepRate')
         .setParse(Result.lift(parseInt))
@@ -288,12 +285,9 @@ function reset() {
     this.view.redraw();
 };
 
-function markVisited(data) {
-    return World.FlagVisited | data;
-}
-
 Hexant.prototype.animate =
 function animate(time) {
+    /* eslint-disable no-try-catch */
     try {
         this._animate(time);
     } catch(err) {
@@ -313,7 +307,7 @@ function _animate(time) {
     var sinceLast = time - this.lastStepTime;
     steps = Math.round(sinceLast / 1000 * this.stepRate);
     this.animTiming.collect(sinceLast);
-    this.throttle()
+    this.throttle();
 
     switch (steps) {
     case 0:
@@ -331,10 +325,10 @@ function _animate(time) {
     }
     this.animTimes.push(time);
 
-    while ((time - this.animTimes[0]) > FPSInterval) {
+    while (time - this.animTimes[0] > FPSInterval) {
         this.animTimes.shift();
     }
-    while ((time - this.stepTimes[0]) > FPSInterval) {
+    while (time - this.stepTimes[0] > FPSInterval) {
         this.stepTimes.shift();
     }
 
@@ -343,7 +337,9 @@ function _animate(time) {
         this.sps.innerText = toSI(this.computeSPS()) + 'sps';
         var stats = this.world.redrawTimingStats();
         if (stats) {
-            this.redrawTiming.innerText = 'µ=' + toSI(stats.m1/1e3) + 's 𝜎=' + toSI(Math.sqrt(stats.m2/1e3)) + 's';
+            this.redrawTiming.innerText =
+                'µ=' + toSI(stats.m1 / 1e3) + 's ' +
+                '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
         } else {
             this.redrawTiming.innerText = '';
         }
@@ -370,13 +366,15 @@ function throttle() {
     }
 
     var as = this.animTiming.classifyAnomalies();
-    var i = as.length-1;
-    if (this.stepRate > 1 && as[i] > 0.5 && as[i-1] > 0.5 && as[i-2] > 0.5) {
+    var i = as.length - 1;
+    if (this.stepRate > 1 &&
+        as[i] > 0.5 && as[i - 1] > 0.5 && as[i - 2] > 0.5
+    ) {
         this.stepRate /= 2;
         this.animTiming.weightedMark(2);
     } else if (
         this.stepRate < this.goalStepRate &&
-        as[i] <= 0 && as[i-1] <= 0 && as[i-2] <= 0
+        as[i] <= 0 && as[i - 1] <= 0 && as[i - 2] <= 0
     ) {
         this.stepRate *= 2;
         this.animTiming.weightedMark(0.5);
@@ -461,7 +459,10 @@ var siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
 function toSI(n) {
     if (n < 1) {
-        for (var nsi = 0; nsi < nsiSuffix.length && n < 1; ++nsi, n *= 1e3) {
+        var nsi = 0;
+        while (nsi < nsiSuffix.length && n < 1) {
+            nsi++;
+            n *= 1e3;
         }
         return n.toPrecision(3) + nsiSuffix[nsi];
     }
@@ -469,7 +470,10 @@ function toSI(n) {
         return n.toFixed(0);
     }
     n /= 1e3;
-    for (var si = 0; si < siSuffix.length && n > 1e3; ++si, n /= 1e3) {
+    var si = 0;
+    while (si < siSuffix.length && n > 1e3) {
+        si++;
+        n /= 1e3;
     }
     return n.toPrecision(3) + siSuffix[si];
 }

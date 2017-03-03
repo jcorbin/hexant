@@ -1,4 +1,4 @@
-/* eslint no-try-catch:0 no-eval:0 */
+/* eslint-disable no-try-catch no-eval */
 
 'use strict';
 
@@ -17,7 +17,7 @@ function parseTurmite(str, World) {
     return res;
 }
 
-function parseLang(str, World) {
+function parseLang(str) {
     if (typeof str !== 'string') {
         return new Result(new Error('invalid argument, not a string'), null);
     }
@@ -43,7 +43,8 @@ function parseResult(gram, str) {
     }
 }
 
-function compileGrammarResult(value, World) {
+function compileGrammarResult(value) {
+    /* eslint-disable no-eval */
     var str = compile.init(value).join('\n');
     var func = eval(str);
     return new Result(null, func);

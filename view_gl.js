@@ -19,8 +19,6 @@ module.exports = ViewGL;
 // - switch to uint32 elements array if supported by extension
 // - switch to uint32 for q,r, use a highp in the shader
 
-/* eslint-disable max-statements */
-
 var tau = 2 * Math.PI;
 var hexAngStep = tau / 6;
 var float2 = 2 * Float32Array.BYTES_PER_ELEMENT;

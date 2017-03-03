@@ -1,7 +1,5 @@
 module.exports.add = add;
 
-/* eslint-disable max-statements */
-
 function add(rl, begin, end) {
     if (end < begin) {
         throw new Error("invalid range");
