@@ -4,9 +4,9 @@
 
 function placeTile(tiles, capacity, length) {
     var bestIndex = -1, bestOffset = -1, best = -1;
-    var offset = 0, start = -1;
+    var offset = 0;
 
-    var freeIndex = -1, freeOffset = -1, freeLength = 0;
+    var waste, freeIndex = -1, freeOffset = -1, freeLength = 0;
     for (var i = 0; i < tiles.length; i+=2) {
         var tileId = tiles[i];
         var tileLength = tiles[i+1];
@@ -17,7 +17,7 @@ function placeTile(tiles, capacity, length) {
             }
             freeLength += tileLength;
             if (length <= freeLength) {
-                var waste = freeLength - length;
+                waste = freeLength - length;
                 if (best < 0 || waste < best) {
                     bestIndex = freeIndex;
                     bestOffset = freeOffset;
@@ -34,7 +34,7 @@ function placeTile(tiles, capacity, length) {
 
     var free = capacity - offset;
     if (length <= free) {
-        var waste = free - length;
+        waste = free - length;
         if (best < 0 || waste < best) {
             bestIndex = tiles.length;
             bestOffset = offset;
@@ -57,7 +57,7 @@ function collectTombstone(tiles, i, length) {
 
     // coalesce range; we assume that we've been told an index of a usable set
     // of tombstones, and so don't range check here
-    var j = i + 2;
+    var j = i + 2, k;
     var spare = 0;
     for (; tileLength < length; j += 2) {
         tileLength += tiles[j+1];
@@ -66,7 +66,7 @@ function collectTombstone(tiles, i, length) {
 
     // truncate (finish any coalesce)
     if (spare > 0) {
-        var k = i + 2;
+        k = i + 2;
         while (j < tiles.length) {
             tiles[k++] = tiles[j++];
         }
@@ -87,7 +87,7 @@ function collectTombstone(tiles, i, length) {
             } else {
                 tiles.push(0, 0);
             }
-            var k = tiles.length - 1;
+            k = tiles.length - 1;
             for (; n-- > 0; k--) tiles[k] = tiles[k - 2];
             tiles[j] = null;
             tiles[j+1] = remain;
