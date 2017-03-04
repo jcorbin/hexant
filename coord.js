@@ -265,7 +265,7 @@ OddQBox.prototype.toString = function toString() {
         this.topLeft.toString() + ', ' +
         this.bottomRight.toString() + ')';
 };
-OddQBox.prototype.screenCount = function screenCount(screenPoint) {
+OddQBox.prototype.screenCount = function screenCount() {
     return this.screenCountInto(ScreenPoint());
 };
 OddQBox.prototype.screenCountInto = function screenCountInto(screenPoint) {
