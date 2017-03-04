@@ -3,7 +3,7 @@ set -e
 set -x
 
 desc=$(git describe HEAD)
-mess=$(git show HEAD --no-decorate --pretty=oneline | cut -d ' ' -f2-)
+mess=$(git show HEAD --no-decorate --pretty=oneline | head -n1 | cut -d ' ' -f2-)
 src=index-bundle-min.js
 
 out=index.html
