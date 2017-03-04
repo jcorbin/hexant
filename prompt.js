@@ -2,7 +2,7 @@
 
 module.exports = Prompt;
 
-function Prompt(body, scope) {
+function Prompt() {
     var self = this;
 
     this.box = null;
@@ -25,7 +25,7 @@ function Prompt(body, scope) {
         self.onKeyUp(e);
     }
 
-    function cancel(e) {
+    function cancel() {
         self.cancel();
     }
 
