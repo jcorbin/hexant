@@ -46,7 +46,6 @@ function Hexant(body, scope) {
     this.animTimes = [];
     this.stepTimes = [];
     this.animTiming = new Sample(NumTimingSamples);
-    this.throtLog = false;
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
@@ -366,9 +365,6 @@ function throttle() {
         if (fps < MinFPS) {
             this.animTiming.weightedMark(2);
             this.stepRate /= 2;
-            if (this.throtLog) {
-                console.log('FPS SLOW DOWN', fps, this.stepRate);
-            }
             return;
         }
     }
@@ -377,9 +373,6 @@ function throttle() {
     var i = as.length-1;
     if (this.stepRate > 1 && as[i] > 0.5 && as[i-1] > 0.5 && as[i-2] > 0.5) {
         this.stepRate /= 2;
-        if (this.throtLog) {
-            console.log('SLOW DOWN', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
-        }
         this.animTiming.weightedMark(2);
     } else if (
         this.stepRate < this.goalStepRate &&
@@ -387,9 +380,6 @@ function throttle() {
     ) {
         this.stepRate *= 2;
         this.animTiming.weightedMark(0.5);
-        if (this.throtLog) {
-            console.log('SPEED UP', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
-        }
     }
 };
 
