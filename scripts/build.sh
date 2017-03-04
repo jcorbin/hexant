@@ -3,7 +3,7 @@ set -e
 set -x
 
 desc=$(git describe HEAD)
-mess=$(git show HEAD --no-decorate --pretty=oneline | cut -d ' ' -f2-)
+mess=$(git show HEAD --no-decorate --pretty=oneline | head -n1 | cut -d ' ' -f2-)
 src=index-bundle-min.js
 
 out=index.html
@@ -33,7 +33,6 @@ sed \
     -e "/data-import/s/src=[^>]*>/src=\"$src\">/" \
     -e "s~BASE~$base~" \
     -e "s/DEV/$desc/" \
-    -e "/PROJECT LINK/d" \
     index-dev.html >index-tmp.html
 
 npm run grammar

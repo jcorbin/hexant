@@ -2,7 +2,6 @@
 
 var World = require('./world.js');
 var Coord = require('./coord.js');
-var vec3 = require('gl-matrix').vec3;
 var mat4 = require('gl-matrix').mat4;
 
 var GLProgram = require('./glprogram.js');
@@ -12,7 +11,6 @@ var hexFragShader = require('./hex.frag');
 var rangeListAdd = require('./rangelist.js').add;
 var collectTombstone = require('./tileglbuffer.js').collectTombstone;
 var placeTile = require('./tileglbuffer.js').placeTile;
-var Coord = require('./coord.js');
 
 module.exports = ViewGL;
 
@@ -20,8 +18,6 @@ module.exports = ViewGL;
 // - in redraw lazily only draw dirty tiles, expand permitting
 // - switch to uint32 elements array if supported by extension
 // - switch to uint32 for q,r, use a highp in the shader
-
-/* eslint-disable max-statements */
 
 var tau = 2 * Math.PI;
 var hexAngStep = tau / 6;
@@ -250,17 +246,17 @@ function updateEnts() {
 };
 
 ViewGL.prototype.addEnt =
-function addEnt(i) {
+function addEnt() {
     this.updateColors();
 };
 
 ViewGL.prototype.updateEnt =
-function updateEnt(i) {
+function updateEnt() {
     this.updateColors();
 };
 
 ViewGL.prototype.removeEnt =
-function removeEnt(i) {
+function removeEnt() {
     this.updateColors();
 };
 
@@ -289,7 +285,7 @@ function updateColors() {
 };
 
 ViewGL.prototype.setLabeled =
-function setLabeled(labeled) {
+function setLabeled() {
     // noop
 };
 
@@ -382,7 +378,7 @@ function drawBodies(world) {
 };
 
 EntGLBuffer.prototype.drawHeads =
-function drawHeads(world) {
+function drawHeads() {
     var i = 0, j = 0, k = 0;
     while (i < this.len) {
         j += 2;
@@ -527,12 +523,13 @@ function onWorldTileRemoved(tile) {
 
 TileBufferer.prototype.flush =
 function flush() {
-    for (var i = 0; i < this.world.tile.dirtyTiles.length; ++i) {
+    var i;
+    for (i = 0; i < this.world.tile.dirtyTiles.length; ++i) {
         var tile = this.world.tile.dirtyTiles[i];
         this.flushTile(tile);
     }
     this.world.tile.dirtyTiles.length = 0;
-    for (var i = 0; i < this.dirtyTileBuffers.length; ++i) {
+    for (i = 0; i < this.dirtyTileBuffers.length; ++i) {
         var tileBuffer = this.dirtyTileBuffers[i];
         this.flushTileBuffer(tileBuffer);
     }
@@ -589,7 +586,6 @@ function flushTileBuffer(tileBuffer) {
     tileBuffer.usedElements = 0;
     for (var i = 0; i < tileBuffer.tiles.length; i+=2) {
         var tileId = tileBuffer.tiles[i];
-        var tileLength = tileBuffer.tiles[i+1];
         if (tileId !== null) {
             var tile = this.world.tile.getTile(tileId);
             if (!tile) {
@@ -645,9 +641,7 @@ function addTile(id, length) {
 TileGLBuffer.prototype.removeTile =
 function removeTile(id) {
     delete this.tileRanges[id];
-    var i = 0, end = 0;
-    for (; i < this.tiles.length; i += 2) {
-        end += this.tiles[i+1];
+    for (var i = 0; i < this.tiles.length; i += 2) {
         if (this.tiles[i] === id) {
             // set tombstone...
             this.tiles[i] = null;

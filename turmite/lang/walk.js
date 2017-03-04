@@ -16,59 +16,59 @@ function iter(root, visit) {
 
     function proc(node) {
         switch (node.type) {
-            case 'spec':
-                var i;
-                for (i = 0; i < node.assigns.length; i++) {
-                    each(node.assigns[i]);
-                }
-                for (i = 0; i < node.rules.length; i++) {
-                    each(node.rules[i]);
-                }
-                break;
+        case 'spec':
+            var i;
+            for (i = 0; i < node.assigns.length; i++) {
+                each(node.assigns[i]);
+            }
+            for (i = 0; i < node.rules.length; i++) {
+                each(node.rules[i]);
+            }
+            break;
 
-            case 'assign':
-                each(node.value);
-                break;
+        case 'assign':
+            each(node.value);
+            break;
 
-            case 'rule':
-                each(node.when);
-                each(node.then);
-                break;
+        case 'rule':
+            each(node.when);
+            each(node.then);
+            break;
 
-            case 'when':
-                each(node.state);
-                each(node.color);
-                break;
+        case 'when':
+            each(node.state);
+            each(node.color);
+            break;
 
-            case 'then':
-                each(node.state);
-                each(node.color);
-                each(node.turn);
-                break;
+        case 'then':
+            each(node.state);
+            each(node.color);
+            each(node.turn);
+            break;
 
-            case 'thenVal':
-                each(node.value);
-                break;
+        case 'thenVal':
+            each(node.value);
+            break;
 
-            case 'member':
-                each(node.value);
-                each(node.item);
-                break;
+        case 'member':
+            each(node.value);
+            each(node.item);
+            break;
 
-            case 'expr':
-                each(node.arg1);
-                each(node.arg2);
-                break;
+        case 'expr':
+            each(node.arg1);
+            each(node.arg2);
+            break;
 
-            case 'identifier':
-            case 'number':
-            case 'symbol':
-            case 'turn':
-            case 'turns':
-                break;
+        case 'identifier':
+        case 'number':
+        case 'symbol':
+        case 'turn':
+        case 'turns':
+            break;
 
-            default:
-                throw new Error('unimplemnted walk type ' + node.type);
+        default:
+            throw new Error('unimplemnted walk type ' + node.type);
         }
     }
 }

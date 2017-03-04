@@ -1,4 +1,11 @@
-# v0.10.1
+# v0.10.2
+
+- Minor code quality improvements
+- Add world step count display in the FPS overlay
+- Fix z-ordering of project and changelog links
+- Fix build script
+
+## v0.10.1
 
 - Fixed hue colorgen
 - Better degradation for invalid colorgen parse

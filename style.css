@@ -32,6 +32,10 @@ html, body {
     font-size: 0.8em;
 }
 
+.overlay.fps ul {
+    list-style-type: none;
+}
+
 .overlay {
     color: #999;
     padding: 0.25em 0.5em;

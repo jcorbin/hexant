@@ -7714,7 +7714,7 @@ OddQBox.prototype.toString = function toString() {
         this.topLeft.toString() + ', ' +
         this.bottomRight.toString() + ')';
 };
-OddQBox.prototype.screenCount = function screenCount(screenPoint) {
+OddQBox.prototype.screenCount = function screenCount() {
     return this.screenCountInto(ScreenPoint());
 };
 OddQBox.prototype.screenCountInto = function screenCountInto(screenPoint) {
@@ -7835,12 +7835,13 @@ function GLProgram(gl, shaderLoader, uniformNames, attrNames) {
     this.attrs = [];
     this.uniform = {};
     this.attr = {};
-    for (var i = 0; i < uniformNames.length; ++i) {
-        var name = uniformNames[i];
+    var name, i;
+    for (i = 0; i < uniformNames.length; ++i) {
+        name = uniformNames[i];
         this.uniform[name] = this.gl.getUniformLocation(this.prog, name);
     }
-    for (var i = 0; i < attrNames.length; ++i) {
-        var name = attrNames[i];
+    for (i = 0; i < attrNames.length; ++i) {
+        name = attrNames[i];
         var attr = this.gl.getAttribLocation(this.prog, name);
         this.attr[name] = attr;
         this.attrs.push(attr);
@@ -8060,10 +8061,10 @@ var $THIS = function HexantHexant(body, caller) {
     component = node.actualNode;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_21w3gw");
+        component.setAttribute("id", "view_f7w04b");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_21w3gw")
+       scope.componentsFor["view"].setAttribute("for", "view_f7w04b")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "hexant-canvas");
@@ -8084,12 +8085,12 @@ var $THIS = function HexantHexant(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("prompt", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "prompt_qtmlw5");
+        component.setAttribute("id", "prompt_ohm7kq");
     }
     if (scope.componentsFor["prompt"]) {
-       scope.componentsFor["prompt"].setAttribute("for", "prompt_qtmlw5")
+       scope.componentsFor["prompt"].setAttribute("for", "prompt_ohm7kq")
     }
-    node = document.createElement("DIV");
+    node = document.createElement("ASIDE");
     parent.appendChild(node);
     component = node.actualNode;
     scope.hookup("fpsOverlay", component);
@@ -8097,54 +8098,73 @@ var $THIS = function HexantHexant(body, caller) {
     component.setAttribute("class", "overlay fps right");
     }
     if (component.setAttribute) {
-        component.setAttribute("id", "fpsOverlay_154w17");
+        component.setAttribute("id", "fpsOverlay_oxnilf");
     }
     if (scope.componentsFor["fpsOverlay"]) {
-       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_154w17")
+       scope.componentsFor["fpsOverlay"].setAttribute("for", "fpsOverlay_oxnilf")
     }
     if (component.setAttribute) {
     component.setAttribute("style", "display: none");
     }
     parents[parents.length] = parent; parent = node;
-    // DIV
-        node = document.createElement("DIV");
+    // ASIDE
+        node = document.createElement("UL");
         parent.appendChild(node);
         component = node.actualNode;
-        scope.hookup("fps", component);
-        if (component.setAttribute) {
-            component.setAttribute("id", "fps_z1rtx3");
-        }
-        if (scope.componentsFor["fps"]) {
-           scope.componentsFor["fps"].setAttribute("for", "fps_z1rtx3")
-        }
         parents[parents.length] = parent; parent = node;
-        // DIV
-        node = parent; parent = parents[parents.length - 1]; parents.length--;
-        node = document.createElement("DIV");
-        parent.appendChild(node);
-        component = node.actualNode;
-        scope.hookup("sps", component);
-        if (component.setAttribute) {
-            component.setAttribute("id", "sps_78f45d");
-        }
-        if (scope.componentsFor["sps"]) {
-           scope.componentsFor["sps"].setAttribute("for", "sps_78f45d")
-        }
-        parents[parents.length] = parent; parent = node;
-        // DIV
-        node = parent; parent = parents[parents.length - 1]; parents.length--;
-        node = document.createElement("DIV");
-        parent.appendChild(node);
-        component = node.actualNode;
-        scope.hookup("redrawTiming", component);
-        if (component.setAttribute) {
-            component.setAttribute("id", "redrawTiming_v5g1ii");
-        }
-        if (scope.componentsFor["redrawTiming"]) {
-           scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_v5g1ii")
-        }
-        parents[parents.length] = parent; parent = node;
-        // DIV
+        // UL
+            node = document.createElement("LI");
+            parent.appendChild(node);
+            component = node.actualNode;
+            scope.hookup("step", component);
+            if (component.setAttribute) {
+                component.setAttribute("id", "step_qiz7ee");
+            }
+            if (scope.componentsFor["step"]) {
+               scope.componentsFor["step"].setAttribute("for", "step_qiz7ee")
+            }
+            parents[parents.length] = parent; parent = node;
+            // LI
+            node = parent; parent = parents[parents.length - 1]; parents.length--;
+            node = document.createElement("LI");
+            parent.appendChild(node);
+            component = node.actualNode;
+            scope.hookup("fps", component);
+            if (component.setAttribute) {
+                component.setAttribute("id", "fps_sqnn3m");
+            }
+            if (scope.componentsFor["fps"]) {
+               scope.componentsFor["fps"].setAttribute("for", "fps_sqnn3m")
+            }
+            parents[parents.length] = parent; parent = node;
+            // LI
+            node = parent; parent = parents[parents.length - 1]; parents.length--;
+            node = document.createElement("LI");
+            parent.appendChild(node);
+            component = node.actualNode;
+            scope.hookup("sps", component);
+            if (component.setAttribute) {
+                component.setAttribute("id", "sps_lr6s21");
+            }
+            if (scope.componentsFor["sps"]) {
+               scope.componentsFor["sps"].setAttribute("for", "sps_lr6s21")
+            }
+            parents[parents.length] = parent; parent = node;
+            // LI
+            node = parent; parent = parents[parents.length - 1]; parents.length--;
+            node = document.createElement("LI");
+            parent.appendChild(node);
+            component = node.actualNode;
+            scope.hookup("redrawTiming", component);
+            if (component.setAttribute) {
+                component.setAttribute("id", "redrawTiming_9544gh");
+            }
+            if (scope.componentsFor["redrawTiming"]) {
+               scope.componentsFor["redrawTiming"].setAttribute("for", "redrawTiming_9544gh")
+            }
+            parents[parents.length] = parent; parent = node;
+            // LI
+            node = parent; parent = parents[parents.length - 1]; parents.length--;
         node = parent; parent = parents[parents.length - 1]; parents.length--;
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     this.scope.hookup("this", this);
@@ -8158,7 +8178,7 @@ var $THIS$0 = function HexantHexant$0(body, caller) {
     var scope = this.scope = caller;
 };
 
-}],["hexant.js","hexant","hexant.js",{"hashbind":18,"Base64":0,"rezult":58,"./colorgen.js":19,"./world.js":52,"./view_gl.js":51,"./turmite/index.js":40,"./coord.js":20,"./hextiletree.js":28,"./sample.js":37},function (require, exports, module, __filename, __dirname){
+}],["hexant.js","hexant","hexant.js",{"hashbind":18,"Base64":0,"rezult":58,"./colorgen.js":19,"./world.js":52,"./view_gl.js":51,"./turmite/index.js":40,"./sample.js":37},function (require, exports, module, __filename, __dirname){
 
 // hexant/hexant.js
 // ----------------
@@ -8174,8 +8194,6 @@ var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var ViewGL = require('./view_gl.js');
 var Turmite = require('./turmite/index.js');
-var OddQOffset = require('./coord.js').OddQOffset;
-var HexTileTree = require('./hextiletree.js');
 var Sample = require('./sample.js');
 
 var FPSInterval = 3 * 1000;
@@ -8191,11 +8209,12 @@ function Hexant(body, scope) {
     this.prompt = null;
     this.el = null;
     this.fpsOverlay = null;
+    this.step = null;
     this.fps = null;
     this.sps = null;
     this.redrawTiming = null;
 
-    this.world = null;
+    this.world = new World();
     this.view = null;
 
     this.window = scope.window;
@@ -8211,7 +8230,6 @@ function Hexant(body, scope) {
     this.animTimes = [];
     this.stepTimes = [];
     this.animTiming = new Sample(NumTimingSamples);
-    this.throtLog = false;
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
@@ -8250,12 +8268,12 @@ function hookup(id, component, scope) {
     this.prompt = scope.components.prompt;
     this.el = scope.components.view;
     this.fpsOverlay = scope.components.fpsOverlay;
+    this.step = scope.components.step;
     this.fps = scope.components.fps;
     this.sps = scope.components.sps;
     this.redrawTiming = scope.components.redrawTiming;
 
     this.titleBase = this.window.document.title;
-    this.world = new World();
     this.view = this.world.addView(
         new ViewGL(this.world, this.el));
 
@@ -8289,10 +8307,9 @@ function configure() {
     this.hash.bind('showFPS')
         .setDefault(false)
         .addListener(function onDrawFPSChange(showFPS) {
-            self.showFPS = !! showFPS;
+            self.showFPS = !!showFPS;
             self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
         });
-
 
     this.hash.bind('stepRate')
         .setParse(Result.lift(parseInt))
@@ -8350,9 +8367,23 @@ function onColorGenChange(gen) {
 
 Hexant.prototype.onRuleChange =
 function onRuleChange(ent) {
-    this.window.document.title = this.titleBase + ': ' + ent;
-    this.world.setEnts([ent]);
-    this.reset();
+    this.setEnts([ent]);
+};
+
+Hexant.prototype.setEnts =
+function setEnts(ents) {
+    var title = '';
+    for (var i = 0; i < ents.length; ++i) {
+        if (i > 0) {
+            title += ', ';
+        }
+        title += ents[i];
+    }
+    this.world.setEnts(ents);
+    this.world.reset();
+    this.el.width = this.el.width;
+    this.view.redraw();
+    this.window.document.title = this.titleBase + ': ' + title;
 };
 
 Hexant.prototype.onKeyPress =
@@ -8369,11 +8400,11 @@ function onKeyPress(e) {
         this.playpause();
         break;
     case 0x23: // #
-        this.toggleLabeled();
+        this.hash.set('labeled', !this.view.labeled);
         break;
     case 0x2a: // *
         this.pause();
-        this.reset();
+        this.onRuleChange(this.hash.get('rule'));
         break;
     case 0x2b: // +
         this.hash.set('stepRate', this.stepRate * 2);
@@ -8447,19 +8478,9 @@ function promptFor(name, desc) {
     }
 };
 
-Hexant.prototype.reset =
-function reset() {
-    this.world.reset();
-    this.el.width = this.el.width;
-    this.view.redraw();
-};
-
-function markVisited(data) {
-    return World.FlagVisited | data;
-}
-
 Hexant.prototype.animate =
 function animate(time) {
+    /* eslint-disable no-try-catch */
     try {
         this._animate(time);
     } catch(err) {
@@ -8474,13 +8495,17 @@ function _animate(time) {
         this.lastStepTime = time;
         return;
     }
+    this.stepWorld(time);
+    this.updateFPS(time);
+};
 
+Hexant.prototype.stepWorld =
+function stepWorld(time) {
     var steps = 1;
     var sinceLast = time - this.lastStepTime;
     steps = Math.round(sinceLast / 1000 * this.stepRate);
     this.animTiming.collect(sinceLast);
-    this.throttle()
-
+    this.throttle();
     switch (steps) {
     case 0:
         break;
@@ -8495,24 +8520,29 @@ function _animate(time) {
         this.lastStepTime = time;
         break;
     }
-    this.animTimes.push(time);
+    return steps;
+};
 
-    while ((time - this.animTimes[0]) > FPSInterval) {
+Hexant.prototype.updateFPS =
+function updateFPS(time) {
+    this.animTimes.push(time);
+    while (time - this.animTimes[0] > FPSInterval) {
         this.animTimes.shift();
     }
-    while ((time - this.stepTimes[0]) > FPSInterval) {
+    while (time - this.stepTimes[0] > FPSInterval) {
         this.stepTimes.shift();
     }
-
-    if (this.showFPS) {
-        this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
-        this.sps.innerText = toSI(this.computeSPS()) + 'sps';
-        var stats = this.world.redrawTimingStats();
-        if (stats) {
-            this.redrawTiming.innerText = 'µ=' + toSI(stats.m1/1e3) + 's 𝜎=' + toSI(Math.sqrt(stats.m2/1e3)) + 's';
-        } else {
-            this.redrawTiming.innerText = '';
-        }
+    if (!this.showFPS) return;
+    this.step.innerText = '#' + this.world.stepCount;
+    this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
+    this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+    var stats = this.world.redrawTimingStats();
+    if (stats) {
+        this.redrawTiming.innerText =
+            'µ=' + toSI(stats.m1 / 1e3) + 's ' +
+            '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
+    } else {
+        this.redrawTiming.innerText = '';
     }
 };
 
@@ -8531,30 +8561,23 @@ function throttle() {
         if (fps < MinFPS) {
             this.animTiming.weightedMark(2);
             this.stepRate /= 2;
-            if (this.throtLog) {
-                console.log('FPS SLOW DOWN', fps, this.stepRate);
-            }
             return;
         }
     }
 
     var as = this.animTiming.classifyAnomalies();
-    var i = as.length-1;
-    if (this.stepRate > 1 && as[i] > 0.5 && as[i-1] > 0.5 && as[i-2] > 0.5) {
+    var i = as.length - 1;
+    if (this.stepRate > 1 &&
+        as[i] > 0.5 && as[i - 1] > 0.5 && as[i - 2] > 0.5
+    ) {
         this.stepRate /= 2;
-        if (this.throtLog) {
-            console.log('SLOW DOWN', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
-        }
         this.animTiming.weightedMark(2);
     } else if (
         this.stepRate < this.goalStepRate &&
-        as[i] <= 0 && as[i-1] <= 0 && as[i-2] <= 0
+        as[i] <= 0 && as[i - 1] <= 0 && as[i - 2] <= 0
     ) {
         this.stepRate *= 2;
         this.animTiming.weightedMark(0.5);
-        if (this.throtLog) {
-            console.log('SPEED UP', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
-        }
     }
 };
 
@@ -8621,11 +8644,6 @@ function setStepRate(rate) {
     this.goalStepRate = rate;
 };
 
-Hexant.prototype.toggleLabeled =
-function toggleLabeled() {
-    this.hash.set('labeled', !this.view.labeled);
-};
-
 Hexant.prototype.resize =
 function resize(width, height) {
     this.view.resize(width, height);
@@ -8636,7 +8654,10 @@ var siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
 function toSI(n) {
     if (n < 1) {
-        for (var nsi = 0; nsi < nsiSuffix.length && n < 1; ++nsi, n *= 1e3) {
+        var nsi = 0;
+        while (nsi < nsiSuffix.length && n < 1) {
+            nsi++;
+            n *= 1e3;
         }
         return n.toPrecision(3) + nsiSuffix[nsi];
     }
@@ -8644,7 +8665,10 @@ function toSI(n) {
         return n.toFixed(0);
     }
     n /= 1e3;
-    for (var si = 0; si < siSuffix.length && n > 1e3; ++si, n /= 1e3) {
+    var si = 0;
+    while (si < siSuffix.length && n > 1e3) {
+        si++;
+        n /= 1e3;
     }
     return n.toPrecision(3) + siSuffix[si];
 }
@@ -8739,7 +8763,7 @@ function eachTile(each) {
 };
 
 OddQHexTile.prototype.eachDataPoint =
-function eachDataPoint(each, fill, replace) {
+function eachDataPoint(each) {
     var point = this.oqo;
     var loQ = this.origin.q;
     var loR = this.origin.r;
@@ -8754,7 +8778,7 @@ function eachDataPoint(each, fill, replace) {
 };
 
 OddQHexTile.prototype.expandBoxTo =
-function expandBoxTo(tl, br, mask) {
+function expandBoxTo(tl, br) {
     var tlq = this.origin.q;
     var tlr = this.origin.r;
     var brq = tlq + this.width;
@@ -9167,8 +9191,6 @@ function eachDataPoint(each, fill) {
         tile.eachDataPoint(each, fill, null);
         return;
     }
-    var self = this;
-
     if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
     if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill);
@@ -9180,7 +9202,7 @@ function eachDataPoint(each, fill) {
 };
 
 HexTileTreeNode.prototype._mayCompact =
-function _mayCompact(replaceMe) {
+function _mayCompact() {
     if (this.concrete != 4) {
         return null;
     }
@@ -9369,7 +9391,7 @@ function setup() {
     scope.window = window;
     scope.animator = new Animator();
     var document = window.document;
-    var bodyDocument = new Document(document.body);
+    var bodyDocument = new Document(document.querySelector('main'));
     window.hexant = new Main(bodyDocument.documentElement, scope);
 
     window.addEventListener('resize', onResize);
@@ -9414,10 +9436,10 @@ var $THIS = function HexantMain(body, caller) {
     node = parent; parent = parents[parents.length - 1]; parents.length--;
     scope.hookup("view", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "view_zd13yi");
+        component.setAttribute("id", "view_wuclnu");
     }
     if (scope.componentsFor["view"]) {
-       scope.componentsFor["view"].setAttribute("for", "view_zd13yi")
+       scope.componentsFor["view"].setAttribute("for", "view_wuclnu")
     }
     this.scope.hookup("this", this);
 };
@@ -9551,10 +9573,10 @@ var $THIS = function HexantPrompt(body, caller) {
     component = node.actualNode;
     scope.hookup("box", component);
     if (component.setAttribute) {
-        component.setAttribute("id", "box_4p0l71");
+        component.setAttribute("id", "box_bt6ua3");
     }
     if (scope.componentsFor["box"]) {
-       scope.componentsFor["box"].setAttribute("for", "box_4p0l71")
+       scope.componentsFor["box"].setAttribute("for", "box_bt6ua3")
     }
     if (component.setAttribute) {
     component.setAttribute("class", "prompt");
@@ -9569,10 +9591,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("help", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "help_qjdw9z");
+            component.setAttribute("id", "help_3uk2cx");
         }
         if (scope.componentsFor["help"]) {
-           scope.componentsFor["help"].setAttribute("for", "help_qjdw9z")
+           scope.componentsFor["help"].setAttribute("for", "help_3uk2cx")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "help");
@@ -9585,10 +9607,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("text", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "text_infml4");
+            component.setAttribute("id", "text_p3vh7x");
         }
         if (scope.componentsFor["text"]) {
-           scope.componentsFor["text"].setAttribute("for", "text_infml4")
+           scope.componentsFor["text"].setAttribute("for", "text_p3vh7x")
         }
         parents[parents.length] = parent; parent = node;
         // TEXTAREA
@@ -9598,10 +9620,10 @@ var $THIS = function HexantPrompt(body, caller) {
         component = node.actualNode;
         scope.hookup("error", component);
         if (component.setAttribute) {
-            component.setAttribute("id", "error_d4wpxx");
+            component.setAttribute("id", "error_w2mtjf");
         }
         if (scope.componentsFor["error"]) {
-           scope.componentsFor["error"].setAttribute("for", "error_d4wpxx")
+           scope.componentsFor["error"].setAttribute("for", "error_w2mtjf")
         }
         if (component.setAttribute) {
         component.setAttribute("class", "error");
@@ -9630,7 +9652,7 @@ module.exports = $THIS;
 
 module.exports = Prompt;
 
-function Prompt(body, scope) {
+function Prompt() {
     var self = this;
 
     this.box = null;
@@ -9653,7 +9675,7 @@ function Prompt(body, scope) {
         self.onKeyUp(e);
     }
 
-    function cancel(e) {
+    function cancel() {
         self.cancel();
     }
 
@@ -9788,8 +9810,6 @@ function onKeyUp(e) {
 // -------------------
 
 module.exports.add = add;
-
-/* eslint-disable max-statements */
 
 function add(rl, begin, end) {
     if (end < begin) {
@@ -9951,8 +9971,9 @@ function classifyAnomalies() {
     var cs = [];
     var qs = this.quantiles([0.25, 0.50, 0.75]);
     var iqr = qs[2] - qs[0];
+    var i;
     if (iqr / qs[1] < TIGHT_TOL) {
-        for (var i = 0; i < this.data.length; ++i) {
+        for (i = 0; i < this.data.length; ++i) {
             cs.push(this.data[i] / qs[1] - 1);
         }
     } else {
@@ -9962,7 +9983,7 @@ function classifyAnomalies() {
         var tol = iqr * 1.5;
         var lo = qs[0] - tol;
         var hi = qs[2] + tol;
-        for (var i = 0; i < this.data.length; ++i) {
+        for (i = 0; i < this.data.length; ++i) {
             if (this.data[i] < lo) {
                 cs.push((this.data[i] - lo) / iqr);
             } else if (this.data[i] > hi) {
@@ -10006,9 +10027,9 @@ function numericCmp(a, b) {
 
 function placeTile(tiles, capacity, length) {
     var bestIndex = -1, bestOffset = -1, best = -1;
-    var offset = 0, start = -1;
+    var offset = 0;
 
-    var freeIndex = -1, freeOffset = -1, freeLength = 0;
+    var waste, freeIndex = -1, freeOffset = -1, freeLength = 0;
     for (var i = 0; i < tiles.length; i+=2) {
         var tileId = tiles[i];
         var tileLength = tiles[i+1];
@@ -10019,7 +10040,7 @@ function placeTile(tiles, capacity, length) {
             }
             freeLength += tileLength;
             if (length <= freeLength) {
-                var waste = freeLength - length;
+                waste = freeLength - length;
                 if (best < 0 || waste < best) {
                     bestIndex = freeIndex;
                     bestOffset = freeOffset;
@@ -10036,7 +10057,7 @@ function placeTile(tiles, capacity, length) {
 
     var free = capacity - offset;
     if (length <= free) {
-        var waste = free - length;
+        waste = free - length;
         if (best < 0 || waste < best) {
             bestIndex = tiles.length;
             bestOffset = offset;
@@ -10059,7 +10080,7 @@ function collectTombstone(tiles, i, length) {
 
     // coalesce range; we assume that we've been told an index of a usable set
     // of tombstones, and so don't range check here
-    var j = i + 2;
+    var j = i + 2, k;
     var spare = 0;
     for (; tileLength < length; j += 2) {
         tileLength += tiles[j+1];
@@ -10068,7 +10089,7 @@ function collectTombstone(tiles, i, length) {
 
     // truncate (finish any coalesce)
     if (spare > 0) {
-        var k = i + 2;
+        k = i + 2;
         while (j < tiles.length) {
             tiles[k++] = tiles[j++];
         }
@@ -10089,7 +10110,7 @@ function collectTombstone(tiles, i, length) {
             } else {
                 tiles.push(0, 0);
             }
-            var k = tiles.length - 1;
+            k = tiles.length - 1;
             for (; n-- > 0; k--) tiles[k] = tiles[k - 2];
             tiles[j] = null;
             tiles[j+1] = remain;
@@ -10227,7 +10248,7 @@ Turmite.ruleHelp =
 function Turmite() {
     this.numStates = 0;
     this.numColors = 0;
-    this.rules = new Uint32Array(64 * 1024);
+    this.rules = new Uint32Array(256 * 256);
     this.specString = '';
 
     this.dir = 0;
@@ -10848,11 +10869,20 @@ function compileThen(lines, then, scope, body) {
 }
 
 function compileThenParts(lines, then, scope) {
-    var valMaxes = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
-    var resMasks = ['World.MaskResultState',
-                    'World.MaskResultColor',
-                    'World.MaskResultTurn'];
-    var shifts = ['World.ColorShift', 'World.TurnShift'];
+    var valMaxes = [
+        'World.MaxState',
+        'World.MaxColor',
+        'World.MaxTurn'
+    ];
+    var resMasks = [
+        'World.MaskResultState',
+        'World.MaskResultColor',
+        'World.MaskResultTurn'
+    ];
+    var shifts = [
+        'World.ColorShift',
+        'World.TurnShift'
+    ];
 
     var allZero = true;
     var parts = [then.state, then.color, then.turn];
@@ -11195,7 +11225,7 @@ if (typeof module !== 'undefined'&& typeof module.exports !== 'undefined') {
 // hexant/turmite/lang/parse.js
 // ----------------------------
 
-/* eslint no-try-catch:0 no-eval:0 */
+/* eslint-disable no-try-catch no-eval */
 
 'use strict';
 
@@ -11214,7 +11244,7 @@ function parseTurmite(str, World) {
     return res;
 }
 
-function parseLang(str, World) {
+function parseLang(str) {
     if (typeof str !== 'string') {
         return new Result(new Error('invalid argument, not a string'), null);
     }
@@ -11240,7 +11270,8 @@ function parseResult(gram, str) {
     }
 }
 
-function compileGrammarResult(value, World) {
+function compileGrammarResult(value) {
+    /* eslint-disable no-eval */
     var str = compile.init(value).join('\n');
     var func = eval(str);
     return new Result(null, func);
@@ -11398,89 +11429,89 @@ function toSpecString(root, emit) {
 
     function each(node, next) {
         switch (node.type) {
-            case 'spec':
-                next();
-                break;
+        case 'spec':
+            next();
+            break;
 
-            case 'assign':
-                stack.push(node.id.name);
-                next();
-                join(' = ');
-                emit(stack.pop());
-                break;
+        case 'assign':
+            stack.push(node.id.name);
+            next();
+            join(' = ');
+            emit(stack.pop());
+            break;
 
-            case 'rule':
-                next();
-                join(' => ');
-                emit(stack.pop());
-                break;
+        case 'rule':
+            next();
+            join(' => ');
+            emit(stack.pop());
+            break;
 
-            case 'when':
-                next();
-                join(', ');
-                break;
+        case 'when':
+            next();
+            join(', ');
+            break;
 
-            case 'then':
-                next();
-                join(', ');
-                join(', ');
-                break;
+        case 'then':
+            next();
+            join(', ');
+            join(', ');
+            break;
 
-            case 'thenVal':
-                if (node.mode === '|') {
-                    next();
-                } else {
-                    stack.push(node.mode);
-                    next();
-                    join('');
-                }
-                break;
-
-            case 'member':
+        case 'thenVal':
+            if (node.mode === '|') {
                 next();
-                wrap('[', ']');
+            } else {
+                stack.push(node.mode);
+                next();
                 join('');
-                break;
+            }
+            break;
 
-            case 'expr':
-                precs.push(opPrec.indexOf(node.op));
-                next();
-                join(' ' + node.op + ' ');
-                if (precs.pop() < precs[precs.length - 1]) {
-                    wrap('(', ')');
-                }
-                break;
+        case 'member':
+            next();
+            wrap('[', ']');
+            join('');
+            break;
 
-            case 'identifier':
-            case 'symbol':
-                stack.push(node.name);
-                next();
-                break;
+        case 'expr':
+            precs.push(opPrec.indexOf(node.op));
+            next();
+            join(' ' + node.op + ' ');
+            if (precs.pop() < precs[precs.length - 1]) {
+                wrap('(', ')');
+            }
+            break;
 
-            case 'turns':
-                var rle = RLEBuilder('turns(', ' ', ')');
-                for (var i = 0; i < node.value.length; i++) {
-                    var turn = node.value[i];
-                    rle(turn.count.value, TurnSyms[turn.turn]);
-                }
-                stack.push(rle(0, ''));
-                next();
-                break;
+        case 'identifier':
+        case 'symbol':
+            stack.push(node.name);
+            next();
+            break;
 
-            case 'turn':
-                stack.push(node.names.map(function eachTurnName(name) {
-                    return TurnSyms[name];
-                }).join('|'));
-                break;
+        case 'turns':
+            var rle = RLEBuilder('turns(', ' ', ')');
+            for (var i = 0; i < node.value.length; i++) {
+                var turn = node.value[i];
+                rle(turn.count.value, TurnSyms[turn.turn]);
+            }
+            stack.push(rle(0, ''));
+            next();
+            break;
 
-            case 'number':
-                stack.push(node.value.toString());
-                next();
-                break;
+        case 'turn':
+            stack.push(node.names.map(function eachTurnName(name) {
+                return TurnSyms[name];
+            }).join('|'));
+            break;
 
-            default:
-                stack.push('/* unsupported ' + JSON.stringify(node) + ' */');
-                next();
+        case 'number':
+            stack.push(node.value.toString());
+            next();
+            break;
+
+        default:
+            stack.push('/* unsupported ' + JSON.stringify(node) + ' */');
+            next();
         }
     }
 
@@ -11520,59 +11551,59 @@ function iter(root, visit) {
 
     function proc(node) {
         switch (node.type) {
-            case 'spec':
-                var i;
-                for (i = 0; i < node.assigns.length; i++) {
-                    each(node.assigns[i]);
-                }
-                for (i = 0; i < node.rules.length; i++) {
-                    each(node.rules[i]);
-                }
-                break;
+        case 'spec':
+            var i;
+            for (i = 0; i < node.assigns.length; i++) {
+                each(node.assigns[i]);
+            }
+            for (i = 0; i < node.rules.length; i++) {
+                each(node.rules[i]);
+            }
+            break;
 
-            case 'assign':
-                each(node.value);
-                break;
+        case 'assign':
+            each(node.value);
+            break;
 
-            case 'rule':
-                each(node.when);
-                each(node.then);
-                break;
+        case 'rule':
+            each(node.when);
+            each(node.then);
+            break;
 
-            case 'when':
-                each(node.state);
-                each(node.color);
-                break;
+        case 'when':
+            each(node.state);
+            each(node.color);
+            break;
 
-            case 'then':
-                each(node.state);
-                each(node.color);
-                each(node.turn);
-                break;
+        case 'then':
+            each(node.state);
+            each(node.color);
+            each(node.turn);
+            break;
 
-            case 'thenVal':
-                each(node.value);
-                break;
+        case 'thenVal':
+            each(node.value);
+            break;
 
-            case 'member':
-                each(node.value);
-                each(node.item);
-                break;
+        case 'member':
+            each(node.value);
+            each(node.item);
+            break;
 
-            case 'expr':
-                each(node.arg1);
-                each(node.arg2);
-                break;
+        case 'expr':
+            each(node.arg1);
+            each(node.arg2);
+            break;
 
-            case 'identifier':
-            case 'number':
-            case 'symbol':
-            case 'turn':
-            case 'turns':
-                break;
+        case 'identifier':
+        case 'number':
+        case 'symbol':
+        case 'turn':
+        case 'turns':
+            break;
 
-            default:
-                throw new Error('unimplemnted walk type ' + node.type);
+        default:
+            throw new Error('unimplemnted walk type ' + node.type);
         }
     }
 }
@@ -11788,7 +11819,6 @@ function RLEBuilder(prefix, sep, suffix) {
 
 var World = require('./world.js');
 var Coord = require('./coord.js');
-var vec3 = require('gl-matrix').vec3;
 var mat4 = require('gl-matrix').mat4;
 
 var GLProgram = require('./glprogram.js');
@@ -11798,7 +11828,6 @@ var hexFragShader = require('./hex.frag');
 var rangeListAdd = require('./rangelist.js').add;
 var collectTombstone = require('./tileglbuffer.js').collectTombstone;
 var placeTile = require('./tileglbuffer.js').placeTile;
-var Coord = require('./coord.js');
 
 module.exports = ViewGL;
 
@@ -11806,8 +11835,6 @@ module.exports = ViewGL;
 // - in redraw lazily only draw dirty tiles, expand permitting
 // - switch to uint32 elements array if supported by extension
 // - switch to uint32 for q,r, use a highp in the shader
-
-/* eslint-disable max-statements */
 
 var tau = 2 * Math.PI;
 var hexAngStep = tau / 6;
@@ -12036,17 +12063,17 @@ function updateEnts() {
 };
 
 ViewGL.prototype.addEnt =
-function addEnt(i) {
+function addEnt() {
     this.updateColors();
 };
 
 ViewGL.prototype.updateEnt =
-function updateEnt(i) {
+function updateEnt() {
     this.updateColors();
 };
 
 ViewGL.prototype.removeEnt =
-function removeEnt(i) {
+function removeEnt() {
     this.updateColors();
 };
 
@@ -12075,7 +12102,7 @@ function updateColors() {
 };
 
 ViewGL.prototype.setLabeled =
-function setLabeled(labeled) {
+function setLabeled() {
     // noop
 };
 
@@ -12168,7 +12195,7 @@ function drawBodies(world) {
 };
 
 EntGLBuffer.prototype.drawHeads =
-function drawHeads(world) {
+function drawHeads() {
     var i = 0, j = 0, k = 0;
     while (i < this.len) {
         j += 2;
@@ -12313,12 +12340,13 @@ function onWorldTileRemoved(tile) {
 
 TileBufferer.prototype.flush =
 function flush() {
-    for (var i = 0; i < this.world.tile.dirtyTiles.length; ++i) {
+    var i;
+    for (i = 0; i < this.world.tile.dirtyTiles.length; ++i) {
         var tile = this.world.tile.dirtyTiles[i];
         this.flushTile(tile);
     }
     this.world.tile.dirtyTiles.length = 0;
-    for (var i = 0; i < this.dirtyTileBuffers.length; ++i) {
+    for (i = 0; i < this.dirtyTileBuffers.length; ++i) {
         var tileBuffer = this.dirtyTileBuffers[i];
         this.flushTileBuffer(tileBuffer);
     }
@@ -12375,7 +12403,6 @@ function flushTileBuffer(tileBuffer) {
     tileBuffer.usedElements = 0;
     for (var i = 0; i < tileBuffer.tiles.length; i+=2) {
         var tileId = tileBuffer.tiles[i];
-        var tileLength = tileBuffer.tiles[i+1];
         if (tileId !== null) {
             var tile = this.world.tile.getTile(tileId);
             if (!tile) {
@@ -12431,9 +12458,7 @@ function addTile(id, length) {
 TileGLBuffer.prototype.removeTile =
 function removeTile(id) {
     delete this.tileRanges[id];
-    var i = 0, end = 0;
-    for (; i < this.tiles.length; i += 2) {
-        end += this.tiles[i+1];
+    for (var i = 0; i < this.tiles.length; i += 2) {
         if (this.tiles[i] === id) {
             // set tombstone...
             this.tiles[i] = null;
@@ -12519,8 +12544,6 @@ var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
 var CubePoint = Coord.CubePoint;
 
-var OddQOffset = Coord.OddQOffset;
-
 var REDRAW_TIMING_WINDOW = 5000;
 
 module.exports = World;
@@ -12541,6 +12564,7 @@ World.MaskResultTurn  = 0x0000ffff;
 function World() {
     this.numColors = 0;
     this.numStates = 0;
+    this.stepCount = 0;
     this.tile = new HexTileTree();
     this.ents = [];
     this.views = [];
@@ -12561,19 +12585,21 @@ function getEntDir(i) {
 
 World.prototype.reset =
 function reset() {
-    this.resetEnt(0);
+    // TODO: should carry initial pos/dir
+    if (this.ents.length > 0) {
+        this.ents[0].reset();
+        this.ents[0].pos.scale(0); // reset to 0,0
+        this.ents[0].dir = 0;
+    }
     this.tile.reset();
-    for (var i = 0; i < this.views.length; ++i) {
+    this.stepCount = 0;
+    var i = 0;
+    for (; i < this.views.length; ++i) {
         this.views[i].reset();
     }
-    this.tile.update(this.getEntPos(0), markVisited);
-};
-
-World.prototype.resetEnt =
-function resetEnt(i) {
-    this.ents[i].reset();
-    this.ents[i].pos.scale(0); // reset to 0,0
-    this.ents[i].dir = 0;
+    for (i = 0; i < this.ents.length; ++i) {
+        this.tile.update(this.getEntPos(i), markVisited);
+    }
 };
 
 World.prototype.turnEnt =
@@ -12594,6 +12620,7 @@ function step() {
     for (i = 0; i < this.views.length; i++) {
         this.views[i].step();
     }
+    this.stepCount++;
     this.redraw();
 };
 
@@ -12608,6 +12635,7 @@ function stepn(n) {
             this.views[j].step();
         }
     }
+    this.stepCount += n;
     return this.redraw();
 };
 
@@ -12635,8 +12663,8 @@ function redraw() {
 
 World.prototype.redrawTimingStats =
 function redrawTimingStats() {
-    var n = 0, m1 = 0, m2 = 0;
-    for (var i = 0; i < this.redrawTiming.length;) {
+    var i = 0, n = 0, m1 = 0, m2 = 0;
+    while (i < this.redrawTiming.length) {
         var t0 = this.redrawTiming[i++];
         var t1 = this.redrawTiming[i++];
         var dur = t1 - t0;
@@ -12714,12 +12742,12 @@ function setEnts(ents) {
     }
 
     for (i = 0; i < n; ++i) {
-        for (var j = 0; j < this.views.length; j++) {
+        for (j = 0; j < this.views.length; j++) {
             this.views[j].updateEnt(j);
         }
     }
     for (; i < ents.length; ++i) {
-        for (var j = 0; j < this.views.length; j++) {
+        for (j = 0; j < this.views.length; j++) {
             this.views[j].addEnt(j);
         }
     }

@@ -224,11 +224,20 @@ function compileThen(lines, then, scope, body) {
 }
 
 function compileThenParts(lines, then, scope) {
-    var valMaxes = ['World.MaxState', 'World.MaxColor', 'World.MaxTurn'];
-    var resMasks = ['World.MaskResultState',
-                    'World.MaskResultColor',
-                    'World.MaskResultTurn'];
-    var shifts = ['World.ColorShift', 'World.TurnShift'];
+    var valMaxes = [
+        'World.MaxState',
+        'World.MaxColor',
+        'World.MaxTurn'
+    ];
+    var resMasks = [
+        'World.MaskResultState',
+        'World.MaskResultColor',
+        'World.MaskResultTurn'
+    ];
+    var shifts = [
+        'World.ColorShift',
+        'World.TurnShift'
+    ];
 
     var allZero = true;
     var parts = [then.state, then.color, then.turn];

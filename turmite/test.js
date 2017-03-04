@@ -1,5 +1,5 @@
-/* global console, process, Buffer */
-/* eslint no-console:0 */
+/* global process, Buffer */
+/* eslint-disable no-console */
 
 'use strict';
 
@@ -8,20 +8,20 @@ var Turmite = require('./index.js');
 
 function main(args) {
     switch (args[0]) {
-        case 'dump':
-            bufferStream(process.stdin, errStrMap(parseAndDump));
+    case 'dump':
+        bufferStream(process.stdin, errStrMap(parseAndDump));
         break;
 
-        case 'roundTrip':
-            bufferStream(process.stdin, errStrMap(roundTrip));
+    case 'roundTrip':
+        bufferStream(process.stdin, errStrMap(roundTrip));
         break;
 
-        case 'diffRules':
-            diffRules(args[1], args[2]);
+    case 'diffRules':
+        diffRules(args[1], args[2]);
         break;
 
-        default:
-            console.error('invalid test action', args[0]);
+    default:
+        console.error('invalid test action', args[0]);
     }
 }
 
@@ -188,7 +188,7 @@ function splitLines(str) {
 
 function pad(n, str) {
     while (str.length < n) {
-        str = str + ' ';
+        str += ' ';
     }
     return str;
 }

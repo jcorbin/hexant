@@ -83,7 +83,7 @@ function eachTile(each) {
 };
 
 OddQHexTile.prototype.eachDataPoint =
-function eachDataPoint(each, fill, replace) {
+function eachDataPoint(each) {
     var point = this.oqo;
     var loQ = this.origin.q;
     var loR = this.origin.r;
@@ -98,7 +98,7 @@ function eachDataPoint(each, fill, replace) {
 };
 
 OddQHexTile.prototype.expandBoxTo =
-function expandBoxTo(tl, br, mask) {
+function expandBoxTo(tl, br) {
     var tlq = this.origin.q;
     var tlr = this.origin.r;
     var brq = tlq + this.width;

@@ -339,8 +339,6 @@ function eachDataPoint(each, fill) {
         tile.eachDataPoint(each, fill, null);
         return;
     }
-    var self = this;
-
     if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill);
     else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
     if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill);
@@ -352,7 +350,7 @@ function eachDataPoint(each, fill) {
 };
 
 HexTileTreeNode.prototype._mayCompact =
-function _mayCompact(replaceMe) {
+function _mayCompact() {
     if (this.concrete != 4) {
         return null;
     }

@@ -1,16 +1,17 @@
 <!doctype html>
-<html>
-    <head>
-        <link rel="extends" href="./hexant.js">
-        <link rel="tag" href="./prompt.html">
-    </head>
-    <body>
-        <canvas id="view" class="hexant-canvas"></canvas>
-        <prompt id="prompt"></prompt>
-        <div class="overlay fps right" id="fpsOverlay" style="display: none">
-            <div id="fps"></div>
-            <div id="sps"></div>
-            <div id="redrawTiming"></div>
-        </div>
-    </body>
-</html>
+
+<link rel="extends" href="./hexant.js">
+<link rel="tag" href="./prompt.html">
+
+<body>
+    <canvas id="view" class="hexant-canvas"></canvas>
+    <prompt id="prompt"></prompt>
+    <aside class="overlay fps right" id="fpsOverlay" style="display: none">
+        <ul>
+            <li id="step">
+            <li id="fps">
+            <li id="sps">
+            <li id="redrawTiming">
+        </ul>
+    </aside>
+</body>

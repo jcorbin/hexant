@@ -73,8 +73,9 @@ function classifyAnomalies() {
     var cs = [];
     var qs = this.quantiles([0.25, 0.50, 0.75]);
     var iqr = qs[2] - qs[0];
+    var i;
     if (iqr / qs[1] < TIGHT_TOL) {
-        for (var i = 0; i < this.data.length; ++i) {
+        for (i = 0; i < this.data.length; ++i) {
             cs.push(this.data[i] / qs[1] - 1);
         }
     } else {
@@ -84,7 +85,7 @@ function classifyAnomalies() {
         var tol = iqr * 1.5;
         var lo = qs[0] - tol;
         var hi = qs[2] + tol;
-        for (var i = 0; i < this.data.length; ++i) {
+        for (i = 0; i < this.data.length; ++i) {
             if (this.data[i] < lo) {
                 cs.push((this.data[i] - lo) / iqr);
             } else if (this.data[i] > hi) {

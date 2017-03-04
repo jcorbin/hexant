@@ -9,8 +9,6 @@ var colorGen = require('./colorgen.js');
 var World = require('./world.js');
 var ViewGL = require('./view_gl.js');
 var Turmite = require('./turmite/index.js');
-var OddQOffset = require('./coord.js').OddQOffset;
-var HexTileTree = require('./hextiletree.js');
 var Sample = require('./sample.js');
 
 var FPSInterval = 3 * 1000;
@@ -26,11 +24,12 @@ function Hexant(body, scope) {
     this.prompt = null;
     this.el = null;
     this.fpsOverlay = null;
+    this.step = null;
     this.fps = null;
     this.sps = null;
     this.redrawTiming = null;
 
-    this.world = null;
+    this.world = new World();
     this.view = null;
 
     this.window = scope.window;
@@ -46,7 +45,6 @@ function Hexant(body, scope) {
     this.animTimes = [];
     this.stepTimes = [];
     this.animTiming = new Sample(NumTimingSamples);
-    this.throtLog = false;
 
     this.boundPlaypause = playpause;
     this.boundOnKeyPress = onKeyPress;
@@ -85,12 +83,12 @@ function hookup(id, component, scope) {
     this.prompt = scope.components.prompt;
     this.el = scope.components.view;
     this.fpsOverlay = scope.components.fpsOverlay;
+    this.step = scope.components.step;
     this.fps = scope.components.fps;
     this.sps = scope.components.sps;
     this.redrawTiming = scope.components.redrawTiming;
 
     this.titleBase = this.window.document.title;
-    this.world = new World();
     this.view = this.world.addView(
         new ViewGL(this.world, this.el));
 
@@ -124,10 +122,9 @@ function configure() {
     this.hash.bind('showFPS')
         .setDefault(false)
         .addListener(function onDrawFPSChange(showFPS) {
-            self.showFPS = !! showFPS;
+            self.showFPS = !!showFPS;
             self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
         });
-
 
     this.hash.bind('stepRate')
         .setParse(Result.lift(parseInt))
@@ -185,9 +182,23 @@ function onColorGenChange(gen) {
 
 Hexant.prototype.onRuleChange =
 function onRuleChange(ent) {
-    this.window.document.title = this.titleBase + ': ' + ent;
-    this.world.setEnts([ent]);
-    this.reset();
+    this.setEnts([ent]);
+};
+
+Hexant.prototype.setEnts =
+function setEnts(ents) {
+    var title = '';
+    for (var i = 0; i < ents.length; ++i) {
+        if (i > 0) {
+            title += ', ';
+        }
+        title += ents[i];
+    }
+    this.world.setEnts(ents);
+    this.world.reset();
+    this.el.width = this.el.width;
+    this.view.redraw();
+    this.window.document.title = this.titleBase + ': ' + title;
 };
 
 Hexant.prototype.onKeyPress =
@@ -204,11 +215,11 @@ function onKeyPress(e) {
         this.playpause();
         break;
     case 0x23: // #
-        this.toggleLabeled();
+        this.hash.set('labeled', !this.view.labeled);
         break;
     case 0x2a: // *
         this.pause();
-        this.reset();
+        this.onRuleChange(this.hash.get('rule'));
         break;
     case 0x2b: // +
         this.hash.set('stepRate', this.stepRate * 2);
@@ -282,19 +293,9 @@ function promptFor(name, desc) {
     }
 };
 
-Hexant.prototype.reset =
-function reset() {
-    this.world.reset();
-    this.el.width = this.el.width;
-    this.view.redraw();
-};
-
-function markVisited(data) {
-    return World.FlagVisited | data;
-}
-
 Hexant.prototype.animate =
 function animate(time) {
+    /* eslint-disable no-try-catch */
     try {
         this._animate(time);
     } catch(err) {
@@ -309,13 +310,17 @@ function _animate(time) {
         this.lastStepTime = time;
         return;
     }
+    this.stepWorld(time);
+    this.updateFPS(time);
+};
 
+Hexant.prototype.stepWorld =
+function stepWorld(time) {
     var steps = 1;
     var sinceLast = time - this.lastStepTime;
     steps = Math.round(sinceLast / 1000 * this.stepRate);
     this.animTiming.collect(sinceLast);
-    this.throttle()
-
+    this.throttle();
     switch (steps) {
     case 0:
         break;
@@ -330,24 +335,29 @@ function _animate(time) {
         this.lastStepTime = time;
         break;
     }
-    this.animTimes.push(time);
+    return steps;
+};
 
-    while ((time - this.animTimes[0]) > FPSInterval) {
+Hexant.prototype.updateFPS =
+function updateFPS(time) {
+    this.animTimes.push(time);
+    while (time - this.animTimes[0] > FPSInterval) {
         this.animTimes.shift();
     }
-    while ((time - this.stepTimes[0]) > FPSInterval) {
+    while (time - this.stepTimes[0] > FPSInterval) {
         this.stepTimes.shift();
     }
-
-    if (this.showFPS) {
-        this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
-        this.sps.innerText = toSI(this.computeSPS()) + 'sps';
-        var stats = this.world.redrawTimingStats();
-        if (stats) {
-            this.redrawTiming.innerText = 'µ=' + toSI(stats.m1/1e3) + 's 𝜎=' + toSI(Math.sqrt(stats.m2/1e3)) + 's';
-        } else {
-            this.redrawTiming.innerText = '';
-        }
+    if (!this.showFPS) return;
+    this.step.innerText = '#' + this.world.stepCount;
+    this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
+    this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+    var stats = this.world.redrawTimingStats();
+    if (stats) {
+        this.redrawTiming.innerText =
+            'µ=' + toSI(stats.m1 / 1e3) + 's ' +
+            '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
+    } else {
+        this.redrawTiming.innerText = '';
     }
 };
 
@@ -366,30 +376,23 @@ function throttle() {
         if (fps < MinFPS) {
             this.animTiming.weightedMark(2);
             this.stepRate /= 2;
-            if (this.throtLog) {
-                console.log('FPS SLOW DOWN', fps, this.stepRate);
-            }
             return;
         }
     }
 
     var as = this.animTiming.classifyAnomalies();
-    var i = as.length-1;
-    if (this.stepRate > 1 && as[i] > 0.5 && as[i-1] > 0.5 && as[i-2] > 0.5) {
+    var i = as.length - 1;
+    if (this.stepRate > 1 &&
+        as[i] > 0.5 && as[i - 1] > 0.5 && as[i - 2] > 0.5
+    ) {
         this.stepRate /= 2;
-        if (this.throtLog) {
-            console.log('SLOW DOWN', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
-        }
         this.animTiming.weightedMark(2);
     } else if (
         this.stepRate < this.goalStepRate &&
-        as[i] <= 0 && as[i-1] <= 0 && as[i-2] <= 0
+        as[i] <= 0 && as[i - 1] <= 0 && as[i - 2] <= 0
     ) {
         this.stepRate *= 2;
         this.animTiming.weightedMark(0.5);
-        if (this.throtLog) {
-            console.log('SPEED UP', this.stepRate, this.animTiming.markWeight, this.animTiming.lastMark);
-        }
     }
 };
 
@@ -456,11 +459,6 @@ function setStepRate(rate) {
     this.goalStepRate = rate;
 };
 
-Hexant.prototype.toggleLabeled =
-function toggleLabeled() {
-    this.hash.set('labeled', !this.view.labeled);
-};
-
 Hexant.prototype.resize =
 function resize(width, height) {
     this.view.resize(width, height);
@@ -471,7 +469,10 @@ var siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
 function toSI(n) {
     if (n < 1) {
-        for (var nsi = 0; nsi < nsiSuffix.length && n < 1; ++nsi, n *= 1e3) {
+        var nsi = 0;
+        while (nsi < nsiSuffix.length && n < 1) {
+            nsi++;
+            n *= 1e3;
         }
         return n.toPrecision(3) + nsiSuffix[nsi];
     }
@@ -479,7 +480,10 @@ function toSI(n) {
         return n.toFixed(0);
     }
     n /= 1e3;
-    for (var si = 0; si < siSuffix.length && n > 1e3; ++si, n /= 1e3) {
+    var si = 0;
+    while (si < siSuffix.length && n > 1e3) {
+        si++;
+        n /= 1e3;
     }
     return n.toPrecision(3) + siSuffix[si];
 }

@@ -4,8 +4,6 @@ var Coord = require('./coord.js');
 var HexTileTree = require('./hextiletree.js');
 var CubePoint = Coord.CubePoint;
 
-var OddQOffset = Coord.OddQOffset;
-
 var REDRAW_TIMING_WINDOW = 5000;
 
 module.exports = World;
@@ -26,6 +24,7 @@ World.MaskResultTurn  = 0x0000ffff;
 function World() {
     this.numColors = 0;
     this.numStates = 0;
+    this.stepCount = 0;
     this.tile = new HexTileTree();
     this.ents = [];
     this.views = [];
@@ -46,19 +45,21 @@ function getEntDir(i) {
 
 World.prototype.reset =
 function reset() {
-    this.resetEnt(0);
+    // TODO: should carry initial pos/dir
+    if (this.ents.length > 0) {
+        this.ents[0].reset();
+        this.ents[0].pos.scale(0); // reset to 0,0
+        this.ents[0].dir = 0;
+    }
     this.tile.reset();
-    for (var i = 0; i < this.views.length; ++i) {
+    this.stepCount = 0;
+    var i = 0;
+    for (; i < this.views.length; ++i) {
         this.views[i].reset();
     }
-    this.tile.update(this.getEntPos(0), markVisited);
-};
-
-World.prototype.resetEnt =
-function resetEnt(i) {
-    this.ents[i].reset();
-    this.ents[i].pos.scale(0); // reset to 0,0
-    this.ents[i].dir = 0;
+    for (i = 0; i < this.ents.length; ++i) {
+        this.tile.update(this.getEntPos(i), markVisited);
+    }
 };
 
 World.prototype.turnEnt =
@@ -79,6 +80,7 @@ function step() {
     for (i = 0; i < this.views.length; i++) {
         this.views[i].step();
     }
+    this.stepCount++;
     this.redraw();
 };
 
@@ -93,6 +95,7 @@ function stepn(n) {
             this.views[j].step();
         }
     }
+    this.stepCount += n;
     return this.redraw();
 };
 
@@ -120,8 +123,8 @@ function redraw() {
 
 World.prototype.redrawTimingStats =
 function redrawTimingStats() {
-    var n = 0, m1 = 0, m2 = 0;
-    for (var i = 0; i < this.redrawTiming.length;) {
+    var i = 0, n = 0, m1 = 0, m2 = 0;
+    while (i < this.redrawTiming.length) {
         var t0 = this.redrawTiming[i++];
         var t1 = this.redrawTiming[i++];
         var dur = t1 - t0;
@@ -199,12 +202,12 @@ function setEnts(ents) {
     }
 
     for (i = 0; i < n; ++i) {
-        for (var j = 0; j < this.views.length; j++) {
+        for (j = 0; j < this.views.length; j++) {
             this.views[j].updateEnt(j);
         }
     }
     for (; i < ents.length; ++i) {
-        for (var j = 0; j < this.views.length; j++) {
+        for (j = 0; j < this.views.length; j++) {
             this.views[j].addEnt(j);
         }
     }
