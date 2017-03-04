@@ -1,6 +1,6 @@
 {
   "name": "hexant",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "dependencies": {
     "Base64": {
       "version": "0.3.0",
