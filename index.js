@@ -15,7 +15,7 @@ function setup() {
     scope.window = window;
     scope.animator = new Animator();
     var document = window.document;
-    var bodyDocument = new Document(document.body);
+    var bodyDocument = new Document(document.querySelector('main'));
     window.hexant = new Main(bodyDocument.documentElement, scope);
 
     window.addEventListener('resize', onResize);
