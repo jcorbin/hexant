@@ -1,10 +1,78 @@
 'use strict';
 
 var Turmite = require('./index.js');
-var constants = require('./constants.js');
 
 module.exports.rulesSimilarity = rulesSimilarity;
 module.exports.randomAnt = randomAnt;
+module.exports.specSimilarity = specSimilarity;
+
+// XXX copied from parse.js
+var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
+
+function specSimilarity(a, b) {
+    a = antTurns(a);
+    b = antTurns(b);
+    if (a === null || b === null) {
+        return 0;
+    }
+    return 1 - levenshtein(a, b) / (a + b);
+    // return jaroDistance(a, b);
+
+    function antTurns(str) {
+        var match = antPattern.exec(str);
+        if (!match) {
+            return null;
+        }
+        return match[1];
+    }
+}
+
+function levenshtein(a, b) {
+    var t = [], u, i, j, m = a.length, n = b.length;
+    if (!m) return n;
+    if (!n) return m;
+    for (j = 0; j <= n; j++) t[j] = j;
+    for (i = 1; i <= m; i++) {
+        for (u = [i], j = 1; j <= n; j++) {
+            u[j] = a[i - 1] === b[j - 1]
+                ? t[j - 1]
+                : Math.min(t[j - 1], t[j], u[j - 1]) + 1;
+        }
+        t = u;
+    }
+    return u[n];
+}
+
+// function jaroDistance(a, b) {
+//     if (a.length === 0 && b.length === 0) return 1;
+//     if (a.length === 0 || b.length === 0) return 0;
+//     var i, k, aMatches = [], bMatches = [];
+
+//     var m = 0;
+//     var matchDistance = Math.max(a.length, b.length) / 2 - 1;
+//     for (i = 0; i < a.length; ++i) {
+//         var end = Math.min(i + matchDistance + 1, b.length);
+//         for (k = Math.max(0, i - matchDistance); k < end; ++k) {
+//             if (!bMatches[k] && a[i] === b[k]) {
+//                 aMatches[i] = true;
+//                 bMatches[k] = true;
+//                 m++;
+//                 break;
+//             }
+//         }
+//     }
+//     if (m === 0) return 0;
+
+//     var t = 0.0;
+//     for (i = 0, k = 0; i < a.length; ++i) {
+//         if (aMatches[i]) {
+//             while (!bMatches[k]) k++;
+//             if (a[i] !== b[k++]) t += 0.5
+//         }
+//     }
+
+//     return (m / a.length + m / b.length + (m - t) / m) / 3.0;
+// }
 
 /*
  * A Turmite rules table is a 2^16 array of 32-bit words:
@@ -27,14 +95,7 @@ var COLOR_MASK = 0x00ff0000;
 var TURN_MASK  = 0x0000ffff;
 var TURN_NBITS = popcount(TURN_MASK);
 
-var REL_TURNS = [
-    constants.Turn.RelForward,
-    constants.Turn.RelBackward,
-    constants.Turn.RelLeft,
-    constants.Turn.RelRight,
-    constants.Turn.RelDoubleLeft,
-    constants.Turn.RelDoubleRight
-];
+var RelTurns = 'LRPSBF'
 
 // TODO: moar generation:
 // - multi-modal rules
@@ -50,30 +111,19 @@ var REL_TURNS = [
 // It may be passed a function randi(lo, hi) that returns a random integer in
 // the half-open range [lo, hi).
 function randomAnt(randi) {
-    var ent = new Turmite();
-
     if (typeof randi !== 'function') {
         randi = randint;
     }
     var turns = randomTurns(randi);
-    var i = 0, k = 0;
-    while (k < MODE_SIZE) {
-        for (var j = 0; j < turns.length; i++, j++, k++) {
-            var color = k + 1 << 16;
-            ent.rules[i] = color | turns[j];
-        }
-    }
-
-    ent.numColors = turns.length;
-    ent.numStates = 1;
-    return ent;
+    var spec = 'ant(' + turns.join(' ') + ')';
+    return Turmite.compile(spec).toValue();
 }
 
 function randomTurns(randi) {
     var order = randi(2, 256);
     var turns = [];
     while (turns.length < order) {
-        turns.push(REL_TURNS[randi(0, REL_TURNS.length)]);
+        turns.push(RelTurns[randi(0, RelTurns.length)]);
     }
     return turns;
 }
