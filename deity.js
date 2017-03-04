@@ -120,7 +120,7 @@ function scoreRules(rules) {
     for (var i = 0; i < this.priorRules.length; ++i) {
         var sim = gen.rulesSimilarity(rules, this.priorRules[i]);
         var priorScore = this.priorScores[2*i+1];
-        score += sim * priorScore;
+        score += sim * priorScore / this.priorRules.length;
     }
     return score;
 };
