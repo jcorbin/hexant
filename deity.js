@@ -11,7 +11,7 @@ function Deity() {
     this.cutoff = 0.001;
     this.endStep = 10000;
     this.neededPriors = 5;
-    this.genRounds = 10;
+    this.genRounds = 100;
 }
 
 Deity.scores = {};
