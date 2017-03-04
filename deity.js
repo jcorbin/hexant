@@ -7,7 +7,7 @@ var gen = require('./turmite/gen.js');
 module.exports = Deity;
 
 function Deity() {
-    this.score = Deity.scores.growthRate;
+    this.score = Deity.scores.explored;
     this.cutoff = 0.001;
     this.endStep = 10000;
     this.neededPriors = 5;
@@ -29,6 +29,21 @@ function growthRate(world) {
     if (score > 0.95) {
         score = 0;
     }
+    return score - 0.05;
+};
+
+// a slightly less naived score: explored/unexplored space
+Deity.scores.explored =
+function explored(world) {
+    var score = 0;
+    world.tile.eachTile(function eachTile(tile) {
+        score += tile.count(World.FlagVisited);
+    });
+    var box = world.tile.boundingBox();
+    var size =
+        Math.abs(box.bottomRight.q - box.topLeft.q) *
+        Math.abs(box.bottomRight.r - box.topLeft.r);
+    score /= size;
     return score - 0.05;
 };
 
