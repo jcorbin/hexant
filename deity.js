@@ -29,7 +29,7 @@ function growthRate(world) {
     if (score > 0.95) {
         score = 0;
     }
-    return score;
+    return score - 0.05;
 };
 
 Deity.prototype.incept =
