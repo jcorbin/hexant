@@ -33,7 +33,6 @@ sed \
     -e "/data-import/s/src=[^>]*>/src=\"$src\">/" \
     -e "s~BASE~$base~" \
     -e "s/DEV/$desc/" \
-    -e "/PROJECT LINK/d" \
     index-dev.html >index-tmp.html
 
 npm run grammar
