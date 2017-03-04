@@ -56,16 +56,16 @@ function DeityState(deity, world, priorState) {
     this.deity = deity;
     this.done = false;
     this.cutoff = false;
-    this.turmiteRules = null;
+    this.currentSpec = null;
     this.expected = 0;
-    this.priorRules = [];
+    this.priorSpecs = [];
     this.priorScores = [];
     // TODO: rather than storing entire rule tables, we could extract salient
     // sections (features?) from them; probably has a lot of crossover with
     // generation and similarity scoring
 
     if (priorState !== null) {
-        this.priorRules = this.priorRules.concat(priorState.priorRules);
+        this.priorSpecs = this.priorSpecs.concat(priorState.priorSpecs);
         this.priorScores = this.priorScores.concat(priorState.priorScores);
     }
 
@@ -73,24 +73,21 @@ function DeityState(deity, world, priorState) {
         var ent = world.ents[i];
         if (ent instanceof Turmite) {
             // TODO: support multi-turmite worlds
-            if (this.turmiteRules !== null) {
-                this.turmiteRules = null;
+            if (this.currentSpec !== null) {
+                this.currentSpec = null;
                 break;
             }
-            this.turmiteRules = ent.rules;
+            this.currentSpec = ent.specString;
         }
     }
-    if (this.turmiteRules !== null) {
-        this.turmiteRules = new Uint32Array(this.turmiteRules);
-        this.expected = this.scoreRules(this.turmiteRules);
-    }
+    this.expected = this.scoreSpec(this.currentSpec);
 }
 
 DeityState.prototype.wrapTitle =
 function wrapTitle(title) {
     title = '^ ' + title;
-    if (this.priorRules.length > 0) {
-        var i = this.priorRules.length - 1;
+    if (this.priorSpecs.length > 0) {
+        var i = this.priorSpecs.length - 1;
         var expected = this.priorScores[2*i];
         var score = this.priorScores[2*i+1];
         // TODO: better description of score recent history
@@ -103,7 +100,7 @@ function wrapTitle(title) {
 
 DeityState.prototype.update =
 function update(world) {
-    if (this.turmiteRules === null) {
+    if (this.currentSpec === null) {
         return;
     }
     this.done = world.stepCount >= this.deity.endStep;
@@ -119,23 +116,23 @@ function nextEnts(world) {
     if (!this.done) {
         return null;
     }
-    if (this.turmiteRules !== null) {
-        // store score and ruleset
+    if (this.currentSpec !== null) {
+        // store score and spec
         var score = this.deity.score(world);
-        this.priorRules.push(this.turmiteRules);
+        this.priorSpecs.push(this.currentSpec);
         this.priorScores.push(this.expected, score);
-        this.turmiteRules = null;
+        this.currentSpec = null;
     }
     return [this.genScoredEnt(this.deity.genRounds)];
 };
 
-DeityState.prototype.scoreRules =
-function scoreRules(rules) {
+DeityState.prototype.scoreSpec =
+function scoreSpec(spec) {
     var score = 0;
-    for (var i = 0; i < this.priorRules.length; ++i) {
-        var sim = gen.rulesSimilarity(rules, this.priorRules[i]);
+    for (var i = 0; i < this.priorSpecs.length; ++i) {
+        var sim = gen.specSimilarity(spec, this.priorSpecs[i])
         var priorScore = this.priorScores[2*i+1];
-        score += sim * priorScore / this.priorRules.length;
+        score += sim * priorScore / this.priorSpecs.length;
     }
     return score;
 };
@@ -143,14 +140,14 @@ function scoreRules(rules) {
 DeityState.prototype.genScoredEnt =
 function genScoredEnt(n) {
     // we need at least this much history to score
-    if (this.priorRules.length < this.deity.neededPriors) {
+    if (this.priorSpecs.length < this.deity.neededPriors) {
         return gen.randomAnt();
     }
 
     var best = null, bestScore = 0;
     for (var i = 0; i < n; ++i) {
         var ent = gen.randomAnt();
-        var score = this.scoreRules(ent.rules);
+        var score = this.scoreSpec(ent.specString);
         if (best === null || score > bestScore) {
             best = ent;
             bestScore = score;
