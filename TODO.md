@@ -23,6 +23,15 @@
 - randomized starting cell values
 - generalize and borg github:jcorbin/ants
 
+# Deity
+
+- switch to mc-generated ant strings
+- support user-specified goal function
+- better similiarity functions
+- at least have an option for higher level gen
+- when doing low level gen, try to infer a high level spec
+- document / explain it (at all)
+
 # Turmite Lang
 
 - better when matching logic
