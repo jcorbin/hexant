@@ -40,89 +40,89 @@ function toSpecString(root, emit) {
 
     function each(node, next) {
         switch (node.type) {
-            case 'spec':
-                next();
-                break;
+        case 'spec':
+            next();
+            break;
 
-            case 'assign':
-                stack.push(node.id.name);
-                next();
-                join(' = ');
-                emit(stack.pop());
-                break;
+        case 'assign':
+            stack.push(node.id.name);
+            next();
+            join(' = ');
+            emit(stack.pop());
+            break;
 
-            case 'rule':
-                next();
-                join(' => ');
-                emit(stack.pop());
-                break;
+        case 'rule':
+            next();
+            join(' => ');
+            emit(stack.pop());
+            break;
 
-            case 'when':
-                next();
-                join(', ');
-                break;
+        case 'when':
+            next();
+            join(', ');
+            break;
 
-            case 'then':
-                next();
-                join(', ');
-                join(', ');
-                break;
+        case 'then':
+            next();
+            join(', ');
+            join(', ');
+            break;
 
-            case 'thenVal':
-                if (node.mode === '|') {
-                    next();
-                } else {
-                    stack.push(node.mode);
-                    next();
-                    join('');
-                }
-                break;
-
-            case 'member':
+        case 'thenVal':
+            if (node.mode === '|') {
                 next();
-                wrap('[', ']');
+            } else {
+                stack.push(node.mode);
+                next();
                 join('');
-                break;
+            }
+            break;
 
-            case 'expr':
-                precs.push(opPrec.indexOf(node.op));
-                next();
-                join(' ' + node.op + ' ');
-                if (precs.pop() < precs[precs.length - 1]) {
-                    wrap('(', ')');
-                }
-                break;
+        case 'member':
+            next();
+            wrap('[', ']');
+            join('');
+            break;
 
-            case 'identifier':
-            case 'symbol':
-                stack.push(node.name);
-                next();
-                break;
+        case 'expr':
+            precs.push(opPrec.indexOf(node.op));
+            next();
+            join(' ' + node.op + ' ');
+            if (precs.pop() < precs[precs.length - 1]) {
+                wrap('(', ')');
+            }
+            break;
 
-            case 'turns':
-                var rle = RLEBuilder('turns(', ' ', ')');
-                for (var i = 0; i < node.value.length; i++) {
-                    var turn = node.value[i];
-                    rle(turn.count.value, TurnSyms[turn.turn]);
-                }
-                stack.push(rle(0, ''));
-                next();
-                break;
+        case 'identifier':
+        case 'symbol':
+            stack.push(node.name);
+            next();
+            break;
 
-            case 'turn':
-                stack.push(node.names.map(function eachTurnName(name) {
-                    return TurnSyms[name];
-                }).join('|'));
-                break;
+        case 'turns':
+            var rle = RLEBuilder('turns(', ' ', ')');
+            for (var i = 0; i < node.value.length; i++) {
+                var turn = node.value[i];
+                rle(turn.count.value, TurnSyms[turn.turn]);
+            }
+            stack.push(rle(0, ''));
+            next();
+            break;
 
-            case 'number':
-                stack.push(node.value.toString());
-                next();
-                break;
+        case 'turn':
+            stack.push(node.names.map(function eachTurnName(name) {
+                return TurnSyms[name];
+            }).join('|'));
+            break;
 
-            default:
-                stack.push('/* unsupported ' + JSON.stringify(node) + ' */');
-                next();
+        case 'number':
+            stack.push(node.value.toString());
+            next();
+            break;
+
+        default:
+            stack.push('/* unsupported ' + JSON.stringify(node) + ' */');
+            next();
         }
     }
 
