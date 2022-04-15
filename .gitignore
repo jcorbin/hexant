@@ -1,6 +1,2 @@
 node_modules/
-index-bundle-min.js
-index-bundle.js
-index-inline-min.html
-index-tmp.html
 npm-debug.log

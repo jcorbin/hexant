@@ -8,9 +8,7 @@
     "test": "npm run lint -s && node test",
     "lint": "eslint .",
     "grammar": "nearleyc turmite/lang/grammar.ne >turmite/lang/grammar.js",
-    "build": "bash scripts/build.sh",
     "postinstall": "npm run grammar",
-    "wip": "bash scripts/update_wip.sh",
     "preversion": "bash scripts/preversion.sh",
     "version": "bash scripts/version.sh",
     "postversion": "bash scripts/postversion.sh"
@@ -24,9 +22,6 @@
     "eslint-plugin-standard": "^2.1.1",
     "gl-matrix": "^2.3.2",
     "hexer": "1.4.5",
-    "html-inline": "1.1.1",
-    "http-server": "^14.1.0",
-    "minify": "^8.0.4",
     "system": "1.0.4",
     "tape": "4.2.0"
   },
