@@ -18,15 +18,15 @@
   "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^3.16.1",
+    "eslint": "^8.13.0",
     "eslint-config-standard": "^7.0.0",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^2.1.1",
     "gl-matrix": "^2.3.2",
     "hexer": "1.4.5",
     "html-inline": "1.1.1",
-    "http-server": "0.8.0",
-    "minify": "1.4.20",
+    "http-server": "^14.1.0",
+    "minify": "^8.0.4",
     "system": "1.0.4",
     "tape": "4.2.0"
   },
@@ -35,10 +35,10 @@
     "blick": "1.1.0",
     "domready": "1.0.8",
     "global": "4.3.0",
-    "gutentag": "2.1.1",
+    "gutentag": "^0.0.0",
     "hashbind": "2.1.0",
     "husl": "6.0.1",
-    "nearley": "1.5.0",
+    "nearley": "^2.20.1",
     "rezult": "1.1.0"
   },
   "eslintConfig": {
