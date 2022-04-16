@@ -1,1 +1,69 @@
-index-dev.html
+<!doctype html>
+
+<title>Hexant</title>
+
+<meta charset="utf-8">
+
+<link rel="stylesheet" type="text/css" href="style.css">
+
+<body>
+
+  <div id="main">
+
+    <canvas id="view" class="hexant-canvas"></canvas>
+
+    <div id="box" class="prompt" style="display: none">
+        <div id="help" class="help"></div>
+        <textarea id="text"></textarea>
+        <div id="error" class="error" style="display: none"></div>
+        Press &lt;Ctrl&gt;-Enter to submit.
+    </div>
+
+    <aside class="overlay fps right" id="fpsOverlay" style="display: none">
+      <ul>
+        <li id="step">
+        <li id="fps">
+        <li id="sps">
+        <li id="redrawTiming">
+      </ul>
+    </aside>
+
+  </div>
+
+  <footer id="revision" style="left: 0">
+    <a href="BASE/CHANGELOG.md">DEV</a>
+  </footer>
+
+  <footer style="right: 0">
+    <a href="//github.com/jcorbin/hexant">Project Page</a>
+  </footer>
+
+  <script type="module">
+    import {Hexant} from './dist/hexant.js';
+    {
+
+      hexant: new Hexant({
+        body: document.querySelector('#main'),
+      }),
+
+      init() {
+        window.addEventListener('resize', () => this.updateSize());
+        this.updateSize();
+      },
+
+      updateSize() {
+        const {
+          innerWidth, innerHeight,
+          document: {
+            documentElement: {clientWidth, clientHeight},
+          },
+        } = window;
+        const width = Math.max(clientWidth, innerWidth || 0);
+        const height = Math.max(clientHeight, innerHeight || 0);
+        this.hexant.resize(width, height);
+      },
+
+    }.init()
+  </script>
+
+</body>

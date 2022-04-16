@@ -1,42 +1,59 @@
 'use strict';
 
-module.exports = Hexant;
+const Hash = require('hashbind');
+const Base64 = require('Base64');
+const Result = require('rezult');
+const colorGen = require('./colorgen.js');
+const World = require('./world.js');
+const ViewGL = require('./view_gl.js');
+const Turmite = require('./turmite/index.js');
+const Sample = require('./sample.js');
+const Prompt = require('./prompt.js');
 
-var Hash = require('hashbind');
-var Base64 = require('Base64');
-var Result = require('rezult');
-var colorGen = require('./colorgen.js');
-var World = require('./world.js');
-var ViewGL = require('./view_gl.js');
-var Turmite = require('./turmite/index.js');
-var Sample = require('./sample.js');
+const FPSInterval = 3 * 1000;
+const NumTimingSamples = FPSInterval / 1000 * 60;
+const MinFPS = 20;
 
-var FPSInterval = 3 * 1000;
-var NumTimingSamples = FPSInterval / 1000 * 60;
-var MinFPS = 20;
+export class Hexant {
+  constructor ({
+    body,
+    prompt=body.querySelecotr('#prompt'),
+    view=body.querySelecotr('#view'),
+    fpsOverlay=body.querySelecotr('#fpsOverlay'),
+    fps=body.querySelecotr('#fps'),
+    sps=body.querySelecotr('#sps'),
+    redrawTiming=body.querySelecotr('#redrawTiming'),
+  }) {
+    const window = body.ownerDocument.defaultView;
 
-function Hexant(body, scope) {
-    var self = this;
-    var atob = scope.window.atob || Base64.atob;
-    var btoa = scope.window.btoa || Base64.btoa;
+    const atob = window.atob || Base64.atob;
+    const btoa = window.btoa || Base64.btoa;
 
     // components
-    this.prompt = null;
-    this.el = null;
-    this.fpsOverlay = null;
-    this.step = null;
-    this.fps = null;
-    this.sps = null;
-    this.redrawTiming = null;
+    this.body = body;
+    this.prompt = new Prompt({body: prompt});
+    this.el = view;
+
+    this.fpsOverlay = fpsOverlay;
+    this.step = step;
+    this.fps = fps;
+    this.sps = sps;
+    this.redrawTiming = redrawTiming;
 
     this.world = new World();
     this.view = null;
 
-    this.window = scope.window;
+    this.window = window;
     this.hash = new Hash(this.window, {
-        decode: decodeHash
+      decode(str) {
+        if (/^b64:/.test(str)) {
+          str = str.slice(4);
+          str = atob(str);
+        }
+        return Hash.decodeUnescape(str);
+      }
     });
-    this.animator = scope.animator.add(this);
+    // this.animator = animator.add(this); FIXME raf
     this.lastStepTime = null;
     this.goalStepRate = 0;
     this.stepRate = 0;
@@ -46,300 +63,229 @@ function Hexant(body, scope) {
     this.stepTimes = [];
     this.animTiming = new Sample(NumTimingSamples);
 
-    this.boundPlaypause = playpause;
-    this.boundOnKeyPress = onKeyPress;
-    this.b64EncodeHash = encodeHash;
+    this.boundPlaypause = () => this.playpause();
+    this.boundOnKeyPress = e => this.onKeyPress(e);
 
-    function playpause() {
-        self.playpause();
-    }
-
-    function onKeyPress(e) {
-        self.onKeyPress(e);
-    }
-
-    function decodeHash(str) {
-        if (/^b64:/.test(str)) {
-            str = str.slice(4);
-            str = atob(str);
-        }
-        return Hash.decodeUnescape(str);
-    }
-
-    function encodeHash(keyvals) {
-        var str = Hash.encodeMinEscape(keyvals);
-        str = 'b64:' + btoa(str);
-        return str;
-    }
-}
-
-Hexant.prototype.hookup =
-function hookup(id, component, scope) {
-    // Only one scope of interest
-    if (id !== 'this') {
-        return;
-    }
-
-    this.prompt = scope.components.prompt;
-    this.el = scope.components.view;
-    this.fpsOverlay = scope.components.fpsOverlay;
-    this.step = scope.components.step;
-    this.fps = scope.components.fps;
-    this.sps = scope.components.sps;
-    this.redrawTiming = scope.components.redrawTiming;
+    this.b64EncodeHash = (keyvals) => {
+      const str = Hash.encodeMinEscape(keyvals);
+      return 'b64:' + btoa(str);
+    };
 
     this.titleBase = this.window.document.title;
-    this.view = this.world.addView(
-        new ViewGL(this.world, this.el));
+    this.view = this.world.addView(new ViewGL(this.world, this.el));
 
     this.world.tile.maxTileArea = this.view.maxCellsPerTile;
 
     this.window.addEventListener('keypress', this.boundOnKeyPress);
     this.el.addEventListener('click', this.boundPlaypause);
 
-    this.configure();
-};
-
-Hexant.prototype.configure =
-function configure() {
-    var self = this;
-
     this.hash.bind('colors')
-        .setParse(colorGen.parse, colorGen.toString)
-        .setDefault('light')
-        .addListener(function onColorGenChange(gen) {
-            self.onColorGenChange(gen);
-        })
-        ;
+      .setParse(colorGen.parse, colorGen.toString)
+      .setDefault('light')
+      .addListener(gen => {
+        this.view.setColorGen(gen);
+        this.view.redraw();
+      });
 
     this.hash.bind('rule')
-        .setParse(Turmite.compile)
-        .setDefault('ant(L R)')
-        .addListener(function onRuleChange(ent) {
-            self.onRuleChange(ent);
-        });
+      .setParse(Turmite.compile)
+      .setDefault('ant(L R)')
+      .addListener(ent => this.setEnts(ent));
 
     this.hash.bind('showFPS')
-        .setDefault(false)
-        .addListener(function onDrawFPSChange(showFPS) {
-            self.showFPS = !!showFPS;
-            self.fpsOverlay.style.display = self.showFPS ? '' : 'none';
-        });
+      .setDefault(false)
+      .addListener(showFPS => {
+        this.showFPS = !!showFPS;
+        this.fpsOverlay.style.display = this.showFPS ? '' : 'none';
+      });
 
     this.hash.bind('stepRate')
-        .setParse(Result.lift(parseInt))
-        .setDefault(4)
-        .addListener(function onStepRateChange(rate) {
-            self.setStepRate(rate);
-        });
+      .setParse(Result.lift(parseInt))
+      .setDefault(4)
+      .addListener(rate => this.setStepRate(rate));
 
     this.hash.bind('labeled')
-        .setDefault(false)
-        .addListener(function onLabeledChange(labeled) {
-            self.view.setLabeled(labeled);
-            self.view.redraw();
-        });
+      .setDefault(false)
+      .addListener(labeled => {
+        this.view.setLabeled(labeled);
+        this.view.redraw();
+      });
 
     this.hash.bind('drawUnvisited')
-        .setDefault(false)
-        .addListener(function onDrawUnvisitedChange(drawUnvisited) {
-            self.view.setDrawUnvisited(!!drawUnvisited);
-        });
+      .setDefault(false)
+      .addListener(drawUnvisited => this.view.setDrawUnvisited(!!drawUnvisited));
 
     this.hash.bind('drawTrace')
-        .setDefault(false)
-        .addListener(function onDrawTraceChange(drawTrace) {
-            self.view.setDrawTrace(!!drawTrace);
-            self.view.redraw();
-        });
+      .setDefault(false)
+      .addListener(drawTrace => {
+        this.view.setDrawTrace(!!drawTrace);
+        this.view.redraw();
+      });
 
-    var autoplay;
-    var autorefresh;
+    let autoplay = false;
+    let autorefresh = 0;
     if (this.hash.get('fullauto')) {
-        autoplay = true;
-        autorefresh = 24 * 60 * 60;
+      autoplay = true;
+      autorefresh = 24 * 60 * 60;
     } else {
-        autoplay = this.hash.get('autoplay');
-        autorefresh = parseInt(this.hash.get('autorefresh'), 10);
+      autoplay = this.hash.get('autoplay');
+      autorefresh = parseInt(this.hash.get('autorefresh'), 10);
     }
 
     if (!isNaN(autorefresh) && autorefresh) {
-        this.window.setTimeout(function shipit() {
-            this.window.location.reload();
-        }, autorefresh * 1000);
+      this.window.setTimeout(
+        () => this.window.location.reload(),
+        autorefresh * 1000);
     }
 
-    if (autoplay) {
-        this.play();
-    }
-};
+    if (autoplay) this.play();
+  }
 
-Hexant.prototype.onColorGenChange =
-function onColorGenChange(gen) {
-    this.view.setColorGen(gen);
-    this.view.redraw();
-};
-
-Hexant.prototype.onRuleChange =
-function onRuleChange(ent) {
-    this.setEnts([ent]);
-};
-
-Hexant.prototype.setEnts =
-function setEnts(ents) {
-    var title = '';
-    for (var i = 0; i < ents.length; ++i) {
-        if (i > 0) {
-            title += ', ';
-        }
+    setEnts(ents) {
+      let title = '';
+      for (let i = 0; i < ents.length; ++i) {
+        if (i > 0) title += ', ';
         title += ents[i];
+      }
+      this.world.setEnts(ents);
+      this.world.reset();
+      this.el.width = this.el.width;
+      this.view.redraw();
+      this.window.document.title = this.titleBase + ': ' + title;
     }
-    this.world.setEnts(ents);
-    this.world.reset();
-    this.el.width = this.el.width;
-    this.view.redraw();
-    this.window.document.title = this.titleBase + ': ' + title;
-};
 
-Hexant.prototype.onKeyPress =
-function onKeyPress(e) {
+  onKeyPress(e) {
     if (e.target !== this.window.document.documentElement &&
         e.target !== this.window.document.body &&
         e.target !== this.el
-    ) {
-        return;
-    }
+    ) return;
 
     switch (e.keyCode) {
+
     case 0x20: // <Space>
-        this.playpause();
-        break;
+      this.playpause();
+      break;
+
     case 0x23: // #
-        this.hash.set('labeled', !this.view.labeled);
-        break;
+      this.hash.set('labeled', !this.view.labeled);
+      break;
+
     case 0x2a: // *
-        this.pause();
-        this.onRuleChange(this.hash.get('rule'));
-        break;
+      this.pause();
+      this.setEnts(this.hash.get('rule'));
+      break;
+
     case 0x2b: // +
-        this.hash.set('stepRate', this.stepRate * 2);
-        break;
+      this.hash.set('stepRate', this.stepRate * 2);
+      break;
+
     case 0x2d: // -
-        this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)));
-        break;
+      this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)));
+      break;
+
     case 0x2e: // .
-        this.stepit();
-        break;
+      this.stepit();
+      break;
 
     case 0x42: // B
     case 0x62: // b
-        this.hash.encode =
-            this.hash.encode === Hash.encodeMinEscape
-            ? this.b64EncodeHash : Hash.encodeMinEscape;
-        this.hash.save();
-        break;
+      this.hash.encode =
+        this.hash.encode === Hash.encodeMinEscape
+        ? this.b64EncodeHash : Hash.encodeMinEscape;
+      this.hash.save();
+      break;
 
     case 0x43: // C
     case 0x63: // c
-        this.promptFor('colors', 'New Colors:');
-        e.preventDefault();
-        break;
+      this.promptFor('colors', 'New Colors:');
+      e.preventDefault();
+      break;
 
     case 0x46: // F
     case 0x66: // f
-        this.hash.set('showFPS', !this.showFPS);
-        break;
+      this.hash.set('showFPS', !this.showFPS);
+      break;
 
     case 0x55: // U
     case 0x75: // u
-        this.hash.set('drawUnvisited', !this.view.drawUnvisited);
-        break;
+      this.hash.set('drawUnvisited', !this.view.drawUnvisited);
+      break;
 
     case 0x54: // T
     case 0x74: // t
-        this.hash.set('drawTrace', !this.view.drawTrace);
-        break;
+      this.hash.set('drawTrace', !this.view.drawTrace);
+      break;
 
     case 0x2f: // /
-        this.promptFor('rule', Turmite.ruleHelp);
-        e.preventDefault();
-        break;
+      this.promptFor('rule', Turmite.ruleHelp);
+      e.preventDefault();
+      break;
     }
-};
+  }
 
-Hexant.prototype.promptFor =
-function promptFor(name, desc) {
-    var self = this;
-
-    if (self.prompt.active()) {
+  promptFor(name, desc) {
+    if (self.prompt.active()) return;
+    const orig = this.hash.getStr(name);
+    this.prompt.prompt(desc, orig, (canceled, value, callback) => {
+      if (canceled) {
+        callback(null);
         return;
-    }
+      }
+      this.hash.set(name, value, err => {
+        // NOTE: we get two extra args, the string value entered, and the
+        // parsed value, so we cannot just pass callback in directly, whose
+        // signature is callback(err, help, revalue)
+        callback(err);
+      });
+    });
+  }
 
-    var orig = self.hash.getStr(name);
-    self.prompt.prompt(desc, orig, finish);
-
-    function finish(canceled, value, callback) {
-        if (canceled) {
-            callback(null);
-            return;
-        }
-
-        self.hash.set(name, value, function setDone(err) {
-            // NOTE: we get two extra args, the string value entered, and  the
-            // parsed value, so we cannot just pass callback in directly, whose
-            // signature is callback(err, help, revalue)
-            callback(err);
-        });
-    }
-};
-
-Hexant.prototype.animate =
-function animate(time) {
+  animate(time) {
     /* eslint-disable no-try-catch */
     try {
-        this._animate(time);
+      this._animate(time);
     } catch(err) {
-        this.animator.cancelAnimation();
-        throw err;
+      // this.animator.cancelAnimation(); FIXME raf
+      throw err;
     }
-};
+  }
 
-Hexant.prototype._animate =
-function _animate(time) {
+  _animate(time) {
     if (!this.lastStepTime) {
-        this.lastStepTime = time;
-        return;
+      this.lastStepTime = time;
+      return;
     }
     this.stepWorld(time);
     this.updateFPS(time);
-};
+  }
 
-Hexant.prototype.stepWorld =
-function stepWorld(time) {
-    var steps = 1;
-    var sinceLast = time - this.lastStepTime;
-    steps = Math.round(sinceLast / 1000 * this.stepRate);
+  stepWorld(time) {
+    const sinceLast = time - this.lastStepTime;
     this.animTiming.collect(sinceLast);
     this.throttle();
+    const steps = Math.round(sinceLast / 1000 * this.stepRate);
     switch (steps) {
+
     case 0:
         break;
+
     case 1:
         this.world.step();
         this.stepTimes.push(time, 1);
         this.lastStepTime = time;
         break;
+
     default:
-        this.stepTimes.push(time, steps);
         this.world.stepn(steps);
+        this.stepTimes.push(time, steps);
         this.lastStepTime = time;
         break;
+
     }
     return steps;
-};
+  }
 
-Hexant.prototype.updateFPS =
-function updateFPS(time) {
+  updateFPS(time) {
     this.animTimes.push(time);
     while (time - this.animTimes[0] > FPSInterval) {
         this.animTimes.shift();
@@ -353,16 +299,15 @@ function updateFPS(time) {
     this.sps.innerText = toSI(this.computeSPS()) + 'sps';
     var stats = this.world.redrawTimingStats();
     if (stats) {
-        this.redrawTiming.innerText =
-            'µ=' + toSI(stats.m1 / 1e3) + 's ' +
-            '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
+      this.redrawTiming.innerText =
+        'µ=' + toSI(stats.m1 / 1e3) + 's ' +
+        '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
     } else {
-        this.redrawTiming.innerText = '';
+      this.redrawTiming.innerText = '';
     }
-};
+  }
 
-Hexant.prototype.throttle =
-function throttle() {
+  throttle() {
     if (!this.animTiming.complete()) {
         return;
     }
@@ -372,46 +317,45 @@ function throttle() {
     }
 
     if (this.stepRate > 1) {
-        var fps = this.computeFPS();
+        const fps = this.computeFPS();
         if (fps < MinFPS) {
-            this.animTiming.weightedMark(2);
-            this.stepRate /= 2;
-            return;
+          this.animTiming.weightedMark(2);
+          this.stepRate /= 2;
+          return;
         }
     }
 
     var as = this.animTiming.classifyAnomalies();
     var i = as.length - 1;
-    if (this.stepRate > 1 &&
-        as[i] > 0.5 && as[i - 1] > 0.5 && as[i - 2] > 0.5
+    if (
+      this.stepRate > 1 &&
+      as[i] > 0.5 && as[i - 1] > 0.5 && as[i - 2] > 0.5
     ) {
-        this.stepRate /= 2;
-        this.animTiming.weightedMark(2);
+      this.stepRate /= 2;
+      this.animTiming.weightedMark(2);
     } else if (
-        this.stepRate < this.goalStepRate &&
-        as[i] <= 0 && as[i - 1] <= 0 && as[i - 2] <= 0
+      this.stepRate < this.goalStepRate &&
+      as[i] <= 0 && as[i - 1] <= 0 && as[i - 2] <= 0
     ) {
-        this.stepRate *= 2;
-        this.animTiming.weightedMark(0.5);
+      this.stepRate *= 2;
+      this.animTiming.weightedMark(0.5);
     }
-};
 
-Hexant.prototype.computeFPS =
-function computeFPS() {
+  }
+
+  computeFPS() {
     return this.animTimes.length / FPSInterval * 1000;
-};
+  }
 
-Hexant.prototype.computeSPS =
-function computeSPS() {
-    var totalSteps = 0;
+  computeSPS() {
+    let totalSteps = 0;
     for (var i = 1; i < this.stepTimes.length; i += 2) {
         totalSteps += this.stepTimes[i];
     }
     return totalSteps / FPSInterval * 1000;
-};
+  }
 
-Hexant.prototype.play =
-function play() {
+  play() {
     this.animTimes.length = 0;
     this.stepTimes.length = 0;
     this.animTiming.reset();
@@ -419,71 +363,68 @@ function play() {
     this.sps.innerText = '';
     this.redrawTiming.innerText = '';
     this.lastStepTime = null;
-    this.animator.requestAnimation();
+    // this.animator.requestAnimation(); FIXME raf
     this.paused = false;
-};
+  }
 
-Hexant.prototype.pause =
-function pause() {
+  pause() {
     this.fps.innerText = '<' + this.fps.innerText + '>';
     this.sps.innerText = '<' + this.sps.innerText + '>';
     this.redrawTiming.innerText = '<' + this.redrawTiming.innerText + '>';
     this.lastStepTime = null;
-    this.animator.cancelAnimation();
+    // this.animator.cancelAnimation(); FIXME raf
     this.paused = true;
-};
+  }
 
-Hexant.prototype.playpause =
-function playpause() {
+  playpause() {
     if (this.paused) {
-        this.play();
+      this.play();
     } else {
-        this.pause();
+      this.pause();
     }
-};
+  }
 
-Hexant.prototype.stepit =
-function stepit() {
+  stepit() {
     if (this.paused) {
-        this.world.step();
+      this.world.step();
     } else {
-        this.pause();
+      this.pause();
     }
-};
+  }
 
-Hexant.prototype.setStepRate =
-function setStepRate(rate) {
+  setStepRate(rate) {
     if (this.stepRate === this.goalStepRate) {
         this.stepRate = rate;
     }
     this.goalStepRate = rate;
-};
+  }
 
-Hexant.prototype.resize =
-function resize(width, height) {
+  resize(width, height) {
     this.view.resize(width, height);
-};
+  }
 
-var nsiSuffix = ['', 'm', 'µ', 'n'];
-var siSuffix = ['K', 'M', 'G', 'T', 'E'];
+}
+
+const nsiSuffix = ['', 'm', 'µ', 'n'];
+const siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
 function toSI(n) {
-    if (n < 1) {
-        var nsi = 0;
-        while (nsi < nsiSuffix.length && n < 1) {
-            nsi++;
-            n *= 1e3;
-        }
-        return n.toPrecision(3) + nsiSuffix[nsi];
+  if (n < 1) {
+    let nsi = 0;
+    while (nsi < nsiSuffix.length && n < 1) {
+        nsi++;
+        n *= 1e3;
     }
-    if (n < 1e3) {
-        return n.toFixed(0);
-    }
+    return n.toPrecision(3) + nsiSuffix[nsi];
+  }
+  if (n < 1e3) {
+    return n.toFixed(0);
+  }
+  n /= 1e3;
+  let si = 0;
+  while (si < siSuffix.length && n > 1e3) {
+    si++;
     n /= 1e3;
-    var si = 0;
-    while (si < siSuffix.length && n > 1e3) {
-        si++;
-        n /= 1e3;
-    }
-    return n.toPrecision(3) + siSuffix[si];
+  }
+  return n.toPrecision(3) + siSuffix[si];
 }

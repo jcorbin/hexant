@@ -26,15 +26,10 @@
     "gl-matrix": "^2.3.2",
     "hexer": "1.4.5",
     "snowpack": "^3.8.8",
-    "system": "1.0.4",
     "tape": "4.2.0"
   },
   "dependencies": {
     "Base64": "0.3.0",
-    "blick": "1.1.0",
-    "domready": "1.0.8",
-    "global": "4.3.0",
-    "gutentag": "^0.0.0",
     "hashbind": "2.1.0",
     "hsluv": "^0.1.0",
     "nearley": "^2.20.1",
@@ -51,10 +46,5 @@
       "no-console": "off",
       "one-var": "off"
     }
-  },
-  "translators": {
-    "html": "gutentag/translate-html",
-    "frag": "./translate-glsl",
-    "vert": "./translate-glsl"
   }
 }

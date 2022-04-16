@@ -1,7 +1,7 @@
 # TODO
 
+- restore animation ticks, ripped out with gutentag
 - unbreak the tests, after the `src/` pivot
-- build solution now that html-inline is gone... snowpack?
 - modernize js
   - esm
   - jsdoc type annotations to pass tsc
@@ -22,19 +22,27 @@
 - maybe just write a custom parser and drop nearley
 - META: subsume the old `TODO.md` file
 
-# WIP
+# 2022-04-16
 
-Reading... orienting...
+## WIP
 
-- working toward a working dev server again
-  - browser kicks 404s for `node_modules/...` things like `gutentag`; will
-    probably just need to drop system/gutentag right away
+Porting towards a working dev server again.
+
+- either comlete ESMification of yesterday's progress, or back it out for
+  another future round of uplift
+- fix the gutenacht raf gap
+- continue code uplift
+
+## Done
 
 # 2022-04-15
 
 - opened back up for the first time in over 5 years, started sketching a plan
 - renamed `master` branch to `main`
 - started npm uplift
-  - dropped old `html-inline` based build, as it's not been mainstained and has
-    critical transitive vulnerabilityes under `npm audit`
-
+  - dropped old `html-inline` based build, as it's not been maintained and has
+    critical transitive vulnerabilities under `npm audit`
+- switched to snowpack, including a port of my glsl loader
+- excised gutentag
+  - classified `Prompt` and `Hexant` in passing
+  - switching to simpler component wiring along the way
