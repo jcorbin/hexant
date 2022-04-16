@@ -1,126 +1,160 @@
+// @ts-check
+
 'use strict';
 
-const Hash = require('hashbind');
-const Base64 = require('Base64');
-const Result = require('rezult');
-const colorGen = require('./colorgen.js');
-const World = require('./world.js');
-const ViewGL = require('./view_gl.js');
-const Turmite = require('./turmite/index.js');
-const Sample = require('./sample.js');
-const Prompt = require('./prompt.js');
+import colorGen from './colorgen.js';
+import { mustQuery } from './domkit.js';
+import makeHash from './hashbind.js';
+import { Prompt } from './prompt.js';
+import * as rezult from './rezult.js';
+import { Sample } from './sample.js';
+import {
+  Turmite,
+  ruleHelp as turmiteRuleHelp,
+} from './turmite/index.js';
+import { ViewGL } from './view_gl.js';
+import { World } from './world.js';
+
+/** @typedef {import('./world.js').Ent} Ent */
 
 const FPSInterval = 3 * 1000;
 const NumTimingSamples = FPSInterval / 1000 * 60;
 const MinFPS = 20;
 
-export class Hexant {
-  constructor ({
-    body,
-    prompt=body.querySelecotr('#prompt'),
-    view=body.querySelecotr('#view'),
-    fpsOverlay=body.querySelecotr('#fpsOverlay'),
-    fps=body.querySelecotr('#fps'),
-    sps=body.querySelecotr('#sps'),
-    redrawTiming=body.querySelecotr('#redrawTiming'),
+export default class Hexant {
+
+  /**
+   * @param {object} options
+   * @param {HTMLElement} options.$body
+   * @param {HTMLElement} [options.$prompt]
+   * @param {HTMLCanvasElement} [options.$view]
+   * @param {HTMLElement} [options.$fpsOverlay]
+   * @param {HTMLElement} [options.$step]
+   * @param {HTMLElement} [options.$fps]
+   * @param {HTMLElement} [options.$sps]
+   * @param {HTMLElement} [options.$redrawTiming]
+   */
+  constructor({
+    $body,
+    $prompt = mustQuery($body, '.prompt', HTMLElement),
+    $view = mustQuery($body, '#view', HTMLCanvasElement),
+    $fpsOverlay = mustQuery($body, '#fpsOverlay', HTMLElement),
+    $step = mustQuery($body, '#step', HTMLElement),
+    $fps = mustQuery($body, '#fps', HTMLElement),
+    $sps = mustQuery($body, '#sps', HTMLElement),
+    $redrawTiming = mustQuery($body, '#redrawTiming', HTMLElement),
   }) {
-    const window = body.ownerDocument.defaultView;
+    const window = $body.ownerDocument.defaultView;
+    if (!window) {
+      throw new Error('$body has no defaultView');
+    }
 
-    const atob = window.atob || Base64.atob;
-    const btoa = window.btoa || Base64.btoa;
+    this.$body = $body;
+    this.prompt = new Prompt({ $body: $prompt });
 
-    // components
-    this.body = body;
-    this.prompt = new Prompt({body: prompt});
-    this.el = view;
-
-    this.fpsOverlay = fpsOverlay;
-    this.step = step;
-    this.fps = fps;
-    this.sps = sps;
-    this.redrawTiming = redrawTiming;
-
-    this.world = new World();
-    this.view = null;
+    this.$fpsOverlay = $fpsOverlay;
+    this.$step = $step;
+    this.$fps = $fps;
+    this.$sps = $sps;
+    this.$redrawTiming = $redrawTiming;
 
     this.window = window;
-    this.hash = new Hash(this.window, {
-      decode(str) {
-        if (/^b64:/.test(str)) {
-          str = str.slice(4);
-          str = atob(str);
-        }
-        return Hash.decodeUnescape(str);
-      }
-    });
-    // this.animator = animator.add(this); FIXME raf
     this.lastStepTime = null;
     this.goalStepRate = 0;
     this.stepRate = 0;
+    this.locked = false;
     this.paused = true;
     this.showFPS = false;
+
+    /** @type {number[]} */
     this.animTimes = [];
+
+    /** @type {number[]} */
     this.stepTimes = [];
+
     this.animTiming = new Sample(NumTimingSamples);
 
-    this.boundPlaypause = () => this.playpause();
-    this.boundOnKeyPress = e => this.onKeyPress(e);
-
-    this.b64EncodeHash = (keyvals) => {
-      const str = Hash.encodeMinEscape(keyvals);
-      return 'b64:' + btoa(str);
-    };
-
     this.titleBase = this.window.document.title;
-    this.view = this.world.addView(new ViewGL(this.world, this.el));
 
+    this.world = new World();
+
+    this.view = new ViewGL(this.world, $view);
+    this.world.addView(this.view);
     this.world.tile.maxTileArea = this.view.maxCellsPerTile;
 
-    this.window.addEventListener('keypress', this.boundOnKeyPress);
-    this.el.addEventListener('click', this.boundPlaypause);
+    const {
+      bind: bindHash,
+      load: loadHash,
+      ...hash
+    } = makeHash(window);
 
-    this.hash.bind('colors')
-      .setParse(colorGen.parse, colorGen.toString)
-      .setDefault('light')
-      .addListener(gen => {
+    bindHash('colors', {
+      parse: colorGen,
+      defaultValue: rezult.toValue(colorGen('light')),
+      listener: gen => {
         this.view.setColorGen(gen);
         this.view.redraw();
-      });
+      },
+    });
 
-    this.hash.bind('rule')
-      .setParse(Turmite.compile)
-      .setDefault('ant(L R)')
-      .addListener(ent => this.setEnts(ent));
+    bindHash('rule', {
+      parse: str => Turmite.from(World, str),
+      defaultValue: rezult.toValue(Turmite.from(World, 'ant(L R)')),
+      listener: ent => this.setEnts(ent ? [ent] : []),
+    });
 
-    this.hash.bind('showFPS')
-      .setDefault(false)
-      .addListener(showFPS => {
-        this.showFPS = !!showFPS;
-        this.fpsOverlay.style.display = this.showFPS ? '' : 'none';
-      });
+    bindHash('showFPS', {
+      defaultValue: false,
+      listener: showFPS => {
+        this.showFPS = showFPS;
+        this.$fpsOverlay.style.display = this.showFPS ? '' : 'none';
+      },
+    });
 
-    this.hash.bind('stepRate')
-      .setParse(Result.lift(parseInt))
-      .setDefault(4)
-      .addListener(rate => this.setStepRate(rate));
+    bindHash('stepRate', {
+      parse: rezult.lift(parseInt),
+      defaultValue: 4,
+      listener: rate => this.setStepRate(rate),
+    });
 
-    this.hash.bind('labeled')
-      .setDefault(false)
-      .addListener(labeled => {
-        this.view.setLabeled(labeled);
+    bindHash('drawUnvisited', {
+      defaultValue: false,
+      listener: drawUnvisited => this.view.drawUnvisited = drawUnvisited,
+    });
+
+    bindHash('drawTrace', {
+      defaultValue: false,
+      listener: drawTrace => {
+        this.view.setDrawTrace(drawTrace);
         this.view.redraw();
-      });
+      },
+    });
 
-    this.hash.bind('drawUnvisited')
-      .setDefault(false)
-      .addListener(drawUnvisited => this.view.setDrawUnvisited(!!drawUnvisited));
+    loadHash();
 
-    this.hash.bind('drawTrace')
-      .setDefault(false)
-      .addListener(drawTrace => {
-        this.view.setDrawTrace(!!drawTrace);
-        this.view.redraw();
-      });
+    this.hash = hash;
+
+    // TODO shifted keys are a bit awkward right now
+    /** @type {Map<string, (type: string, key: string) => void>} */
+    this.keymap = new Map([
+      // ['', (t, k) => console.log(`${t}:${k}`)], // to log unhandled events
+      ['click:0', () => this.playpause()],
+      ['click:S-0', () => this.stepit()],
+      ['keypress: ', () => this.playpause()],
+      ['keypress:.', () => this.stepit()],
+      ['keypress:S-*', () => this.reboot()],
+      ['keypress:/', () => this.promptFor('rule', [...turmiteRuleHelp()].join('\n'))],
+      ['keypress:c', () => this.promptFor('colors', 'New Colors:')],
+      ['keypress:S-+', () => this.hash.set('stepRate', this.stepRate * 2)],
+      ['keypress:-', () => this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)))],
+      ['keypress:f', () => this.hash.set('showFPS', !this.showFPS)],
+      ['keypress:u', () => this.hash.set('drawUnvisited', !this.view.drawUnvisited)],
+      ['keypress:t', () => this.hash.set('drawTrace', !this.view.drawTrace)],
+      ['keypress:b', () => this.hash.encoding = this.hash.encoding == 'b64:' ? '' : 'b64:'],
+    ]);
+
+    this.window.addEventListener('keypress', this);
+    this.window.addEventListener('click', this);
 
     let autoplay = false;
     let autorefresh = 0;
@@ -141,188 +175,138 @@ export class Hexant {
     if (autoplay) this.play();
   }
 
-    setEnts(ents) {
-      let title = '';
-      for (let i = 0; i < ents.length; ++i) {
-        if (i > 0) title += ', ';
-        title += ents[i];
-      }
-      this.world.setEnts(ents);
-      this.world.reset();
-      this.el.width = this.el.width;
-      this.view.redraw();
-      this.window.document.title = this.titleBase + ': ' + title;
-    }
+  reboot() {
+    this.pause();
+    this.setEnts([this.hash.get('rule')]);
+  }
 
-  onKeyPress(e) {
-    if (e.target !== this.window.document.documentElement &&
-        e.target !== this.window.document.body &&
-        e.target !== this.el
+  /** @param {Ent[]} ents */
+  setEnts(ents) {
+    const title = ents.map(ent => `${ent}`).join(', ');
+    this.world.setEnts(ents);
+    this.world.reset();
+    this.view.$canvas.width = this.view.$canvas.width;
+    this.view.redraw();
+    this.window.document.title = this.titleBase + ': ' + title;
+  }
+
+  /** @param {Event} e */
+  handleEvent(e) {
+    const { target } = e;
+    if (target !== this.window.document.documentElement &&
+      target !== this.window.document.body &&
+      target !== this.view.$canvas
     ) return;
 
-    switch (e.keyCode) {
-
-    case 0x20: // <Space>
-      this.playpause();
-      break;
-
-    case 0x23: // #
-      this.hash.set('labeled', !this.view.labeled);
-      break;
-
-    case 0x2a: // *
-      this.pause();
-      this.setEnts(this.hash.get('rule'));
-      break;
-
-    case 0x2b: // +
-      this.hash.set('stepRate', this.stepRate * 2);
-      break;
-
-    case 0x2d: // -
-      this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)));
-      break;
-
-    case 0x2e: // .
-      this.stepit();
-      break;
-
-    case 0x42: // B
-    case 0x62: // b
-      this.hash.encode =
-        this.hash.encode === Hash.encodeMinEscape
-        ? this.b64EncodeHash : Hash.encodeMinEscape;
-      this.hash.save();
-      break;
-
-    case 0x43: // C
-    case 0x63: // c
-      this.promptFor('colors', 'New Colors:');
-      e.preventDefault();
-      break;
-
-    case 0x46: // F
-    case 0x66: // f
-      this.hash.set('showFPS', !this.showFPS);
-      break;
-
-    case 0x55: // U
-    case 0x75: // u
-      this.hash.set('drawUnvisited', !this.view.drawUnvisited);
-      break;
-
-    case 0x54: // T
-    case 0x74: // t
-      this.hash.set('drawTrace', !this.view.drawTrace);
-      break;
-
-    case 0x2f: // /
-      this.promptFor('rule', Turmite.ruleHelp);
-      e.preventDefault();
-      break;
-    }
-  }
-
-  promptFor(name, desc) {
-    if (self.prompt.active()) return;
-    const orig = this.hash.getStr(name);
-    this.prompt.prompt(desc, orig, (canceled, value, callback) => {
-      if (canceled) {
-        callback(null);
-        return;
+    const { type } = e;
+    const key = function() {
+      if (e instanceof KeyboardEvent) {
+        return modified(e, e.key.toLowerCase());
       }
-      this.hash.set(name, value, err => {
-        // NOTE: we get two extra args, the string value entered, and the
-        // parsed value, so we cannot just pass callback in directly, whose
-        // signature is callback(err, help, revalue)
-        callback(err);
-      });
-    });
-  }
+      if (e instanceof MouseEvent) {
+        return modified(e, `${e.button}`);
+      }
+      return '';
+    }();
 
-  animate(time) {
-    /* eslint-disable no-try-catch */
-    try {
-      this._animate(time);
-    } catch(err) {
-      // this.animator.cancelAnimation(); FIXME raf
-      throw err;
+    const fn = this.keymap.get(`${type}:${key}`) || this.keymap.get('');
+    if (fn) {
+      e.preventDefault();
+      fn(type, key);
     }
   }
 
-  _animate(time) {
+  /**
+   * @param {string} name
+   * @param {string} desc
+   */
+  async promptFor(name, desc) {
+    if (this.prompt.active()) return;
+    const orig = this.hash.getStr(name);
+    for await (const { canceled, value } of this.prompt.interact(desc, orig)) {
+      if (canceled) {
+        this.prompt.hide();
+        break;
+      }
+      const { res: { err } } = this.hash.set(name, value);
+      if (err) {
+        this.prompt.error(err.message);
+      } else {
+        this.prompt.hide();
+      }
+    }
+  }
+
+  /** @param {number} time */
+  calcSteps(time) {
     if (!this.lastStepTime) {
       this.lastStepTime = time;
+      return 0;
+    }
+
+    const sinceLast = time - this.lastStepTime;
+    if (sinceLast > 0) {
+      this.animTiming.collect(sinceLast);
+    }
+    this.throttle();
+    return Math.round(sinceLast / 1000 * this.stepRate);
+  }
+
+  /** @param {number} time */
+  stepWorld(time) {
+    if (this.locked) { return; }
+    const steps = this.calcSteps(time);
+    if (steps < 1) {
       return;
     }
-    this.stepWorld(time);
-    this.updateFPS(time);
-  }
-
-  stepWorld(time) {
-    const sinceLast = time - this.lastStepTime;
-    this.animTiming.collect(sinceLast);
-    this.throttle();
-    const steps = Math.round(sinceLast / 1000 * this.stepRate);
-    switch (steps) {
-
-    case 0:
-        break;
-
-    case 1:
-        this.world.step();
-        this.stepTimes.push(time, 1);
-        this.lastStepTime = time;
-        break;
-
-    default:
-        this.world.stepn(steps);
-        this.stepTimes.push(time, steps);
-        this.lastStepTime = time;
-        break;
-
+    if (steps == 1) {
+      this.world.step();
+    } else {
+      this.world.stepn(steps);
     }
-    return steps;
+    this.stepTimes.push(time, steps);
+    this.lastStepTime = time;
   }
 
+  /** @param {number} time */
   updateFPS(time) {
     this.animTimes.push(time);
     while (time - this.animTimes[0] > FPSInterval) {
-        this.animTimes.shift();
+      this.animTimes.shift();
     }
     while (time - this.stepTimes[0] > FPSInterval) {
-        this.stepTimes.shift();
+      this.stepTimes.shift();
     }
     if (!this.showFPS) return;
-    this.step.innerText = '#' + this.world.stepCount;
-    this.fps.innerText = this.computeFPS().toFixed(0) + 'fps';
-    this.sps.innerText = toSI(this.computeSPS()) + 'sps';
+    this.$step.innerText = '#' + this.world.stepCount;
+    this.$fps.innerText = this.computeFPS().toFixed(0) + 'fps';
+    this.$sps.innerText = toSI(this.computeSPS()) + 'sps';
     var stats = this.world.redrawTimingStats();
     if (stats) {
-      this.redrawTiming.innerText =
+      this.$redrawTiming.innerText =
         'µ=' + toSI(stats.m1 / 1e3) + 's ' +
         '𝜎=' + toSI(Math.sqrt(stats.m2 / 1e3)) + 's';
     } else {
-      this.redrawTiming.innerText = '';
+      this.$redrawTiming.innerText = '';
     }
   }
 
   throttle() {
     if (!this.animTiming.complete()) {
-        return;
+      return;
     }
 
     if (this.animTiming.sinceWeightedMark() <= 3) {
-        return;
+      return;
     }
 
     if (this.stepRate > 1) {
-        const fps = this.computeFPS();
-        if (fps < MinFPS) {
-          this.animTiming.weightedMark(2);
-          this.stepRate /= 2;
-          return;
-        }
+      const fps = this.computeFPS();
+      if (fps < MinFPS) {
+        this.animTiming.weightedMark(2);
+        this.stepRate /= 2;
+        return;
+      }
     }
 
     var as = this.animTiming.classifyAnomalies();
@@ -350,30 +334,48 @@ export class Hexant {
   computeSPS() {
     let totalSteps = 0;
     for (var i = 1; i < this.stepTimes.length; i += 2) {
-        totalSteps += this.stepTimes[i];
+      totalSteps += this.stepTimes[i];
     }
     return totalSteps / FPSInterval * 1000;
   }
 
-  play() {
+  async play() {
+    if (this.locked) { return; }
+    this.paused = false;
     this.animTimes.length = 0;
     this.stepTimes.length = 0;
     this.animTiming.reset();
-    this.fps.innerText = '';
-    this.sps.innerText = '';
-    this.redrawTiming.innerText = '';
+    this.$fps.innerText = '';
+    this.$sps.innerText = '';
+    this.$redrawTiming.innerText = '';
     this.lastStepTime = null;
-    // this.animator.requestAnimation(); FIXME raf
-    this.paused = false;
+
+    while (!this.paused) {
+      const time = await nextFrame(this.window);
+      /* eslint-disable no-try-catch */
+      try {
+        this.stepWorld(time);
+        this.updateFPS(time);
+      } catch (err) {
+        this.pause();
+        this.locked = true;
+        logError(err, 'Hexant playtime',
+          ['config', Object.fromEntries(this.hash.stringEntries())],
+          ['step', this.world.stepCount],
+          ['fps', this.computeFPS()],
+          ['sps', this.computeSPS()],
+          ['redrawTiming', this.world.redrawTimingStats()],
+        );
+      }
+    }
   }
 
   pause() {
-    this.fps.innerText = '<' + this.fps.innerText + '>';
-    this.sps.innerText = '<' + this.sps.innerText + '>';
-    this.redrawTiming.innerText = '<' + this.redrawTiming.innerText + '>';
-    this.lastStepTime = null;
-    // this.animator.cancelAnimation(); FIXME raf
     this.paused = true;
+    this.$fps.innerText = '<' + this.$fps.innerText + '>';
+    this.$sps.innerText = '<' + this.$sps.innerText + '>';
+    this.$redrawTiming.innerText = '<' + this.$redrawTiming.innerText + '>';
+    this.lastStepTime = null;
   }
 
   playpause() {
@@ -385,20 +387,25 @@ export class Hexant {
   }
 
   stepit() {
-    if (this.paused) {
-      this.world.step();
-    } else {
+    if (!this.paused) {
       this.pause();
+    } else if (!this.locked) {
+      this.world.step();
     }
   }
 
+  /** @param {number} rate */
   setStepRate(rate) {
     if (this.stepRate === this.goalStepRate) {
-        this.stepRate = rate;
+      this.stepRate = rate;
     }
     this.goalStepRate = rate;
   }
 
+  /**
+   * @param {number} width
+   * @param {number} height
+   */
   resize(width, height) {
     this.view.resize(width, height);
   }
@@ -408,12 +415,13 @@ export class Hexant {
 const nsiSuffix = ['', 'm', 'µ', 'n'];
 const siSuffix = ['K', 'M', 'G', 'T', 'E'];
 
+/** @param {number} n */
 function toSI(n) {
   if (n < 1) {
     let nsi = 0;
     while (nsi < nsiSuffix.length && n < 1) {
-        nsi++;
-        n *= 1e3;
+      nsi++;
+      n *= 1e3;
     }
     return n.toPrecision(3) + nsiSuffix[nsi];
   }
@@ -427,4 +435,47 @@ function toSI(n) {
     n /= 1e3;
   }
   return n.toPrecision(3) + siSuffix[si];
+}
+
+/**
+ * @param {Window} [window]
+ * @returns {Promise<number>}
+ */
+function nextFrame(window = global.window) {
+  return new Promise(
+    resolve => window.requestAnimationFrame(resolve)
+  );
+}
+
+/** @typedef {object} ModifierKeyEvent
+ * @prop {boolean} metaKey
+ * @prop {boolean} altKey
+ * @prop {boolean} ctrlKey
+ * @prop {boolean} shiftKey
+ */
+
+/**
+ * @param {ModifierKeyEvent} e
+ * @param {string} s
+ */
+function modified({ metaKey, altKey, ctrlKey, shiftKey }, s) {
+  if (metaKey) { s = `M-${s}` }
+  if (altKey) { s = `A-${s}` }
+  if (ctrlKey) { s = `C-${s}` }
+  if (shiftKey) { s = `S-${s}` }
+  return s;
+}
+
+/**
+ * @param {any} err
+ * @param {string} desc
+ * @param {[key: string, data: any][]} details
+ */
+function logError(err, desc, ...details) {
+  console.group(`${desc} error`);
+  console.error(err);
+  for (const [key, data] of details) {
+    console.log(key, JSON.stringify(data));
+  }
+  console.groupEnd();
 }
