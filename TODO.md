@@ -12,7 +12,7 @@
     light(...) for cells)
   - more schemes
     - a `sat(...)` scheme for completeness
-    - perhaps make hsl vs husl available for all aspects, rather than the
+    - perhaps make hsl vs hsluv available for all aspects, rather than the
       current pick-and-choose
     - a constant color scheme; espec useful for the empty cell class, so we
       could have them all drawn black

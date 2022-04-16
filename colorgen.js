@@ -1,7 +1,7 @@
 'use strict';
 
 var Result = require('rezult');
-var husl = require('husl');
+var hsluvToRgb = require('hsluv').hsluvToRgb;
 
 var gens = {};
 gens.light = LightWheelGenerator;
@@ -31,7 +31,7 @@ function toString(gen) {
     return gen.genString || 'hue';
 }
 
-// TODO: husl too
+// TODO: hsluv too
 
 /* roles:
  * 0: empty cells
@@ -60,7 +60,7 @@ function LightWheelGenerator(hue, sat) {
             var r = [];
             var l = step;
             for (var i = 0; i < ncolors; l += step, i++) {
-                r.push(husl.toRGB(h, sat, l));
+                r.push(hsluvToRgb(h, sat, l));
             }
             return r;
         };

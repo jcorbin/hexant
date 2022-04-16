@@ -115,8 +115,8 @@ Colors are driven by a color generation scheme, using a simple language.
 
 `light(HUE, SAT)`
 
-Uses lightness variation for a fixed hue and saturation in the [HUSL color
-space](http://www.husl-colors.org/).
+Uses lightness variation for a fixed hue and saturation in the [HSLuv color
+space](https://www.hsluv.org/).
 
 - `HUE` is a number between `0` and `360` and is in degrees on the color wheel;
   defaults to `0`.

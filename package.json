@@ -32,7 +32,7 @@
     "global": "4.3.0",
     "gutentag": "^0.0.0",
     "hashbind": "2.1.0",
-    "husl": "6.0.1",
+    "hsluv": "^0.1.0",
     "nearley": "^2.20.1",
     "rezult": "1.1.0"
   },

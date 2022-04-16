@@ -19,15 +19,19 @@
 - asyncify the gap between view and sim
 - port turmite sim to Go... shard and scale over goroutines
 - maybe just write a custom parser and drop nearley
+- META: subsume the old `TODO.md` file
 
 # WIP
 
 Reading... orienting...
 
+- working toward a working dev server again
+  - browser kicks 404s for `node_modules/...` things like `gutentag`; will
+    probably just need to drop system/gutentag right away
+
 - npm uplift:
   - deprecations:
   ```
-  npm WARN deprecated husl@6.0.1: Project renamed to HSLuv
   npm WARN deprecated nomnom@1.6.2: Package no longer supported. Contact support@npmjs.com for more info.
   npm WARN deprecated xmldom@0.1.22: Deprecated due to CVE-2021-21366 resolved in 0.5.0
   npm WARN deprecated circular-json@0.3.3: CircularJSON is in maintenance only, flatted is its successor.
