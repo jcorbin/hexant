@@ -1,5 +1,6 @@
 # TODO
 
+- unbreak the tests, after the `src/` pivot
 - build solution now that html-inline is gone... snowpack?
 - modernize js
   - esm
