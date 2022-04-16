@@ -1,20 +1,21 @@
 # TODO
 
-- restore animation ticks, ripped out with gutentag
+- uplift js
+  - wip
+    - esm
+    - classify
+    - const, for-of, destructring, etc...
+    - switch to local version of rezult as we go
+  - next
+    - switch classes out for maker pattern
+    - jsdoc type annotations to pass tsc
+
 - unbreak the tests, after the `src/` pivot
-- modernize js
-  - esm
-  - jsdoc type annotations to pass tsc
-- subsume external deps
-  - hashbind
-  - rezult
 - drop deps should be obsolete now
-  - domready
   - Base64
 - evaluate why hexer
-- use snowpack for dev server and build
-- tbd deploy artifact, whether single inlined page like before, or otherwise
-- drop gutentag
+- do a bundle or some form of inline/flattengin for deploy
+
 - separate tile rendering module
 - separate turmite sim module
 - asyncify the gap between view and sim
@@ -28,12 +29,14 @@
 
 Porting towards a working dev server again.
 
-- either comlete ESMification of yesterday's progress, or back it out for
-  another future round of uplift
-- fix the gutenacht raf gap
 - continue code uplift
 
 ## Done
+
+- inlined page integrated javascript into its html file
+- added an uplifted copy of rezult, started using it in the `hexant.js` module
+- added a reworked copy of hashbind, and converted `hexant.js` to use it
+- fixed raf leftover from yesterday, and added a sprinkle of type hinting to assist
 
 # 2022-04-15
 
