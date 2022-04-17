@@ -23,7 +23,7 @@
 - maybe just write a custom parser and drop nearley
 - META: subsume the old `TODO.md` file
 
-# 2022-04-16
+# 2022-04-17
 
 ## WIP
 
@@ -32,6 +32,11 @@ Porting towards a working dev server again.
 - continue code uplift
 
 ## Done
+
+- further refactored hashbind to take over all codec concerns (base64) from
+  hexant.js, obviating need for Base64 shim dependency
+
+# 2022-04-16
 
 - inlined page integrated javascript into its html file
 - added an uplifted copy of rezult, started using it in the `hexant.js` module
