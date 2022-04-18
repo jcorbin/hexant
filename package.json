@@ -20,6 +20,10 @@
   },
   "devDependencies": {
     "gl-matrix": "^2.3.2",
+    "glsl-deparser": "^1.0.0",
+    "glsl-min-stream": "^1.0.0",
+    "glsl-parser": "^2.0.1",
+    "glsl-tokenizer": "^2.1.5",
     "hexer": "1.4.5",
     "snowpack": "^3.8.8",
     "tape": "4.2.0",

@@ -7,8 +7,11 @@ export default {
     src: '/dist',
     public: '/',
   },
+  alias: {
+    'glslshader': './src/glslshader.js',
+  },
   plugins: [
-    './glsl-loader.js',
+    ['./glsl-loader.cjs', { minify: true }],
   ],
   packageOptions: {
   },
