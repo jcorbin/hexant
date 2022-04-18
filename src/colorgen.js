@@ -1,95 +1,110 @@
+// @ts-check
+
 'use strict';
 
-var Result = require('rezult');
-var hsluvToRgb = require('hsluv').hsluvToRgb;
+import { hsluvToRgb } from 'hsluv';
 
-var gens = {};
-gens.light = LightWheelGenerator;
-gens.hue = HueWheelGenerator;
+import * as rezult from './rezult.js';
 
-function parse(str) {
-    var match = /^(\w+)(?:\((.*)\))?$/.exec(str);
-    if (!match) {
-        return Result.error(new Error('invalid color spec'));
-    }
+/** A color tuple in some color space (e.g. rgb or hsl)
+ *
+ * @typedef {[a: number, b: number, c: number]} ColorTuple
+ */
 
-    var name = match[1];
-    var gen = gens[name];
-    if (!gen) {
-        var choices = Object.keys(gens).sort().join(', ');
-        return Result.error(new Error(
-            'no such color scheme ' + JSON.stringify(name) +
-            ', valid choices: ' + choices
-        ));
-    }
+/** A function which can generate N color tuples
+ *
+ * @typedef {(n: number) => IterableIterator<ColorTuple>} ColorGen
+ */
 
-    var args = match[2] ? match[2].split(/, */) : [];
-    return Result.lift(gen).apply(null, args);
-}
-
-function toString(gen) {
-    return gen.genString || 'hue';
-}
-
-// TODO: hsluv too
-
-/* roles:
+/** A factory for creating N-color generators for a given intensity level
+ *
+ * The view module currently uses these intensity levels for fixed roles:
  * 0: empty cells
  * 1: ant traced cells
  * 2: ant body
  * 3: ant head
+ *
+ * @typedef {object} ColorGenMaker
+ * @prop {(intensity: number) => ColorGen} makeColorGen
+ * @prop {() => string} toString
  */
 
-function LightWheelGenerator(hue, sat) {
-    hue = parseInt(hue, 10) || 0;
-    sat = parseInt(sat, 10) || 100;
+/** A family of N-color-generator factories, parameterized by 2 arguments
+ *
+ * Family implementations must provide argument defaults
+ *
+ * Family aguments are presumabley 2 fixed color space but not necessarily so...
+ *
+ * @typedef {(a?: number, b?: number) => ColorGenMaker} ColorGenFam2
+ */
 
-    if (hue === 0) {
-        hue = 360;
-    }
+/** @type {Map<string, ColorGenFam2>} */
+const gens = new Map();
 
-    wheelGenGen.genString = 'light(' +
-                            hue.toString() + ', ' +
-                            sat.toString() + ')';
-    return wheelGenGen;
+/**
+ * @param {string} str
+ * @returns {rezult.Result<ColorGenMaker>}
+ */
+export default function parse(str) {
+  const match = /^(\w+)(?:\((.*)\))?$/.exec(str);
+  if (!match) {
+    return rezult.error(new Error('invalid color spec'));
+  }
 
-    function wheelGenGen(intensity) {
-        var h = hue * (1 + (intensity - 1) / 3) % 360;
-        return function wheelGen(ncolors) {
-            var step = 100 / (ncolors + 1);
-            var r = [];
-            var l = step;
-            for (var i = 0; i < ncolors; l += step, i++) {
-                r.push(hsluvToRgb(h, sat, l));
-            }
-            return r;
-        };
-    }
+  const name = match[1] || '';
+  const gen = gens.get(name);
+  if (!gen) {
+    const choices = Object.keys(gens).sort().join(', ');
+    return rezult.error(new Error(
+      `no such color scheme ${JSON.stringify(name)}, valid choices: ${choices}`
+    ));
+  }
+
+  const args = match[2] ? match[2].split(/, */) : [];
+  const a = args[0] ? parseInt(args[0], 10) : undefined;
+  const b = args[1] ? parseInt(args[1], 10) : undefined;
+
+  return rezult.just(gen(a, b));
 }
 
-function HueWheelGenerator(sat, light) {
-    sat = parseInt(sat, 10) || 70;
-    light = parseInt(light, 10) || 40;
-    var satDelta = sat > 70 ? -10 : 10;
-    var lightDelta = light > 70 ? -10 : 10;
+gens.set('light', (hue = 0, sat = 100) => {
+  if (hue === 0) {
+    hue = 360;
+  }
+  return {
+    toString() {
+      return `light(${hue}, ${sat})`;
+    },
+    makeColorGen(intensity) {
+      const h = hue * (1 + (intensity - 1) / 3) % 360;
+      return function*(ncolors) {
+        const step = 100 / (ncolors + 1);
+        for (let i = 0, l = step; i < ncolors; l += step, i++) {
+          yield hsluvToRgb([h, sat, l]);
+        }
+      };
+    },
+  };
+});
 
-    hueWheelGenGen.genString = 'hue(' + sat + ', ' + light + ')';
-    return hueWheelGenGen;
+gens.set('hue', (sat = 70, light = 40) => {
+  const satDelta = sat > 70 ? -10 : 10;
+  const lightDelta = light > 70 ? -10 : 10;
+  return {
+    toString() {
+      return `hue(${sat}, ${light})`;
+    },
+    makeColorGen(intensity) {
+      const mySat = sat + satDelta * intensity;
+      const myLight = light + lightDelta * intensity;
+      return function*(ncolors) {
+        const step = 360 / ncolors;
+        for (let i = 0, h = 0; i < ncolors; h += step, i++) {
+          yield [h, mySat, myLight];
+        }
+      };
+    },
+  };
+});
 
-    function hueWheelGenGen(intensity) {
-        var mySat = sat + satDelta * intensity;
-        var myLight = light + lightDelta * intensity;
-        return function wheelGen(ncolors) {
-            var scale = 360 / ncolors;
-            var r = [];
-            for (var i = 0; i < ncolors; i++) {
-                r.push([i * scale, mySat, myLight]);
-            }
-            return r;
-        };
-    }
-}
-
-module.exports.gens = gens;
-module.exports.parse = parse;
-module.exports.toString = toString;
+// TODO: implement a 'hsluv' family
