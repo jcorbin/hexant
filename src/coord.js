@@ -1,282 +1,398 @@
+// @ts-check
+
 'use strict';
 
-module.exports.ScreenPoint = ScreenPoint;
-module.exports.CubePoint = CubePoint;
-module.exports.OddQOffset = OddQOffset;
-module.exports.OddQBox = OddQBox;
-
-function ScreenPoint(x, y) {
-    if (!(this instanceof ScreenPoint)) {
-        return new ScreenPoint(x, y);
-    }
+export class ScreenPoint {
+  /**
+   * @param {number} [x]
+   * @param {number} [y]
+   */
+  constructor(x = 0, y = 0) {
     this.x = x;
     this.y = y;
-}
-ScreenPoint.prototype.type = 'point.screen';
-ScreenPoint.prototype.copy = function copy() {
-    return ScreenPoint(this.x, this.y);
-};
-ScreenPoint.prototype.copyFrom = function copyFrom(other) {
+  }
+
+  type = 'point.screen'
+
+  copy() {
+    return new ScreenPoint(this.x, this.y);
+  }
+
+  /** @param {ScreenPoint} other */
+  copyFrom(other) {
     this.x = other.x;
     this.y = other.y;
     return this;
-};
-ScreenPoint.prototype.toString = function toString() {
-    return 'ScreenPoint(' + this.x + ', ' + this.y + ')';
-};
-ScreenPoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
+  }
+
+  toString() {
+    return `ScreenPoint(${this.x}, ${this.y});`
+  }
+
+  /** @param {ScreenPoint} screenPoint */
+  toScreenInto(screenPoint) {
     screenPoint.x = this.x;
     screenPoint.y = this.y;
     return screenPoint;
-};
-ScreenPoint.prototype.toScreen = function toScreen() {
+  }
+
+  toScreen() {
     return this;
-};
-ScreenPoint.prototype.scale = function scale(n) {
+  }
+
+  /** @param {number} n */
+  scale(n) {
     this.x *= n;
     this.y *= n;
     return this;
-};
-ScreenPoint.prototype.mulBy = function mulBy(x, y) {
+  }
+
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
+  mulBy(x, y) {
     this.x *= x;
     this.y *= y;
     return this;
-};
-ScreenPoint.prototype.add = function add(other) {
+  }
+
+  /** @param {ScreenPoint} other */
+  add(other) {
     if (other.type !== this.type) {
-        other = other.toScreen();
+      other = other.toScreen();
     }
     this.x += other.x;
     this.y += other.y;
     return this;
-};
-ScreenPoint.prototype.addTo = function addTo(x, y) {
+  }
+
+  /**
+   * @param {number} x
+   * @param {number} y
+   */
+  addTo(x, y) {
     this.x += x;
     this.y += y;
     return this;
-};
-ScreenPoint.prototype.sub = function sub(other) {
+  }
+
+  /** @param {ScreenPoint} other */
+  sub(other) {
     if (other.type !== this.type) {
-        other = other.toScreen();
+      other = other.toScreen();
     }
     this.x -= other.x;
     this.y -= other.y;
     return this;
-};
+  }
+}
 
-function CubePoint(x, y, z) {
-    if (!(this instanceof CubePoint)) {
-        return new CubePoint(x, y, z);
-    }
+export class CubePoint {
+  /**
+   * @param {number} [x]
+   * @param {number} [y]
+   * @param {number} [z]
+   */
+  constructor(x = 0, y = 0, z = 0) {
     if (x + y + z !== 0) {
-        throw new Error(
-            'CubePoint invariant violated: ' +
-            x + ' + ' +
-            y + ' + ' +
-            z + ' = ' +
-            (x + y + z));
+      throw new Error(`CubePoint invariant violated: ${x} + ${y} + ${z} = ${x + y + z}`);
     }
     this.x = x;
     this.y = y;
     this.z = z;
-}
-CubePoint.basis = [
-    CubePoint(1, -1, 0), // SE -- 0, 1
-    CubePoint(0, -1, 1), // S  -- 1, 2
-    CubePoint(-1, 0, 1), // SW -- 2, 3
-    CubePoint(-1, 1, 0), // NW -- 3, 4
-    CubePoint(0, 1, -1), // N  -- 4, 5
-    CubePoint(1, 0, -1)  // NE -- 5, 0
-];
-CubePoint.prototype.type = 'point.cube';
-CubePoint.prototype.toString = function toString() {
-    return 'CubePoint(' + this.x + ', ' + this.y + ', ' + this.z + ')';
-};
-CubePoint.prototype.copy = function copy() {
-    return CubePoint(this.x, this.y, this.z);
-};
-CubePoint.prototype.copyFrom = function copyFrom(other) {
+  }
+
+  type = 'point.cube'
+
+  toString() {
+    return `CubePoint(${this.x}, ${this.y}, ${this.z})`;
+  }
+
+  copy() {
+    return new CubePoint(this.x, this.y, this.z);
+  }
+
+  /** @param {CubePoint} other */
+  copyFrom(other) {
     if (other.type !== this.type) {
-        return other.toCubeInto(this);
+      return other.toCubeInto(this);
     }
     this.x = other.x;
     this.y = other.y;
     this.z = other.z;
     return this;
-};
-CubePoint.prototype.add = function add(other) {
+  }
+
+  /** @param {CubePoint} other */
+  add(other) {
     if (other.type !== this.type) {
-        other = other.toCube();
+      other = other.toCube();
     }
     this.x += other.x;
     this.y += other.y;
     this.z += other.z;
     return this;
-};
-CubePoint.prototype.addTo = function addTo(x, y, z) {
+  }
+
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   */
+  addTo(x, y, z) {
     this.x += x;
     this.y += y;
     this.z += z;
     return this;
-};
-CubePoint.prototype.sub = function sub(other) {
+  }
+
+  /** @param {CubePoint} other */
+  sub(other) {
     if (other.type !== this.type) {
-        other = other.toCube();
+      other = other.toCube();
     }
     this.x -= other.x;
     this.y -= other.y;
     this.z -= other.z;
     return this;
-};
-CubePoint.prototype.scale = function scale(n) {
+  }
+
+  /**
+   * @param {number} n
+   */
+  scale(n) {
     this.x *= n;
     this.y *= n;
     this.z *= n;
     return this;
-};
-CubePoint.prototype.mulBy = function mulBy(x, y, z) {
+  }
+
+  /**
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   */
+  mulBy(x, y, z) {
     this.x *= x;
     this.y *= y;
     this.z *= z;
     return this;
-};
-CubePoint.prototype.toScreenInto = function toScreenInto(screenPoint) {
+  }
+
+  /** @param {ScreenPoint} screenPoint */
+  toScreenInto(screenPoint) {
     screenPoint.x = 3 / 2 * this.x;
     screenPoint.y = Math.sqrt(3) * (this.z + this.x / 2);
     return screenPoint;
-};
-CubePoint.prototype.toScreen = function toScreen() {
-    return this.toScreenInto(ScreenPoint());
-};
-CubePoint.prototype.toCubeInto = function toCubeInto(other) {
+  }
+
+  toScreen() {
+    return this.toScreenInto(new ScreenPoint());
+  }
+
+  /** @param {CubePoint} other */
+  toCubeInto(other) {
     other.x = this.x;
     other.y = this.y;
     other.z = this.z;
     return other;
-};
-CubePoint.prototype.toCube = function toCube() {
+  }
+
+  toCube() {
     return this;
-};
-CubePoint.prototype.toOddQOffset = function toOddQOffset() {
-    var q = this.x;
-    var r = this.z + (this.x - (this.x & 1)) / 2;
-    return OddQOffset(q, r);
-};
-CubePoint.prototype.toOddQOffsetInto = function toOddQOffsetInto(oqo) {
+  }
+
+  toOddQOffset() {
+    const q = this.x;
+    const r = this.z + (this.x - (this.x & 1)) / 2;
+    return new OddQOffset(q, r);
+  }
+
+  /** @param {OddQOffset} oqo */
+  toOddQOffsetInto(oqo) {
     oqo.q = this.x;
     oqo.r = this.z + (this.x - (this.x & 1)) / 2;
-};
+  }
 
-function OddQOffset(q, r) {
-    if (!(this instanceof OddQOffset)) {
-        return new OddQOffset(q, r);
-    }
+  static basis = [
+    new CubePoint(1, -1, 0), // SE -- 0, 1
+    new CubePoint(0, -1, 1), // S  -- 1, 2
+    new CubePoint(-1, 0, 1), // SW -- 2, 3
+    new CubePoint(-1, 1, 0), // NW -- 3, 4
+    new CubePoint(0, 1, -1), // N  -- 4, 5
+    new CubePoint(1, 0, -1)  // NE -- 5, 0
+  ]
+}
+
+/**
+ * @typedef {object} oddQPotent
+ * @prop {(oqo: OddQOffset) => void} toOddQOffsetInto
+ */
+
+/**
+ * @typedef {object} oddQToable
+ * @prop {() => OddQOffset} toOddQOffset
+ */
+
+export class OddQOffset {
+  /**
+   * @param {number} [q]
+   * @param {number} [r]
+   */
+  constructor(q = 0, r = 0) {
     this.q = q;
     this.r = r;
-}
-OddQOffset.prototype.type = 'offset.odd-q';
-OddQOffset.prototype.toString = function toString() {
-    return 'OddQOffset(' + this.q + ', ' + this.r + ')';
-};
-OddQOffset.prototype.copy = function copy() {
-    return OddQOffset(this.q, this.r);
-};
-OddQOffset.prototype.copyFrom = function copyFrom(other) {
-    if (other.type !== this.type) {
-        return other.toOddQOffsetInto(this);
-    }
-    this.q = other.q;
-    this.r = other.r;
+  }
+
+  type = 'offset.odd-q'
+
+  toString() {
+    return `OddQOffset(${this.q}, ${this.r})`;
+  }
+
+  copy() {
+    return new OddQOffset(this.q, this.r);
+  }
+
+  /** @param {oddQPotent} other */
+  copyFrom(other) {
+    other.toOddQOffsetInto(this);
     return this;
-};
-OddQOffset.prototype.add = function add(other) {
-    if (other.type !== this.type) {
-        other = other.toOddQOffset();
+  }
+
+  /** @param {OddQOffset|oddQToable} other */
+  add(other) {
+    if (other instanceof OddQOffset) {
+      const { q, r } = other;
+      this.q += q, this.r += r;
+    } else {
+      const { q, r } = other.toOddQOffset();
+      this.q += q, this.r += r;
     }
-    this.q += other.q;
-    this.r += other.r;
     return this;
-};
-OddQOffset.prototype.addTo = function addTo(q, r) {
+  }
+
+  /**
+   * @param {number} q
+   * @param {number} r
+   */
+  addTo(q, r) {
     this.q += q;
     this.r += r;
     return this;
-};
-OddQOffset.prototype.sub = function sub(other) {
-    if (other.type !== this.type) {
-        other = other.toOddQOffset();
+  }
+
+  /** @param {OddQOffset|oddQToable} other */
+  sub(other) {
+    if (other instanceof OddQOffset) {
+      const { q, r } = other;
+      this.q -= q, this.r -= r;
+    } else {
+      const { q, r } = other.toOddQOffset();
+      this.q -= q, this.r -= r;
     }
-    this.q -= other.q;
-    this.r -= other.r;
     return this;
-};
-OddQOffset.prototype.scale = function scale(n) {
+  }
+
+  /**
+   * @param {number} n
+   */
+  scale(n) {
     this.q *= n;
     this.r *= n;
     return this;
-};
-OddQOffset.prototype.mulBy = function mulBy(q, r) {
+  }
+
+  /**
+   * @param {number} q
+   * @param {number} r
+   */
+  mulBy(q, r) {
     this.q *= q;
     this.r *= r;
     return this;
-};
-OddQOffset.prototype.toScreenInto = function toScreenInto(screenPoint) {
+  }
+
+  /** @param {ScreenPoint} screenPoint */
+  toScreenInto(screenPoint) {
     screenPoint.x = 3 / 2 * this.q;
     screenPoint.y = Math.sqrt(3) * (this.r + 0.5 * (this.q & 1));
     return screenPoint;
-};
-OddQOffset.prototype.toScreen = function toScreen() {
-    return this.toScreenInto(ScreenPoint());
-};
-OddQOffset.prototype.toOddQOffset = function toOddQOffset() {
+  }
+
+  toScreen() {
+    return this.toScreenInto(new ScreenPoint());
+  }
+
+  toOddQOffset() {
     return this;
-};
-OddQOffset.prototype.toOddQOffsetInto = function toOddQOffsetInto(oqo) {
+  }
+
+  /** @param {OddQOffset} oqo */
+  toOddQOffsetInto(oqo) {
     oqo.q = this.q;
     oqo.r = this.r;
-};
-OddQOffset.prototype.toCubeInto = function toCubeInto(other) {
-    other.x = this.q;
-    other.z = this.r - (this.q - (this.q & 1)) / 2;
-    other.y = -other.x - other.z;
-    return other;
-};
-OddQOffset.prototype.toCube = function toCube() {
-    return this.toCubeInto(CubePoint());
-};
+  }
 
-function OddQBox(topLeft, bottomRight) {
-    if (!(this instanceof OddQBox)) {
-        return new OddQBox(topLeft, bottomRight);
-    }
-    this.topLeft = topLeft ? topLeft.toOddQOffset() : OddQOffset();
-    this.bottomRight = bottomRight ? bottomRight.toOddQOffset() : OddQOffset();
+  /** @param {CubePoint} cubePoint */
+  toCubeInto(cubePoint) {
+    cubePoint.x = this.q;
+    cubePoint.z = this.r - (this.q - (this.q & 1)) / 2;
+    cubePoint.y = -cubePoint.x - cubePoint.z;
+    return cubePoint;
+  }
+
+  toCube() {
+    return this.toCubeInto(new CubePoint());
+  }
 }
-OddQBox.prototype.copy = function copy() {
+
+/**
+ * @typedef {{toOddQOffset: () => OddQOffset}} OddQOffsetIsh
+ */
+
+export class OddQBox {
+  /**
+   * @param {OddQOffsetIsh} [topLeft]
+   * @param {OddQOffsetIsh} [bottomRight]
+   */
+  constructor(topLeft = new OddQOffset(), bottomRight = new OddQOffset()) {
+    this.topLeft = topLeft.toOddQOffset();
+    this.bottomRight = bottomRight.toOddQOffset();
+  }
+
+  copy() {
     return new OddQBox(this.topLeft.copy(), this.bottomRight.copy());
-};
-OddQBox.prototype.copyFrom = function copyFrom(other) {
-    this.topLeft.copy(other.topLeft);
-    this.bottomRight.copy(other.bottomRight);
+  }
+
+  /** @param {OddQBox} other */
+  copyFrom(other) {
+    this.topLeft.copyFrom(other.topLeft);
+    this.bottomRight.copyFrom(other.bottomRight);
     return this;
-};
-OddQBox.prototype.toString = function toString() {
+  }
+
+  toString() {
     return 'OddQBox(' +
-        this.topLeft.toString() + ', ' +
-        this.bottomRight.toString() + ')';
-};
-OddQBox.prototype.screenCount = function screenCount() {
-    return this.screenCountInto(ScreenPoint());
-};
-OddQBox.prototype.screenCountInto = function screenCountInto(screenPoint) {
-    var W = this.bottomRight.q - this.topLeft.q;
-    var H = this.bottomRight.r - this.topLeft.r;
+      this.topLeft.toString() + ', ' +
+      this.bottomRight.toString() + ')';
+  }
+
+  screenCount() {
+    return this.screenCountInto(new ScreenPoint());
+  }
+
+  /** @param {ScreenPoint} screenPoint */
+  screenCountInto(screenPoint) {
+    const W = this.bottomRight.q - this.topLeft.q;
+    const H = this.bottomRight.r - this.topLeft.r;
 
     // return the count number of hexes needed in screen x space and screen y
     // space
 
     // first one is a unit, each successive column backs 1/4 with the last
-    // var x = 1 + 3 / 4 * (W - 1);
+    // const x = 1 + 3 / 4 * (W - 1);
     screenPoint.x = (3 * W + 1) / 4;
 
     // height backs directly, but we need an extra half cell except when we
@@ -284,31 +400,36 @@ OddQBox.prototype.screenCountInto = function screenCountInto(screenPoint) {
     screenPoint.y = H + (W > 1 ? 0.5 : 0);
 
     return screenPoint;
-};
-OddQBox.prototype.contains = function contains(pointArg) {
-    var point = pointArg.toOddQOffset();
+  }
+
+  /** @param {OddQOffsetIsh} pointArg */
+  contains(pointArg) {
+    const point = pointArg.toOddQOffset();
     return point.q >= this.topLeft.q && point.q < this.bottomRight.q &&
-           point.r >= this.topLeft.r && point.r < this.bottomRight.r;
-};
-OddQBox.prototype.expandTo = function expandTo(pointArg) {
-    var expanded = false;
-    var point = pointArg.toOddQOffset();
+      point.r >= this.topLeft.r && point.r < this.bottomRight.r;
+  }
+
+  /** @param {OddQOffsetIsh} pointArg */
+  expandTo(pointArg) {
+    let expanded = false;
+    const point = pointArg.toOddQOffset();
 
     if (point.q < this.topLeft.q) {
-        this.topLeft.q = point.q;
-        expanded = true;
+      this.topLeft.q = point.q;
+      expanded = true;
     } else if (point.q >= this.bottomRight.q) {
-        this.bottomRight.q = point.q + 1;
-        expanded = true;
+      this.bottomRight.q = point.q + 1;
+      expanded = true;
     }
 
     if (point.r < this.topLeft.r) {
-        this.topLeft.r = point.r;
-        expanded = true;
+      this.topLeft.r = point.r;
+      expanded = true;
     } else if (point.r >= this.bottomRight.r) {
-        this.bottomRight.r = point.r + 1;
-        expanded = true;
+      this.bottomRight.r = point.r + 1;
+      expanded = true;
     }
 
     return expanded;
-};
+  }
+}
