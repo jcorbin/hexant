@@ -18,7 +18,7 @@ Uplifting old javascript toward a full type checking pass:
   - return frozen result objects
   - maybe drop the `class Result` entirel, and shift to `makeResult`
 
-## Status 17% done (805 / 4819 LoC, 5 / 56 modules)
+## Status 20% done (968 / 4862 LoC, 8 / 35 modules)
 
 - NOTE: "pass" means passes `// @ts-check`
 - NOTE: "works" means functionally verified
@@ -28,9 +28,9 @@ Uplifting old javascript toward a full type checking pass:
 - `src/`
   - `colorgen.js` - pass
   - `coord.js` - pass
-  - `glpalette.js`
-  - `glprogram.js`
-  - `glslshader.js` - TODO address ESM/import path notes in glsl-loader.js too
+  - `glpalette.js` - pass
+  - `glprogram.js` - pass
+  - `glslshader.js` - pass
   - `hashbind.js` - pass
   - `hexant.js` - WIP top level controller ; TODO decompose
   - `hextile.js`
@@ -65,16 +65,18 @@ Uplifting old javascript toward a full type checking pass:
 
 ```
 $ cloc --vcs=git --include-lang=JavaScript --by-file
+
+github.com/AlDanial/cloc v 1.92  T=0.04 s (831.6 files/s, 145287.4 lines/s)
 ------------------------------------------------------------------------------------------
 File                                        blank        comment           code
 ------------------------------------------------------------------------------------------
-glsl-loader.js                                  6             10             47
-snowpack.config.js                              1              3             15
+glsl-loader.js                                 16             17            103
+snowpack.config.js                              1              3             18
 src/colorgen.js                                15             35             66
 src/coord.js                                   61             80            283
-src/glpalette.js                                6              0             42
-src/glprogram.js                                6              3             37
-src/glslshader.js                              16              0            104
+src/glpalette.js                               12             11             48
+src/glprogram.js                               13             12             29
+src/glslshader.js                              19             24             90
 src/hashbind.js                                58             72            318
 src/hexant.js                                  61             16            351
 src/hextile.js                                 18              3            145
@@ -104,7 +106,7 @@ src/turmite/test.js                            38             11            185
 src/view_gl.js                                 90             29            598
 src/world.js                                   24              3            199
 ------------------------------------------------------------------------------------------
-SUM:                                          755            421           4819
+SUM:                                          781            472           4862
 ------------------------------------------------------------------------------------------
 
 ```
@@ -128,16 +130,34 @@ SUM:                                          755            421           4819
 - maybe just write a custom parser and drop nearley
 - META: see also / subsume the old `TODO.md` file
 
-# 2022-04-18
+# 2022-04-19
 
 ## Done
+
+- uplifted `glpalette.js` thru type checking
+  - minor change to data array fill to use `UInt8Array.fill` and `.set`
+  - changed constructor to options pattern, made srgb option an enum
+- uplifted `glprogram.js` thru type checking
+  - eliminated shader load indirection, a problem for our future caller
+  - switched attr and uniform collections to `Map`, dropped `attrs`
+    array, just use `attr.values()`
+- uplifted `glslshader.js` thru type checking
+- fixed `glsl-loader.js` to generate ESMs with aliased imports, and to
+  have better internal io semantics
+- added build-time minification to `glsl-loader.js`
+- fixed done module denominator... oops
+
+# 2022-04-18
 
 - refactored Hexant world stepping logic and reified its animation loop into
   while-await form
 - uplifted `rezult.js` thru type checking
 - uplifted `colorgen.js` thru type checking
+  - now only exports `parse()`, string conversion is now implicit, and
+    fortunately nothing was using the gens export
 - surveyed remaining module status to sketch a better stream status picture
 - uplifted `coord.js` thru type checking
+  - elminated callable-constructor oddity
 
 # 2022-04-17
 
