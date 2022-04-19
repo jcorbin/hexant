@@ -1,46 +1,67 @@
-'use strict';
+// @ts-check
 
-module.exports = GLProgram;
+'use strict';
 
 // TODO:
 // - detect uniform and attr names by static analysis
 // - pursue tighter integration with GLSLShader
 
-function GLProgram(gl, shaderLoader, uniformNames, attrNames) {
+export class GLProgram {
+
+  /**
+   * @param {WebGLRenderingContext} gl
+   * @param {WebGLProgram} prog
+   * @param {Iterable<string>} uniformNames
+   * @param {Iterable<string>} attrNames
+   */
+  constructor(gl, prog, uniformNames, attrNames) {
+
+    /** @type {{[name: string]: WebGLUniformLocation}} */
+    const uniform = {};
+
+    /** @type {{[name: string]: number}} */
+    const attr = {};
+
+    for (const name of uniformNames) {
+      const loc = gl.getUniformLocation(prog, name);
+      if (!loc) {
+        throw new Error(`unable to find uniform ${name}`);
+      }
+      uniform[name] = loc;
+    }
+
+    for (const name of attrNames) {
+      const loc = gl.getAttribLocation(prog, name);
+      if (loc < 0) {
+        throw new Error(`unable to find attrib ${name}`);
+      }
+      attr[name] = loc;
+    }
+
     this.gl = gl;
-    this.prog = shaderLoader.load(this.gl).toValue();
-    this.attrs = [];
-    this.uniform = {};
-    this.attr = {};
-    var name, i;
-    for (i = 0; i < uniformNames.length; ++i) {
-        name = uniformNames[i];
-        this.uniform[name] = this.gl.getUniformLocation(this.prog, name);
-    }
-    for (i = 0; i < attrNames.length; ++i) {
-        name = attrNames[i];
-        var attr = this.gl.getAttribLocation(this.prog, name);
-        this.attr[name] = attr;
-        this.attrs.push(attr);
-    }
-}
+    this.prog = prog;
+    this.uniform = uniform;
+    this.attr = attr;
+  }
 
-GLProgram.prototype.use =
-function use() {
-    this.gl.useProgram(this.prog);
-};
+  use() {
+    const { gl, prog } = this;
+    gl.useProgram(prog);
+  }
 
-GLProgram.prototype.enable =
-function enable() {
+  enable() {
+    const { gl, attr } = this;
     this.use();
-    for (var i = 0; i < this.attrs.length; ++i) {
-        this.gl.enableVertexAttribArray(this.attrs[i]);
+    for (const attrLoc of Object.values(attr)) {
+      gl.enableVertexAttribArray(attrLoc);
     }
-};
+  }
 
-GLProgram.prototype.disable =
-function disable() {
-    for (var i = 0; i < this.attrs.length; ++i) {
-        this.gl.disableVertexAttribArray(this.attrs[i]);
+  disable() {
+    const { gl, attr } = this;
+    for (const attrLoc of Object.values(attr)) {
+      gl.disableVertexAttribArray(attrLoc);
     }
-};
+  }
+
+}
