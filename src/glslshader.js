@@ -1,120 +1,153 @@
+// @ts-check
+
 "use strict";
 
-var Result = require('rezult');
+import * as rezult from './rezult.js';
 
-module.exports = GLSLShader;
+export default class GLSLShader {
 
-function GLSLShader(name, type, source) {
+  /**
+   * @param {string} name
+   * @param {string} type
+   * @param {string} source
+   * @param {GLSLShader} [nextShader]
+   */
+  constructor(name, type, source, nextShader) {
     this.name = name;
     this.type = type;
     this.source = source;
-    this.nextShader = null;
-}
+    this.nextShader = nextShader;
+  }
 
-GLSLShader.prototype.linkWith =
-function linkWith(nextShader) {
-    var self = new GLSLShader(this.name, this.type, this.source);
-    if (this.nextShader === null) {
-        self.nextShader = nextShader;
-    } else {
-        self.nextShader = this.nextShader.linkWith(nextShader);
+  /** @param {GLSLShader} nextShader */
+  linkWith(nextShader) {
+    const { name, type, source, nextShader: myNextShader } = this;
+    if (myNextShader) {
+      nextShader = myNextShader.linkWith(nextShader);
     }
-    return self;
-};
+    return new GLSLShader(name, type, source, nextShader);
+  }
 
-GLSLShader.prototype.compile =
-function compile(gl) {
-    var shader = null;
-    switch (this.type) {
-    case 'frag':
-        shader = gl.createShader(gl.FRAGMENT_SHADER);
-        break;
-    case 'vert':
-        shader = gl.createShader(gl.VERTEX_SHADER);
-        break;
-    default:
-        throw new Error('invalid glsl shader type ' + JSON.stringify(this.type));
+  /** @param {WebGLRenderingContext} gl */
+  compile(gl) {
+    const { name, type, source } = this;
+
+    const typeRes = glShaderType(gl, type);
+    if (typeRes.err) {
+      return typeRes;
     }
-    gl.shaderSource(shader, this.source);
+
+    const shader = gl.createShader(typeRes.value);
+    if (!shader) {
+      return rezult.error(new Error(`unable to create ${type} shader`));
+    }
+
+    gl.shaderSource(shader, source);
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        var mess = gl.getShaderInfoLog(shader);
-        mess = annotateCompileError(this.source, mess);
-        mess = this.name + ' ' + this.type + ' shader compile error: ' + mess;
-        return Result.error(new Error(mess));
+      const log = gl.getShaderInfoLog(shader) || '';
+      const mess = annotateCompileError(source, log);
+      return rezult.error(new Error(
+        `${name} ${type} shader compile error: ${mess}`));
     }
 
-    return Result.just(shader);
-};
+    return rezult.just(shader);
+  }
 
-GLSLShader.prototype.load =
-function load(gl) {
-    var prog = gl.createProgram();
+  /**
+   * @param {WebGLRenderingContext} gl
+   * @returns {rezult.Result<WebGLProgram>}
+   */
+  load(gl) {
+    const prog = gl.createProgram();
+    if (!prog) {
+      return rezult.error(new Error('unable to create gl program'));
+    }
 
-    for (var shader = this; shader !== null; shader = shader.nextShader) {
-        var res = shader.compile(gl);
-        if (res.err) {
-            return res;
-        }
-        gl.attachShader(prog, res.value);
+    for (let shader = /** @type {GLSLShader|undefined} */ (this); shader; shader = shader.nextShader) {
+      const res = shader.compile(gl);
+      if (res.err) {
+        return res;
+      }
+      gl.attachShader(prog, res.value);
     }
 
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-        var mess = gl.getProgramInfoLog(prog);
-        mess = 'shader program link error: ' + mess;
-        return Result.error(new Error(mess));
+      const log = gl.getProgramInfoLog(prog);
+      return rezult.error(new Error(`shader program link error: ${log}`));
     }
 
-    return Result.just(prog);
-};
+    return rezult.just(prog);
+  }
+}
 
+/**
+ * @param {WebGLRenderingContext} gl
+ * @param {string} type
+ */
+function glShaderType(gl, type) {
+  switch (type) {
+    case 'frag':
+      return rezult.just(gl.FRAGMENT_SHADER);
+    case 'vert':
+      return rezult.just(gl.VERTEX_SHADER);
+    default:
+      return rezult.error(new Error('invalid glsl shader type ' + JSON.stringify(type)));
+  }
+}
+
+/**
+ * @param {string} src
+ * @param {string} mess
+ */
 function annotateCompileError(src, mess) {
-    var match = /^ERROR: \d+:(\d+):/.exec(mess);
-    if (!match) {
-        return mess;
+  var match = /^ERROR: \d+:(\d+):/.exec(mess);
+  if (!match) {
+    return mess;
+  }
+  const lineNo = parseInt(match[1] || '');
+  const contextCount = 3;
+
+  const lines = src.split(/\n/);
+  const numLines = lines.length;
+  const w = numLines.toString().length;
+
+  return [...annotateLine(
+    numberLines(w, lines),
+    lineNo, contextCount,
+    `${' '.repeat(w)} ^-- ${mess}`
+  )].join('\n');
+}
+
+/**
+ * @param {number} w
+ * @param {Iterable<string>} lines
+ */
+function* numberLines(w, lines) {
+  let n = 0;
+  for (const line of lines) {
+    n++;
+    yield `${n.toString().padStart(w)}: ${line}`;
+  }
+}
+
+/**
+ * @param {Iterable<string>} lines
+ * @param {number} lineNo
+ * @param {number} contextCount
+ * @param {string} mess
+ */
+function* annotateLine(lines, lineNo, contextCount, mess) {
+  let n = 0;
+  for (const line of lines) {
+    n++;
+    if (Math.abs(lineNo - n) <= contextCount) {
+      yield line;
     }
-    var lines = src.split(/\n/);
-    lines = numberLines(lines);
-    var n = parseInt(match[1]);
-    var w = lines.length.toString().length + 1;
-    lines = annotateLine(
-        lines, n, 3,
-        rep(' ', w) + '^-- ' + mess);
-    return lines.join('')
-}
-
-function annotateLine(lines, n, c, mess) {
-    var out = [];
-    for (var i = 0; i < lines.length; ++i) {
-        var m = i + 1;
-        if (Math.abs(n - m) <= c) {
-            out.push(lines[i]);
-        }
-        if (m === n) {
-            out.push(mess);
-        }
+    if (n === lineNo) {
+      yield mess;
     }
-    return out;
-}
-
-function numberLines(lines) {
-    var w = lines.length.toString().length;
-    return lines.map(function(line, i) {
-        var n = i + 1;
-        return pad(n.toString(), w) + ':' + line + '\n';
-    });
-}
-
-function pad(str, n) {
-    return rep(' ', n - str.length) + str;
-}
-
-function rep(str, n) {
-    var s = '';
-    for (var i = 0; i < n; ++i) {
-        s += str;
-    }
-    return s;
+  }
 }
