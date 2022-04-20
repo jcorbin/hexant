@@ -91,7 +91,7 @@ export class TileGLBuffer {
         // set tombstone...
         index[i] = 0;
         // ...prune trailing tombstones
-        while (!index[index.length - 2]) {
+        while (index[index.length - 2] === 0) {
           index.length -= 2;
         }
         break;

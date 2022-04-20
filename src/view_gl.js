@@ -1,339 +1,455 @@
+// @ts-check
+
 'use strict';
 
+import { mat4 } from 'gl-matrix';
+
+import { OddQOffset } from './coord.js';
+import { GLProgram } from './glprogram.js';
+import { GLPalette } from './glpalette.js';
+import * as rezult from './rezult.js';
 import {
   GLBuffer,
   LazyGLBuffer,
   TileGLBuffer,
 } from './tileglbuffer.js';
+import { World } from './world.js';
 
-var World = require('./world.js');
-var Coord = require('./coord.js');
-var mat4 = require('gl-matrix').mat4;
+// TODO how to get these resolved for type checking?
+// @ts-ignore
+import oddqPointShader from './oddq_point.js';
+// @ts-ignore
+import hexFragShader from './hex.js';
 
-var GLProgram = require('./glprogram.js');
-var GLPalette = require('./glpalette.js');
-var oddqPointShader = require('./oddq_point.vert');
-var hexFragShader = require('./hex.frag');
+/** @typedef {import('./coord.js').oddQToable} oddQToable */
 
-module.exports = ViewGL;
+/** @typedef {import('./colorgen.js').ColorGenMaker} ColorGenMaker */
+/** @typedef {import('./colorgen.js').ColorGen} ColorGen */
+/** @typedef {import('./hextile.js').OddQHexTile} OddQHexTile */
 
 // TODO:
 // - in redraw lazily only draw dirty tiles, expand permitting
 // - switch to uint32 elements array if supported by extension
 // - switch to uint32 for q,r, use a highp in the shader
 
-var tau = 2 * Math.PI;
-var hexAngStep = tau / 6;
-var float2 = 2 * Float32Array.BYTES_PER_ELEMENT;
+const tau = 2 * Math.PI;
+const hexAngStep = tau / 6;
+const float2 = 2 * Float32Array.BYTES_PER_ELEMENT;
 
-function ViewGL(world, canvas) {
-  this.world = world;
-  this.canvas = canvas;
+export class ViewGL {
 
-  this.topLeftQ = new Coord.OddQOffset();
-  this.bottomRightQ = new Coord.OddQOffset();
-  this.topLeft = new Coord.ScreenPoint();
-  this.bottomRight = new Coord.ScreenPoint();
+  /**
+   * @param {World} world
+   * @param {HTMLCanvasElement} $canvas
+   */
+  constructor(world, $canvas) {
+    // TODO can we get away with not getting/retaining a world reference, and
+    // just do with what get passed in through the world -> view surface?
+    // i.e. move from `world -> view(world) + view -> world` to `world -(components)> view`
 
-  // max uint16 value for elements:
-  // TODO: may be able to use uint32 extension
-  // TODO: platform may define max in that case? (i.e. it would seem unlikely
-  // that we can actually use a full 4Gi vert attribute, let alone that we
-  // really don't want to allocate the 224GiB vert + color arrays that it
-  // would imply
-  this.maxElement = 0xffff;
+    this.world = world;
+    this.$canvas = $canvas;
 
-  this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl') || null;
-  if (!this.gl) {
-    throw new Error('no webgl support');
+    this.topLeftQ = new OddQOffset();
+    this.bottomRightQ = new OddQOffset();
+
+    // max uint16 value for elements:
+    // TODO: may be able to use uint32 extension
+    // TODO: platform may define max in that case? (i.e. it would seem unlikely
+    // that we can actually use a full 4Gi vert attribute, let alone that we
+    // really don't want to allocate the 224GiB vert + color arrays that it
+    // would imply
+    this.maxElement = 0xffff;
+
+    this.gl = this.$canvas.getContext('webgl') || null;
+    if (!this.gl) {
+      throw new Error('no webgl support');
+    }
+
+    this.perspectiveMatrix = mat4.identity(new Float32Array(16));
+
+    // TODO refactor GLProgram to just take a variadic list of shaders, and own
+    // the linking, rather than the shader linked-list deal it is currently
+
+    // TODO refactor GLSLShader so that each shader carries data about its
+    // uniforms and attributes; provide that data by analyzing source in the
+    // loader
+
+    // TODO @type only needed because import is not resolvable by typescript above
+    /** @type {import('./glslshader.js').default} */
+    const shader = oddqPointShader.linkWith(hexFragShader);
+    const prog = rezult.toValue(shader.load(this.gl));
+
+    this.hexShader = new GLProgram(this.gl,
+      prog,
+      ['uPMatrix', 'uVP', 'uRadius'],
+      ['vert', 'ang', 'color']
+    );
+    this.uSampler = this.gl.getUniformLocation(this.hexShader.prog, 'uSampler'); // TODO: GLProgram borg
+    if (!this.uSampler) {
+      throw new Error('missing uSampler uniform');
+    }
+
+    this.tileWriter = new TileWriter(this.maxElement + 1);
+    // TODO tileBufferer should only need access to the tile storage system, not the entire world
+    this.tileBufferer = new TileBufferer(this.gl, this.world, this.tileWriter);
+    this.entBuffer = new EntGLBuffer(this.gl);
+    this.maxCellsPerTile = Math.floor((this.maxElement + 1) / this.tileWriter.cellSize);
+
+    this.cellPallete = new GLPalette(this.gl, { unit: 0 });
+    this.bodyPallete = new GLPalette(this.gl, { unit: 1 });
+    this.headPallete = new GLPalette(this.gl, { unit: 2 });
+
+    /** @type {ColorGen|null} */
+    this.antCellColorGen = null;
+    /** @type {ColorGen|null} */
+    this.emptyCellColorGen = null;
+    /** @type {ColorGen|null} */
+    this.bodyColorGen = null;
+    /** @type {ColorGen|null} */
+    this.headColorGen = null;
+
+    this.needsRedraw = false;
+
+    this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
+    this.hexShader.use();
+
+    this.gl.uniform1f(this.hexShader.uniform.uRadius, 1);
+
+    this.updateSize(); // XXX: drop?
   }
 
-  this.perspectiveMatrix = mat4.identity(new Float32Array(16));
-  this.hexShader = new GLProgram(this.gl,
-    oddqPointShader.linkWith(hexFragShader),
-    ['uPMatrix', 'uVP', 'uRadius'],
-    ['vert', 'ang', 'color']
-  );
-  this.uSampler = this.gl.getUniformLocation(this.hexShader.prog, 'uSampler'); // TODO: GLProgram borg
-
-  this.tileWriter = new TileWriter(this.maxElement + 1);
-  this.tileBufferer = new TileBufferer(this.gl, this.world, this.tileWriter);
-  this.entBuffer = new EntGLBuffer(this.gl, this.hexShader);
-  this.maxCellsPerTile = Math.floor((this.maxElement + 1) / this.tileWriter.cellSize);
-
-  this.cellPallete = new GLPalette(this.gl, 0, false);
-  this.bodyPallete = new GLPalette(this.gl, 1, false);
-  this.headPallete = new GLPalette(this.gl, 2, false);
-
-  // TODO: subsume into GLPalette
-  this.colorGen = null;
-  this.antCellColorGen = null;
-  this.emptyCellColorGen = null;
-  this.bodyColorGen = null;
-  this.headColorGen = null;
-
-  this.needsRedraw = false;
-
-  this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
-  this.hexShader.use();
-
-  this.gl.uniform1f(this.hexShader.uniform.uRadius, 1);
-
-  this.updateSize(); // XXX: drop?
-}
-
-ViewGL.prototype.reset =
-  function reset() {
-    var self = this;
-
-    this.tileBufferer.reset();
-
-    this.topLeftQ.q = 0;
-    this.topLeftQ.r = 0;
-    this.bottomRightQ.q = 0;
-    this.bottomRightQ.r = 0;
-    this.world.tile.eachTile(this.tileBufferer.drawUnvisited ? eachExpandTo : eachExpandToIf);
-
+  reset() {
+    const {
+      tileBufferer,
+      topLeftQ, bottomRightQ,
+      world: { tile },
+    } = this;
+    tileBufferer.reset();
+    topLeftQ.q = 0, topLeftQ.r = 0;
+    bottomRightQ.q = 0, bottomRightQ.r = 0;
+    tile.eachTile(tileBufferer.drawUnvisited
+      ? tile => tile.expandBoxTo(topLeftQ, bottomRightQ)
+      : tile => tile.expandBoxToIf(topLeftQ, bottomRightQ, World.FlagVisited));
     this.updateSize();
+  }
 
-    function eachExpandTo(tile) {
-      tile.expandBoxTo(self.topLeftQ, self.bottomRightQ);
-    }
+  /** @param {oddQToable} pointArg */
+  expandTo(pointArg) {
+    const { topLeftQ, bottomRightQ } = this;
+    const { q, r } = pointArg.toOddQOffset();
+    let expanded = false;
 
-    function eachExpandToIf(tile) {
-      tile.expandBoxToIf(self.topLeftQ, self.bottomRightQ, World.FlagVisited);
-    }
-  };
-
-ViewGL.prototype.expandTo =
-  function expandTo(pointArg) {
-    var expanded = false;
-    var point = pointArg.toOddQOffset();
-
-    if (point.q < this.topLeftQ.q) {
-      this.topLeftQ.q = point.q;
+    if (q < topLeftQ.q) {
+      topLeftQ.q = q;
       expanded = true;
-    } else if (point.q >= this.bottomRightQ.q) {
-      this.bottomRightQ.q = point.q;
+    } else if (q >= bottomRightQ.q) {
+      bottomRightQ.q = q;
       expanded = true;
     }
 
-    if (point.r < this.topLeftQ.r) {
-      this.topLeftQ.r = point.r;
+    if (r < topLeftQ.r) {
+      topLeftQ.r = r;
       expanded = true;
-    } else if (point.r >= this.bottomRightQ.r) {
-      this.bottomRightQ.r = point.r;
+    } else if (r >= bottomRightQ.r) {
+      bottomRightQ.r = r;
       expanded = true;
     }
 
     return expanded;
-  };
+  }
 
-ViewGL.prototype.updateSize =
-  function updateSize() {
-    this.qrToScreen(this.tileWriter.cellHalfWidth, this.tileWriter.cellHalfHeight);
-    fixAspectRatio(
-      this.gl.drawingBufferWidth / this.gl.drawingBufferHeight,
-      this.topLeft, this.bottomRight);
-    mat4.ortho(this.perspectiveMatrix,
-      this.topLeft.x, this.bottomRight.x,
-      this.bottomRight.y, this.topLeft.y,
-      -1, 1);
-    this.gl.uniformMatrix4fv(this.hexShader.uniform.uPMatrix, false, this.perspectiveMatrix);
-  };
+  updateSize() {
+    const {
+      gl,
+      hexShader: {
+        uniform: { uVP, uPMatrix },
+      },
+      perspectiveMatrix,
+      $canvas: { width, height },
+      tileWriter: {
+        cellHalfWidth: rx,
+        cellHalfHeight: ry,
+      },
+      topLeftQ, bottomRightQ,
+    } = this;
 
-ViewGL.prototype.qrToScreen =
-  function qrToScreen(rx, ry) {
-    this.topLeftQ.toScreenInto(this.topLeft);
-    this.bottomRightQ.toScreenInto(this.bottomRight);
+    gl.viewport(0, 0, width, height);
+    gl.uniform2f(uVP, width, height);
 
-    this.topLeft.x -= rx;
-    this.topLeft.y -= ry;
-    this.bottomRight.x += rx;
-    this.bottomRight.y += ry;
+    let { x: topX, y: topY } = topLeftQ.toScreen();
+    let { x: botX, y: botY } = bottomRightQ.toScreen();
+    topX -= rx, topY -= ry;
+    botX += rx, botY += ry;
 
     // TODO: sometimes over tweaks, but only noticable at small scale
-    var oddEnough = (this.bottomRightQ.q - this.topLeftQ.q) > 0;
-    if (this.topLeftQ.q & 1) {
-      this.topLeft.y -= ry;
+    const oddEnough = (bottomRightQ.q - topLeftQ.q) > 0;
+    if (topLeftQ.q & 1) {
+      topY -= ry;
     }
-    if (this.bottomRightQ.q & 1 || oddEnough) {
-      this.bottomRight.y += ry;
+    if (bottomRightQ.q & 1 || oddEnough) {
+      botY += ry;
     }
-  };
 
-function fixAspectRatio(aspectRatio, topLeft, bottomRight) {
-  var gridWidth = bottomRight.x - topLeft.x;
-  var gridHeight = bottomRight.y - topLeft.y;
-  var ratio = gridWidth / gridHeight;
-  if (ratio < aspectRatio) {
-    var dx = gridHeight * aspectRatio / 2 - gridWidth / 2;
-    topLeft.x -= dx;
-    bottomRight.x += dx;
-  } else if (ratio > aspectRatio) {
-    var dy = gridWidth / aspectRatio / 2 - gridHeight / 2;
-    topLeft.y -= dy;
-    bottomRight.y += dy;
+    // fixAspectRatio
+    const aspectRatio = gl.drawingBufferWidth / gl.drawingBufferHeight;
+    const gridWidth = botX - topX;
+    const gridHeight = botY - topY;
+    const ratio = gridWidth / gridHeight;
+    if (ratio < aspectRatio) {
+      const dx = gridHeight * aspectRatio / 2 - gridWidth / 2;
+      topX -= dx, botX += dx;
+    } else if (ratio > aspectRatio) {
+      const dy = gridWidth / aspectRatio / 2 - gridHeight / 2;
+      topY -= dy, botY += dy;
+    }
+
+    mat4.ortho(perspectiveMatrix, topX, botX, botY, topY, -1, 1);
+    gl.uniformMatrix4fv(uPMatrix, false, perspectiveMatrix);
   }
-}
 
-ViewGL.prototype.setDrawTrace =
-  function setDrawTrace(dt) {
-    this.drawTrace = !!dt;
+  /** @param {boolean} should */
+  setDrawTrace(should) {
+    this.drawTrace = should;
     this.updateColors();
-  };
+  }
 
-ViewGL.prototype.resize =
-  function resize(width, height) {
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.gl.viewport(0, 0, width, height);
-    this.gl.uniform2f(this.hexShader.uniform.uVP, this.canvas.width, this.canvas.height);
-
+  /**
+   * @param {number} width
+   * @param {number} height
+   */
+  resize(width, height) {
+    const { $canvas } = this;
+    $canvas.width = width;
+    $canvas.height = height;
     this.updateSize();
     this.redraw();
-  };
+  }
 
-ViewGL.prototype.redraw =
-  function redraw() {
-    // TODO: partial redraws in the non-expanded case
+  redraw() {
+    const { gl, hexShader } = this;
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
-    this.tileBufferer.flush();
-
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    this.hexShader.enable();
-
-    // tiles
-    this.cellPallete.use(this.uSampler);
-    this.gl.uniform1f(this.hexShader.uniform.uRadius, 1.0);
+    hexShader.enable();
     this.drawTiles();
+    this.drawEntities();
+    hexShader.disable();
 
-    this.gl.enableVertexAttribArray(this.hexShader.attr.ang);
-
-    // ents bodies
-    this.bodyPallete.use(this.uSampler);
-    this.gl.uniform1f(this.hexShader.uniform.uRadius, 0.5);
-    this.entBuffer.drawBodies(this.world);
-
-    // ents heads
-    this.headPallete.use(this.uSampler);
-    this.gl.uniform1f(this.hexShader.uniform.uRadius, 0.75);
-    this.entBuffer.drawHeads(this.world);
-
-    this.hexShader.disable();
-    this.gl.finish();
-
+    gl.finish();
     this.needsRedraw = false;
-  };
+  }
 
-ViewGL.prototype.drawTiles =
-  function drawTiles() {
-    this.gl.disableVertexAttribArray(this.hexShader.attr.ang);
-    for (var i = 0; i < this.tileBufferer.tileBuffers.length; ++i) {
-      var tileBuffer = this.tileBufferer.tileBuffers[i];
-      if (!tileBuffer.tiles.length) {
-        continue;
+  drawTiles() {
+    const {
+      gl,
+      hexShader: {
+        attr: {
+          ang: angAttr,
+          vert: vertAttr,
+          color: colorAttr,
+        },
+        uniform: { uRadius },
+      },
+      uSampler,
+      cellPallete,
+      tileBufferer,
+    } = this;
+
+    // flush changed tile data to buffers
+    tileBufferer.flush();
+
+    gl.uniform1f(uRadius, 1.0);
+
+    // tiles are full hexes without an ang attribute
+    gl.disableVertexAttribArray(angAttr);
+
+    cellPallete.use(uSampler);
+
+    // draw all tiles
+    for (const { index, verts, colors, elements, usedElements } of tileBufferer.tileBuffers) {
+      if (index.length) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, verts.buf);
+        gl.vertexAttribPointer(vertAttr, verts.width, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, colors.buf);
+        gl.vertexAttribPointer(colorAttr, colors.width, gl.UNSIGNED_BYTE, true, 0, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements.buf);
+        gl.drawElements(gl.POINTS, usedElements, gl.UNSIGNED_SHORT, 0);
       }
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tileBuffer.verts.buf);
-      this.gl.vertexAttribPointer(this.hexShader.attr.vert, tileBuffer.verts.width, this.gl.FLOAT, false, 0, 0);
-      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, tileBuffer.colors.buf);
-      this.gl.vertexAttribPointer(this.hexShader.attr.color, tileBuffer.colors.width, this.gl.UNSIGNED_BYTE, true, 0, 0);
-      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, tileBuffer.elements.buf);
-      this.gl.drawElements(this.gl.POINTS, tileBuffer.usedElements, this.gl.UNSIGNED_SHORT, 0);
     }
-  };
+  }
 
-ViewGL.prototype.updateEnts =
-  function updateEnts() {
-    this.updateColors();
-  };
+  drawEntities() {
+    const {
+      gl,
+      hexShader: {
+        attr: {
+          ang: angAttr,
+          vert: vertAttr,
+          color: colorAttr,
+        },
+        uniform: { uRadius },
+      },
+      uSampler,
+      bodyPallete, headPallete,
+      entBuffer,
+      world: { ents },
+    } = this;
 
-ViewGL.prototype.addEnt =
-  function addEnt() {
-    this.updateColors();
-  };
-
-ViewGL.prototype.updateEnt =
-  function updateEnt() {
-    this.updateColors();
-  };
-
-ViewGL.prototype.removeEnt =
-  function removeEnt() {
-    this.updateColors();
-  };
-
-ViewGL.prototype.setColorGen =
-  function setColorGen(colorGen) {
-    if (typeof colorGen !== 'function') {
-      this.colorGen = null;
+    if (!ents.length) {
       return;
     }
-    this.colorGen = colorGen;
-    this.emptyCellColorGen = extendColorGen(colorGen(0), World.MaxColor);
-    this.antCellColorGen = extendColorGen(colorGen(1), World.MaxColor);
-    this.bodyColorGen = colorGen(2);
-    this.headColorGen = colorGen(3);
+
+    // extract world entity data
+    const poss = ents.map(({ pos }) => pos);
+    const dirs = ents.map(({ dir }) => dir);
+    entBuffer.ensureLen(ents.length);
+
+    // head and body are partial hexes with an ang attribute
+    gl.enableVertexAttribArray(angAttr);
+
+    // lay down entity color palette indices
+    setNumbers(entBuffer.colors, function*() {
+      // TODO ent color scheme beyond monotonic
+      for (let i = 0; i < poss.length; i++) {
+        yield i;
+      }
+    }());
+
+    // lay down entity positions and body arcs
+    setNumbers(entBuffer.verts, function*() {
+      for (const [{ q, r }, dir] of zip(poss, dirs)) {
+        yield q; yield r;
+        const ang = dir * hexAngStep;
+        yield ang + hexAngStep; yield ang;
+      }
+    }());
+
+    // draw entity bodies
+    bodyPallete.use(uSampler);
+    gl.uniform1f(uRadius, 0.5);
+    gl.bindBuffer(gl.ARRAY_BUFFER, entBuffer.bodyVertsBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, entBuffer.verts, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(vertAttr, 2, gl.FLOAT, false, float2, 0);
+    gl.vertexAttribPointer(angAttr, 2, gl.FLOAT, false, float2, float2);
+    gl.bindBuffer(gl.ARRAY_BUFFER, entBuffer.bodyColorsBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, entBuffer.colors, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(colorAttr, 1, gl.UNSIGNED_BYTE, true, 0, 0);
+    gl.drawArrays(gl.POINTS, 0, entBuffer.len);
+
+    // lay down entity head co-arcs
+    setStridedNumbers(entBuffer.verts, 2, 4, function*() {
+      for (const dir of dirs) {
+        const ang = dir * hexAngStep;
+        yield ang; yield ang + hexAngStep;
+      }
+    }());
+
+    // draw entity heads
+    headPallete.use(uSampler);
+    gl.uniform1f(uRadius, 0.75);
+    gl.bindBuffer(gl.ARRAY_BUFFER, entBuffer.headVertsBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, entBuffer.verts, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(vertAttr, 2, gl.FLOAT, false, float2, 0);
+    gl.vertexAttribPointer(angAttr, 2, gl.FLOAT, false, float2, float2);
+    gl.bindBuffer(gl.ARRAY_BUFFER, entBuffer.headColorsBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, entBuffer.colors, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(colorAttr, 1, gl.UNSIGNED_BYTE, true, 0, 0);
+    gl.drawArrays(gl.POINTS, 0, entBuffer.len);
+  }
+
+  // TODO these are terrible legacy api callbacks for World, burn it down...
+  // these methods used to do something different in prior iteration of the
+  // view, but are all now redundant 💀
+  addEnt() { this.updateColors(); }
+  updateEnt() { this.updateColors(); }
+  removeEnt() { this.updateColors(); }
+  updateEnts() { this.updateColors(); }
+
+  /** @param {ColorGenMaker} colorGenMaker */
+  setColorGen(colorGenMaker) {
+    const { makeColorGen } = colorGenMaker;
+    this.emptyCellColorGen = extendColorGen(makeColorGen(0), World.MaxColor);
+    this.antCellColorGen = extendColorGen(makeColorGen(1), World.MaxColor);
+    this.bodyColorGen = makeColorGen(2);
+    this.headColorGen = makeColorGen(3);
     this.updateColors();
-  };
+  }
 
-ViewGL.prototype.updateColors =
-  function updateColors() {
-    if (this.colorGen == null) return;
-    this.cellPallete.setColorsRGB(this.drawTrace
-      ? this.emptyCellColorGen(this.world.numColors)
-      : this.antCellColorGen(this.world.numColors));
-    this.bodyPallete.setColorsRGB(this.bodyColorGen(this.world.ents.length));
-    this.headPallete.setColorsRGB(this.headColorGen(this.world.ents.length));
-  };
+  updateColors() {
+    const {
+      drawTrace,
+      world: { ents, numColors },
+      cellPallete, emptyCellColorGen, antCellColorGen,
+      bodyPallete, bodyColorGen,
+      headPallete, headColorGen,
+    } = this;
+    const cellGen = drawTrace ? emptyCellColorGen : antCellColorGen;
+    if (cellGen) {
+      cellPallete.setColorsRGB(cellGen(numColors));
+    }
+    if (bodyColorGen) {
+      bodyPallete.setColorsRGB(bodyColorGen(ents.length));
+    }
+    if (headColorGen) {
+      headPallete.setColorsRGB(headColorGen(ents.length));
+    }
+  }
 
-ViewGL.prototype.setLabeled =
-  function setLabeled() {
-    // noop
-  };
-
-ViewGL.prototype.setDrawUnvisited =
-  function setDrawUnvisited(drawUnvisited) {
+  get drawUnvisited() {
+    return this.tileBufferer.drawUnvisited;
+  }
+  set drawUnvisited(drawUnvisited) {
     this.tileBufferer.drawUnvisited = drawUnvisited;
-  };
+  }
 
-ViewGL.prototype.step =
-  function step() {
-    var expanded = false;
-    for (var i = 0; i < this.world.ents.length; i++) {
-      expanded = this.expandTo(this.world.getEntPos(i)) || expanded;
+  step() {
+    const { world } = this;
+    let expanded = false;
+    for (let i = 0; i < world.ents.length; i++) {
+      expanded = this.expandTo(world.getEntPos(i)) || expanded;
     }
     if (expanded) {
       this.updateSize();
     }
     this.needsRedraw = true;
-
-    // TODO: consider restoring partial updates
-  };
-
-function EntGLBuffer(gl, hexShader) {
-  this.gl = gl;
-  this.hexShader = hexShader;
-  this.len = 0;
-  this.cap = 0;
-  this.verts = null;
-  this.colors = null;
-  this.bodyVertsBuf = null;
-  this.bodyColorsBuf = null;
-  this.headVertsBuf = null;
-  this.headColorsBuf = null;
+  }
 }
 
-EntGLBuffer.prototype.free =
-  function free() {
-    this.gl.deleteBuffer(this.bodyVertsBuf);
-    this.gl.deleteBuffer(this.bodyColorsBuf);
-    this.gl.deleteBuffer(this.headVertsBuf);
-    this.gl.deleteBuffer(this.headColorsBuf);
-  };
+class EntGLBuffer {
+  /** @param {WebGLRenderingContext} gl */
+  constructor(gl) {
+    this.gl = gl;
+    this.len = 0;
+    this.cap = 0;
 
-EntGLBuffer.prototype.alloc =
-  function alloc(cap) {
+    /** @type {Float32Array|null} */
+    this.verts = null;
+    /** @type {Uint8Array|null} */
+    this.colors = null;
+
+    /** @type {WebGLBuffer|null} */
+    this.bodyVertsBuf = null;
+    /** @type {WebGLBuffer|null} */
+    this.bodyColorsBuf = null;
+
+    /** @type {WebGLBuffer|null} */
+    this.headVertsBuf = null;
+    /** @type {WebGLBuffer|null} */
+    this.headColorsBuf = null;
+  }
+
+  free() {
+    const { gl } = this;
+    this.verts = null;
+    this.colors = null;
+    gl.deleteBuffer(this.bodyVertsBuf);
+    gl.deleteBuffer(this.bodyColorsBuf);
+    gl.deleteBuffer(this.headVertsBuf);
+    gl.deleteBuffer(this.headColorsBuf);
+  }
+
+  /** @param {number} cap */
+  alloc(cap) {
     this.cap = cap;
     this.verts = new Float32Array(this.cap * 4);
     this.colors = new Uint8Array(this.cap * 1);
@@ -341,258 +457,316 @@ EntGLBuffer.prototype.alloc =
     this.bodyColorsBuf = this.gl.createBuffer();
     this.headVertsBuf = this.gl.createBuffer();
     this.headColorsBuf = this.gl.createBuffer();
-  };
+  }
 
-EntGLBuffer.prototype.draw =
-  function draw(hexShader, vertBuf, colorBuf) {
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vertBuf);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, this.verts, this.gl.STATIC_DRAW);
-    this.gl.vertexAttribPointer(hexShader.attr.vert, 2, this.gl.FLOAT, false, float2, 0);
-    this.gl.vertexAttribPointer(hexShader.attr.ang, 2, this.gl.FLOAT, false, float2, float2);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, colorBuf);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, this.colors, this.gl.STATIC_DRAW);
-    this.gl.vertexAttribPointer(hexShader.attr.color, 1, this.gl.UNSIGNED_BYTE, true, 0, 0);
-    this.gl.drawArrays(this.gl.POINTS, 0, this.len);
-  };
-
-EntGLBuffer.prototype.drawBodies =
-  function drawBodies(world) {
-    var n = world.ents.length;
-    if (n > this.len) {
-      if (this.len > 0) {
+  /** @param {number} len */
+  ensureLen(len) {
+    if (len > this.cap) {
+      if (this.cap > 0) {
         this.free();
       }
-      this.alloc(n);
+      this.alloc(len < 1024
+        ? 2 * len
+        : len + Math.floor(len / 4));
     }
-    var pos = new Coord.OddQOffset(0, 0);
-    var i = 0, j = 0, k = 0;
-    while (i < n) {
-      world.getEntPos(i).toOddQOffsetInto(pos);
-      var ang = world.getEntDir(i) * hexAngStep;
-      this.verts[j++] = pos.q;
-      this.verts[j++] = pos.r;
-      this.verts[j++] = ang + hexAngStep;
-      this.verts[j++] = ang;
-      this.colors[k++] = i;
-      i++;
-    }
-    this.len = n;
-    this.draw(this.hexShader, this.bodyVertsBuf, this.bodyColorsBuf);
-  };
-
-EntGLBuffer.prototype.drawHeads =
-  function drawHeads() {
-    var i = 0, j = 0, k = 0;
-    while (i < this.len) {
-      j += 2;
-      var tmp = this.verts[j];
-      this.verts[j] = this.verts[j + 1];
-      this.verts[j + 1] = tmp;
-      j += 2;
-      this.colors[k++] = i;
-      i++;
-    }
-    this.draw(this.hexShader, this.headVertsBuf, this.headColorsBuf);
-  };
-
-function TileWriter(bufferSize) {
-  this.bufferSize = bufferSize;
-  this.vertSize = 2;
-  this.colorSize = 1;
-  this.cellSize = 1;
-  this.maxCells = Math.floor(this.bufferSize / this.cellSize);
-  if (this.maxCells < 1) {
-    throw new Error("can't fit any tiles in that bufferSize");
+    this.len = len;
   }
-  this.elementsSize = this.cellSize * this.maxCells + 2 * (this.maxCells - 1);
-  this.colors = null;
+}
 
-  /* The vertex order in cellXYs is:
-   *       2 1
-   *     3     0
-   *       4 5
-   * So that means:
-   * - the n-th x coord is at 2*n
-   * - the n-th y coord is at 2*n+1
+class TileWriter {
+  /** @param {number} bufferSize */
+  constructor(bufferSize) {
+    this.bufferSize = bufferSize;
+    this.vertSize = 2;
+    this.colorSize = 1;
+    this.cellSize = 1;
+    this.maxCells = Math.floor(this.bufferSize / this.cellSize);
+    if (this.maxCells < 1) {
+      throw new Error("can't fit any tiles in that bufferSize");
+    }
+    this.elementsSize = this.cellSize * this.maxCells + 2 * (this.maxCells - 1);
+    this.colors = null;
+
+    // Flat-topped vertices indexed by 2 * Math.PI * i / 6:
+    //     2 1
+    //   3     0
+    //     4 5
+    this.cellWidth = Math.cos(0) - Math.cos(Math.PI);
+    this.cellHeight =
+      Math.sin(2 * Math.PI / 6) -
+      Math.sin(2 * Math.PI * 5 / 6);
+    this.cellHalfWidth = this.cellWidth / 2;
+    this.cellHalfHeight = this.cellHeight / 2;
+  }
+
+  /**
+   * @param {number} id
+   * @param {WebGLRenderingContext} gl
    */
-  this.cellXYs = new Float32Array(12);
-  for (var r = 0, i = 0, j = 0; i < 6; i++) {
-    this.cellXYs[j++] = Math.cos(r);
-    this.cellXYs[j++] = Math.sin(r);
-    r += 2 * Math.PI / 6;
-  }
-  this.cellWidth = this.cellXYs[2 * 0] - this.cellXYs[2 * 3];
-  this.cellHeight = this.cellXYs[2 * 1 + 1] - this.cellXYs[2 * 5 + 1];
-  this.cellHalfWidth = this.cellWidth / 2;
-  this.cellHalfHeight = this.cellHeight / 2;
-}
-
-TileWriter.prototype.newTileBuffer =
-  function newTileBuffer(id, gl) {
+  newTileBuffer(id, gl) {
+    const { elementsSize, bufferSize, vertSize, colorSize } = this;
     return new TileGLBuffer(id,
-      new GLBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, 1, new Uint16Array(this.elementsSize)),
-      new LazyGLBuffer(gl, gl.ARRAY_BUFFER, this.vertSize, new Float32Array(this.bufferSize * this.vertSize)),
-      new LazyGLBuffer(gl, gl.ARRAY_BUFFER, this.colorSize, new Uint8Array(this.bufferSize * this.colorSize)),
+      new GLBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, 1, new Uint16Array(elementsSize)),
+      new LazyGLBuffer(gl, gl.ARRAY_BUFFER, vertSize, new Float32Array(bufferSize * vertSize)),
+      new LazyGLBuffer(gl, gl.ARRAY_BUFFER, colorSize, new Uint8Array(bufferSize * colorSize)),
     );
-  };
+  }
 
-TileWriter.prototype.writeTileVerts =
-  function writeTileVerts(tile, tileBuffer, start) {
-    var glData = tileBuffer.verts.data;
-    var loQ = tile.origin.q;
-    var loR = tile.origin.r;
-    var hiQ = loQ + tile.width;
-    var hiR = loR + tile.height;
-    var vi = start * this.vertSize;
-    var end = start;
-    for (var r = loR; r < hiR; r++) {
-      for (var q = loQ; q < hiQ; q++) {
-        glData[vi++] = q;
-        glData[vi++] = r;
-        end++;
+  /**
+   * @param {OddQHexTile} tile
+   * @param {TileGLBuffer} tileBuffer
+   * @param {number} start
+   */
+  writeTileVerts({ data, origin, width, height }, { verts }, start) {
+    if (!data) { return }
+    setNumbers(verts.data.subarray(start * this.vertSize), function*() {
+      const { q: loQ, r: loR } = origin;
+      const hiQ = loQ + width;
+      const hiR = loR + height;
+      for (let r = loR; r < hiR; r++) {
+        for (let q = loQ; q < hiQ; q++) {
+          yield q;
+          yield r;
+        }
       }
-    }
-    tileBuffer.verts.invalidate(start, end);
+    }());
+    const end = start + width * height;
+    verts.invalidate(start, end);
     return end;
-  };
+  }
 
-TileWriter.prototype.writeTileColors =
-  function writeTileColors(tile, tileBuffer, start) {
-    var glData = tileBuffer.colors.data;
-    var ci = start * this.colorSize;
-    var end = start;
-    for (var i = 0; i < tile.data.length; ++i) {
-      glData[ci++] = tile.data[i] & World.MaskColor;
-      end++;
-    }
-    tileBuffer.colors.invalidate(start, end);
+  /**
+   * @param {OddQHexTile} tile
+   * @param {TileGLBuffer} tileBuffer
+   * @param {number} start
+   */
+  writeTileColors({ data }, { colors }, start) {
+    if (!data) { return }
+    setNumbers(colors.data.subarray(start * this.colorSize), function*() {
+      for (const datum of data) {
+        yield datum & World.MaskColor;
+      }
+    }());
+    const end = start + data.length;
+    colors.invalidate(start, end);
     return end;
-  };
-
-function TileBufferer(gl, world, tileWriter) {
-  var self = this;
-
-  this.gl = gl;
-  this.world = world;
-  this.tileWriter = tileWriter;
-  this.drawUnvisited = false;
-
-  this.tileBuffers = [];
-  this.bufferForTileId = {};
-  this.dirtyTileBuffers = [];
-
-  this.world.tile.tileRemoved = function onWorldTileRemoved(tile) {
-    self.onWorldTileRemoved(tile);
-  };
+  }
 }
 
-TileBufferer.prototype.reset =
-  function reset() {
-    this.bufferForTileId = {};
-    this.dirtyTileBuffers.length = 0;
-    for (var i = 0; i < this.tileBuffers.length; ++i) {
-      var tileBuffer = this.tileBuffers[i];
+class TileBufferer {
+  /**
+   * @param {WebGLRenderingContext} gl
+   * @param {World} world
+   * @param {TileWriter} tileWriter
+   */
+  constructor(gl, world, tileWriter) {
+    this.gl = gl;
+    this.world = world;
+    this.tileWriter = tileWriter;
+    this.drawUnvisited = false;
+
+    /** @type {TileGLBuffer[]} */
+    this.tileBuffers = [];
+
+    /** @type {Map<number, number>} */
+    this.bufferForTileId = new Map();
+
+    /** @type {Set<number>} */
+    this.dirtyTileBuffers = new Set();
+
+    // TODO this is a singular callback... that'll never work for more than one view...
+    this.world.tile.tileRemoved = tile => this.onWorldTileRemoved(tile);
+  }
+
+  reset() {
+    const {
+      bufferForTileId,
+      dirtyTileBuffers,
+      tileBuffers,
+    } = this;
+    bufferForTileId.clear();
+    dirtyTileBuffers.clear();
+    for (const tileBuffer of tileBuffers) {
       tileBuffer.reset();
     }
-  };
+  }
 
-TileBufferer.prototype.onWorldTileRemoved =
-  function onWorldTileRemoved(tile) {
-    var bufferId = this.bufferForTileId[tile.id];
+  /** @param {OddQHexTile} tile */
+  onWorldTileRemoved(tile) {
+    const {
+      bufferForTileId,
+      tileBuffers,
+    } = this;
+    const bufferId = bufferForTileId.get(tile.id);
     if (bufferId !== undefined) {
-      var tileBuffer = this.tileBuffers[bufferId];
+      const tileBuffer = tileBuffers[bufferId];
       if (!tileBuffer) {
         throw new Error('got tileRemoved for an unknown tile');
       }
       tileBuffer.removeTile(tile.id);
-      delete this.bufferForTileId[tile.id];
+      bufferForTileId.delete(tile.id);
     }
-  };
+  }
 
-TileBufferer.prototype.flush =
-  function flush() {
-    var i;
-    for (i = 0; i < this.world.tile.dirtyTiles.length; ++i) {
-      var tile = this.world.tile.dirtyTiles[i];
+  flush() {
+    const {
+      world: { tile: { dirtyTiles } },
+      dirtyTileBuffers,
+      tileBuffers,
+    } = this;
+    for (const tile of dirtyTiles) {
       this.flushTile(tile);
     }
-    this.world.tile.dirtyTiles.length = 0;
-    for (i = 0; i < this.dirtyTileBuffers.length; ++i) {
-      var tileBuffer = this.dirtyTileBuffers[i];
+    dirtyTiles.length = 0;
+
+    for (const id of dirtyTileBuffers) {
+      const tileBuffer = tileBuffers[id];
       this.flushTileBuffer(tileBuffer);
     }
-    this.dirtyTileBuffers.length = 0;
-  };
+    dirtyTileBuffers.clear();
+  }
 
-TileBufferer.prototype.flushTile =
-  function flushTile(tile) {
-    var offset = -1;
-    var tileBuffer = null;
-    var bufferId = this.bufferForTileId[tile.id];
-    if (bufferId !== undefined) {
-      tileBuffer = this.tileBuffers[bufferId];
+  /** @param {OddQHexTile} tile */
+  flushTile(tile) {
+    const {
+      dirtyTileBuffers,
+      tileWriter,
+    } = this;
+    const { tileBuffer, offset } = this.bufferFor(tile);
+    tileWriter.writeTileVerts(tile, tileBuffer, offset);
+    tileWriter.writeTileColors(tile, tileBuffer, offset);
+    dirtyTileBuffers.add(tileBuffer.id);
+    tile.dirty = false;
+  }
+
+  /**
+   * @param {OddQHexTile} tile
+   * @returns {{tileBuffer: TileGLBuffer, offset: number}}
+   */
+  bufferFor(tile) {
+    if (!tile.data) {
+      throw new Error('unallocated tile will not be assigned a buffer');
     }
-    if (!tileBuffer) {
-      for (var i = 0; i < this.tileBuffers.length; ++i) {
-        tileBuffer = this.tileBuffers[i];
-        offset = tileBuffer.addTile(tile.id, tile.data.length * this.tileWriter.cellSize);
-        if (offset >= 0) {
-          break;
-        }
-        tileBuffer = null;
-      }
-      if (!tileBuffer) {
-        tileBuffer = this.tileWriter.newTileBuffer(this.tileBuffers.length, this.gl);
-        this.tileBuffers.push(tileBuffer);
-        offset = tileBuffer.addTile(tile.id, tile.data.length * this.tileWriter.cellSize);
-        if (offset < 0) {
-          throw new Error('unable to add tile to new tileBuffer');
-        }
-      }
-      this.bufferForTileId[tile.id] = tileBuffer.id;
 
-      this.tileWriter.writeTileVerts(tile, tileBuffer, offset);
-    } else {
-      offset = tileBuffer.tileOffset(tile.id);
+    const {
+      gl,
+      bufferForTileId,
+      tileWriter,
+      tileBuffers,
+    } = this;
+
+    const bufferId = bufferForTileId.get(tile.id);
+    if (bufferId !== undefined) {
+      const tileBuffer = tileBuffers[bufferId];
+      const offset = tileBuffer.tileOffset(tile.id);
       if (offset < 0) {
         throw new Error('dissociated tileBuffer.tiles -> tile');
       }
+      return { tileBuffer, offset };
     }
-    this.tileWriter.writeTileColors(tile, tileBuffer, offset);
-    if (!tileBuffer.dirty) {
-      tileBuffer.dirty = true;
-      this.dirtyTileBuffers.push(tileBuffer);
-    }
-    tile.dirty = false;
-  };
 
-TileBufferer.prototype.flushTileBuffer =
-  function flushTileBuffer(tileBuffer) {
+    for (const tileBuffer of tileBuffers) {
+      const offset = tileBuffer.addTile(tile.id, tile.data.length * tileWriter.cellSize);
+      if (offset >= 0) {
+        bufferForTileId.set(tile.id, tileBuffer.id);
+        return { tileBuffer, offset };
+      }
+    }
+
+    const tileBuffer = tileWriter.newTileBuffer(tileBuffers.length, gl);
+    tileBuffers.push(tileBuffer);
+    const offset = tileBuffer.addTile(tile.id, tile.data.length * tileWriter.cellSize);
+    if (offset < 0) {
+      throw new Error('unable to add tile to new tileBuffer');
+    }
+    bufferForTileId.set(tile.id, tileBuffer.id);
+    return { tileBuffer, offset };
+  }
+
+  /** @param {TileGLBuffer} tileBuffer */
+  flushTileBuffer(tileBuffer) {
+    const { world, drawUnvisited } = this;
     tileBuffer.usedElements = 0;
-    for (const tileId of tileBuffer.tiles) {
-      if (tileId) {
-        const tile = this.world.tile.getTile(tileId);
-        if (!tile) {
-          throw new Error(`tile #${tileId} missing in buffer #${tileBuffer.id}`);
+    for (const tileId of tileBuffer.tileRanges.keys()) {
+      const tile = world.tile.getTile(tileId);
+      if (!tile) {
+        throw new Error(`tile #${tileId} missing in buffer #${tileBuffer.id}`);
+      }
+      if (!tile.data) {
+        throw new Error(`tile #${tileId} has no data for buffer #${tileBuffer.id}`);
+      }
+      let offset = tileBuffer.tileOffset(tile.id);
+      for (const datum of tile.data) {
+        if (drawUnvisited || datum & World.FlagVisited) {
+          tileBuffer.addElement(offset);
         }
-        let offset = tileBuffer.tileOffset(tile.id);
-        for (const datum of tile.data) {
-          if (this.drawUnvisited || datum & World.FlagVisited) {
-            tileBuffer.addElement(offset);
-          }
-          offset++;
-        }
+        offset++;
       }
     }
     tileBuffer.flush();
-  };
+  }
+}
 
+/**
+ * @param {ColorGen} gen
+ * @param {number} n
+ * @returns {ColorGen}
+ */
 function extendColorGen(gen, n) {
-  return function extendedColorGen(m) {
-    var ar = gen(m);
+  return function*(m) {
+    const ar = [...gen(m)];
     m = ar.length;
-    if (!m) return ar;
-    while (ar.length <= n) ar.push(ar[ar.length % m]);
-    return ar;
+    if (!m) return;
+    yield* ar;
+    for (let i = ar.length; i < n; i++) {
+      yield ar[i % ar.length];
+    }
   };
+}
+
+/** @template A, B
+ * @param {ArrayLike<A>} a
+ * @param {ArrayLike<B>} b
+ */
+function* zip(a, b) {
+  for (let i = 0; i < a.length && i < b.length; i++) {
+    yield /** @type {[A, B]} */([a[i], b[i]]);
+  }
+}
+
+/**
+ * @param {{readonly length: number, [index: number]: number}|null} ar
+ * @param {Iterable<number>} ns
+ */
+function setNumbers(ar, ns) {
+  const length = ar?.length;
+  if (!length) {
+    return;
+  }
+  let i = 0;
+  for (const n of ns) {
+    ar[i] = n;
+    if (++i >= length) { return; }
+  }
+}
+
+/**
+ * @param {{readonly length: number, [index: number]: number}|null} ar
+ * @param {number} offset
+ * @param {number} stride
+ * @param {Iterable<number>} ns
+ */
+function setStridedNumbers(ar, offset, stride, ns) {
+  const length = ar?.length;
+  if (!length) {
+    return;
+  }
+  let i = offset;
+  for (const n of ns) {
+    ar[i] = n;
+    if (++i >= length) { return; }
+    if (i % stride == 0) {
+      i += offset;
+    }
+  }
 }
