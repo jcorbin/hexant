@@ -18,13 +18,13 @@ Uplifting old javascript toward a full type checking pass:
   - return frozen result objects
   - maybe drop the `class Result` entirel, and shift to `makeResult`
 
-## Status 20% done (968 / 4862 LoC, 8 / 35 modules)
+## Status 53% done (2539 / 4807 LoC, 17 / 35 modules)
 
 - NOTE: "pass" means passes `// @ts-check`
 - NOTE: "works" means functionally verified
 - NOTE: any module without a stated status is "TODO"
 
-- `glsl-loader.js` - pass
+- `glsl-loader.js` - works
 - `src/`
   - `colorgen.js` - pass
   - `coord.js` - pass
@@ -33,16 +33,16 @@ Uplifting old javascript toward a full type checking pass:
   - `glslshader.js` - pass
   - `hashbind.js` - pass
   - `hexant.js` - WIP top level controller ; TODO decompose
-  - `hextile.js`
-  - `hextiletree.js`
-  - `pool.js`
-  - `prompt.js`
-  - `rangelist.js`
+  - `hextile.js` - pass
+  - `hextiletree.js` - pass
+  - `pool.js` - pass
+  - `prompt.js` - pass
+  - `rangelist.js` - pass
   - `rezult.js` - pass
-  - `sample.js`
-  - `tileglbuffer.js`
+  - `sample.js` - pass
+  - `tileglbuffer.js` - pass
   - `view_gl.js`
-  - `world.js`
+  - `world.js` - pass
   - `test/`
     - `hextiletree.js`
     - `index.js` - TODO port to ava
@@ -66,31 +66,30 @@ Uplifting old javascript toward a full type checking pass:
 ```
 $ cloc --vcs=git --include-lang=JavaScript --by-file
 
-github.com/AlDanial/cloc v 1.92  T=0.04 s (831.6 files/s, 145287.4 lines/s)
 ------------------------------------------------------------------------------------------
 File                                        blank        comment           code
 ------------------------------------------------------------------------------------------
 glsl-loader.js                                 16             17            103
 snowpack.config.js                              1              3             18
 src/colorgen.js                                15             35             66
-src/coord.js                                   61             80            283
+src/coord.js                                   63             88            283
 src/glpalette.js                               12             11             48
 src/glprogram.js                               13             12             29
-src/glslshader.js                              19             24             90
+src/glslshader.js                              19             27             90
 src/hashbind.js                                58             72            318
 src/hexant.js                                  61             16            351
-src/hextile.js                                 18              3            145
-src/hextiletree.js                             55              2            461
-src/pool.js                                     1              0             19
-src/prompt.js                                  14              0            107
-src/rangelist.js                                5             14             62
+src/hextile.js                                 23             39            166
+src/hextiletree.js                             77             73            417
+src/pool.js                                     2              8             20
+src/prompt.js                                  17             32            107
+src/rangelist.js                                6             26             61
 src/rezult.js                                   6             22             31
-src/sample.js                                  15             10             94
+src/sample.js                                  19             20             75
 src/test/hextiletree.js                        15              3             80
 src/test/index.js                               1              0              4
 src/test/rangelist.js                          11              8             52
 src/test/tileglbuffer.js                       16              0            285
-src/tileglbuffer.js                            13              7             80
+src/tileglbuffer.js                            33             72            196
 src/turmite/constants.js                        8             16             55
 src/turmite/index.js                           23             44             95
 src/turmite/lang/analyze.js                    10              2             69
@@ -103,10 +102,10 @@ src/turmite/lang/walk.js                       15              0             70
 src/turmite/parse.js                           20              5            112
 src/turmite/rle-builder.js                      3              0             39
 src/turmite/test.js                            38             11            185
-src/view_gl.js                                 90             29            598
-src/world.js                                   24              3            199
+src/view_gl.js                                 78             22            490
+src/world.js                                   49             51            178
 ------------------------------------------------------------------------------------------
-SUM:                                          781            472           4862
+SUM:                                          852            758           4807
 ------------------------------------------------------------------------------------------
 
 ```
@@ -114,6 +113,24 @@ SUM:                                          781            472           4862
 # TODO
 
 - get it working on dev server again
+- refactor `glslshader.js` and `glprogram.js`
+  - move linking to program;
+    program becomes `new GLProgram(gl, shadeer1, shader2, ...)`
+  - provide unifrom / attrib introspection from shader;
+    shader become `new GLSLShader({name, type, source, uniformNames, attribNames})`
+    - with name extraction done at build time by `glsl-loader.js` using the
+      parser we added for minification
+- `hextiletree.js` refactor to linear(-ish) form
+  - either on a `Map<{key, mask}, tile>` or on `Array<tile>` sorted by `Array<{key, mask}>`
+  - probably a good time to move to maker form
+- refactor `World.ents` to be propely system oriented, rather than have the
+  world model itself particpate in per-ent convernts
+- once there's only need for a single pool (no more nodes), flatten it into
+  `hextile.js`, dropping `pool.js`
+- revamp `coord.js`
+  - push conversions out to callers
+  - maybe drop the `type` field?
+  - can we elminate `CubePoint` (it only has a couple of users)?
 - unbreak the tests, after the `src/` pivot
 - switch classes out for maker pattern throughout; initial uplift pass above
   may do so when scope is small enough to be easily done in passing
@@ -130,9 +147,27 @@ SUM:                                          781            472           4862
 - maybe just write a custom parser and drop nearley
 - META: see also / subsume the old `TODO.md` file
 
-# 2022-04-19
+# 2022-04-20
 
 ## Done
+
+- uplifted `pool.js`
+  - refactored to a `makePool(cons) => {alloc, free}` for use in static blocks
+- uplifted `hextile.js`
+- uplifted `hextiletree.js`
+  - lots of subtle changes, fixes, and improvements on the way around weak
+    points revealed by type checking
+- uplifted `prompt.js`
+  - the initial gutennacht pass was insufficient, type checking revealed typos,
+    and other deficiences
+- uplifted `rangelist.js`
+- uplifted `sample.js`
+- uplifted `tileglbuffer.js`
+  - subsumed `TileGLBuffer`, `LazyGLBuffer`, and `GLBuffer` out of `view_gl.js`
+- simplifed old cell width/height calc logic, a holdover from the times
+  when we used to compute 6 vertices per cell
+
+# 2022-04-19
 
 - uplifted `glpalette.js` thru type checking
   - minor change to data array fill to use `UInt8Array.fill` and `.set`
