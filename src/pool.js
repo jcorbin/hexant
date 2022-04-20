@@ -1,20 +1,33 @@
+// @ts-check
+
 'use strict';
 
-module.exports = function installPool(cons) {
-    var pool = [];
-    cons.alloc = function alloc() {
-        if (pool.length > 0) {
-            return pool.shift();
+/**
+ * @template T
+ * @param {() => T} cons
+ * @param {(t: T) => void} [reset]
+ * @returns {{alloc: () => T, free: (t: T) => void}}
+ */
+export function makePool(cons, reset) {
+  /** @type {T[]} */
+  const pool = [];
+  return {
+    alloc() {
+      if (pool.length > 0) {
+        const inst = pool.shift()
+        if (inst !== undefined) {
+          return inst;
         }
-        return new cons();
-    };
-    cons.prototype.free = typeof cons.prototype.reset === 'function'
-        ? function resetAndFree() {
-            this.reset();
-            pool.push(this);
-        }
-        : function justFree() {
-            pool.push(this);
-        };
-    return cons;
-};
+      }
+      return cons();
+    },
+    free: reset
+      ? inst => {
+        reset(inst);
+        pool.push(inst);
+      }
+      : inst => {
+        pool.push(inst);
+      },
+  };
+}
