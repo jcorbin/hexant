@@ -1,6 +1,6 @@
-'use strict';
+// @ts-check
 
-module.exports = Sample;
+'use strict';
 
 /* TODO:
  * - evaluate online sorting
@@ -10,110 +10,108 @@ module.exports = Sample;
  *   around animation throttling into a separate subclass
  */
 
-var TIGHT_TOL = 0.1;
+// TODO recall what the point / idea of TIGHT_TOL and subsequent mode switching
+// under classifyAnomalies
+const TIGHT_TOL = 0.1;
 
-function Sample(n) {
+export class Sample {
+
+  /** @param {number} n */
+  constructor(n) {
     this.n = n;
+    /** @type {number[]} */
     this.data = [];
     this.lastMark = 0;
     this.markWeight = 1;
-}
+  }
 
-Sample.prototype.mark =
-function mark() {
+  // TODO sort out and document the semantics of marking and weight
+
+  mark() {
     this.markWeight = 1;
     this.lastMark = this.data.length;
-};
+  }
 
-Sample.prototype.weightedMark =
-function weightedMark(weight) {
+  /** @param {number} weight */
+  weightedMark(weight) {
     if (this.lastMark > 0) {
-        this.markWeight *= weight;
+      this.markWeight *= weight;
     }
     this.lastMark = this.data.length;
-};
+  }
 
-Sample.prototype.sinceWeightedMark =
-function sinceWeightedMark() {
+  sinceWeightedMark() {
     return (this.data.length - this.lastMark) / this.markWeight;
-};
+  }
 
-Sample.prototype.sinceMark =
-function sinceMark() {
+  sinceMark() {
     return this.data.length - this.lastMark;
-};
+  }
 
-Sample.prototype.reset =
-function reset() {
+  reset() {
     this.data.length = 0;
     this.lastMark = 0;
     this.markWeight = 1;
-};
+  }
 
-Sample.prototype.complete =
-function complete() {
+  complete() {
     return this.data.length >= this.n;
-};
+  }
 
-Sample.prototype.collect =
-function collect(datum) {
+  /** @param {number} datum */
+  collect(datum) {
     while (this.data.length >= this.n) {
-        this.data.shift();
+      this.data.shift();
     }
     this.data.push(datum);
     if (this.lastMark > 0) {
-        if (--this.lastMark === 0) {
-            this.markWeight = 1;
-        }
+      if (--this.lastMark === 0) {
+        this.markWeight = 1;
+      }
     }
-};
+  }
 
-Sample.prototype.classifyAnomalies =
-function classifyAnomalies() {
-    var cs = [];
-    var qs = this.quantiles([0.25, 0.50, 0.75]);
-    var iqr = qs[2] - qs[0];
-    var i;
-    if (iqr / qs[1] < TIGHT_TOL) {
-        for (i = 0; i < this.data.length; ++i) {
-            cs.push(this.data[i] / qs[1] - 1);
-        }
-    } else {
-        // var lh = qs[1] - qs[0];
-        // var rh = qs[2] - qs[1];
-        // var skew = (rh - lh) / iqr;
-        var tol = iqr * 1.5;
-        var lo = qs[0] - tol;
-        var hi = qs[2] + tol;
-        for (i = 0; i < this.data.length; ++i) {
-            if (this.data[i] < lo) {
-                cs.push((this.data[i] - lo) / iqr);
-            } else if (this.data[i] > hi) {
-                cs.push((this.data[i] - hi) / iqr);
-            } else {
-                cs.push(0);
-            }
-        }
+  classifyAnomalies() {
+    const q = this.quantileSelector();
+    const q25 = q(0.25), q50 = q(0.50), q75 = q(0.75);
+    const iqr = q75 - q25;
+    const { data } = this;
+
+    // TODO what is this?
+    if (iqr / q50 < TIGHT_TOL) {
+      return data.map(
+        datum => datum / q50 - 1
+      );
     }
-    return cs;
-};
 
-Sample.prototype.quantiles =
-function quantiles(qs) {
-    var S = this.data.slice(0);
-    S.sort(numericCmp);
-    var vs = [];
-    for (var i = 0; i < qs.length; ++i) {
-        vs.push(q(qs[i], S));
+    // const lh = q50 - q25;
+    // const rh = q75 - q50;
+    // const skew = (rh - lh) / iqr;
+
+    const tol = iqr * 1.5;
+    const lo = q25 - tol;
+    const hi = q75 + tol;
+
+    return data.map(datum => {
+      if (datum < lo) {
+        return (datum - lo) / iqr;
+      } else if (datum > hi) {
+        return (datum - hi) / iqr;
+      } else {
+        return 0;
+      }
+    });
+  }
+
+  /** @returns {(q: number) => number} */
+  quantileSelector() {
+    // TODO when is a cleverer data structure / algo worth?
+    const S = [...this.data];
+    S.sort((a, b) => a - b);
+    return q => {
+      const i = q * S.length;
+      // @ts-ignore proven by S.length bound in prior line
+      return S[Math.floor(i)] / 2 + S[Math.ceil(i)] / 2;
     }
-    return vs;
-};
-
-function q(p, S) {
-    var i = 0.5 * S.length;
-    return S[Math.floor(i)] / 2 + S[Math.ceil(i)] / 2;
-}
-
-function numericCmp(a, b) {
-    return a - b;
+  }
 }
