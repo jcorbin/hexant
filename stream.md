@@ -18,7 +18,7 @@ Uplifting old javascript toward a full type checking pass:
   - return frozen result objects
   - maybe drop the `class Result` entirel, and shift to `makeResult`
 
-## Status 53% done (2539 / 4807 LoC, 17 / 35 modules)
+## Status 64% done (3028 / 4751 LoC, 17 / 35 modules)
 
 - NOTE: "pass" means passes `// @ts-check`
 - NOTE: "works" means functionally verified
@@ -41,7 +41,7 @@ Uplifting old javascript toward a full type checking pass:
   - `rezult.js` - pass
   - `sample.js` - pass
   - `tileglbuffer.js` - pass
-  - `view_gl.js`
+  - `view_gl.js` - pass
   - `world.js` - pass
   - `test/`
     - `hextiletree.js`
@@ -79,7 +79,7 @@ src/glslshader.js                              19             27             90
 src/hashbind.js                                58             72            318
 src/hexant.js                                  61             16            351
 src/hextile.js                                 23             39            166
-src/hextiletree.js                             77             73            417
+src/hextiletree.js                             77             76            417
 src/pool.js                                     2              8             20
 src/prompt.js                                  17             32            107
 src/rangelist.js                                6             26             61
@@ -90,7 +90,7 @@ src/test/index.js                               1              0              4
 src/test/rangelist.js                          11              8             52
 src/test/tileglbuffer.js                       16              0            285
 src/tileglbuffer.js                            33             72            196
-src/turmite/constants.js                        8             16             55
+src/turmite/constants.js                        9             22             55
 src/turmite/index.js                           23             44             95
 src/turmite/lang/analyze.js                    10              2             69
 src/turmite/lang/build.js                      21              7            142
@@ -102,10 +102,10 @@ src/turmite/lang/walk.js                       15              0             70
 src/turmite/parse.js                           20              5            112
 src/turmite/rle-builder.js                      3              0             39
 src/turmite/test.js                            38             11            185
-src/view_gl.js                                 78             22            490
+src/view_gl.js                                 90            106            434
 src/world.js                                   49             51            178
 ------------------------------------------------------------------------------------------
-SUM:                                          852            758           4807
+SUM:                                          865            851           4751
 ------------------------------------------------------------------------------------------
 
 ```
@@ -124,7 +124,8 @@ SUM:                                          852            758           4807
   - either on a `Map<{key, mask}, tile>` or on `Array<tile>` sorted by `Array<{key, mask}>`
   - probably a good time to move to maker form
 - refactor `World.ents` to be propely system oriented, rather than have the
-  world model itself particpate in per-ent convernts
+  world model itself particpate in per-ent concerns; rectify how views relate
+  to all that jazz
 - once there's only need for a single pool (no more nodes), flatten it into
   `hextile.js`, dropping `pool.js`
 - revamp `coord.js`
@@ -147,9 +148,23 @@ SUM:                                          852            758           4807
 - maybe just write a custom parser and drop nearley
 - META: see also / subsume the old `TODO.md` file
 
-# 2022-04-20
+# 2022-04-21
 
 ## Done
+
+- uplifted `world.js`
+  - that old entity "system" sure is 🥔🍐💀
+- uplifted `view_gl.js`
+  - dropped obsolete `"'experimental-webgl"' rendering context branch, as
+    typescript definitions don't acknowledge it
+  - refactored a lot of drawing code to be more coherent
+  - many small changes and fixes throughout
+  - ramified usage fix into `GLProgram` wrt uniform and attr collections
+  - ramified usage fix into `HexTileTree` wrt tiles collection
+- uplifted `turmite/constants.js`
+  - switched to `Map()`s where it made sense
+
+# 2022-04-20
 
 - uplifted `pool.js`
   - refactored to a `makePool(cons) => {alloc, free}` for use in static blocks
