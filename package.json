@@ -19,7 +19,6 @@
     "postversion": "bash scripts/postversion.sh"
   },
   "devDependencies": {
-    "gl-matrix": "^2.3.2",
     "glsl-deparser": "^1.0.0",
     "glsl-min-stream": "^1.0.0",
     "glsl-parser": "^2.0.1",
@@ -30,6 +29,7 @@
     "typescript": "^4.6.4"
   },
   "dependencies": {
+    "gl-matrix": "^3.4.3",
     "hsluv": "^0.1.0",
     "nearley": "^2.20.1"
   }
