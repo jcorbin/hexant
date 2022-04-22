@@ -18,7 +18,7 @@ Uplifting old javascript toward a full type checking pass:
   - return frozen result objects
   - maybe drop the `class Result` entirel, and shift to `makeResult`
 
-## Status 64% done (3028 / 4751 LoC, 17 / 35 modules)
+## Status 75% done (3442 / 4563 LoC, 24 / 32 modules)
 
 - NOTE: "pass" means passes `// @ts-check`
 - NOTE: "works" means functionally verified
@@ -49,18 +49,16 @@ Uplifting old javascript toward a full type checking pass:
     - `rangelist.js`
     - `tileglbuffer.js`
   - `turmite/`
-    - `constants.js`
+    - `constants.js` - pass
     - `index.js`
     - `lang/`
-      - `analyze.js`
-      - `build.js`
-      - `compile.js`
-      - `parse.js`
-      - `solve.js`
-      - `tostring.js`
-      - `walk.js`
-    - `parse.js`
-    - `rle-builder.js`
+      - `analyze.js` - pass
+      - `compile.js` - pass
+      - `parse.js` - pass
+      - `tostring.js` - pass
+      - `walk.js` - pass
+    - `parse.js` - pass
+    - `rle-builder.js` - pass
     - `test.js` - TODO port to ava, maybe move into `../test/`
 
 ```
@@ -92,26 +90,27 @@ src/test/tileglbuffer.js                       16              0            285
 src/tileglbuffer.js                            33             72            196
 src/turmite/constants.js                        9             22             55
 src/turmite/index.js                           23             44             95
-src/turmite/lang/analyze.js                    10              2             69
-src/turmite/lang/build.js                      21              7            142
-src/turmite/lang/compile.js                    61              4            336
-src/turmite/lang/parse.js                       7              2             42
-src/turmite/lang/solve.js                      14              9             76
-src/turmite/lang/tostring.js                   21              1            118
-src/turmite/lang/walk.js                       15              0             70
-src/turmite/parse.js                           20              5            112
-src/turmite/rle-builder.js                      3              0             39
+src/turmite/lang/analyze.js                    14             30             49
+src/turmite/lang/compile.js                    82            128            401
+src/turmite/lang/parse.js                      10              3             35
+src/turmite/lang/tostring.js                   27             20            115
+src/turmite/lang/walk.js                       41            125             73
+src/turmite/parse.js                           18             38            100
+src/turmite/rle-builder.js                      6             40             43
 src/turmite/test.js                            38             11            185
 src/view_gl.js                                 90            106            434
 src/world.js                                   49             51            178
 ------------------------------------------------------------------------------------------
-SUM:                                          865            851           4751
+SUM:                                          891           1205           4563
 ------------------------------------------------------------------------------------------
 
 ```
 
 # TODO
 
+- flatten `src/turmite/lang` into `src/turmite`
+  - naturalize the legacy `ant(...)` parser into either `grammar.ne` and/or
+    into the eventual recursive descent replacement
 - get it working on dev server again
 - refactor `glslshader.js` and `glprogram.js`
   - move linking to program;
@@ -133,6 +132,7 @@ SUM:                                          865            851           4751
   - maybe drop the `type` field?
   - can we elminate `CubePoint` (it only has a couple of users)?
 - unbreak the tests, after the `src/` pivot
+- write tests for more parts of `turmite/` like `RLEBuilder`
 - switch classes out for maker pattern throughout; initial uplift pass above
   may do so when scope is small enough to be easily done in passing
 - evaluate why hexer
@@ -141,16 +141,85 @@ SUM:                                          865            851           4751
   - inline much of the specific integration/controller logic into `public/index.html`
   - factor out a stats component for fps, sps, timing, etc
   - factor out a keymap component, which can later be a basis for a help overlay
+- just write a custom parser and drop nearley
 - separate tile rendering module
 - separate turmite sim module
 - asyncify the gap between view and sim
 - port turmite sim to Go... shard and scale over goroutines
-- maybe just write a custom parser and drop nearley
 - META: see also / subsume the old `TODO.md` file
 
-# 2022-04-21
+# 2022-04-29
+
+## WIP
+
+- uplifting `turmite/index.js`
 
 ## Done
+
+- uplifted `turmite/lang/parse.js`
+  - moved evaluation to compile module, making return a typed result object
+    - fixed option default and return string type from yesterday's uplift
+  - flattened and simplified `parse.js` module, setting it up well to grow a
+    custom recursive descent parser
+- uplifted `turmite/parse.js`
+  - around new `Builder => Built` types which will be merged with
+    `turmite/lang.Spec` during parser unification
+- added a new `from` convenience to `rle-builder.js`
+- added explicit `Rules` table type with docs; documented `RuleConstants`
+
+# 2022-04-28
+
+- uplifted `turmite/lang/compile.js`
+  - completely refactored over iterable-strings paradigm
+  - reworked nearly all `compileFoo` function boundaries
+  - greatly clarified symbols in scope
+  - tightened down the grammar node field types
+  - refactored `toSpecString` into the iterable-strings paradigm
+  - preserved integer bases from parsing to code gen time
+
+# 2022-04-27
+
+- continued uplifting `turmite/lang/compile.js`... not done yet
+- noticed how the old grammar definition locks us into expressions over
+  mixtures of turns and primitive numbers everywhere
+  - made a parametric `Expr<Literal>` type that makes this explicit for now,
+    until we can rework the grammar to prevent turns where the context doesn't
+    call for them
+
+# 2022-04-26
+
+- uplifted `turmite/lang/analyze.js`
+  - gnarly logic under `analyze() each() switch-case 'then'
+    - looks to be implictly indexing the then.turns name(s) by the first
+      then.color symbol? wat?
+- started reformatting code as I go, starting with the current
+  `turmite/lang/...` modules undef focus
+
+# 2022-04-23
+
+- uplifted `turmite/lang/walk.js`, standing up a new gramma type tree alongside
+  the nearley parser, for future use by its recursive descent replacement
+- uplifted `turmite/lang/tostring.js`
+  - noted how it would be better without a "generic" DFS walker
+  - hardened its cases over the new types, rather than allowing invalid grammar
+    tree node data
+- subsumed `turmite/lang/solve.js` into `.../compile.js`, resolving their
+  circular relationship, and deduplicating an array declaration
+
+# 2022-04-22
+
+- uplifted `turmite/rle-builder.js`; greatly refactored it:
+  - no more string accumulation, result is an array of term pairs
+  - returned surface is now
+    `{consume([count, ]sym) => void, finish() => [[count, sym]]}`,
+    with sensible "prefixed count parsing" out of symbol strings
+- updated turmite grammar definition
+  - subsumed `turmite/lang/build.js` module, just inline all those
+    post-processing rules
+  - fix build script
+  - switch to ESM output
+
+# 2022-04-21
 
 - uplifted `world.js`
   - that old entity "system" sure is 🥔🍐💀
