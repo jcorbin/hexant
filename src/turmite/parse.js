@@ -1,137 +1,161 @@
+// @ts-check
+
 'use strict';
 
-module.exports = parseTurmite;
+import * as rezult from '../rezult.js';
 
-var Result = require('rezult');
-var World = require('../world.js');
-var RLEBuilder = require('./rle-builder.js');
-var constants = require('./constants.js');
-var parseLang = require('./lang/parse.js');
+import { from as rleFrom } from './rle-builder.js';
+import * as constants from './constants.js';
 
-function parseTurmite(str) {
-    var parsers = [
-        parseAnt,
-        parseLang
-    ];
-    for (var i = 0; i < parsers.length; i++) {
-        var res = parsers[i](str, World);
-        if (res.err || res.value) {
-            return res;
-        }
-    }
-    return new Result(new Error('invalid spec string'), null);
+import parseLang from './lang/parse.js';
+/** @typedef {import('./lang/compile.js').Spec} Spec */
+/** @typedef {import('./lang/compile.js').Rules} Rules */
+/** @typedef {import('./lang/compile.js').RuleConstants} RuleConstants */
+
+/** @callback Builder
+ * @param {Rules} rules
+ * @param {RuleConstants} ruleSpec
+ * @returns {rezult.Result<Built>}
+ */
+
+/** @typedef {object} Built
+ * @prop {number} numColors
+ * @prop {number} numStates
+ * @prop {string} specString
+ */
+
+// TODO replace lang.Spec entirely with Builder once we merge
+
+/**
+ * @param {string} str
+ * @returns {rezult.Result<Builder>}
+ */
+export default function(str) {
+  // TODO unified recursive descent parser
+  for (const parser of [
+    parseAnt,
+    parseTurmite,
+  ]) {
+    const res = parser(str);
+    if (res.err) { return res }
+    if (res.value) { return rezult.just(res.value) }
+  }
+  return rezult.error(new Error('invalid spec string'));
 }
 
-var antCompatPattern = /^\s*([lrwefaLRWEFA]+)\s*$/;
-var antPattern = /^\s*ant\(\s*(.+?)\s*\)\s*$/;
-
-var antCompatMap = {
-    L: 'L',
-    R: 'R',
-    W: 'P',
-    E: 'S',
-    F: 'B',
-    A: 'F'
-};
-
-function antCompatConvert(str) {
-    str = str.toUpperCase();
-    var equivMoves = [];
-    for (var i = 0; i < str.length; i++) {
-        var equivMove = antCompatMap[str[i]];
-        if (equivMove === undefined) {
-            return undefined;
-        }
-        equivMoves.push(equivMove);
-    }
-    return 'ant(' + equivMoves.join(' ') + ')';
-}
-
+/**
+ * @param {string} str
+ * @returns {rezult.Result<Builder|null>}
+ */
 function parseAnt(str) {
-    var match = antCompatPattern.exec(str);
-    if (match) {
-        str = antCompatConvert(match[1]);
+  // match any ant(TURNS)
+  const antMatch = /^\s*ant\(\s*(.+?)\s*\)\s*$/.exec(str);
+  if (!antMatch) {
+    // NOTE: not an error, allowing next parser (lang.parse) a chance
+    return rezult.just(null);
+  }
+  str = antMatch[1];
+
+  // convert legacy turn aliases
+  const compatMatch = /^\s*([lrwefaLRWEFA]+)\s*$/.exec(str);
+  if (compatMatch) {
+    const antCompatMap = new Map([
+      ['W', 'P'], // "west" meant "port"
+      ['E', 'S'], // "east" meant "starboard"
+      ['F', 'B'], // legacy... not sure how to make sense of this
+      ['A', 'F'], // ...or this
+    ]);
+    str = Array
+      .from(compatMatch[1].toUpperCase())
+      .map(move => antCompatMap.get(move) || move)
+      .join(' ');
+  }
+
+  str = str.toUpperCase();
+
+  // tokenize [SPACE] [COUNT] TURN [SPACE]
+  const re = /\s*\b(\d+)?(?:(B|P|L|F|R|S|NW|NO|NE|SE|SO|SW))\b\s*/g;
+  let i = 0;
+  /** @type {number[]} */
+  const counts = [];
+  /** @type {string[]} */
+  const syms = [];
+  for (
+    let match = re.exec(str);
+    match && i === match.index;
+    i += match[0].length, match = re.exec(str)
+  ) {
+    const [_, count, turn] = match;
+    counts.push(count ? parseInt(count, 10) : 1);
+    syms.push(turn.toUpperCase());
+  }
+  if (i < str.length) {
+    return rezult.error(new Error(
+      `invalid ant string: ${JSON.stringify(str)}` +
+      `; invalid input starts at [${i}]: ${JSON.stringify(str.slice(i))}`));
+  }
+
+  const numColors = counts.reduce((a, b) => a + b);
+  const numStates = 1;
+  const specString = `ant(${rleFrom(zip(counts, syms))
+    .map(([count, sym]) => count > 1 ? `${count}${sym}` : sym)
+    .join(' ')})`;
+
+  /** @type {number[]} */
+  const turns = [];
+  for (const [count, turn] of zip(counts, syms.map(sym =>
+    constants.RelSymbolTurns.get(sym) ||
+    constants.AbsSymbolTurns.get(sym)))) {
+    if (turn !== undefined) {
+      for (let j = 0; j < count; j++) {
+        turns.push(turn);
+      }
     }
+  }
 
-    match = antPattern.exec(str);
-    if (!match) {
-        return new Result(null, null);
+  return rezult.just((rules, ruleSpec) => {
+    const { MaxColor, TurnShift } = ruleSpec;
+    if (numColors > MaxColor) {
+      return rezult.error(new Error('too many colors needed for ant ruleset'));
     }
-    str = match[1];
-
-    // we'll also build the canonical version of the parsed rule string in the
-    // same pass as parsing it; rulestr will be that string, and we'll need
-    // some state between arg matches
-    var numColors = 0;
-    var multurns  = [];
-
-    var re = /\s*\b(\d+)?(?:(B|P|L|F|R|S)|(NW|NO|NE|SE|SO|SW))\b\s*/g;
-    str = str.toUpperCase();
-
-    var i = 0;
-    for (
-        match = re.exec(str);
-        match && i === match.index;
-        i += match[0].length, match = re.exec(str)
-    ) {
-        var multurn = {
-            mult: 0,
-            turn: 0,
-            sym: ''
-        };
-        multurn.mult = match[1] ? parseInt(match[1], 10) : 1;
-
-        if (match[2]) {
-            multurn.sym = match[2];
-            multurn.turn = constants.RelSymbolTurns[match[2]];
-        } else if (match[3]) {
-            multurn.sym = match[3];
-            multurn.turn = constants.AbsSymbolTurns[match[3]];
-        }
-
-        numColors += multurn.mult;
-        if (numColors > World.MaxColor) {
-            return new Result(
-                new Error('too many colors needed for ant ruleset'),
-                null);
-        }
-        multurns.push(multurn);
+    for (let c = 0; c <= MaxColor; c++) {
+      const turn = turns[c % turns.length];
+      const color = c + 1 & MaxColor;
+      rules[c] = color << TurnShift | turn;
     }
-    // TODO: check if didn't match full input
-
-    return new Result(null, boundCompileAnt);
-
-    function boundCompileAnt(turmite) {
-        return compileAnt(multurns, turmite);
-    }
+    return rezult.just({ numColors, numStates, specString });
+  });
 }
 
-function compileAnt(multurns, turmite) {
-    // TODO: describe
-    var numColors    = 0;
-    var buildRuleStr = RLEBuilder('ant(', ' ', ')');
-    var turns        = [];
-
-    for (var i = 0; i < multurns.length; i++) {
-        var mult = multurns[i].mult;
-        for (var j = 0; j < mult; j++) {
-            turns.push(multurns[i].turn);
-        }
-        numColors += multurns[i].mult;
-        buildRuleStr(multurns[i].mult, multurns[i].sym);
+/**
+ * @param {string} str
+ * @returns {rezult.Result<Builder>}
+ */
+function parseTurmite(str) {
+  const { value: spec, err } = parseLang(str);
+  if (err) {
+    return rezult.error(err);
+  }
+  return rezult.just((rules, ruleSpec) => {
+    const { numColors, specString, build } = spec;
+    // TODO push this back up the chain, and make lang.compile return a Builder
+    const { MaxColor } = ruleSpec;
+    if (numColors > MaxColor) {
+      return rezult.error(new Error('too many colors needed for turmite ruleset'));
     }
 
-    turmite.clearRules();
-    for (var c = 0; c <= World.MaxColor; c++) {
-        var turn = turns[c % turns.length];
-        var color = c + 1 & World.MaxColor;
-        turmite.rules[c] = color << World.TurnShift | turn;
-    }
+    // TODO more checks like above once we unify into lang.compile
+    const { states: { size: numStates } } = build(ruleSpec, rules);
+    return rezult.just({ numColors, numStates, specString });
+  });
+}
 
-    turmite.state      = 0;
-    turmite.specString = buildRuleStr(0, '');
-    turmite.numColors  = numColors;
-    turmite.numStates  = 1;
-
-    return new Result(null, turmite);
+/** @template A, B
+ * @param {ArrayLike<A>} a
+ * @param {ArrayLike<B>} b
+ */
+function* zip(a, b) {
+  for (let i = 0; i < a.length && i < b.length; i++) {
+    yield /** @type {[A, B]} */([a[i], b[i]]);
+  }
 }
