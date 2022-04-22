@@ -1,101 +1,102 @@
-@{% var build = require('./build.js'); %}
+@preprocessor module
 
-spec -> assigns:? rules  {% build.spec %}
+spec -> assigns:? rules {%
+  ([assigns, rules]) => ({type: 'spec', assigns: assigns || [], rules}) %}
 
 assigns -> assign
-         | assign newline assigns  {% build.rightConcat %}
+         | assign newline assigns {% ([head, _1, tail]) => [head].concat(tail) %}
 
-assign -> identifier _ "=" _ lit  {% build.assign %}
+assign -> identifier _ "=" _ lit  {% ([id, _1, _2, _3, value]) => ({type: 'assign', id, value}) %}
 
 rules -> rule
-       | rule newline rules  {% build.rightConcat %}
+       | rule newline rules  {% ([head, _1, tail]) => [head].concat(tail) %}
 
-rule -> when "=>" then  {% build.rule %}
+rule -> when "=>" then  {% ([when, _1, then]) => ({type: 'rule', when, then}) %}
 
-when -> expr "," expr  {% build.when %}
+when -> expr "," expr  {% ([state, _1, color]) => ({type: 'when', state, color}) %}
 
-then -> thenState "," thenColor "," thenTurn  {% build.then %}
+then -> thenState "," thenColor "," thenTurn  {% ([state, _1, color, _3, turn]) => ({type: 'then', state, color, turn}) %}
 
-thenMode -> null  {% build.just('|') %}
-          | "="   {% build.item(0) %}
-          | "|"   {% build.item(0) %}
+thenMode -> null  {% () => '|' %}
+          | "="   {% () => '=' %}
+          | "|"   {% () => '|' %}
 
-thenState -> _ thenMode sum _  {% build.thenVal %}
+thenState -> _ thenMode sum _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
 
-thenColor -> _ thenMode sum _  {% build.thenVal %}
+thenColor -> _ thenMode sum _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
 
-thenTurn -> _ thenMode sum _       {% build.thenVal %}
-          | _ thenMode turnExpr _  {% build.thenVal %}
+thenTurn -> _ thenMode sum _       {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
+          | _ thenMode turnExpr _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
 
-turnExpr -> turn                   {% build.turn %}
-          | turnExpr "|" turnExpr  {% build.multiTurn %}
+turnExpr -> turn                   {% ([name]) => ({type: 'turn', names: [name]}) %}
+          | turnExpr "|" turnExpr  {% ([a, _1, b]) => ({type: 'turn', names: a.names.concat(b.names)}) %}
 
-expr -> _ sum _  {% build.item(1) %}
+expr -> _ sum _  {% d => d[1] %}
 
-sumop -> _ "+" _  {% build.item(1) %}
-       | _ "-" _  {% build.item(1) %}
+sumop -> _ "+" _  {% d => d[1] %}
+       | _ "-" _  {% d => d[1] %}
 
-mulop -> _ "*" _  {% build.item(1) %}
-       | _ "/" _  {% build.item(1) %}
-       | _ "%" _  {% build.item(1) %}
+mulop -> _ "*" _  {% d => d[1] %}
+       | _ "/" _  {% d => d[1] %}
+       | _ "%" _  {% d => d[1] %}
 
-sum -> sum sumop mul  {% build.expr %}
-     | mul            {% build.item(0) %}
+sum -> sum sumop mul  {% ([arg1, op, arg2]) => ({type: 'expr', op, arg1, arg2}) %}
+     | mul            {% d => d[0] %}
 
-mul -> mul mulop fac  {% build.expr %}
-     | fac            {% build.item(0) %}
+mul -> mul mulop fac  {% ([arg1, op, arg2]) => ({type: 'expr', op, arg1, arg2}) %}
+     | fac            {% d => d[0] %}
 
-fac -> "(" expr ")"  {% build.item(1) %}
-     | lit           {% build.item(0) %}
-     | member        {% build.item(0) %}
-     | symbol        {% build.item(0) %}
-     | identifier    {% build.item(0) %}
+fac -> "(" expr ")"  {% d => d[1] %}
+     | lit           {% d => d[0] %}
+     | member        {% d => d[0] %}
+     | symbol        {% d => d[0] %}
+     | identifier    {% d => d[0] %}
 
-turns -> "turns(" _ countTurn ( __ countTurn ):* _ ")"  {% build.turns %}
+turns -> "turns(" _ countTurn ( __ countTurn ):* _ ")"  {% ([_0, _1, first, rest=[]]) => ({type: 'turns', value: [first, ...rest.map(rr => rr[1])]}) %}
 
-turn -> "L"  {% function() {return 'RelLeft'}        %}
-      | "R"  {% function() {return 'RelRight'}       %}
-      | "F"  {% function() {return 'RelForward'}     %}
-      | "B"  {% function() {return 'RelBackward'}    %}
-      | "P"  {% function() {return 'RelDoubleLeft'}  %}
-      | "S"  {% function() {return 'RelDoubleRight'} %}
-      | "l"  {% function() {return 'RelLeft'}        %}
-      | "r"  {% function() {return 'RelRight'}       %}
-      | "f"  {% function() {return 'RelForward'}     %}
-      | "b"  {% function() {return 'RelBackward'}    %}
-      | "p"  {% function() {return 'RelDoubleLeft'}  %}
-      | "s"  {% function() {return 'RelDoubleRight'} %}
-      | "NW" {% function() {return 'AbsNorthWest'}   %}
-      | "NO" {% function() {return 'AbsNorth'}       %}
-      | "NE" {% function() {return 'AbsNorthEast'}   %}
-      | "SE" {% function() {return 'AbsSouthEast'}   %}
-      | "SO" {% function() {return 'AbsSouth'}       %}
-      | "SW" {% function() {return 'AbsSouthWest'}   %}
-      | "nw" {% function() {return 'AbsNorthWest'}   %}
-      | "no" {% function() {return 'AbsNorth'}       %}
-      | "ne" {% function() {return 'AbsNorthEast'}   %}
-      | "se" {% function() {return 'AbsSouthEast'}   %}
-      | "so" {% function() {return 'AbsSouth'}       %}
-      | "sw" {% function() {return 'AbsSouthWest'}   %}
+turn -> "L"  {% () => 'RelLeft'        %}
+      | "R"  {% () => 'RelRight'       %}
+      | "F"  {% () => 'RelForward'     %}
+      | "B"  {% () => 'RelBackward'    %}
+      | "P"  {% () => 'RelDoubleLeft'  %}
+      | "S"  {% () => 'RelDoubleRight' %}
+      | "l"  {% () => 'RelLeft'        %}
+      | "r"  {% () => 'RelRight'       %}
+      | "f"  {% () => 'RelForward'     %}
+      | "b"  {% () => 'RelBackward'    %}
+      | "p"  {% () => 'RelDoubleLeft'  %}
+      | "s"  {% () => 'RelDoubleRight' %}
+      | "NW" {% () => 'AbsNorthWest'   %}
+      | "NO" {% () => 'AbsNorth'       %}
+      | "NE" {% () => 'AbsNorthEast'   %}
+      | "SE" {% () => 'AbsSouthEast'   %}
+      | "SO" {% () => 'AbsSouth'       %}
+      | "SW" {% () => 'AbsSouthWest'   %}
+      | "nw" {% () => 'AbsNorthWest'   %}
+      | "no" {% () => 'AbsNorth'       %}
+      | "ne" {% () => 'AbsNorthEast'   %}
+      | "se" {% () => 'AbsSouthEast'   %}
+      | "so" {% () => 'AbsSouth'       %}
+      | "sw" {% () => 'AbsSouthWest'   %}
 
-countTurn ->        turn  {% build.singleTurn %}
-           | decint turn  {% build.countTurn %}
+countTurn ->        turn  {% ([turn]) => ({count: {type: 'number', value: 1}, turn}) %}
+           | decint turn  {% ([count, turn]) => ({count, turn}) %}
 
-member -> ( member | symbol | identifier | lit ) "[" expr "]"  {% build.member %}
+member -> ( member | symbol | identifier | lit ) "[" expr "]"  {% ([[value], _1, item]) => ({type: 'member', value, item}) %}
 
-symbol -> [a-z] [\w]:*  {% build.symbol %}
+symbol -> [a-z] [\w]:*  {% ([head, tail]) => ({type: 'symbol', name: head + tail.join('')}) %}
 
-identifier -> [A-Z] [\w]:+  {% build.identifier %}
+identifier -> [A-Z] [\w]:+  {% ([head, tail]) => ({type: 'identifier', name: head + tail.join('')}) %}
 
-lit -> int    {% build.item(0) %}
-     | turns  {% build.item(0) %}
+lit -> int    {% d => d[0] %}
+     | turns  {% d => d[0] %}
 
-int -> "0x" hexint  {% build.item(1) %}
-     |      decint  {% build.item(0) %}
+int -> "0x" hexint  {% d => d[1] %}
+     |      decint  {% d => d[0] %}
 
-hexint -> [0-9a-fA-F]:+  {% build.int(16) %}
-decint -> [0-9]:+        {% build.int(10) %}
+hexint -> [0-9a-fA-F]:+  {% ([head]) => ({type: 'number', value: parseInt(head.join(''), 16)}) %}
+decint -> [0-9]:+        {% ([head]) => ({type: 'number', value: parseInt(head.join(''), 10)}) %}
 
-_ -> [\s]:*  {% build.noop %}
-__ -> [\s]:+  {% build.noop %}
-newline -> "\r":? "\n"  {% build.noop %}
+_ -> [\s]:*  {% () => null %}
+__ -> [\s]:+  {% () => null %}
+newline -> "\r":? "\n"  {% () => null %}
