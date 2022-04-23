@@ -1,140 +1,179 @@
+// @ts-check
+
 'use strict';
 
-var RLEBuilder = require('../rle-builder.js');
-var walk = require('./walk.js');
+import { from as rleFrom } from '../rle-builder.js';
+import * as walk from './walk.js';
 
-module.exports = toSpecString;
-
-var TurnSyms = {
-    RelLeft: 'L',
-    RelRight: 'R',
-    RelForward: 'F',
-    RelBackward: 'B',
-    RelDoubleLeft: 'P',
-    RelDoubleRight: 'S',
-    AbsNorth: 'NO',
-    AbsNorthWest: 'NW',
-    AbsNorthEast: 'NE',
-    AbsSouth: 'SO',
-    AbsSouthEast: 'SE',
-    AbsSouthWest: 'SW'
+// TODO reconcile with ../constants.js
+const TurnSyms = {
+  RelLeft: 'L',
+  RelRight: 'R',
+  RelForward: 'F',
+  RelBackward: 'B',
+  RelDoubleLeft: 'P',
+  RelDoubleRight: 'S',
+  AbsNorth: 'NO',
+  AbsNorthWest: 'NW',
+  AbsNorthEast: 'NE',
+  AbsSouth: 'SO',
+  AbsSouthEast: 'SE',
+  AbsSouthWest: 'SW'
 };
 
 // TODO: de-dupe
-var opPrec = [
-    '+',
-    '-',
-    '*',
-    '/',
-    '%'
-];
+const opPrec = ['+', '-', '*', '/', '%'];
 
-function toSpecString(root, emit) {
-    var precs = [0];
-    var stack = [];
+/** @param {walk.Node} root */
+export function* toSpecString(root) {
+  /** @type {string[]} */
+  const lines = [];
 
-    walk.iter(root, each);
-    if (stack.length) {
-        throw new Error('leftover spec string parts');
+  const precs = [0];
+  /** @type {string[]} */
+  const stack = [];
+
+  function pop() {
+    const term = stack.pop();
+    if (term === undefined) {
+      throw new Error('toSpecString blew its stack');
     }
+    lines.push(term);
+  }
 
-    function each(node, next) {
-        switch (node.type) {
-        case 'spec':
-            next();
+  /** @param {number|undefined} n */
+  function orNaN(n) {
+    return n === undefined ? NaN : n;
+  }
+
+  // TODO this is mostly duplicated structure with walk.dfs ; just wholly
+  // subsume its DFS logic ; in fact it'll be clearer once each case owns it's
+  // own "descend TO WHAT", rather than hiding them behind some guise of
+  // generality
+  walk.dfs(root, (node, descend) => {
+    switch (node.type) {
+
+      case 'spec':
+        descend();
+        break;
+
+      case 'assign':
+        stack.push(node.id.name);
+        descend();
+        join(' = ');
+        pop();
+        break;
+
+      case 'rule':
+        descend();
+        join(' => ');
+        pop();
+        break;
+
+      case 'when':
+        descend();
+        join(', ');
+        break;
+
+      case 'then':
+        descend();
+        join(', ');
+        join(', ');
+        break;
+
+      case 'thenVal':
+        switch (node.mode) {
+          case '|':
+            descend();
             break;
 
-        case 'assign':
-            stack.push(node.id.name);
-            next();
-            join(' = ');
-            emit(stack.pop());
-            break;
-
-        case 'rule':
-            next();
-            join(' => ');
-            emit(stack.pop());
-            break;
-
-        case 'when':
-            next();
-            join(', ');
-            break;
-
-        case 'then':
-            next();
-            join(', ');
-            join(', ');
-            break;
-
-        case 'thenVal':
-            if (node.mode === '|') {
-                next();
-            } else {
-                stack.push(node.mode);
-                next();
-                join('');
-            }
-            break;
-
-        case 'member':
-            next();
-            wrap('[', ']');
+          case '=':
+            stack.push(node.mode);
+            descend();
             join('');
             break;
 
-        case 'expr':
-            precs.push(opPrec.indexOf(node.op));
-            next();
-            join(' ' + node.op + ' ');
-            if (precs.pop() < precs[precs.length - 1]) {
-                wrap('(', ')');
-            }
-            break;
-
-        case 'identifier':
-        case 'symbol':
-            stack.push(node.name);
-            next();
-            break;
-
-        case 'turns':
-            var rle = RLEBuilder('turns(', ' ', ')');
-            for (var i = 0; i < node.value.length; i++) {
-                var turn = node.value[i];
-                rle(turn.count.value, TurnSyms[turn.turn]);
-            }
-            stack.push(rle(0, ''));
-            next();
-            break;
-
-        case 'turn':
-            stack.push(node.names.map(function eachTurnName(name) {
-                return TurnSyms[name];
-            }).join('|'));
-            break;
-
-        case 'number':
-            stack.push(node.value.toString());
-            next();
-            break;
-
-        default:
-            stack.push('/* unsupported ' + JSON.stringify(node) + ' */');
-            next();
+          default:
+            assertNever(node.mode, 'invalid thenVal mode');
         }
-    }
+        break;
 
-    function join(sep) {
-        var b = stack.pop();
-        var a = stack.pop();
-        var c = a + sep + b;
-        stack.push(c);
-    }
+      case 'member':
+        descend();
+        wrap('[', ']');
+        join('');
+        break;
 
-    function wrap(pre, post) {
-        var i = stack.length - 1;
-        stack[i] = pre + stack[i] + post;
+      case 'expr':
+        precs.push(opPrec.indexOf(node.op));
+        descend();
+        join(` ${node.op} `);
+        if (orNaN(precs.pop()) < orNaN(precs[precs.length - 1])) {
+          wrap('(', ')');
+        }
+        break;
+
+      case 'identifier':
+      case 'symbol':
+        stack.push(node.name);
+        descend();
+        break;
+
+      case 'turns':
+        stack.push(`turns(${rleFrom(node.value
+          .map(({ count: { value: count }, turn }) => [count, TurnSyms[turn]])
+        )
+          .map(([count, sym]) => count > 1 ? `${count}${sym}` : sym)
+          .join(' ')})`);
+        descend();
+        break;
+
+      case 'turn':
+        stack.push(node.names.map(name => TurnSyms[name]).join('|'));
+        break;
+
+      case 'number':
+        stack.push(node.value.toString());
+        descend();
+        break;
+
+      default:
+        assertNever(node, 'invalid grammar node');
     }
+  });
+
+  // if the caller called us with some arbitrary grammar node, let them have/keep all the pieces ;-)
+  while (stack.length) {
+    const line = stack.pop();
+    if (line !== undefined) {
+      lines.push(line);
+    }
+  }
+
+  // TODO refactor to yield throughout above after we flatten walk.dfs
+  yield* lines;
+
+  /** @param {string} sep */
+  function join(sep) {
+    const b = stack.pop();
+    const a = stack.pop();
+    stack.push(`${a}${sep}${b}`);
+  }
+
+  /**
+   * @param {string} pre
+   * @param {string} post
+   */
+  function wrap(pre, post) {
+    const i = stack.length - 1;
+    stack[i] = `${pre}${stack[i]}${post}`;
+  }
+}
+
+/**
+ * @param {never} impossible
+ * @param {string} mess
+ */
+function assertNever(impossible, mess) {
+  throw new Error(`${mess}: ${JSON.stringify(impossible)}`);
 }
