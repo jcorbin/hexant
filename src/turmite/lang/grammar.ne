@@ -94,7 +94,7 @@ lit -> int    {% d => d[0] %}
 int -> "0x" hexint  {% d => d[1] %}
      |      decint  {% d => d[0] %}
 
-hexint -> [0-9a-fA-F]:+  {% ([head]) => ({type: 'number', value: parseInt(head.join(''), 16)}) %}
+hexint -> [0-9a-fA-F]:+  {% ([head]) => ({type: 'number', value: parseInt(head.join(''), 16), base: 16}) %}
 decint -> [0-9]:+        {% ([head]) => ({type: 'number', value: parseInt(head.join(''), 10)}) %}
 
 _ -> [\s]:*  {% () => null %}
