@@ -1,51 +1,46 @@
-/* eslint-disable no-try-catch no-eval */
+// @ts-check
 
 'use strict';
 
-var nearley = require('nearley');
-var Result = require('rezult');
-var grammar = require('./grammar.js');
-var compile = require('./compile.js');
+// @ts-ignore
+import nearley from 'nearley';
 
-module.exports = parseTurmite;
+import * as rezult from '../../rezult.js';
 
-function parseTurmite(str, World) {
-    var res = parseLang(str, World);
-    if (!res.err) {
-        res = compileGrammarResult(res.value, World);
-    }
-    return res;
-}
+import compile from './compile.js';
+import grammarRules from './grammar.js';
 
-function parseLang(str) {
-    if (typeof str !== 'string') {
-        return new Result(new Error('invalid argument, not a string'), null);
-    }
-    var res = parseResult(grammar, str);
-    if (res.err) {
-        return res;
-    }
-    if (!res.value.length) {
-        return new Result(new Error('no parse result'), null);
-    } else if (res.value.length > 1) {
-        return new Result(new Error('ambiguous parse'), null);
-    }
-    return new Result(null, res.value[0] || null);
-}
+const grammar = nearley.Grammar.fromCompiled(grammarRules);
 
-function parseResult(gram, str) {
-    var parser = new nearley.Parser(gram.ParserRules, gram.ParserStart);
-    try {
-        parser.feed(str);
-        return new Result(null, parser.results);
-    } catch(err) {
-        return new Result(err, null);
-    }
-}
-
-function compileGrammarResult(value) {
-    /* eslint-disable no-eval */
-    var str = compile.init(value).join('\n');
-    var func = eval(str);
-    return new Result(null, func);
+/** @param {string} str */
+export default function(str) {
+  return rezult.bind(
+    rezult.catchErr(() => {
+      if (typeof str !== 'string') {
+        return rezult.error(new Error('invalid argument, not a string'));
+      }
+      /** @typedef {import('./walk.js').Node} Node */
+      const parser = new nearley.Parser(grammar);
+      parser.feed(str);
+      /** @type {{ results: Node[] }} */
+      const { results } = parser;
+      switch (results.length) {
+        case 0:
+          return rezult.error(new Error('no parse result'));
+        case 1:
+          return rezult.just(results[0]);
+        default:
+          return rezult.error(new Error('ambiguous parse'));
+      }
+    }),
+    node => {
+      switch (node.type) {
+        case 'spec':
+          return compile(node);
+        default:
+          return rezult.error(new Error(
+            `expected a "spec" grammar node, got a "${node.type}" node instead` +
+            `; tried to parse only a fragment of a turmite spec?`));
+      }
+    });
 }
