@@ -2,7 +2,7 @@
 
 'use strict';
 
-/** @enum {number} */
+/** @enum {number} - resultant turn bits in a Rules table */
 export const Turn = {
   // relative turns
   //    F -- +0 -- no turn, forward
@@ -32,6 +32,25 @@ export const Turn = {
   AbsSouth: 0x0400,
   AbsSouthWest: 0x0800,
 };
+
+/**
+ * @param {Turn} turn - a bit field containing any/all chosen turn(s)
+ * @param {number} dir - current heading direction for relative turns
+ * @returns {Generator<number>} - resultant absolute direction heading(s)
+ */
+export function* turnDirs(turn, dir) {
+  let t = 0x0001;
+  for (; t <= 0x0020; t <<= 1) {
+    if (turn & t) {
+      yield (dir + (RelTurnDelta.get(t) || 0) + 6) % 6;
+    }
+  }
+  for (; t <= 0x0800; t <<= 1) {
+    if (turn & t) {
+      yield (AbsTurnDir.get(t) || 0);
+    }
+  }
+}
 
 /** @type {Map<Turn, number>} */
 export const RelTurnDelta = new Map([
