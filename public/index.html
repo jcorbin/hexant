@@ -1,10 +1,14 @@
 <!doctype html>
 
-<title>Hexant</title>
+<head>
 
-<meta charset="utf-8">
+  <title>Hexant</title>
 
-<link rel="stylesheet" type="text/css" href="style.css">
+  <meta charset="utf-8">
+
+  <link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
 
 <body>
 
@@ -13,10 +17,10 @@
     <canvas id="view" class="hexant-canvas"></canvas>
 
     <div id="box" class="prompt" style="display: none">
-        <div id="help" class="help"></div>
-        <textarea id="text"></textarea>
-        <div id="error" class="error" style="display: none"></div>
-        Press &lt;Ctrl&gt;-Enter to submit.
+      <div id="help" class="help"></div>
+      <textarea id="text"></textarea>
+      <div id="error" class="error" style="display: none"></div>
+      Press &lt;Ctrl&gt;-Enter to submit.
     </div>
 
     <aside class="overlay fps right" id="fpsOverlay" style="display: none">
@@ -39,31 +43,26 @@
   </footer>
 
   <script type="module">
-    import {Hexant} from './dist/hexant.js';
-    {
+    import Hexant from './dist/hexant.js';
 
-      hexant: new Hexant({
-        body: document.querySelector('#main'),
-      }),
+    const hexant = new Hexant({
+      $body: document.querySelector('#main'),
+    });
 
-      init() {
-        window.addEventListener('resize', () => this.updateSize());
-        this.updateSize();
-      },
+    function updateSize() {
+      const {
+        innerWidth, innerHeight,
+        document: {
+          documentElement: {clientWidth, clientHeight},
+        },
+      } = window;
+      const width = Math.max(clientWidth, innerWidth || 0);
+      const height = Math.max(clientHeight, innerHeight || 0);
+      hexant.resize(width, height);
+    }
 
-      updateSize() {
-        const {
-          innerWidth, innerHeight,
-          document: {
-            documentElement: {clientWidth, clientHeight},
-          },
-        } = window;
-        const width = Math.max(clientWidth, innerWidth || 0);
-        const height = Math.max(clientHeight, innerHeight || 0);
-        this.hexant.resize(width, height);
-      },
-
-    }.init()
+    window.addEventListener('resize', () => updateSize());
+    updateSize();
   </script>
 
 </body>
