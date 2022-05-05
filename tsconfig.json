@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "allowJs": true,
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "isolatedModules": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "importsNotUsedAsValues": "error",
+    "exactOptionalPropertyTypes": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
