@@ -1,518 +1,605 @@
+// @ts-check
+
 'use strict';
 
-var Coord = require('./coord.js');
-var OddQHexTile = require('./hextile.js');
-var OddQOffset = Coord.OddQOffset;
-var OddQBox = Coord.OddQBox;
-var installPool = require('./pool.js');
+import { OddQOffset, OddQBox } from './coord.js';
+import { OddQHexTile } from './hextile.js';
+import { makePool } from './pool.js';
 
-module.exports = HexTileTree;
+/**
+ * @typedef {object} oddQPotent
+ * @prop {(oqo: OddQOffset) => void} toOddQOffsetInto
+ */
 
-var zoomPerm = [
-    3, // 0 --> 3
-    2, // 1 --> 2
-    1, // 2 --> 1
-    0  // 3 --> 0
-];
+/** @typedef {(tile: OddQHexTile) => void} tileCallback */
+/** @typedef {OddQHexTile|HexTileTreeNode} tileOrNode */
+/** @typedef {tileOrNode|null} tileOrNodeOrNull */
 
-var tileOriginOffset = [
-    OddQOffset(0, 0),
-    OddQOffset(1, 0),
-    OddQOffset(0, 1),
-    OddQOffset(1, 1)
-];
-
-var nodeOriginOffset = [
-    OddQOffset(-1, -1),
-    OddQOffset(1, -1),
-    OddQOffset(-1, 1),
-    OddQOffset(1, 1)
-];
-
-function HexTileTree() {
+export class HexTileTree {
+  constructor() {
     this.minTileArea = 4;
     this.maxTileArea = 64;
     this.oqo = new OddQOffset(0, 0);
+
+    /** @type {null|HexTileTreeNode} */
     this.root = null;
-    this.tiles = {};
+
+    // TODO Map
+    /** @type {Map<number, OddQHexTile>} */
+    this.tiles = new Map();
+
+    /** @type {OddQHexTile[]} */
     this.dirtyTiles = [];
+
+    /** @type {tileCallback} */
     this.tileRemoved = noop;
+
+    /** @type {tileCallback} */
     this.tileAdded = noop;
-}
+  }
 
-function HexTileTreeNode() {
-    var self = this;
-    this.tree = null;
-    this.origin = new OddQOffset(0, 0);
-    this.oqo = new OddQOffset(0, 0);
-    this.box = OddQBox(null, null);
-    this.size = 0;
-    this.tileSize = 0;
-    this.tiles = [null, null, null, null];
-    this.concrete = 0;
-    this._replaceme = null;
-    this._replace = [
-        function replace0(tile) {self._setTile(0, tile);},
-        function replace1(tile) {self._setTile(1, tile);},
-        function replace2(tile) {self._setTile(2, tile);},
-        function replace3(tile) {self._setTile(3, tile);},
-    ];
-}
+  /**
+   * @param {number} id
+   * @returns {null|OddQHexTile}
+   */
+  getTile(id) {
+    return this.tiles.get(id) || null;
+  }
 
-HexTileTreeNode.prototype.init =
-function init(tree, origin, size, replaceme) {
-    this.tree = tree;
-    this.concrete = 0;
-    this._replaceme = replaceme;
-    if (origin !== null) {
-        origin.toOddQOffsetInto(this.origin);
-    } else {
-        this.origin.q = this.origin.r = 0;
-    }
-    this._setSize(size);
-    return this;
-};
-
-HexTileTreeNode.prototype.reset =
-function reset() {
-    if (this.tiles[0] !== null) {
-        this.tiles[0].free();
-        this.tiles[0] = null;
-    }
-    if (this.tiles[1] !== null) {
-        this.tiles[1].free();
-        this.tiles[1] = null;
-    }
-    if (this.tiles[2] !== null) {
-        this.tiles[2].free();
-        this.tiles[2] = null;
-    }
-    if (this.tiles[3] !== null) {
-        this.tiles[3].free();
-        this.tiles[3] = null;
-    }
-};
-
-HexTileTreeNode.prototype._setSize =
-function _setSize(size) {
-    this.size = size;
-    this.tileSize = Math.floor(this.size / 2);
-    this.box.topLeft.q = this.origin.q - this.tileSize;
-    this.box.topLeft.r = this.origin.r - this.tileSize;
-    this.box.bottomRight.q = this.origin.q + this.tileSize;
-    this.box.bottomRight.r = this.origin.r + this.tileSize;
-};
-
-HexTileTree.prototype.getTile =
-function getTile(id) {
-    return this.tiles[id];
-};
-
-HexTileTree.prototype.addTile =
-function addTile(tile) {
-    this.tiles[tile.id] = tile;
+  /** @param {OddQHexTile} tile */
+  addTile(tile) {
+    this.tiles.set(tile.id, tile);
     tile.dirty = true;
     this.dirtyTiles.push(tile);
     this.tileAdded(tile);
-};
+  }
 
-HexTileTree.prototype.removeTile =
-function removeTile(tile) {
-    if (tile.dirty) {
-        var j = 0, k = 0;
-        for (; k < this.dirtyTiles.length; ++j, ++k) {
-            if (this.dirtyTiles[j] === tile) {
-                ++k;
-                break;
+  /** @param {OddQHexTile[]} tiles */
+  removeTiles(...tiles) {
+    const { dirtyTiles } = this;
+    if (tiles.some(tile => tile.dirty)) {
+      const goneIDs = new Set(tiles.map(({ id }) => id));
+      let j = 0;
+      for (let k = 0; k < dirtyTiles.length; ++k) {
+        const dirtyTile = dirtyTiles[k];
+        if (dirtyTile) {
+          const { id } = dirtyTile;
+          if (!goneIDs.has(id)) {
+            if (j != k) {
+              dirtyTiles[j] = dirtyTile;
             }
+            ++j;
+          }
         }
-        while (k < this.dirtyTiles.length) {
-            this.dirtyTiles[j++] = this.dirtyTiles[k++];
-        }
-        this.dirtyTiles.length = j;
+      }
+      dirtyTiles.length = j;
     }
-    this.tileRemoved(tile);
-    delete this.tiles[tile.id];
-    tile.free();
-};
 
-HexTileTree.prototype.reset =
-function reset() {
+    for (const tile of tiles) {
+      this.tileRemoved(tile);
+    }
+
+    for (const { id } of tiles) {
+      this.tiles.delete(id);
+    }
+
+    for (const tile of tiles) {
+      tile.free();
+    }
+  }
+
+  reset() {
     this.dirtyTiles.length = 0;
-    this.tiles = {};
+    this.tiles.clear();
     this.root = null;
-};
+  }
 
-HexTileTree.prototype.dump =
-function dump() {
-    if (this.root !== null) {
-        return this.root.dump();
+  dump() {
+    const { root } = this;
+    return root ? [...root.dump()].join('\n') : '';
+  }
+
+  boundingBox() {
+    const { root } = this;
+    return root ? root.boundingBox() : null;
+  }
+
+  /** @param {(tile: OddQHexTile) => void} each */
+  eachTile(each) {
+    const { root } = this;
+    if (root !== null) {
+      root.eachTile(each);
     }
-};
+  }
 
-HexTileTreeNode.prototype.dump =
-function dump() {
-    var parts = [
-        'TreeNode @' + this.origin.toString(),
-        '  box: ' + this.box.toString()
-    ];
-
-    for (var i = 0; i < this.tiles.length; i++) {
-        var tileparts = ['null'];
-        var tile = this.tiles[i];
-        if (tile) {
-            tileparts = tile.dump().split(/\n/);
-        }
-        parts.push('[' + i + ']: ' + tileparts[0]);
-        for (var j = 1; j < tileparts.length; j++) {
-            parts.push('     ' + tileparts[j]);
-        }
+  /** @param {(point: OddQOffset, datum: number) => void} each */
+  eachDataPoint(each) {
+    const { root } = this;
+    if (root !== null) {
+      root.eachDataPoint(each, null);
     }
+  }
 
-    return parts.join('\n');
-};
+  centerPoint() {
+    const { root } = this;
+    return root ? root.centerPoint() : null;
+  }
 
-OddQHexTile.prototype.dump =
-function dump() {
-    var parts = ['Tile @' + this.origin.toString()];
-    var row = [];
-    for (var i = 0; i < this.data.length; i++) {
-        if (i && i % this.size === 0) {
-            parts.push(row.join(' '));
-            row = [];
-        }
-        row.push(this.data[i].toString());
+  /** @returns {HexTileTreeNode} */
+  _ensureRoot() {
+    let { root } = this;
+    if (!root) {
+      const s = Math.ceil(Math.sqrt(this.minTileArea)) * 2;
+      root = HexTileTreeNode.alloc ? HexTileTreeNode.alloc() : new HexTileTreeNode()
+      root.init(this, null, s);
     }
-    parts.push(row.join(' '));
-    return parts.join('\n');
-};
+    return root;
+  }
 
-HexTileTree.prototype.boundingBox =
-function boundingBox() {
-    if (this.root === null) {
+  /** @param {oddQPotent} point */
+  _ensureTile(point) {
+    const { oqo } = this;
+    let root = this._ensureRoot();
+    point.toOddQOffsetInto(oqo);
+    while (!root.box.contains(oqo)) {
+      const expanded = root.expand();
+      if (!expanded) {
         return null;
+      }
+      root = expanded;
     }
-    return this.root.boundingBox();
-};
+    if (root !== this.root) {
+      this.root = root;
+    }
+    root.oqo.copyFrom(oqo);
+    return root._getOrCreateTile(); // FIXME implicit oqo pass from copy in last line
+    // FIXME implicit side return in this.oqo
+  }
 
-HexTileTree.prototype.eachTile =
-function eachTile(each) {
-    if (this.root !== null) {
-        this.root.eachTile(each);
-    }
-};
-
-HexTileTreeNode.prototype.eachTile =
-function eachTile(each) {
-    var tile;
-    if (this.replaceme && (tile = this._mayCompact())) {
-        tile.eachTile(each);
-        return;
-    }
-    if (this.tiles[0]) this.tiles[0].eachTile(each);
-    if (this.tiles[1]) this.tiles[1].eachTile(each);
-    if (this.tiles[2]) this.tiles[2].eachTile(each);
-    if (this.tiles[3]) this.tiles[3].eachTile(each);
-};
-
-HexTileTree.prototype.eachTile =
-function eachTile(each) {
-    if (this.root !== null) {
-        this.root.eachTile(each);
-    }
-};
-
-HexTileTree.prototype.eachDataPoint =
-function eachDataPoint(each) {
-    if (this.root !== null) {
-        this.root.eachDataPoint(each, null, null);
-    }
-};
-
-HexTileTree.prototype.centerPoint =
-function centerPoint() {
-    if (this.root === null) {
-        return null;
-    }
-    return this.root.centerPoint();
-};
-
-HexTileTree.prototype._ensureRoot =
-function _ensureRoot() {
-    if (this.root === null) {
-        var s = Math.ceil(Math.sqrt(this.minTileArea))*2;
-        this.root = HexTileTreeNode.alloc().init(this, null, s, null);
-    }
-};
-
-HexTileTree.prototype.update =
-function update(point, func) {
-    this._ensureRoot();
-    point.toOddQOffsetInto(this.oqo);
-    while (!this.root.box.contains(this.oqo)) {
-        this.root = this.root.expand();
-    }
-    this.root.oqo.copyFrom(this.oqo);
-    var tile = this.root._getOrCreateTile();
+  /**
+   * @param {oddQPotent} point
+   * @param {(datum: number, point: oddQPotent) => number} func
+   * @returns {number}
+   */
+  update(point, func) {
+    const { oqo, dirtyTiles } = this;
+    const tile = this._ensureTile(point); // NOTE: implicit return into shared oqo
+    if (!tile) { return NaN }
     if (tile instanceof OddQHexTile && !tile.dirty) {
-        tile.dirty = true;
-        this.dirtyTiles.push(tile);
+      tile.dirty = true;
+      dirtyTiles.push(tile);
     }
-    return tile.update(this.oqo, func);
-};
+    return tile.update(oqo, func);
+  }
 
-HexTileTree.prototype.get =
-function get(point) {
-    this._ensureRoot();
-    return this.root.get(point);
-};
+  /**
+   * @param {oddQPotent} point
+   * @returns {number}
+   */
+  get(point) {
+    return this._ensureRoot().get(point);
+  }
 
-HexTileTree.prototype.set =
-function set(point, datum) {
-    this._ensureRoot();
-    point.toOddQOffsetInto(this.oqo);
-    while (!this.root.box.contains(this.oqo)) {
-        this.root = this.root.expand();
-    }
-    this.root.oqo.copyFrom(this.oqo);
-    var tile = this.root._getOrCreateTile();
+  /**
+   * @param {oddQPotent} point
+   * @param {number} datum}
+   * @returns {number}
+   */
+  set(point, datum) {
+    const { oqo, dirtyTiles } = this;
+    const tile = this._ensureTile(point); // NOTE: implicit return into shared oqo
+    if (!tile) { return NaN }
     if (tile instanceof OddQHexTile && !tile.dirty) {
-        tile.dirty = true;
-        this.dirtyTiles.push(tile);
+      tile.dirty = true;
+      dirtyTiles.push(tile);
     }
-    return tile.set(this.oqo, datum);
-};
+    return tile.set(oqo, datum);
+  }
 
-HexTileTreeNode.prototype.expand =
-function expand() {
+}
+
+const zoomPerm = [
+  3, // 0 --> 3
+  2, // 1 --> 2
+  1, // 2 --> 1
+  0  // 3 --> 0
+];
+
+const tileOriginOffset = [
+  new OddQOffset(0, 0),
+  new OddQOffset(1, 0),
+  new OddQOffset(0, 1),
+  new OddQOffset(1, 1)
+];
+
+const nodeOriginOffset = [
+  new OddQOffset(-1, -1),
+  new OddQOffset(1, -1),
+  new OddQOffset(-1, 1),
+  new OddQOffset(1, 1)
+];
+
+class HexTileTreeNode {
+  static {
+    const { alloc, free } = makePool(
+      () => new HexTileTreeNode(),
+      node => node.reset());
+    this.alloc = alloc;
+    this.free = free;
+    this.prototype.free = function() { free(this) };
+  }
+
+  free() { }
+
+  constructor() {
+    /** @type {HexTileTree|null} */
+    this.tree = null;
+
+    this.origin = new OddQOffset(0, 0);
+    this.oqo = new OddQOffset(0, 0);
+    this.box = new OddQBox();
+    this.size = 0;
+    this.tileSize = 0;
+    this.concrete = 0;
+
+    /** @type {[tileOrNodeOrNull, tileOrNodeOrNull, tileOrNodeOrNull, tileOrNodeOrNull]} */
+    this.tiles = [null, null, null, null];
+
+    /** @type {tileCallback|null} */
+    this._replaceme = null;
+  }
+
+  /**
+   * @param {HexTileTree} tree
+   * @param {oddQPotent?} origin
+   * @param {number} size
+   * @param {tileCallback} [replaceme]
+   */
+  init(tree, origin, size, replaceme) {
+    this.tree = tree;
+    this.concrete = 0;
+    this._replaceme = replaceme || null;
+    if (origin !== null) {
+      origin.toOddQOffsetInto(this.origin);
+    } else {
+      this.origin.q = this.origin.r = 0;
+    }
+    this._setSize(size);
+    return this;
+  }
+
+  reset() {
+    const { tiles } = this;
+    const [a, b, c, d] = tiles;
+    if (a) {
+      a.free();
+      tiles[0] = null;
+    }
+    if (b) {
+      b.free();
+      tiles[1] = null;
+    }
+    if (c) {
+      c.free();
+      tiles[2] = null;
+    }
+    if (d) {
+      d.free();
+      tiles[3] = null;
+    }
+  }
+
+  /** @param {number} size */
+  _setSize(size) {
+    const { origin: { q, r }, box: { topLeft, bottomRight } } = this;
+    const tileSize = Math.floor(size / 2);
+    this.size = size;
+    this.tileSize = tileSize;
+    topLeft.q = q - tileSize;
+    topLeft.r = r - tileSize;
+    bottomRight.q = q + tileSize;
+    bottomRight.r = r + tileSize;
+  }
+
+  /** @returns {Generator<string>} */
+  *dump() {
+    const { origin, box, tiles } = this;
+    yield `TreeNode @${origin}`;
+    yield `  box: ${box}`;
+    for (let i = 0; i < tiles.length; i++) {
+      const tile = tiles[i];
+      const [first, ...tileparts] = tile ? [...tile.dump()] : ['null'];
+      yield `[${i}]: ${first}`;
+      for (const tilepart of tileparts) {
+        yield `     ${tilepart}`;
+      }
+    }
+  }
+
+  /** @param {(tile: OddQHexTile) => void} each */
+  eachTile(each) {
+    const tile = this._mayCompact();
+    if (tile) {
+      tile.eachTile(each);
+      return;
+    }
+
+    const { tiles: [a, b, c, d] } = this;
+    if (a) a.eachTile(each);
+    if (b) b.eachTile(each);
+    if (c) c.eachTile(each);
+    if (d) d.eachTile(each);
+  }
+
+  expand() {
+    const { tree, tiles } = this;
+    if (!tree) { return null }
     this._setSize(this.size * 2);
-    for (var i = 0; i < this.tiles.length; i++) {
-        var tile = this.tiles[i];
-        if (tile !== null) {
-            var tileNode = HexTileTreeNode.alloc().init(
-                this.tree, tile.growthOrigin(i), this.tileSize, this._replace[i]);
-            tileNode._setTile(zoomPerm[i], tile);
-            this.tiles[i] = tileNode;
-        }
+    for (let i = 0; i < tiles.length; i++) {
+      const tile = tiles[i];
+      const originOffset = tile instanceof OddQHexTile ? tileOriginOffset[i] : nodeOriginOffset[i];
+      const zoom = zoomPerm[i];
+      if (tile != undefined && originOffset != undefined && zoom != undefined) {
+        const growthOrigin = tile.oqo
+          .copyFrom(originOffset)
+          .scale(tile instanceof OddQHexTile ? tile.width : tile.tileSize)
+          .add(tile.origin);
+        const tileNode = HexTileTreeNode.alloc ? HexTileTreeNode.alloc() : new HexTileTreeNode();
+        tileNode.init(tree, growthOrigin, this.tileSize);
+        tileNode._setTile(zoom, tile);
+        this._setTile(i, tileNode);
+      }
     }
     return this;
-};
+  }
 
-OddQHexTile.prototype.growthOrigin =
-function growthOrigin(i) {
-    return this.oqo
-        .copyFrom(tileOriginOffset[i])
-        .scale(this.width)
-        .add(this.origin);
-};
-
-HexTileTreeNode.prototype.growthOrigin =
-function growthOrigin(i) {
-    return this.oqo
-        .copyFrom(nodeOriginOffset[i])
-        .scale(this.tileSize)
-        .add(this.origin);
-};
-
-HexTileTreeNode.prototype.boundingBox =
-function boundingBox() {
+  boundingBox() {
     return this.box;
-};
+  }
 
-HexTileTreeNode.prototype.eachTile =
-function eachTile(each) {
-    var tile;
-    if (this.replaceme && (tile = this._mayCompact())) {
-        tile.eachTile(each);
-        return;
+  /**
+   * @param {(point: OddQOffset, datum: number) => void} each
+   * @param {null|number} [fill]
+   */
+  eachDataPoint(each, fill = null) {
+    const tile = this._mayCompact();
+    if (tile) {
+      tile.eachDataPoint(each);
+      return;
     }
-    if (this.tiles[0]) this.tiles[0].eachTile(each);
-    if (this.tiles[1]) this.tiles[1].eachTile(each);
-    if (this.tiles[2]) this.tiles[2].eachTile(each);
-    if (this.tiles[3]) this.tiles[3].eachTile(each);
-};
 
-HexTileTreeNode.prototype.eachDataPoint =
-function eachDataPoint(each, fill) {
-    var tile;
-    if (this._replaceMe && (tile = this._mayCompact())) {
-        tile.eachDataPoint(each, fill, null);
+    const {
+      tileSize,
+      origin: { q: oq, r: or },
+      oqo: point,
+      tiles: [a, b, c, d],
+    } = this
+
+    if (a) a.eachDataPoint(each, fill); else doFill(0);
+    if (b) b.eachDataPoint(each, fill); else doFill(1);
+    if (c) c.eachDataPoint(each, fill); else doFill(2);
+    if (d) d.eachDataPoint(each, fill); else doFill(3);
+
+    /** @param {number} i */
+    function doFill(i) {
+      if (typeof fill !== 'number') {
         return;
+      }
+      const tileCol = i & 1;
+      const tileRow = i >> 1;
+      const loQ = oq + (tileCol ? 0 : -tileSize);
+      const loR = or + (tileRow ? 0 : -tileSize);
+      const hiQ = loQ + tileSize;
+      const hiR = loR + tileSize;
+      point.q = loQ, point.r = loR;
+      for (point.r = loR; point.r < hiR; point.r++) {
+        for (point.q = loQ; point.q < hiQ; point.q++) {
+          each(point, fill);
+        }
+      }
     }
-    if (this.tiles[0]) this.tiles[0].eachDataPoint(each, fill);
-    else if (typeof fill === 'number') this._fakeDataPoints(0, each, fill);
-    if (this.tiles[1]) this.tiles[1].eachDataPoint(each, fill);
-    else if (typeof fill === 'number') this._fakeDataPoints(1, each, fill);
-    if (this.tiles[2]) this.tiles[2].eachDataPoint(each, fill);
-    else if (typeof fill === 'number') this._fakeDataPoints(2, each, fill);
-    if (this.tiles[3]) this.tiles[3].eachDataPoint(each, fill);
-    else if (typeof fill === 'number') this._fakeDataPoints(3, each, fill);
-};
+  }
 
-HexTileTreeNode.prototype._mayCompact =
-function _mayCompact() {
+  _mayCompact() {
+    if (!this.tree || !this._replaceme) {
+      return null;
+    }
+
     if (this.concrete != 4) {
-        return null;
+      return null;
     }
 
-    var tile = this.compact();
+    const tile = this.compact();
     if (tile === null) {
-        this.concrete = 5;
-        return null;
+      // setting concrete to 5 caches the negative result of "won't compact" so
+      // that we don't try again in the future
+      this.concrete = 5;
+      return null;
+    }
+
+    /** @type {OddQHexTile[]} */
+    const subTiles = [];
+    for (const tile of this.tiles) {
+      if (tile && tile instanceof OddQHexTile) {
+        subTiles.push(tile);
+      }
     }
 
     this._replaceme(tile);
-    for (var i = 0; i < this.tiles.length; ++i) {
-        this.tree.removeTile(this.tiles[i]);
-    }
-    if (tile instanceof OddQHexTile) {
-        this.tree.addTile(tile);
-    }
-    return tile;
-};
 
-HexTileTreeNode.prototype.compact =
-function compact() {
-    if (this.size * this.size > this.tree.maxTileArea) {
-        return null;
-    }
+    this.tree.removeTiles(...subTiles);
 
-    var newTile = OddQHexTile.alloc().init(
-        this.box.topLeft, this.size, this.size);
-    this.tiles[0].eachDataPoint(eachPoint, null, null);
-    this.tiles[1].eachDataPoint(eachPoint, null, null);
-    this.tiles[2].eachDataPoint(eachPoint, null, null);
-    this.tiles[3].eachDataPoint(eachPoint, null, null);
-    return newTile;
-
-    function eachPoint(point, datum) {
-        // newTile.data[i++] = datum; TODO: should be able to do something like thing
-        newTile.set(point, datum);
-    }
-};
-
-HexTileTreeNode.prototype._fakeDataPoints =
-function _fakeDataPoints(i, each, fill) {
-    var tileCol = i & 1;
-    var tileRow = i >> 1;
-
-    var loQ = this.origin.q + (tileCol ? 0 : -this.tileSize);
-    var loR = this.origin.r + (tileRow ? 0 : -this.tileSize);
-    var hiQ = loQ + this.tileSize;
-    var hiR = loR + this.tileSize;
-
-    var point = OddQOffset(loQ, loR);
-    for (point.r = loR; point.r < hiR; point.r++) {
-        for (point.q = loQ; point.q < hiQ; point.q++) {
-            each(point, fill);
-        }
-    }
-};
-
-HexTileTreeNode.prototype.centerPoint =
-function centerPoint() {
-    return this.origin;
-};
-
-HexTileTreeNode.prototype.update =
-function update(point, func) {
-    point.toOddQOffsetInto(this.oqo);
-    if (!this.box.contains(this.oqo)) {
-        throw new Error('update out of bounds');
-    }
-    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
-    if (tile instanceof OddQHexTile && !tile.dirty) {
-        tile.dirty = true;
-        this.tree.dirtyTiles.push(tile);
-    }
-    return tile.update(this.oqo, func);
-};
-
-HexTileTreeNode.prototype.get =
-function get(point) {
-    point.toOddQOffsetInto(this.oqo);
-    if (!this.box.contains(this.oqo)) {
-        return NaN;
-    }
-    var tile = this._getTile();
-    if (tile) {
-        return tile.get(this.oqo);
-    }
-    return 0;
-};
-
-HexTileTreeNode.prototype.set =
-function set(point, datum) {
-    point.toOddQOffsetInto(this.oqo);
-    if (!this.box.contains(this.oqo)) {
-        throw new Error('set out of bounds');
-    }
-    var tile = (this._replaceme && this._mayCompact()) || this._getOrCreateTile();
-    if (tile instanceof OddQHexTile && !tile.dirty) {
-        tile.dirty = true;
-        this.tree.dirtyTiles.push(tile);
-    }
-    return tile.set(this.oqo, datum);
-};
-
-HexTileTreeNode.prototype._getTile =
-function _getTile() {
-    // TODO: bit hack: negated sign-bit of subtraction
-    var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
-    var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
-    var i = tileRow * 2 + tileCol;
-    return this.tiles[i];
-};
-
-HexTileTreeNode.prototype._getOrCreateTile =
-function _getOrCreateTile() {
-    var tileCol = this.oqo.q < this.origin.q ? 0 : 1;
-    var tileRow = this.oqo.r < this.origin.r ? 0 : 1;
-    var i = tileRow * 2 + tileCol;
-    var tile = this.tiles[i];
-    if (tile) {
-        return tile;
-    }
-    if (this.tileSize * this.tileSize <= this.tree.minTileArea) {
-        return this._allocTile(i);
-    }
-    return this._allocNode(i);
-};
-
-HexTileTreeNode.prototype._allocTile =
-function _allocTile(i) {
-    var origin = this.origin.copy();
-    if (this.oqo.q < origin.q) origin.q -= this.tileSize;
-    if (this.oqo.r < origin.r) origin.r -= this.tileSize;
-    var tile = OddQHexTile.alloc().init(
-        origin, this.tileSize, this.tileSize);
-    this._setTile(i, tile);
     this.tree.addTile(tile);
     return tile;
-};
+  }
 
-HexTileTreeNode.prototype._allocNode =
-function _allocNode(i) {
-    var origin = this.origin.copy();
-    origin.q += this.tileSize / (this.oqo.q < origin.q ? -2 : 2);
-    origin.r += this.tileSize / (this.oqo.r < origin.r ? -2 : 2);
-    var node = HexTileTreeNode.alloc().init(
-        this.tree, origin, this.tileSize, this._replace[i]);
-    this.tiles[i] = node;
+  compact() {
+    if (!this.tree) { return null }
+    const { size, tree: { maxTileArea } } = this;
+    if (size * size > maxTileArea) {
+      return null;
+    }
+
+    // TODO should be able to do region copies from each subTile into newTile,
+    // rather than all the overhead of each => set
+
+    const { box: { topLeft }, tiles } = this;
+    const newTile = OddQHexTile.alloc ? OddQHexTile.alloc() : new OddQHexTile();
+    newTile.init(topLeft, size, size);
+    for (const subTile of tiles) {
+      if (subTile) subTile.eachDataPoint(
+        (point, datum) => newTile.set(point, datum),
+        null);
+    }
+    return newTile;
+  }
+
+  centerPoint() {
+    return this.origin;
+  }
+
+  /**
+   * @param {oddQPotent} point
+   * @param {(datum: number, point: oddQPotent) => number} func
+   * @returns {number}
+   */
+  update(point, func) {
+    const { oqo, box, tree } = this;
+    if (!tree) { return NaN }
+    const { dirtyTiles } = tree;
+    point.toOddQOffsetInto(oqo);
+    if (!box.contains(oqo)) {
+      throw new Error('update out of bounds');
+    }
+    const tile = this._mayCompact() || this._getOrCreateTile(); // FIXME implicit oqo pass
+    if (!tile) { return NaN }
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+      tile.dirty = true;
+      dirtyTiles.push(tile);
+    }
+    return tile.update(oqo, func);
+  }
+
+  /**
+   * @param {oddQPotent} point
+   * @returns {number}
+   */
+  get(point) {
+    const { oqo, box } = this;
+    point.toOddQOffsetInto(oqo);
+    if (!box.contains(oqo)) {
+      return NaN;
+    }
+    const tile = this._getTile(); // FIXME implicit oqo pass
+    if (tile) {
+      return tile.get(oqo);
+    }
+    return 0;
+  }
+
+  /**
+   * @param {oddQPotent} point
+   * @param {number} datum
+   * @returns {number}
+   */
+  set(point, datum) {
+    const { oqo, box, tree } = this;
+    if (!tree) { return NaN }
+    const { dirtyTiles } = tree;
+    point.toOddQOffsetInto(oqo);
+    if (!box.contains(oqo)) {
+      throw new Error('set out of bounds');
+    }
+
+    const tile = this._mayCompact() || this._getOrCreateTile(); // FIXME implicit oqo pass
+    if (!tile) { return NaN }
+    if (tile instanceof OddQHexTile && !tile.dirty) {
+      tile.dirty = true;
+      dirtyTiles.push(tile);
+    }
+    return tile.set(this.oqo, datum);
+  }
+
+  _index() {
+    // FIXME implicit oqo arg
+    const { oqo: { q, r }, origin: { q: oq, r: or } } = this;
+
+    // TODO: bit hack: negated sign-bit of subtraction would make this branchless
+    const tileCol = q < oq ? 0 : 1;
+    const tileRow = r < or ? 0 : 1;
+    return tileRow * 2 + tileCol;
+  }
+
+  _getTile() {
+    const i = this._index(); // FIXME implicit operation on oqo passed thru
+    return this.tiles[i];
+  }
+
+  _getOrCreateTile() {
+    const { tree, tiles, tileSize } = this;
+    if (!tree) { return null }
+    const i = this._index(); // FIXME implicit operation on oqo passed thru
+    const tile = tiles[i];
+    if (tile) {
+      return tile;
+    }
+    if (tileSize * tileSize <= tree.minTileArea) {
+      return this._allocTile(i);
+    }
+    return this._allocNode(i);
+  }
+
+  /** @param {number} i */
+  _allocTile(i) {
+
+    // FIXME implicit oqo arg
+    const { tree, oqo: { q, r }, tileSize } = this;
+    if (!tree) { return null }
+    const origin = this.origin.copy();
+    if (q < origin.q) origin.q -= tileSize;
+    if (r < origin.r) origin.r -= tileSize;
+
+    const tile = OddQHexTile.alloc ? OddQHexTile.alloc() : new OddQHexTile();
+    tile.init(origin, tileSize, tileSize);
+    this._setTile(i, tile);
+    tree.addTile(tile);
+    return tile;
+  }
+
+  /** @param {number} i */
+  _allocNode(i) {
+
+    // FIXME implicit oqo arg
+    const { tree, oqo: { q, r }, tileSize } = this;
+    if (!tree) { return null }
+    const origin = this.origin.copy();
+    origin.q += tileSize / (q < origin.q ? -2 : 2);
+    origin.r += tileSize / (r < origin.r ? -2 : 2);
+
+    const node = HexTileTreeNode.alloc ? HexTileTreeNode.alloc() : new HexTileTreeNode();
+    node.init(tree, origin, tileSize);
+    this._setTile(i, node);
     return node;
-};
+  }
 
-HexTileTreeNode.prototype._setTile =
-function _setTile(i, tile) {
+  /**
+   * @param {number} i
+   * @param {tileOrNode} tile
+   */
+  _setTile(i, tile) {
+    const prior = this.tiles[i];
+    if (prior && prior instanceof HexTileTreeNode) {
+      prior._replaceme = null;
+    }
     this.tiles[i] = tile;
     if (tile instanceof OddQHexTile) {
-        this.concrete++;
+      this.concrete++;
     } else if (tile instanceof HexTileTreeNode) {
-        tile._replaceme = this._replace[i];
+      tile._replaceme = tile => this._setTile(i, tile);
     }
-};
+  }
 
-installPool(HexTileTreeNode);
+}
 
 function noop() {
 }
