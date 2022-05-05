@@ -1,166 +1,252 @@
+// @ts-check
+
 'use strict';
 
-var Coord = require('./coord.js');
-var OddQOffset = Coord.OddQOffset;
-var OddQBox = Coord.OddQBox;
-var installPool = require('./pool.js');
+import {
+  OddQOffset,
+  OddQBox,
+} from './coord.js';
 
-module.exports = OddQHexTile;
+import { makePool } from './pool.js';
 
-function OddQHexTile() {
+/**
+ * @typedef {object} oddQPotent
+ * @prop {(oqo: OddQOffset) => void} toOddQOffsetInto
+ */
+
+export class OddQHexTile {
+  static NextId = 1;
+
+  static {
+    const { alloc, free } = makePool(() => new OddQHexTile());
+    this.alloc = alloc;
+    this.free = free;
+    this.prototype.free = function() { free(this) };
+  }
+
+  free() { }
+
+  constructor() {
     this.id = OddQHexTile.NextId++;
-    this.origin = new Coord.OddQOffset(0, 0);
-    this.oqo = new Coord.OddQOffset(0, 0);
+    this.origin = new OddQOffset();
+    this.oqo = new OddQOffset();
     this.width = 0;
     this.height = 0;
+    /** @type {null|Uint16Array} */
     this.data = null;
     this.dirty = false;
-}
+  }
 
-OddQHexTile.NextId = 0;
-
-OddQHexTile.prototype.init =
-function init(origin, width, height) {
-    var need = width * height;
-    var needBytes = need * Uint16Array.BYTES_PER_ELEMENT;
+  /**
+   * @param {oddQPotent} origin
+   * @param {number} width
+   * @param {number} height
+   */
+  init(origin, width, height) {
+    const need = width * height;
+    const needBytes = need * Uint16Array.BYTES_PER_ELEMENT;
     origin.toOddQOffsetInto(this.origin);
     this.width = width;
     this.height = height;
     if (this.data === null || this.data.buffer.byteLength < needBytes) {
-        this.data = new Uint16Array(need);
+      this.data = new Uint16Array(need);
     } else {
-        if (this.data.length !== need) {
-            this.data = new Uint16Array(this.data.buffer, 0, need);
-        }
-        for (var i = 0; i < this.data.length; ++i) {
-            this.data[i] = 0;
-        }
+      if (this.data.length !== need) {
+        this.data = new Uint16Array(this.data.buffer, 0, need);
+      }
+      this.data.fill(0);
     }
     this.dirty = false;
     return this;
-};
+  }
 
-OddQHexTile.prototype.boundingBox =
-function boundingBox() {
-    return OddQBox(this.origin, this.origin.copy().addTo(this.width, this.height));
-};
+  boundingBox() {
+    const { origin, width, height } = this;
+    return new OddQBox(origin, origin.copy().addTo(width, height));
+  }
 
-OddQHexTile.prototype.centerPoint =
-function centerPoint() {
-    return OddQOffset(
-        this.origin.q + Math.floor(this.width / 2),
-        this.origin.r + Math.floor(this.height / 2)
+  centerPoint() {
+    const { origin, width, height } = this;
+    return new OddQOffset(
+      origin.q + Math.floor(width / 2),
+      origin.r + Math.floor(height / 2)
     );
-};
+  }
 
-OddQHexTile.prototype.pointToIndex =
-function pointToIndex(point) {
-    point.toOddQOffsetInto(this.oqo);
-    return (this.oqo.r - this.origin.r) * this.width +
-           (this.oqo.q - this.origin.q);
-};
+  /**
+   * @param {oddQPotent} point
+   */
+  pointToIndex(point) {
+    const { oqo, origin, width } = this;
+    point.toOddQOffsetInto(oqo);
+    return (oqo.r - origin.r) * width +
+      (oqo.q - origin.q);
+  }
 
-OddQHexTile.prototype.update =
-function update(point, func) {
-    var i = this.pointToIndex(point);
-    this.data[i] = func(this.data[i], point);
-};
-
-OddQHexTile.prototype.get =
-function get(point) {
-    return this.data[this.pointToIndex(point)];
-};
-
-OddQHexTile.prototype.set =
-function set(point, datum) {
-    this.data[this.pointToIndex(point)] = datum;
+  /**
+   * @param {oddQPotent} point
+   * @param {(datum: number, point: oddQPotent) => number} func
+   * @returns {number}
+   */
+  update(point, func) {
+    const { data } = this;
+    if (!data) {
+      return NaN;
+    }
+    const i = this.pointToIndex(point);
+    const datum = func(orNaN(data[i]), point);
+    data[i] = datum;
     return datum;
-};
+  }
 
-OddQHexTile.prototype.eachTile =
-function eachTile(each) {
+  /**
+   * @param {oddQPotent} point
+   * @returns {number}
+   */
+  get(point) {
+    const { data } = this;
+    return data ? orNaN(data[this.pointToIndex(point)]) : NaN;
+  }
+
+  /**
+   * @param {oddQPotent} point
+   * @param {number} datum
+   * @returns {number}
+   */
+  set(point, datum) {
+    const { data } = this;
+    if (data) {
+      data[this.pointToIndex(point)] = datum;
+    }
+    return datum;
+  }
+
+  /** @param {(tile: OddQHexTile) => void} each */
+  eachTile(each) {
     each(this);
-};
+  }
 
-OddQHexTile.prototype.eachDataPoint =
-function eachDataPoint(each) {
-    var point = this.oqo;
-    var loQ = this.origin.q;
-    var loR = this.origin.r;
-    var hiQ = loQ + this.width;
-    var hiR = loR + this.height;
-    var i = 0;
-    for (point.r = loR; point.r < hiR; point.r++) {
+  /** @param {(point: OddQOffset, datum: number) => void} each */
+  eachDataPoint(each) {
+    const {
+      oqo: point,
+      origin: { q: loQ, r: loR },
+      width, height, data,
+    } = this;
+    if (data) {
+      const hiQ = loQ + width;
+      const hiR = loR + height;
+      let i = 0;
+      for (point.r = loR; point.r < hiR; point.r++) {
         for (point.q = loQ; point.q < hiQ; point.q++, i++) {
-            each(point, this.data[i]);
+          each(point, orNaN(data[i]));
         }
+      }
     }
-};
+  }
 
-OddQHexTile.prototype.expandBoxTo =
-function expandBoxTo(tl, br) {
-    var tlq = this.origin.q;
-    var tlr = this.origin.r;
-    var brq = tlq + this.width;
-    var brr = tlr + this.height;
+  /**
+   * @param {OddQOffset} tl
+   * @param {OddQOffset} br
+   */
+  expandBoxTo(tl, br) {
+    const {
+      origin: { q: tlq, r: tlr },
+      width, height,
+    } = this;
+    const brq = tlq + width;
+    const brr = tlr + height;
     if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
-        tl.q = tlq;
-        tl.r = tlr;
-        br.q = brq;
-        br.r = brr;
+      tl.q = tlq;
+      tl.r = tlr;
+      br.q = brq;
+      br.r = brr;
     } else {
-        if (tlq < tl.q) tl.q = tlq;
-        if (tlr < tl.r) tl.r = tlr;
-        if (brq > br.q) br.q = brq;
-        if (brr > br.r) br.r = brr;
+      if (tlq < tl.q) tl.q = tlq;
+      if (tlr < tl.r) tl.r = tlr;
+      if (brq > br.q) br.q = brq;
+      if (brr > br.r) br.r = brr;
     }
-};
+  }
 
-OddQHexTile.prototype.expandBoxToIf =
-function expandBoxToIf(tl, br, mask) {
-    var q = this.origin.q, r = this.origin.r, i = 0;
+  /**
+   * @param {OddQOffset} tl
+   * @param {OddQOffset} br
+   * @param {number} mask
+   */
+  expandBoxToIf(tl, br, mask) {
+    const { data, width, origin: { q: oq } } = this;
+    let { origin: { q, r } } = this, i = 0;
+    if (!data) {
+      return;
+    }
 
     // if any part of the box isn't defined, initialize from the first masked
     // point
     if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
-        while (i < this.data.length) {
-            if (this.data[i] & mask) {
-                tl.q = q;
-                br.q = q;
-                tl.r = r;
-                br.r = r;
-                break;
-            }
-            i++;
-            q++;
-            if (q >= this.origin.q + this.width) {
-                q = this.origin.q;
-                r++;
-            }
-        }
-    }
-
-    // now just expand to each masked point
-    while (i < this.data.length) {
-        if (this.data[i] & mask) {
-            if (q < tl.q) {
-                tl.q = q;
-            } else if (q >= br.q) {
-                br.q = q;
-            }
-            if (r < tl.r) {
-                tl.r = r;
-            } else if (r >= br.r) {
-                br.r = r;
-            }
+      while (i < data.length) {
+        if (orNaN(data[i]) & mask) {
+          tl.q = q;
+          br.q = q;
+          tl.r = r;
+          br.r = r;
+          break;
         }
         i++;
         q++;
-        if (q >= this.origin.q + this.width) {
-            q = this.origin.q;
-            r++;
+        if (q >= oq + width) {
+          q = oq;
+          r++;
         }
+      }
     }
-};
 
-installPool(OddQHexTile);
+    // now just expand to each masked point
+    while (i < data.length) {
+      if (orNaN(data[i]) & mask) {
+        if (q < tl.q) {
+          tl.q = q;
+        } else if (q >= br.q) {
+          br.q = q;
+        }
+        if (r < tl.r) {
+          tl.r = r;
+        } else if (r >= br.r) {
+          br.r = r;
+        }
+      }
+      i++;
+      q++;
+      if (q >= oq + width) {
+        q = oq;
+        r++;
+      }
+    }
+  }
+
+  *dump() {
+    const {
+      origin,
+      data,
+      width,
+    } = this;
+    yield 'Tile @' + origin.toString();
+    if (data) {
+      const row = [];
+      for (let i = 0; i < data.length; i++) {
+        if (i && i % width === 0) {
+          yield row.join(' ');
+          row.splice(0);
+        }
+        row.push(orNaN(data[i]).toString());
+      }
+      yield row.join(' ');
+    }
+  }
+
+}
+
+/** @param {number|undefined} un */
+function orNaN(un) {
+  return un === undefined ? NaN : un;
+}
