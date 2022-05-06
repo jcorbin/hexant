@@ -1,401 +1,622 @@
+// @ts-check
+
 'use strict';
 
-var constants = require('../constants.js');
-var analyze = require('./analyze.js');
-var symToTstring = require('./tostring.js');
-var solve = require('./solve.js');
-var walk = require('./walk.js');
+import * as rezult from '../../rezult.js';
+import * as constants from '../constants.js';
+
+import { analyze } from './analyze.js';
+import { toSpecString } from './tostring.js';
+import * as walk from './walk.js';
+
+/** @typedef {import('./analyze.js').analysis} analysis */
 
 // TODO: de-dupe
-var opPrec = [
-    '+',
-    '-',
-    '*',
-    '/',
-    '%'
-];
+const opPrec = ['+', '-', '*', '/', '%'];
 
-function compileInit(spec) {
-    var scope = {
-        _ent: 'turmite',
-        numStates: 0,
-        numColors: 0
-    };
+/** @typedef {{[key: number]: number}} Rules - A turmite rule lookup table
+ *
+ * Keys have 2 bit-packed fields encoding color and state:
+ * - color: the value of the cell currently occupied by the turmite
+ * - state: the turmite's current internal state value; has no intrinsic
+ *          semantics other than as part of rules table keys, broadening
+ *          the space of potential rules greatly as compared to an ant that
+ *          merely dispatches on color
+ *
+ * Values have 3 bit-packed fields encoding result color, state, and turn:
+ * - color: the cell currently occupied by the turmite will have its color
+ *          changed to this value
+ * - state: the turmite's state value will be set to this; its primary purpose
+ *          is to expand the rule table keyspace, allowing for things like
+ *          multiple "modes" of turmite rules to be packed into one table
+ * - turn: bit field encoding what turn(s) the turmite should make after
+ *         updating color and state as above; having multiple turn bits set
+ *         implies a "fork" (creation of one or more new turmites)
+ *
+ * Therefore a rules table MUST have a specific/static length to fully
+ * encompass all possible color|state keys; see RuleConstants below for how
+ * particulars are specified.
+ */
 
-    analyze(spec, scope);
+/** @typedef {object} RuleConstants - specifies rule lookup table particulars
+ * @prop {number} MaxColor - maximum color value; should be some 2^N-1
+ * @prop {number} MaxState - maximum state value; should be some 2^N-1
+ * @prop {number} MaxTurn - maximum turn value; should be some 2^N-1
+ * @prop {number} MaskResultColor - color field mask for result extraction
+ * @prop {number} MaskResultState - state field mask for result extraction
+ * @prop {number} MaskResultTurn - turn field mask for result extraction
+ * @prop {number} ColorShift - bit width to shift color values by when packing keys and extracting results
+ * @prop {number} TurnShift - bit width to shift turn values by when extracting results
+ * NOTE: state values live in the lowest bits and are therefore unshifted
+ */
 
-    var bodyLines = [
-        'var numStates = ' + scope.numStates + ';',
-        'var numColors = ' + scope.numColors + ';'
-    ];
-    bodyLines = compileSpec(spec, scope, bodyLines);
-    bodyLines.push(
-        '',
-        scope._ent + '.numStates = numStates;',
-        scope._ent + '.numColors = numColors;',
-        '',
-        'return new Result(null, ' + scope._ent + ');');
+/** @typedef {object} Spec
+ * @prop {string} specString - a canonicalized version of the string that was parsed
+ * @prop {number} numColors - how many colors are needed by this turmite spec
+ * @prop {(World: RuleConstants, _rules: Rules) => {states: Set<number>}} build
+ */
 
-    var lines = [];
-    lines.push('function init(' + scope._ent + ') {');
-    pushWithIndent(lines, bodyLines);
-    lines.push('}');
+/**
+ * @param {walk.SpecNode} spec
+ * @returns {rezult.Result<Spec>}
+ */
+export default function compile(spec) {
+  const lines = compileCode(spec);
+  const codeRes = rezult.catchErr(() => rezult.just([...endLines(lines)].join('')));
 
-    return closeit(['World', 'Result'], 'init', lines);
-}
-
-function compileSpec(spec, scope, lines) {
-    for (var i = 0; i < spec.assigns.length; i++) {
-        var assign = spec.assigns[i];
-        lines = lines.concat(compileAssign(assign, scope));
-        lines.push('');
+  const funcRes = rezult.bind(codeRes, code => {
+    try {
+      return rezult.just(Function(`"use strict"; return (${code})`));
+    } catch (codeErr) {
+      return rezult.error(new Error(`${codeErr}\nTrying to compile:\n${code}`));
     }
-    lines = lines.concat(compileRules('rules', spec.rules, scope));
-    return lines;
+  });
+
+  const valRes = rezult.bind(funcRes, func =>
+    rezult.catchErr(() => rezult.just(func())));
+
+  return rezult.bind(valRes, value => {
+    // TODO replace this runtime type validation with a test-time typecheck of
+    // some example code
+
+    if (typeof value != 'object') {
+      return rezult.error(new Error(
+        `invalid spec result, expected an object, got ${typeof value}`))
+    }
+
+    for (const [field, type] of [
+      ['specString', 'string'],
+      ['numColors', 'number'],
+      ['build', 'function'],
+    ]) {
+      if (!(field in value)) {
+        return rezult.error(new Error(
+          `invalid spec result, missing ${field} field`))
+      }
+
+      const vt = typeof value[field];
+      if (vt != type) {
+        return rezult.error(new Error(
+          `invalid spec result, invalid ${field} field, expected ${type}, got ${vt}`))
+      }
+    }
+
+    return rezult.just(/** @type {Spec} */(value));
+  });
 }
 
-function compileRules(myName, rules, scope) {
-    scope._state  = '_state';
-    scope._color  = '_color';
-    scope._key    = '_key';
-    scope._result = '_res';
-    scope._states = '_states';
+/**
+ * @param {walk.SpecNode} spec
+ * @param {object} [options]
+ * @param {"value"|"module"} [options.format]
+ */
+function compileCode(spec, { format = 'value' } = {}) {
+  const symbols = new Set([
+    // dependencies
+    'World',
 
-    var lines = [];
+    // build(...) => {...}
+    '_rules',
+    '_states',
 
-    lines.push(
-        'var ' + scope._states + ' = {};',
-        'function countState(state) {',
-        '    if (!' + scope._states + '[state]) {',
-        '        ' + scope._states + '[state] = true;',
-        '        numStates++;',
-        '    }',
-        '}',
-        'var ' + [
-            scope._state,
-            scope._color,
-            scope._key,
-            scope._result
-        ].join(', ') + ';',
-        scope._ent + '.clearRules();'
-    );
+    // matching when state
+    '_state',
+    '_stateKey',
 
-    rules.forEach(function eachRule(rule, i) {
-        symToTstring(rule, function each(line) {
-            if (i < rules.length - 1) {
-                line += '\n';
+    // matching when color
+    '_color',
+    '_colorKey',
+
+    // inner _rules update tmp
+    `_prior`,
+  ]);
+
+  return compileContent(spec);
+
+  /** @param {walk.SpecNode} spec */
+  function* compileContent(spec) {
+    switch (format) {
+      case 'value':
+        yield* compileObject(spec);
+        break;
+
+      case 'module':
+        yield* compileModule(spec);
+        break;
+
+      default:
+        assertNever(format, 'invalid format');
+    }
+  }
+
+  /** @param {walk.SpecNode} spec */
+  function* compileObject(spec) {
+    yield* wrap({
+      head: `{`,
+      cont: '  ',
+      foot: `}`,
+    }, compileModule(spec, {
+      propHead: name => `${name}: `,
+      propFoot: `,`,
+      methodHead: sig => `${sig} {`,
+      methodFoot: '},',
+    }));
+  }
+
+  /**
+   * @param {walk.SpecNode} spec
+   * @param {object} [options]
+   * @param {(name: string) => string} [options.propHead]
+   * @param {string} [options.propFoot]
+   * @param {(sig: string) => string} [options.methodHead]
+   * @param {string} [options.methodFoot]
+   */
+  function* compileModule(spec, {
+    propHead = name => `export const ${name} = `,
+    propFoot = ';',
+    methodHead = sig => `export function ${sig} {`,
+    methodFoot = '}',
+  } = {}) {
+    yield* amend({
+      head: propHead('specString'),
+      cont: '  ',
+      zero: `''`,
+      foot: propFoot,
+    }, multiLineQuoted(toSpecString(spec)));
+    yield '';
+
+    // NOTE: analysis delayed until after spec string above, since one of its
+    // products is to mutate the AST for things like hoisting of intermediate
+    // values
+
+    // TODO it'd be great to refactor the analysis module to separate turn
+    // counting from AST transforming passes like intermediate value hoisting
+
+    const { maxTurns } = rezult.toValue(analyze(spec, symbols));
+
+    yield `${propHead('numColors')}${maxTurns}${propFoot}`;
+    yield '';
+
+    yield* wrap({
+      head: methodHead('build(World, _rules)'),
+      cont: '  ',
+      zero: 'throw new Error("unimplemented")',
+      foot: methodFoot,
+    }, compileRuleBuilder());
+  }
+
+  /** @param {walk.Node} node */
+  function* compileSpecComment(node) {
+    yield* comment(toSpecString(node));
+  }
+
+  function* compileRuleBuilder() {
+    for (const assign of spec.assigns) {
+      yield* compileSpecComment(assign);
+      yield* compileAssign(assign);
+      yield '';
+    }
+
+    yield 'const _states = new Set();';
+    yield '';
+
+    for (const rule of spec.rules) {
+      yield* compileSpecComment(rule);
+      // TODO maybe contain each rule in its own scope? iife?
+      yield* wrap({
+        head: `{`,
+        cont: '  ',
+        foot: `}`,
+      }, compileRule(rule.when, rule.then));
+      yield '';
+    }
+
+    yield 'return {states: _states};';
+  }
+
+  /** @param {walk.AssignNode} assign */
+  function* compileAssign({ id: { name }, value }) {
+    yield `let ${name} = ${compileValue(value)};`; // TODO can this be constified?
+  }
+
+  /**
+   * @param {walk.WhenNode} when
+   * @param {walk.ThenNode} then
+   */
+  function* compileRule(
+    { state: whenState, color: whenColor },
+    { state: thenState, color: thenColor, turn: thenTurn },
+  ) {
+    yield* compileWhenMatch(whenState, '_state', 'World.MaxState', function*() {
+      yield `_states.add(_state);`;
+      yield `const _stateKey = _state << World.ColorShift;`;
+      yield '';
+
+      yield* compileWhenMatch(whenColor, '_color', 'World.MaxColor', function*() {
+        yield `const _colorKey = _stateKey|_color;`;
+        yield '';
+
+        let anyResult = false;
+        for (const { value, max, shift } of ([
+          { value: thenState.value, max: 'World.MaxState', shift: 'World.ColorShift' },
+          { value: thenColor.value, max: 'World.MaxColor', shift: 'World.TurnShift' },
+          { value: thenTurn.value, max: 'World.MaxTurn', shift: '' },
+        ])) {
+          let valStr = compileValue(value, opPrec.length);
+          if (valStr !== '0') {
+            if (!anyResult) {
+              anyResult = true;
+              yield `let _result = ${valStr} & ${max};`;
+            } else {
+              yield `_result |= ${valStr} & ${max};`;
             }
-            lines.push(
-                '',
-                scope._ent + '.specString += ' +
-                JSON.stringify(line) + ';');
-        });
+          }
+          if (anyResult && shift) {
+            yield `_result <<= ${shift};`;
+            yield ``;
+          }
+        }
 
-        lines = lines.concat(compileRule(rule, scope));
-    });
+        const maskParts = [];
+        if (thenState.mode === '=') {
+          maskParts.push('World.MaskResultState');
+        }
+        if (thenColor.mode === '=') {
+          maskParts.push('World.MaskResultColor');
+        }
+        maskParts.push('World.MaskResultTurn');
 
-    return lines;
-}
+        yield `const _prior = _rules[_colorKey];`;
+        if (anyResult) {
+          yield `_rules[_colorKey] = _prior & ~(${maskParts.join(' | ')}) | _result;`;
+        } else {
+          yield `_rules[_colorKey] = _prior & ~(${maskParts.join(' | ')});`;
+        }
 
-function compileRule(rule, scope) {
-    // XXX: api shift
-    return compileWhen([], rule.when, scope, function underWhen(innerLines) {
-        return compileThen(innerLines, rule.then, scope, noop);
-    });
-}
-
-function compileWhen(outerLines, when, scope, body) {
-    return compileWhenMatch({
-        sym: scope._state,
-        max: 'World.MaxState',
-        count: 'countState'
-    }, when.state, outerLines, whenStateBody, scope);
-
-    function whenStateBody(lines) {
-        lines.push(scope._key + ' = ' + scope._state + ' << World.ColorShift;');
-
-        return compileWhenMatch({
-            sym: scope._color,
-            max: 'World.MaxColor',
-            count: null
-        }, when.color, lines, whenColorBody, scope);
+      });
     }
+    )
+  }
 
-    function whenColorBody(lines) {
-        lines = body(lines);
-        return lines;
-    }
-}
-
-function compileWhenMatch(varSpec, node, lines, body, scope) {
-    var matchBody = varSpec.count ? countedBody : body;
-
+  /**
+   * @param {walk.Node} node
+   * @param {string} sym
+   * @param {string} max
+   * @param {() => Iterable<string>} body
+   */
+  function* compileWhenMatch(node, sym, max, body) {
     switch (node.type) {
-    case 'symbol':
-    case 'expr':
-        return compileWhenLoop(varSpec, node, lines, matchBody, scope);
+      case 'symbol':
+      case 'expr':
+        const syms = [...freeSymbols(node, symbols)];
+        if (syms.length > 1) {
+          throw new Error('matching more than one variable is unsupported');
+        }
 
-    case 'number':
-        lines.push(varSpec.sym + ' = ' + node.value + ';');
-        return matchBody(lines);
+        const cap = syms[0];
+        if (!cap) {
+          throw new Error('no match variable');
+        }
+
+        const matchExpr = solve(cap, sym, node);
+
+        yield `for (let ${sym} = 0; ${sym} <= ${max}; ${sym}++) {`;
+        yield* indent(matchExpr === sym
+          ? chain(
+            `let ${cap} = ${matchExpr};`,
+            body(),
+          )
+          : chain(
+            `let ${cap} = ${max} + ${matchExpr} % ${max};`,
+            // TODO: gratuitous guard, only needed if division is involved
+            `if (Math.floor(${cap}) === ${cap}) {`,
+            indent(body()),
+            '}',
+          )
+        );
+        yield '}';
+        break;
+
+      case 'number':
+        yield `let ${sym} = ${node.value};`;
+        yield* body();
+        break;
+
+      default:
+        throw new Error(`unsupported match type ${node.type}`);
+    }
+  }
+
+}
+
+/**
+ * @param {string} cap
+ * @param {string} sym
+ * @param {walk.Expr<walk.NumberNode | walk.TurnsNode>} expr - TODO what even does it mean to solve a turns expression; tighten?
+ * @param {number} [outerPrec]
+ */
+function solve(cap, sym, expr, outerPrec = 0) {
+  const invOp = {
+    '+': '-',
+    '*': '/',
+    '-': '+',
+    '/': '*'
+  };
+
+  switch (expr.type) {
+
+    case 'expr':
+      const leftHasSym = usedSymbols(expr.arg1).has(cap);
+      const rightHasSym = usedSymbols(expr.arg2).has(cap);
+      if (!leftHasSym && !rightHasSym) {
+        return compileValue(expr, outerPrec);
+      }
+
+      if (leftHasSym && rightHasSym) {
+        // TODO: solve each side to intermediate values
+        throw new Error('matching complex expressions not supported');
+      }
+
+      const prec = opPrec.indexOf(expr.op);
+      let sol1 = solve(cap, sym, expr.arg1, prec);
+      let sol2 = solve(cap, sym, expr.arg2, prec);
+      let str = '';
+
+      switch (expr.op) {
+
+        case '+':
+        case '*':
+          // color = c [*+] 6 = 6 [*+] c
+          // c = color [/-] 6
+          if (rightHasSym) {
+            [sol1, sol2] = [sol2, sol1];
+          }
+          str += `${sol1} ${invOp[expr.op]} ${sol2}`;
+          break;
+
+        case '-':
+        case '/':
+          if (leftHasSym) {
+            // color = c [-/] 6
+            // c = color [+*] 6
+            str += `${sol1} ${invOp[expr.op]} ${sol2}`;
+          } else if (rightHasSym) {
+            // color = 6 [-/] c
+            // c = 6 [-/] color
+            str += `${sol2} ${expr.op} ${sol1}`;
+          }
+          str += `${sol1} ${invOp[expr.op]} ${sol2}`;
+          break;
+
+        case '%':
+          throw new Error(`unimplemented modulo operator solving`);
+
+        default:
+          assertNever(expr.op, 'invalid expression operator');
+      }
+
+      if (prec < outerPrec) {
+        str = `(${str});`
+      }
+      return str;
+
+    case 'symbol':
+      if (expr.name === cap) {
+        return sym;
+      }
+      return expr.name;
 
     default:
-        throw new Error('unsupported match type ' + node.type);
-    }
-
-    function countedBody(bodyLines) {
-        bodyLines.push(varSpec.count + '(' + varSpec.sym + ');');
-        return body(bodyLines);
-    }
+      return compileValue(expr);
+  }
 }
 
-function compileWhenLoop(varSpec, node, lines, body, scope) {
-    lines.push('for (' +
-               varSpec.sym + ' = 0; ' +
-               varSpec.sym + ' <= ' + varSpec.max + '; ' +
-               varSpec.sym + '++' +
-               ') {');
-    var bodyLines = compileWhenExprMatch(varSpec, node, [], body, scope);
-    pushWithIndent(lines, bodyLines);
-    lines.push('}');
-    return lines;
-}
+/**
+ * @param {walk.Expr<walk.NumberNode | walk.TurnsNode>|walk.TurnNode} node
+ * @param {number} [outerPrec]
+ * @returns {string}
+ */
+function compileValue(node, outerPrec = 0) {
+  switch (node.type) {
 
-function compileWhenExprMatch(varSpec, node, lines, body, scope) {
-    var syms = freeSymbols(node, scope);
-    if (syms.length > 1) {
-        throw new Error('matching more than one variable is unsupported');
-    }
-    var cap = syms[0];
-    if (!cap) {
-        throw new Error('no match variable');
-    }
+    case 'turn':
+      return `0x${node.names
+        .reduce((turn, name) => turn | constants.Turn[name], 0)
+        .toString(16).padStart(2, '0')}`;
 
-    var matchExpr = solve(cap, varSpec.sym, node, scope, 0);
-    if (matchExpr === varSpec.sym) {
-        lines.push('var ' + cap + ' = ' + matchExpr + ';');
-        return body(lines);
-    }
-
-    matchExpr = varSpec.max + ' + ' + matchExpr + ' % ' + varSpec.max;
-    lines.push('var ' + cap + ' = ' + matchExpr + ';');
-    // TODO: gratuitous guard, only needed if division is involved
-    lines.push('if (Math.floor(' + cap + ') === ' + cap + ') {');
-    pushWithIndent(lines, body([]));
-    lines.push('}');
-    return lines;
-}
-
-function freeSymbols(node, scope) {
-    var seen = {};
-    var res = [];
-    walk.iter(node, each);
-    return res;
-
-    function each(child, next) {
-        if (child.type === 'symbol' &&
-            scope[child.name] === undefined &&
-            !seen[child.name]) {
-            seen[child.name] = true;
-            res.push(child.name);
+    case 'turns':
+      const parts = [];
+      for (const { count, turn } of node.value) {
+        const turnStr = `0x${constants.Turn[turn]
+          .toString(16).padStart(2, '0')}`;
+        for (let i = 0; i < count.value; i++) {
+          parts.push(turnStr);
         }
-        next();
-    }
-}
-
-function compileThen(lines, then, scope, body) {
-    var before = lines.length;
-    var mask = compileThenParts(lines, then, scope);
-    var after = lines.length;
-
-    var dest = scope._ent + '.rules[' +
-        scope._key + ' | ' + scope._color +
-    ']';
-
-    if (mask) {
-        lines.push(dest + ' &= ~' + mask + ';');
-    }
-
-    if (after > before) {
-        lines.push(dest + ' |= ' + scope._result + ';');
-    }
-
-    return body(lines);
-}
-
-function compileThenParts(lines, then, scope) {
-    var valMaxes = [
-        'World.MaxState',
-        'World.MaxColor',
-        'World.MaxTurn'
-    ];
-    var resMasks = [
-        'World.MaskResultState',
-        'World.MaskResultColor',
-        'World.MaskResultTurn'
-    ];
-    var shifts = [
-        'World.ColorShift',
-        'World.TurnShift'
-    ];
-
-    var allZero = true;
-    var parts = [then.state, then.color, then.turn];
-    var maskParts = [];
-
-    for (var i = 0; i < parts.length; i++) {
-        var mode = parts[i].mode;
-        var value = parts[i].value;
-
-        if (mode === '=') {
-            maskParts.push(resMasks[i]);
-        }
-
-        var valStr = compileValue(value, scope);
-        if (valStr !== '0') {
-            if (value.type === 'expr') {
-                valStr = '(' + valStr + ')';
-            }
-            valStr += ' & ' + valMaxes[i];
-
-            if (allZero) {
-                allZero = false;
-                lines.push(scope._result + ' = ' + valStr + ';');
-            } else {
-                lines.push(scope._result + ' |= ' + valStr + ';');
-            }
-        }
-        if (i < shifts.length && !allZero) {
-            lines.push(scope._result + ' <<= ' + shifts[i] + ';');
-        }
-    }
-
-    var mask = maskParts.join(' | ');
-    if (maskParts.length > 1) {
-        mask = '(' + mask + ')';
-    }
-
-    return mask;
-}
-
-function compileValue(node, scope, outerPrec) {
-    if (!outerPrec) {
-        outerPrec = 0;
-    }
-
-    switch (node.type) {
+      }
+      return `[${parts.join(', ')}]`;
 
     case 'expr':
-        var prec = opPrec.indexOf(node.op);
-        var arg1 = compileValue(node.arg1, scope, prec);
-        var arg2 = compileValue(node.arg2, scope, prec);
-        var exprStr = arg1 + ' ' + node.op + ' ' + arg2;
-        if (prec < outerPrec) {
-            return '(' + exprStr + ')';
-        }
-        return exprStr;
+      const prec = opPrec.indexOf(node.op);
+      const val1 = compileValue(node.arg1, prec);
+      const val2 = compileValue(node.arg2, prec);
+      const exprStr = `${val1} ${node.op} ${val2}`;
+      return prec < outerPrec ? `(${exprStr})` : exprStr;
 
     case 'member':
-        // TODO error if scope[sym] === 'undefined'
-        var valRepr = compileValue(node.value, scope, 0);
-        var item = compileValue(node.item, scope, opPrec.length);
-        item = item + ' % ' + valRepr + '.length';
-        return valRepr + '[' + item + ']';
+      // TODO error if !symbols.has(sym)
+      const baseVal = compileValue(node.value, 0);
+      const itemVal = compileValue(node.item, opPrec.length);
+      return `${baseVal}[${`${itemVal} % ${baseVal}.length`}]`;
 
     case 'symbol':
     case 'identifier':
-        return node.name;
-
-    case 'turn':
-        return node.names.reduce(
-            function orEachTurn(turn, name) {
-                return turn | constants.Turn[name];
-            }, 0);
+      return node.name;
 
     case 'number':
-        return node.value.toString();
-
-    case 'turns':
-        return compileTurns(node.value);
+      switch (node.base) {
+        case 16:
+          return `0x${node.value.toString(16)}`;
+        default:
+          return node.value.toString(10);
+      }
 
     default:
-        return '/* ' + JSON.stringify(node) + ' */ undefined';
+      assertNever(node, 'invalid value node');
+      return `/* invalid node type */`; // unreachable branch, but tsc can't prove that?
+  }
+}
+
+/**
+ * @param {walk.Node} node
+ * @param {Set<string>} symbols
+ */
+function freeSymbols(node, symbols) {
+  return new Set(
+    walk.collect(node, 'symbol')
+      .map(({ name }) => name)
+      .filter(name => !symbols.has(name))
+  );
+}
+
+/**
+ * @param {walk.Node} node
+ */
+function usedSymbols(node) {
+  return new Set(
+    walk.collect(node, 'symbol')
+      .map(({ name }) => name)
+  );
+}
+
+/** @param {Iterable<string>} lines */
+function* multiLineQuoted(lines) {
+  // NOTE: there's a similar routine in glsl-loader.js
+  let next = '';
+  for (const line of lines) {
+    if (next) {
+      yield `${next} +`;
     }
+    next = JSON.stringify(line + '\n');
+  }
+  if (next) {
+    yield next;
+  }
 }
 
-function compileAssign(assign, scope) {
-    var lines = [];
-    symToTstring(assign, function each(line) {
-        line += '\n';
-        lines.push(
-            '',
-            scope._ent + '.specString += ' +
-            JSON.stringify(line) + ';');
-    });
-
-    lines.push(
-        'var ' + assign.id.name + ' = ' +
-        compileValue(assign.value) + ';');
-
-    return lines;
+/** @param {Iterable<string>} lines */
+function* indent(lines, indent = '  ') {
+  yield* prefix(indent, lines);
 }
 
-function compileTurns(turns) {
-    var parts = [];
-    for (var i = 0; i < turns.length; i++) {
-        var item = turns[i];
-        var turn = constants.Turn[item.turn];
-        var turnStr = '0x' + zeropad(2, turn.toString(16));
-        for (var j = 0; j < item.count.value; j++) {
-            parts.push(turnStr);
-        }
+/** @param {Iterable<string>} lines */
+function* comment(lines, mark = '// ') {
+  yield* prefix(mark, lines);
+}
+
+/**
+* @param {string} prefix
+* @param {Iterable<string>} lines
+*/
+function* prefix(prefix, lines) {
+  const allSpace = prefix.trim().length == 0;
+  for (const line of lines) {
+    yield line || !allSpace ? prefix + line : line;
+  }
+}
+
+/** @param {Iterable<string>} lines */
+function* endLines(lines, nl = '\n') {
+  for (const line of lines) {
+    yield line + nl;
+  }
+}
+
+/**
+ * @param {object} params
+ * @param {string} [params.head] - prefix for the first line
+ * @param {string} [params.foot] - suffix for the last line
+ * @param {string} [params.cont] - prefix for all lines after the first
+ * @param {string} [params.zero] - filler value when lines is empty
+ * @param {Iterable<string>} lines
+ */
+function* wrap({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
+  if (head) {
+    yield head;
+  }
+  let any = false;
+  for (const line of lines) {
+    yield cont ? `${cont}${line}` : line;
+    any = true;
+  }
+  if (!any && zero) {
+    yield zero;
+  }
+  if (foot) {
+    yield foot;
+  }
+}
+
+/**
+ * @param {object} params
+ * @param {string} [params.head] - prefix for the first line
+ * @param {string} [params.foot] - suffix for the last line
+ * @param {string} [params.cont] - prefix for all lines after the first
+ * @param {string} [params.zero] - filler value when lines is empty
+ * @param {Iterable<string>} lines
+ */
+function* amend({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
+  let last = '', any = false;
+  for (const line of lines) {
+    if (!any) {
+      any = true;
+      last = `${head}${line}`;
+    } else {
+      yield last;
+      last = `${cont}${line}`;
     }
-    return '[' + parts.join(', ') + ']';
+  }
+  if (any) {
+    yield `${last}${foot}`;
+  } else {
+    yield `${head}${zero}${foot}`;
+  }
 }
 
-function zeropad(width, str) {
-    while (str.length < width) {
-        str = '0' + str;
+/** @param {(Iterable<string>|string)[]} parts */
+function* chain(...parts) {
+  for (const part of parts) {
+    if (typeof part == 'string') {
+      yield part;
+    } else {
+      yield* part;
     }
-    return str;
+  }
 }
 
-function pushWithIndent(outer, inner) {
-    for (var i = 0; i < inner.length; i++) {
-        var line = inner[i];
-        if (line) {
-            line = '    ' + line;
-        }
-        outer.push(line);
-    }
-    return outer;
+/**
+ * @param {never} impossible
+ * @param {string} mess
+ */
+function assertNever(impossible, mess) {
+  throw new Error(`${mess}: ${JSON.stringify(impossible)}`);
 }
-
-function closeit(args, ret, body) {
-    var argStr = args.join(', ');
-    var lines = [];
-    lines.push('(function(' + argStr + ') {');
-    lines = lines.concat(body);
-    lines.push(
-        '',
-        'return ' + ret + ';',
-        '})(' + argStr + ');');
-    return lines;
-}
-
-function noop(lines) {
-    return lines;
-}
-
-module.exports.assign        = compileAssign;
-module.exports.init          = compileInit;
-module.exports.rule          = compileRule;
-module.exports.rules         = compileRules;
-module.exports.spec          = compileSpec;
-module.exports.then          = compileThen;
-module.exports.turns         = compileTurns;
-module.exports.value         = compileValue;
-module.exports.when          = compileWhen;
-module.exports.whenExprMatch = compileWhenExprMatch;
-module.exports.whenLoop      = compileWhenLoop;
-module.exports.whenMatch     = compileWhenMatch;
