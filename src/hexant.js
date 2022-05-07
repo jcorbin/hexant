@@ -151,6 +151,14 @@ export default class Hexant {
       ['keypress:u', () => this.hash.set('drawUnvisited', !this.view.drawUnvisited)],
       ['keypress:t', () => this.hash.set('drawTrace', !this.view.drawTrace)],
       ['keypress:b', () => this.hash.encoding = this.hash.encoding == 'b64:' ? '' : 'b64:'],
+      ['keypress:enter', () => {
+        const { ownerDocument: document } = $body;
+        if (!document.fullscreenElement) {
+          $body.requestFullscreen();
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }],
     ]);
 
     this.window.addEventListener('keypress', this);
