@@ -178,41 +178,26 @@ SUM:                                          886           1232           4622
 
 ## META: see also / subsume the old `TODO.md` file
 
-# 2022-05-06
+# 2022-05-07
 
 ## WIP
-
-- retcon tsconfig strict es2022
-- debugging dev:
-
-  - running `ant(2L 13R 2L)` with `stepRate=262144`:
-    ```
-    hmr-client.js:9 [ESM-HMR] listening for file changes...
-    hexant.js:472 Hexant playtime error
-    hexant.js:473 RangeError: Invalid array length
-        at TileGLBuffer.removeTile (tileglbuffer.js:91:24)
-        at TileBufferer.onWorldTileRemoved (view_gl.js:574:18)
-        at HexTileTree.TileBufferer.world.tile.tileRemoved (view_gl.js:555:48)
-        at HexTileTree.removeTiles (hextiletree.js:76:12)
-        at HexTileTreeNode._mayCompact (hextiletree.js:413:15)
-        at HexTileTreeNode.update (hextiletree.js:452:23)
-        at HexTileTreeNode.update (hextiletree.js:457:17)
-        at HexTileTreeNode.update (hextiletree.js:457:17)
-        at HexTileTree.update (hextiletree.js:155:17)
-        at World.updateEnt (world.js:118:10)
-    logError @ hexant.js:473
-    play @ hexant.js:354
-    await in play (async)
-    playpause @ hexant.js:378
-    (anonymous) @ hexant.js:132
-    handleEvent @ hexant.js:206
-    hexant.js:475 config {colors: 'light(360, 100)', rule: 'ant(2L 13R 2L)', stepRate: '262144', showFPS: 'undefined'}
-    hexant.js:475 runtime {step: 8108340, fps: 53.66666666666667, sps: 241135, redrawStats: {…}}
-    ```
 
 - sort out `glsl-loader.js` generated sources for tsc
 
 ## Done
+
+- finished the git rebake from yesterday
+  - ripped out `noUncheckedIndexedAccess` and
+    `noPropertyAccessFromIndexSignature` from tsconfig, turned out to be more
+    trouble than worth
+- many minor changes all around ramifying from more type checking, some notes:
+  - added `rezult.catchErr()` and `rezult.bind()` conveniences
+  - hash binds now must provide a default and listener
+  - factored `domkit.mustQuery()` out of `prompt.js` and `hexant.js`
+- fixed view tombstone pruning bug
+- added fullscreen toggle on `Enter`
+
+# 2022-05-06
 
 - realized the need to refactor `rezult` objects to be pure data, dropping the
   `class Result` and exporting its `toValue()` and `toCallback()` methods
