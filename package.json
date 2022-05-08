@@ -2,6 +2,7 @@
   "name": "hexant",
   "version": "0.10.2",
   "description": "Hexagonal Ants",
+  "type": "module",
   "main": "hexant.js",
   "scripts": {
     "serve": "http-server -a 127.0.0.1 -p 8080 -c-1 -o",
