@@ -1,103 +1,11 @@
 # WIP
 
-Uplifting of all non-test code "done", now working on getting the dev server to
-work, before uplifting tests and getting them to pass again.
-
-## Uplift 86% done (3998 / 4622 LoC, 27 / 32 modules)
-
-- NOTE: "pass" means passes `// @ts-check`
-- NOTE: "works" means functionally verified
-- NOTE: any module without a stated status is "TODO"
-
-- `glsl-loader.js` - works
-- `src/`
-  - `colorgen.js` - pass
-  - `coord.js` - pass
-  - `glpalette.js` - pass
-  - `glprogram.js` - pass
-  - `glslshader.js` - pass
-  - `hashbind.js` - pass
-  - `hexant.js` - pass
-  - `hextile.js` - pass
-  - `hextiletree.js` - pass
-  - `pool.js` - pass
-  - `prompt.js` - pass
-  - `rangelist.js` - pass
-  - `rezult.js` - pass
-  - `sample.js` - pass
-  - `tileglbuffer.js` - pass
-  - `view_gl.js` - pass
-  - `world.js` - pass
-  - `test/`
-    - `hextiletree.js`
-    - `index.js` - TODO port to ava
-    - `rangelist.js`
-    - `tileglbuffer.js`
-  - `turmite/`
-    - `constants.js` - pass
-    - `index.js` - pass
-    - `lang/`
-      - `analyze.js` - pass
-      - `compile.js` - pass
-      - `parse.js` - pass
-      - `tostring.js` - pass
-      - `walk.js` - pass
-    - `parse.js` - pass
-    - `rle-builder.js` - pass
-    - `test.js` - TODO port to ava, maybe move into `../test/`
-
-```
-$ cloc --vcs=git --include-lang=JavaScript --by-file
-
-------------------------------------------------------------------------------------------
-File                                        blank        comment           code
-------------------------------------------------------------------------------------------
-glsl-loader.js                                 16             17            103
-snowpack.config.js                              1              3             18
-src/colorgen.js                                15             35             66
-src/coord.js                                   63             88            283
-src/glpalette.js                               14             16             65
-src/glprogram.js                               13             12             29
-src/glslshader.js                              19             27             91
-src/hashbind.js                                58             72            318
-src/hexant.js                                  54             47            338
-src/hextile.js                                 23             39            166
-src/hextiletree.js                             77             76            417
-src/pool.js                                     2              8             20
-src/prompt.js                                  17             32            107
-src/rangelist.js                                6             26             61
-src/rezult.js                                   6             22             31
-src/sample.js                                  19             20             75
-src/test/hextiletree.js                        15              3             80
-src/test/index.js                               1              0              4
-src/test/rangelist.js                          11              8             52
-src/test/tileglbuffer.js                       16              0            285
-src/tileglbuffer.js                            32             72            190
-src/turmite/constants.js                       10             27             68
-src/turmite/index.js                           20             14             75
-src/turmite/lang/analyze.js                    14             30             49
-src/turmite/lang/compile.js                    82            128            401
-src/turmite/lang/parse.js                      10              3             35
-src/turmite/lang/tostring.js                   27             20            115
-src/turmite/lang/walk.js                       41            125             73
-src/turmite/parse.js                           18             38            100
-src/turmite/rle-builder.js                      6             40             43
-src/turmite/test.js                            38             11            185
-src/view_gl.js                                 97            121            502
-src/world.js                                   45             52            177
-------------------------------------------------------------------------------------------
-SUM:                                          886           1232           4622
-------------------------------------------------------------------------------------------
-
-```
+Working on validating `v1.0` functionality.
 
 # TODO
 
 ## `v1.0` retrospective re-release
 
-- finish debugging dev
-- evaluate why hexer
-- get tsc-driven lint passing
 - uplift tests and get them passing again
 - sort out what production bundling looks like now
 - likely as early `v1.0.x` releases before further refactoring, but maybe as part of `v1.0.0`
@@ -106,6 +14,9 @@ SUM:                                          886           1232           4622
     - maybe make `turmite.ruleHelp` interactive as later called for in `v1.3` to
       at least present a 2-screen deal
   - add keymap help overlay
+- fix punchlist
+  - `RuleConstants` shifts are awkward ; see `turmite/test.js` for a starting point
+  - `parseAnt` `numStates` is wrong ; should not be static 1
 
 ## `v1.1` refactoring
 
@@ -178,13 +89,32 @@ SUM:                                          886           1232           4622
 
 ## META: see also / subsume the old `TODO.md` file
 
-# 2022-05-07
+# 2022-05-08
 
 ## WIP
 
-- sort out `glsl-loader.js` generated sources for tsc
+- get a vercel deployment stood up
+- finish cleanup
+  - get tsc-driven lint passing
+    - sort out `glsl-loader.js` generated sources for tsc
+    - deps like nearley and the glsl parser pipeline may be a problem
+  - uplift tests, port to ava, get them passing again
+- play test turmite rules
+- add a keymap help overlay
 
 ## Done
+
+- uplifted `turmite/test.js`, which is actually more of a CLI testing vehicle
+  than an automated test
+  - also the only user of the hexer dependency; eliminated usage, dropped dependency
+  - much refactored around async line generators
+- set `package.json` type to modules to that `turmite/test.js` can be ESM
+  without changing extension
+- bumped tsconfig module to es2022 so that `turmite/test.js` can use toplevel
+  await
+- added `rezult.toPromise(Result) => Promise`
+
+# 2022-05-07
 
 - finished the git rebake from yesterday
   - ripped out `noUncheckedIndexedAccess` and
