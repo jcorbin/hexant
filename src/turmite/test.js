@@ -1,234 +1,250 @@
-/* global process, Buffer */
-/* eslint-disable no-console */
+// @ts-check
 
 'use strict';
 
-var hex = require('hexer');
-var Turmite = require('./index.js');
+import * as rezult from '../rezult.js';
 
-function main(args) {
-    switch (args[0]) {
-    case 'dump':
-        bufferStream(process.stdin, errStrMap(parseAndDump));
-        break;
+import {
+  parse as parseTurmite,
+  Turmite,
+} from './index.js';
 
-    case 'roundTrip':
-        bufferStream(process.stdin, errStrMap(roundTrip));
-        break;
+/** @typedef {import('stream').Readable} Readable */
 
-    case 'diffRules':
-        diffRules(args[1], args[2]);
-        break;
+/** @typedef {object} TestCtx
+ * @prop {Readable} stdin
+ * @prop {string[]} args
+ */
 
-    default:
-        console.error('invalid test action', args[0]);
-    }
+/** @callback TestAction
+ * @param {TestCtx} ctx
+ * @returns {AsyncIterableIterator<string>}
+ */
+
+/** @type {Map<string, TestAction>} */
+const testActions = new Map();
+
+/** @type {TestAction} */
+async function* runTestAction({ args: [action, ...args], ...rest }) {
+  const testAction = testActions.get(action);
+  if (!testAction) {
+    throw new Error(
+      `invalid test action: ${action}; ` +
+      `possible actions: ${[...testActions.keys()].sort().join(' ')} `
+    );
+  }
+  for await (const line of testAction({ args, ...rest })) {
+    const withNL = `${line}${line.endsWith('\n') ? '' : '\n'} `;
+    yield withNL;
+  }
 }
 
-function diffRules(str1, str2) {
-    var res = Turmite.compile(str1);
-    if (!check(res)) {
-        return;
-    }
-    var ent1 = res.value;
+const testRuleSpec = {
+  MaxColor: 0xff,
+  MaxState: 0xff,
+  MaxTurn: 0xffff,
 
-    res = Turmite.compile(str2);
-    if (!check(res)) {
-        return;
-    }
-    var ent2 = res.value;
+  MaskResultColor: 0xff000000,
+  MaskResultState: 0x00ff0000,
+  MaskResultTurn: 0x0000ffff,
 
-    var dump1 = hex(new Buffer(new Uint8Array(ent1.rules.buffer)));
-    var dump2 = hex(new Buffer(new Uint8Array(ent2.rules.buffer)));
+  ColorShift: 8,
+  TurnShift: 16,
 
-    console.log('%s\n-- vs\n%s', ent1.specString, ent2.specString);
-    printDiff([dump1, dump2]);
+  // TODO: these are non-standard currently, but should be standardized
+  //       starting here to not hardcode below in dump()
+
+  ColorByteWidth: 1,
+  StateByteWidth: 1,
+  TurnByteWidth: 2,
+
+  ResultByteWidth: 4,
+  ResultColorShift: 24,
+  ResultStateShift: 16,
+  ResultTurnShift: 0,
+
+  KeyByteWidth: 2,
+  KeyColorMask: 0x00ff,
+  KeyStateMask: 0xff00,
+  KeyColorShift: 0,
+  KeyStateShift: 1,
+};
+
+/** @param {import('./parse.js').Builder} builder */
+function buildEnt(builder) {
+  const ent = new Turmite();
+  const res = builder(ent.rules, testRuleSpec);
+  if (res.err) return res;
+  const { numColors, numStates, specString } = res.value;
+  ent.numColors = numColors;
+  ent.numStates = numStates;
+  ent.specString = specString;
+  return rezult.just(ent);
 }
 
-function parseAndDump(str) {
-    var res = Turmite.parse(str);
-    if (!check(res)) {
-        return;
-    }
+testActions.set('diffRules', async function*({ args: [str1, str2] }) {
+  const { rules: rules1, specString: spec1 } = await rezult.toPromise(Turmite.from(testRuleSpec, str1));
+  const { rules: rules2, specString: spec2 } = await rezult.toPromise(Turmite.from(testRuleSpec, str2));
+  yield spec1;
+  yield '-- vs';
+  yield spec2;
+  yield* diff([
+    Buffer.from(rules1.buffer).toString('hex').split(/\n/),
+    Buffer.from(rules2.buffer).toString('hex').split(/\n/),
+  ]);
+});
 
-    var compile = res.value;
-    console.log('COMPILE:\n%s\n', compile.toString());
+testActions.set('dump', async function*({ stdin }) {
+  const str = await bufferStream(stdin);
 
-    res = compile(new Turmite());
-    if (!check(res)) {
-        return;
-    }
+  const builder = await rezult.toPromise(parseTurmite(str));
+  yield 'BUILDER:';
+  yield builder.toString();
 
-    var ent = res.value;
-    dump(ent, function each(line) {
-        process.stdout.write(line + '\n');
-    });
+  yield* dump(await rezult.toPromise(buildEnt(builder)));
+});
+
+/** @param {Turmite} ent */
+function* dump(ent) {
+  yield `numStates: ${ent.numStates}`;
+  yield `numColors: ${ent.numColors}`;
+
+  let first = true;
+  for (const line of ent.specString.split(/\n/)) {
+    yield first
+      ? `spec: ${line}`
+      : `      ${line}`;
+    first = false;
+  }
+
+  yield 'rules:';
+
+  const {
+    ColorByteWidth,
+    StateByteWidth,
+    TurnByteWidth,
+    MaskResultColor,
+    MaskResultState,
+    MaskResultTurn,
+    ResultColorShift,
+    ResultStateShift,
+    ResultTurnShift,
+    KeyColorMask,
+    KeyStateMask,
+    KeyColorShift,
+    KeyStateShift,
+  } = testRuleSpec;
+  const statePart = 'S'.repeat(StateByteWidth * 2);
+  const colorPart = 'C'.repeat(ColorByteWidth * 2);
+  const turnPart = 'T'.repeat(TurnByteWidth * 2);
+  yield `[ ${statePart} ${colorPart} ] => ${turnPart} ${colorPart} ${statePart} -- S:state C:color T:turn`;
+  for (let i = 0; i < ent.rules.length; i++) {
+    const result = ent.rules[i];
+    const kc = i & KeyColorMask >> KeyColorShift;
+    const ks = i & KeyStateMask >> KeyStateShift;
+    const rt = (result & MaskResultTurn) >> ResultTurnShift;
+    const rc = (result & MaskResultColor) >> ResultColorShift;
+    const rs = (result & MaskResultState) >> ResultStateShift;
+    yield `[ ${hexit(kc, ColorByteWidth)} ${hexit(ks, StateByteWidth)} ] => ${hexit(rt, TurnByteWidth)} ${hexit(rc, ColorByteWidth)} ${hexit(rs, StateByteWidth)}`;
+  }
+
+  /**
+   * @param {number} n
+   * @param {number} w
+   */
+  function hexit(n, w) {
+    return n.toString(16).padStart(w * 2, '0');
+  }
 }
 
-function dump(ent, emit) {
-    var rulesDump = new Buffer(new Uint8Array(ent.rules.buffer));
+testActions.set('roundTrip', async function*({ stdin }) {
+  const str1 = await bufferStream(stdin);
 
-    emit('numStates: ' + ent.numStates);
-    emit('numColors: ' + ent.numColors);
+  const build1 = await rezult.toPromise(parseTurmite(str1));
+  const code1 = build1.toString();
+  yield 'first build:';
+  yield code1;
 
-    ent.specString
-        .split(/\n/)
-        .forEach(function each(line, i) {
-            if (i === 0) {
-                line = 'spec: ' + line;
-            } else {
-                line = '      ' + line;
-            }
-            emit(line);
-        });
-    emit('rules:');
-    hex(rulesDump).split('\n').forEach(emit);
+  const ent = await rezult.toPromise(buildEnt(build1));
+
+  const str2 = ent.specString;
+
+  yield `re - parsing ${str2}; `
+  const build2 = await rezult.toPromise(parseTurmite(str2));
+  const code2 = build2.toString();
+
+  if (code1 !== code2) {
+    yield* diff(
+      [code1.split(/\n/), code2.split(/\n/)],
+      [str1.split(/\n/), str2.split(/\n/)]);
+  } else {
+    yield 'round code trip okay:';
+    yield code2;
+    yield* dump(ent);
+  }
+});
+
+/**
+ * @param {string[][]} cols
+ * @param {string[][]} [headCols]
+ */
+function* diff(cols, headCols) {
+  let start = 0;
+  if (headCols) {
+    start = maxLength(headCols) + 1;
+    for (let i = 0; i < headCols.length; i++) {
+      const headCol = headCols[i];
+      for (let j = headCol.length; j < start; j++) {
+        headCol.unshift('');
+      }
+      headCol.push('');
+      cols[i] = headCol.concat(cols[i]);
+    }
+  }
+
+  const widths = cols.map(maxLength);
+  const n = maxLength(cols);
+  for (let i = 0; i < n; i++) {
+    let out = '';
+    for (let j = 0; j < cols.length; j++) {
+      const line = cols[j][i].padEnd(widths[j]);
+      const sep = (i > start && j > 0)
+        ? cols[j - 1][i] === cols[j][i] ? '|' : 'X'
+        : '   ';
+      out += ` ${sep} ${line}`;
+    }
+    yield out;
+  }
 }
 
-function roundTrip(str1) {
-    var res = Turmite.parse(str1);
-    if (!check(res)) {
-        return;
-    }
-
-    var compile = res.value;
-    var comp1 = compile.toString();
-    console.log('first compile:\n%s', comp1);
-
-    res = compile(new Turmite());
-    if (!check(res)) {
-        return;
-    }
-
-    var ent = res.value;
-    var str2 = ent.specString;
-
-    res = Turmite.parse(ent.specString);
-    if (!check(res)) {
-        return;
-    }
-
-    compile = res.value;
-    var comp2 = compile.toString();
-
-    if (comp1 !== comp2) {
-        printDiff([comp1, comp2],
-                  [str1, str2]);
-        return;
-    }
-
-    console.log('round code trip okay:\n%s', comp2);
-
-    dump(ent, function each(line) {
-        process.stdout.write(line + '\n');
-    });
-}
-
-function check(res) {
-    if (res.err) {
-        console.error(res.err.stack);
-        if (res.value !== null) {
-            console.log(res.value);
-        }
-        return false;
-    }
-    return true;
-}
-
-// function debugAmbiguous(results) {
-//     var util = require('util');
-//     console.error('ambiguous parse, got %s results', results.length);
-//     var dumps = [];
-//     for (var i = 0; i < results.length; i++) {
-//         dumps.push(util.inspect(results[i], {depth: Infinity}));
-//     }
-//     printDiff(dumps);
-// }
-
-function printDiff(strs, heads) {
-    var cols = strs.map(splitLines);
-
-    var start = 0;
-    var i;
-    var j;
-    if (heads) {
-        var headCols = heads.map(splitLines);
-        start = maxLength(headCols) + 1;
-        for (i = 0; i < headCols.length; i++) {
-            var headCol = headCols[i];
-            for (j = headCol.length; j < start; j++) {
-                headCol.unshift('');
-            }
-            headCol.push('');
-            cols[i] = headCol.concat(cols[i]);
-        }
-    }
-
-    var widths = cols.map(maxLength);
-    var n = maxLength(cols);
-
-    for (i = 0; i < n; i++) {
-        var out = '';
-        for (j = 0; j < cols.length; j++) {
-            var line = pad(widths[j], cols[j][i]);
-            var sep = '   ';
-            if (i > start && j > 0) {
-                sep = cols[j - 1][i] === cols[j][i] ? '|' : 'X';
-            }
-            out += ' ' + sep + ' ';
-            out += line;
-        }
-        process.stdout.write(out + '\n');
-    }
-}
-
-function splitLines(str) {
-    return str.split(/\n/);
-}
-
-function pad(n, str) {
-    while (str.length < n) {
-        str += ' ';
-    }
-    return str;
-}
-
+/** @param {{readonly length: number}[]} items */
 function maxLength(items) {
-    return items
-        .map(function each(item) {
-            return item.length;
-        })
-        .reduce(function max(a, b) {
-            return Math.max(a, b);
-        });
+  return items
+    .map(({ length }) => length)
+    .reduce((a, b) => Math.max(a, b));
 }
 
-function bufferStream(stream, callback) {
-    var bufs = [];
-    stream.on('data', function read(chunk) {
-        bufs.push(chunk);
-    });
-    stream.on('error', function onError(err) {
-        callback(err, null);
-    });
-    stream.on('end', function end() {
-        var buf = Buffer.concat(bufs);
-        var str = buf.toString();
-        callback(null, str);
-    });
+/**
+ * @param {Readable} stream
+ * @param {BufferEncoding} [encoding]
+ * @returns {Promise<string>}
+ */
+function bufferStream(stream, encoding = 'utf-8') {
+  /** @type {Buffer[]} */
+  const chunks = [];
+  return new Promise((resolve, reject) => stream
+    .on('data', chunk => chunks.push(Buffer.from(chunk)))
+    .on('error', reject)
+    .on('end', () => resolve(Buffer.concat(chunks).toString(encoding))));
 }
 
-function errStrMap(func) {
-    return done;
-    function done(err, str) {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        func(str);
-    }
-}
+/// main
 
-if (require.main === module) {
-    main(process.argv.slice(2));
-}
+import { promisify } from 'util';
+
+const writeOut = promisify(process.stdout.write.bind(process.stdout));
+
+for await (const line of runTestAction({
+  stdin: process.stdin,
+  args: process.argv.slice(2),
+})) await writeOut(line);
