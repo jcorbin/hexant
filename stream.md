@@ -4,20 +4,6 @@ Working on validating `v1.0` functionality.
 
 # TODO
 
-## `v1.0` retrospective re-release
-
-- uplift tests and get them passing again
-- sort out what production bundling looks like now
-- likely as early `v1.0.x` releases before further refactoring, but maybe as part of `v1.0.0`
-  - write tests for more parts of `turmite/` like `RLEBuilder`
-  - expand turmite help to actually describe the turmite language
-    - maybe make `turmite.ruleHelp` interactive as later called for in `v1.3` to
-      at least present a 2-screen deal
-  - add keymap help overlay
-- fix punchlist
-  - `RuleConstants` shifts are awkward ; see `turmite/test.js` for a starting point
-  - `parseAnt` `numStates` is wrong ; should not be static 1
-
 ## `v1.1` refactoring
 
 - refactor `glslshader.js` and `glprogram.js`
@@ -89,20 +75,66 @@ Working on validating `v1.0` functionality.
 
 ## META: see also / subsume the old `TODO.md` file
 
-# 2022-05-08
+# 2022-05-10
 
 ## WIP
 
-- get a vercel deployment stood up
-- finish cleanup
-  - get tsc-driven lint passing
-    - sort out `glsl-loader.js` generated sources for tsc
-    - deps like nearley and the glsl parser pipeline may be a problem
-  - uplift tests, port to ava, get them passing again
+- production build: minify GLSL, JS, and inline into html
+
+### `v1.0` retrospective re-release
+
 - play test turmite rules
-- add a keymap help overlay
+- uplift tests and get them passing again
+  - port to ava, drop tape
+- `RuleConstants` shifts are awkward ; see `turmite/test.js` for a starting point
+- `parseAnt` `numStates` is wrong ; should not be static 1
+- grep for other code TODOs and cull/triage them into this stream document
+
+#### `v1.0.x`
+
+- add keymap help overlay
+- write tests for more parts of `turmite/` like `RLEBuilder`
+- expand turmite help to actually describe the turmite language
+  - maybe make `turmite.ruleHelp` interactive as later called for in `v1.3` to
+    at least present a 2-screen deal
 
 ## Done
+
+- finished of initial scope of `scripts/generate.js`
+  - config structured in a humane way
+  - ci check command wired up
+- got rollup + http-server based dev server working
+
+# 2022-05-09
+
+- got tsc-driven lint passing
+  - ignored shader imports for now, plan to revamp gl src / shader / program
+    handling anyhow
+  - ignored the nearley dep
+    - tried `@types/nearley` but it got hung up on all of my destructuring post
+      processors like `([tick, tock]) => {type: "meme", tick, tock}` due to
+      post procs getting passed an `any[]` which may have fewer than N elements...
+    - ... but if it did, that'd be a parser library bug, since the grammar
+      production rule guarantees N elements, so nearley's type declarations are
+      insufficient
+    - ... this will all be better once we replace nearley with a recursive
+      decent parser that we own
+- dropped unused leftover dependencies: global, domready, and rezult
+- fully ripped out eslint, and integrated tsc as the lint script
+- got vercel deployment working
+  - fixed `glsl-loader` to work under Node 14.x LTS... which is apparently the
+    latest that vercel supports...
+  - had to add `npm run grammar &&` to build script, since postinstall hook was
+    not running for some reason
+- started ripping out snowpack, since it's looking like abandonware
+  - added `go generate` inspired approach: offline code generation, with
+    committed artifacts:
+    - driver is `genkit.js` as ran by `npm run generate` ; may move into `scripts/generate.js`
+    - configured by `gen-config.js`
+    - ported `glsl-loader.{cjs => js}`
+    - runs `nearleyc` for now
+
+# 2022-05-08
 
 - uplifted `turmite/test.js`, which is actually more of a CLI testing vehicle
   than an automated test
