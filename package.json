@@ -9,24 +9,31 @@
   "main": "src/hexant.js",
   "scripts": {
     "lint": "tsc",
-    "ci": "npm run lint",
-    "grammar": "nearleyc src/turmite/lang/grammar.ne -o src/turmite/lang/grammar.js",
-    "serve": "snowpack dev",
-    "build": "snowpack build --clean",
-    "postinstall": "npm run grammar",
+    "generate": "node scripts/generate.js build",
+    "generate-check": "node scripts/generate.js check -v",
+    "ci": "npm run generate-check && npm run lint",
+    "serve": "bash scripts/dev-server.sh",
+    "build": "rollup -c",
     "preversion": "bash scripts/preversion.sh",
     "version": "bash scripts/version.sh",
     "postversion": "bash scripts/postversion.sh"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^22.0.0",
+    "@rollup/plugin-node-resolve": "^13.3.0",
     "glsl-deparser": "^1.0.0",
     "glsl-min-stream": "^1.0.0",
     "glsl-parser": "^2.0.1",
     "glsl-tokenizer": "^2.1.5",
-    "snowpack": "^3.8.8",
+    "http-server": "^14.1.0",
+    "rollup": "^2.72.1",
     "tape": "4.2.0",
     "typescript": "^4.6.4"
   },
+  "devServices": [
+    "rollup -c -w",
+    "http-server -o"
+  ],
   "dependencies": {
     "gl-matrix": "^3.4.3",
     "hsluv": "^0.1.0",

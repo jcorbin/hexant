@@ -76,7 +76,6 @@ export class ViewGL {
     // loader
 
     // TODO @type only needed because import is not resolvable by typescript above
-    /** @type {import('./glslshader.js').default} */
     const shader = oddqPointShader.linkWith(hexFragShader);
     const prog = rezult.toValue(shader.load(this.gl));
 
