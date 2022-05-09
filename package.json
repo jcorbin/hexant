@@ -30,17 +30,5 @@
     "hashbind": "2.1.0",
     "hsluv": "^0.1.0",
     "nearley": "^2.20.1"
-  },
-  "eslintConfig": {
-    "env": {
-      "browser": true,
-      "node": true
-    },
-    "rules": {
-      "max-len": "off",
-      "max-statements": "off",
-      "no-console": "off",
-      "one-var": "off"
-    }
   }
 }
