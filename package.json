@@ -2,6 +2,8 @@
   "name": "hexant",
   "version": "0.10.2",
   "description": "Hexagonal Ants",
+  "license": "MIT",
+  "author": "Joshua T Corbin <jcorbin@wunjo.org>",
   "type": "module",
   "private": true,
   "main": "hexant.js",
@@ -15,8 +17,6 @@
     "version": "bash scripts/version.sh",
     "postversion": "bash scripts/postversion.sh"
   },
-  "author": "Joshua T Corbin <jcorbin@wunjo.org>",
-  "license": "MIT",
   "devDependencies": {
     "eslint": "^8.13.0",
     "eslint-config-standard": "^7.0.0",
