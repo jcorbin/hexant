@@ -1,13 +1,10 @@
 <!doctype html>
 
 <head>
-
-  <title>Hexant</title>
-
   <meta charset="utf-8">
-
+  <title>Hexant</title>
   <link rel="stylesheet" type="text/css" href="style.css">
-
+  <script type="module" src="index.bundle.min.js"></script>
 </head>
 
 <body>
@@ -41,28 +38,5 @@
   <footer style="right: 0">
     <a href="//github.com/jcorbin/hexant">Project Page</a>
   </footer>
-
-  <script type="module">
-    import Hexant from './hexant.js';
-
-    const hexant = new Hexant({
-      $body: document.querySelector('#main'),
-    });
-
-    function updateSize() {
-      const {
-        innerWidth, innerHeight,
-        document: {
-          documentElement: {clientWidth, clientHeight},
-        },
-      } = window;
-      const width = Math.max(clientWidth, innerWidth || 0);
-      const height = Math.max(clientHeight, innerHeight || 0);
-      hexant.resize(width, height);
-    }
-
-    window.addEventListener('resize', () => updateSize());
-    updateSize();
-  </script>
 
 </body>

@@ -6,14 +6,14 @@ import { terser } from 'rollup-plugin-terser';
 
 /** @type {import('rollup').RollupOptions} */
 const config = {
-  input: 'src/hexant.js',
+  input: 'public/index.js',
   output: [
     {
-      file: 'public/hexant.js',
+      file: 'public/index.bundle.js',
       format: 'esm',
     },
     {
-      file: 'public/hexant.min.js',
+      file: 'public/index.bundle.min.js',
       format: 'esm',
       plugins: [terser()],
     },
