@@ -11,10 +11,12 @@ const config = {
     {
       file: 'public/index.bundle.js',
       format: 'esm',
+      sourcemap: true,
     },
     {
       file: 'public/index.bundle.min.js',
       format: 'esm',
+      sourcemap: true,
       plugins: [terser()],
     },
   ],
