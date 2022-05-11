@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 // TODO:
 // - detect uniform and attr names by static analysis
 // - pursue tighter integration with GLSLShader

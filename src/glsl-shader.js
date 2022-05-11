@@ -1,7 +1,5 @@
 // @ts-check
 
-"use strict";
-
 import * as rezult from './rezult.js';
 
 export default class GLSLShader {

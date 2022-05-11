@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import { from as rleFrom } from '../rle-builder.js';
 import * as walk from './walk.js';
 

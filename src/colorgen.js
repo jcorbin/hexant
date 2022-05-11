@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import { hsluvToRgb } from 'hsluv';
 
 import * as rezult from './rezult.js';

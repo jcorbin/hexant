@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import { CubePoint, OddQOffset } from './coord.js';
 import { HexTileTree } from './hextiletree.js';
 

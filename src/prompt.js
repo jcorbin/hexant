@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import { mustQuery } from './domkit.js';
 
 /** @typedef {Canceled|Response} Result */

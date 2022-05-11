@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 /** @typedef {import("./colorgen.js").ColorTuple} ColorTuple */
 
 export class GLPalette {

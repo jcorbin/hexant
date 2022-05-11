@@ -1,6 +1,6 @@
 // @generated from id:9b04f495a6aa9075b4885817bd4d08d5e76574582df8a35da7c47aa3eee0f1e8
 
-"use strict";
+// @ts-check
 
 import GLSLShader from '././glsl-shader.js';
 

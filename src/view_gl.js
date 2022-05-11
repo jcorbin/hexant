@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import { mat4 } from 'gl-matrix';
 
 import { OddQOffset } from './coord.js';

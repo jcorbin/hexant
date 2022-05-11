@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import { OddQOffset, OddQBox } from './coord.js';
 import { OddQHexTile } from './hextile.js';
 

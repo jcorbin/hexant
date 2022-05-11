@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 /**
  * @template {abstract new(...args: any[]) => any} T
  * @param {HTMLElement} el

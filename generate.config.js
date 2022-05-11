@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import compileGLSL from './src/glsl-compiler.js';
 
 /** @type {import('./scripts/generate.js').Config} */

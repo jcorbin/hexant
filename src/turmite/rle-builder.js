@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 /** Builds a canonical RLE string from possibly redundant parts.
  *
  * Exemplars:

@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 // TODO these types can become the basis of a directly coded recursive descent
 // parser, replacing grammar.{ne,js} entirely
 

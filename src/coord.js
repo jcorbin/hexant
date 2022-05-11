@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 export class ScreenPoint {
   /**
    * @param {number} [x]

@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 /* TODO:
  * - evaluate online sorting
  * - improve anomaly scoring

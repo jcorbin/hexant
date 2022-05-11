@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 /** @enum {number} - resultant turn bits in a Rules table */
 export const Turn = {
   // relative turns

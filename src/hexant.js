@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import colorGen from './colorgen.js';
 import { mustQuery } from './domkit.js';
 import makeHash from './hashbind.js';

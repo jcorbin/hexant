@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import {
   add as rangeListAdd,
   each as rangeListEach,

@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import * as rezult from '../../rezult.js';
 import * as constants from '../constants.js';
 

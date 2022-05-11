@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import { OddQOffset } from '../coord.js';
 import * as rezult from '../rezult.js';
 

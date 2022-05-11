@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 /**
  * @typedef {object} Config
  * @prop {string} [root]

@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 // @ts-ignore
 import nearley from 'nearley';
 

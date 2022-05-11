@@ -1,7 +1,5 @@
 // @ts-check
 
-'use strict';
-
 import {
   OddQOffset,
   OddQBox,

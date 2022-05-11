@@ -4,8 +4,6 @@
 const libPath = fileURLToPath(import.meta.url);
 import './glsl-shader.js';
 
-"use strict";
-
 import GLSLTokenStream from 'glsl-tokenizer/stream.js';
 import GLSLParseStream from 'glsl-parser/stream.js';
 import GLSLDeparser from 'glsl-deparser';
@@ -59,7 +57,7 @@ export default async function compile(inFile, outFile, {
   codeLines = addNLs(codeLines, finalNL);
 
   await outFile.write(
-    '"use strict";\n\n' +
+    '// @ts-check\n\n' +
     `import GLSLShader from './${dirname(relative(dirname(outFilePath), libPath))}/glsl-shader.js';\n\n` +
     `export default new GLSLShader(${JSON.stringify(name)}, ${JSON.stringify(type)},${minify ? ' ' : '\n'}`
   );
