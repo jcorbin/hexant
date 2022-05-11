@@ -27,6 +27,7 @@
     "glsl-tokenizer": "^2.1.5",
     "http-server": "^14.1.0",
     "rollup": "^2.72.1",
+    "rollup-plugin-terser": "^7.0.2",
     "tape": "4.2.0",
     "typescript": "^4.6.4"
   },
