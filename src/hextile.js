@@ -7,24 +7,36 @@ import {
   OddQBox,
 } from './coord.js';
 
-import { makePool } from './pool.js';
-
 /**
  * @typedef {object} oddQPotent
  * @prop {(oqo: OddQOffset) => void} toOddQOffsetInto
  */
 
+/** @type {OddQHexTile[]} */
+const pool = [];
+
 export class OddQHexTile {
   static NextId = 1;
 
-  static {
-    const { alloc, free } = makePool(() => new OddQHexTile());
-    this.alloc = alloc;
-    this.free = free;
-    this.prototype.free = function() { free(this) };
+  static alloc() {
+    if (pool.length > 0) {
+      const tile = pool.shift()
+      if (tile !== undefined) {
+        return tile;
+      }
+    }
+    return new OddQHexTile();
   }
 
-  free() { }
+  /** @param {OddQHexTile} tile */
+  static free(tile) {
+    pool.push(tile);
+  }
+
+  free() {
+    OddQHexTile.free(this);
+  }
+
 
   constructor() {
     this.id = OddQHexTile.NextId++;

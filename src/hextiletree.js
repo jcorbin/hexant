@@ -4,7 +4,6 @@
 
 import { OddQOffset, OddQBox } from './coord.js';
 import { OddQHexTile } from './hextile.js';
-import { makePool } from './pool.js';
 
 /**
  * @typedef {object} oddQPotent
@@ -182,7 +181,7 @@ export class HexTileTree {
 
   /**
    * @param {oddQPotent} point
-   * @param {number} datum}
+   * @param {number} datum
    * @returns {number}
    */
   set(point, datum) {
@@ -219,17 +218,29 @@ const nodeOriginOffset = [
   new OddQOffset(1, 1)
 ];
 
+/** @type {HexTileTreeNode[]} */
+const pool = [];
+
 class HexTileTreeNode {
-  static {
-    const { alloc, free } = makePool(
-      () => new HexTileTreeNode(),
-      node => node.reset());
-    this.alloc = alloc;
-    this.free = free;
-    this.prototype.free = function() { free(this) };
+  static alloc() {
+    if (pool.length > 0) {
+      const node = pool.shift()
+      if (node !== undefined) {
+        return node;
+      }
+    }
+    return new HexTileTreeNode();
   }
 
-  free() { }
+  /** @param {HexTileTreeNode} node */
+  static free(node) {
+    node.reset();
+    pool.push(node);
+  }
+
+  free() {
+    HexTileTreeNode.free(this);
+  }
 
   constructor() {
     /** @type {HexTileTree|null} */
