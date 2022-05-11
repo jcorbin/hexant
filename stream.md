@@ -75,11 +75,15 @@ Working on validating `v1.0` functionality.
 
 ## META: see also / subsume the old `TODO.md` file
 
-# 2022-05-10
+# 2022-05-11
 
 ## WIP
 
-- production build: minify GLSL, JS, and inline into html
+- production build:
+  - minify GLSL
+  - inline stylesheet into html
+  - inline script into html
+  - interpolate version into html
 
 ### `v1.0` retrospective re-release
 
@@ -99,6 +103,19 @@ Working on validating `v1.0` functionality.
     at least present a 2-screen deal
 
 ## Done
+
+- dropped `pool.js` module ahead of schedule, since its surrounding use of
+  static blocks conflicts with terser v5.13.1 not yet supporting that syntax
+- added terser-minifed rollup bundle
+- a bit more work on `scripts/generate.js`
+  - handle per-file build errors better
+  - rename all shaders to `.vert.glsl` and `.frag.glsl`, helps editors
+  - improved tmp file renaming and cleanup
+- dropped explicit `'use strict'` from all uplifted `.js` files
+- split `index.js` out again, with sourcemaps, hardcoded to use the minified
+  bundle for now
+
+# 2022-05-10
 
 - finished of initial scope of `scripts/generate.js`
   - config structured in a humane way
