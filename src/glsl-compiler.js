@@ -4,9 +4,13 @@
 const libPath = fileURLToPath(import.meta.url);
 import './glsl-shader.js';
 
+// @ts-ignore
 import GLSLTokenStream from 'glsl-tokenizer/stream.js';
+// @ts-ignore
 import GLSLParseStream from 'glsl-parser/stream.js';
+// @ts-ignore
 import GLSLDeparser from 'glsl-deparser';
+// @ts-ignore
 import GLSLMinify from 'glsl-min-stream';
 
 import {
