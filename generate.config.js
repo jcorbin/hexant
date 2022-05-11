@@ -13,12 +13,17 @@ const config = {
     }),
 
     singleJSBuilder({
-      ext: ['.vert', '.frag'],
+      ext: '.glsl',
+      outName: base => `${basename(base, extname(base))}.js`,
       async build(inFile, outFile, { name: inputName }, { path: outFilePath }) {
-        const ext = extname(inputName);
-        const name = basename(inputName, ext);
-        const type = ext.slice(1);
         const minify = false; // TODO wen
+        const baseName = basename(inputName, '.glsl');
+        const typeExt = extname(baseName);
+        if (!typeExt) {
+          throw 'has no additional type extension; rename it something like .vert.glsl or .frag.glsl';
+        }
+        const name = basename(baseName, typeExt);
+        const type = typeExt.slice(1);
         await compileGLSL(inFile, outFile, {
           name,
           type,

@@ -1,5 +1,4 @@
-/* hex.frag is a fragment shader which draws flat-topped hexagonal point
- * sprites.
+/* A fragment shader which draws flat-topped hexagonal point sprites.
  */
 
 varying lowp float vertColor;

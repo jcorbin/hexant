@@ -1,11 +1,11 @@
-// @generated from id:9516005881cb617dd3952c0b2523a952c7d9f464160bd7277c98b24df0e7c190
+// @generated from id:38ef3f5d0d481570ecae82f042a9a8ce293f342d5884d5c195d75d382b31813e
 
 // @ts-check
 
 import GLSLShader from '././glsl-shader.js';
 
 export default new GLSLShader("pass", "frag",
-  "/* pass.frag is a trivial lowp color paas-thru fragment shader\n" +
+  "/* A trivial lowp color paas-thru fragment shader.\n" +
   " */\n" +
   "\n" +
   "varying lowp vec4 vertColor;\n" +

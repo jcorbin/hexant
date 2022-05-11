@@ -1,5 +1,5 @@
-/* oddq_dxy.vert is a vertex shader for odd-q hexagonal vertices.  The vertices
- * are specified with Q,R cell centers and relative DX,DY offsets.
+/* A vertex shader for odd-q hexagonal vertices.
+ * The vertices are specified with Q,R cell centers and relative DX,DY offsets.
  *
  * The vert attribute contains two pieces:
  * - the first two components are the column (Q) and row (R) numbers

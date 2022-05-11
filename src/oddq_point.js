@@ -1,12 +1,12 @@
-// @generated from id:9b04f495a6aa9075b4885817bd4d08d5e76574582df8a35da7c47aa3eee0f1e8
+// @generated from id:8fe5d2a30398cabcc7ed4fe8d8701663f454c3accc0674ba6aee737df82bcc30
 
 // @ts-check
 
 import GLSLShader from '././glsl-shader.js';
 
 export default new GLSLShader("oddq_point", "vert",
-  "/* oddq_point.vert is a vertex shader for point vertices that are positioned\n" +
-  " * using odd-q hexagonal coordinates.\n" +
+  "/* A vertex shader for point vertices that are positioned using odd-q hexagonal\n" +
+  " * coordinates.\n" +
   " *\n" +
   " * The vert attribute is just a Q,R vec2.\n" +
   " *\n" +

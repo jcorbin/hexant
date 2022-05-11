@@ -1,12 +1,12 @@
-// @generated from id:750e8b968bdade83778f2bbccd1474169cb4056c01a53e1608b6c04e87b5dcde
+// @generated from id:b34fd6f3e750d3d5e4373e5ca06a52a99341321a2f5213cc9c4a6118684d39e2
 
 // @ts-check
 
 import GLSLShader from '././glsl-shader.js';
 
 export default new GLSLShader("oddq_dxy", "vert",
-  "/* oddq_dxy.vert is a vertex shader for odd-q hexagonal vertices.  The vertices\n" +
-  " * are specified with Q,R cell centers and relative DX,DY offsets.\n" +
+  "/* A vertex shader for odd-q hexagonal vertices.\n" +
+  " * The vertices are specified with Q,R cell centers and relative DX,DY offsets.\n" +
   " *\n" +
   " * The vert attribute contains two pieces:\n" +
   " * - the first two components are the column (Q) and row (R) numbers\n" +

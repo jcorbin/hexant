@@ -1,12 +1,11 @@
-// @generated from id:5a3332e30620e7d12a28c6af2e1d4f8590a40d6fc08b74ede50b3fc23a24bc78
+// @generated from id:e9953cec26100334f8c622af64aa4e105217621f14ded4a5172b08f00a1b60fc
 
 // @ts-check
 
 import GLSLShader from '././glsl-shader.js';
 
 export default new GLSLShader("hex", "frag",
-  "/* hex.frag is a fragment shader which draws flat-topped hexagonal point\n" +
-  " * sprites.\n" +
+  "/* A fragment shader which draws flat-topped hexagonal point sprites.\n" +
   " */\n" +
   "\n" +
   "varying lowp float vertColor;\n" +

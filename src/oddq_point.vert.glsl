@@ -1,5 +1,5 @@
-/* oddq_point.vert is a vertex shader for point vertices that are positioned
- * using odd-q hexagonal coordinates.
+/* A vertex shader for point vertices that are positioned using odd-q hexagonal
+ * coordinates.
  *
  * The vert attribute is just a Q,R vec2.
  *
