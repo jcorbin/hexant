@@ -4,7 +4,7 @@ import compileGLSL from './src/glsl-compiler.js';
 
 /** @type {import('./scripts/generate.js').Config} */
 const config = {
-  root: 'src',
+  root: ['vendor', 'src'],
   match: [
 
     singleJSBuilder({
@@ -31,6 +31,23 @@ const config = {
           outFilePath,
         });
       },
+    }),
+
+    // TODO: a tighter / in-process integration should be possible thru the
+    // rollup API, which might even let us get the full/proper hash of (all)
+    // input files; note: this would also require that we change
+    // scripts/generate.js to allow Builder to determine a better input id
+    singleJSBuilder({
+      ext: '.cjs',
+      cmd: (input, output) => [
+        'rollup',
+        '--plugin', '@rollup/plugin-node-resolve',
+        '--plugin', '@rollup/plugin-commonjs',
+        '--format', 'esm',
+        '--sourcemap',
+        '--input', input.path,
+        '--output', output.path,
+      ],
     }),
 
   ],
@@ -64,7 +81,7 @@ import {
 
 /** @param {object} params
  * @param {string|string[]} params.ext
- * @param {string[]} [params.cmd]
+ * @param {string[]|((input: FileEntry, output: FileEntry) => string[])} [params.cmd]
  * @param {(inFile: FileHandle, outFile: FileHandle, input: FileEntry, output: FileEntry) => Promise<void>} [params.build]
  * @param {string} [params.comment]
  * @param {(base: string, ext: string) => string} [params.outName]
@@ -77,6 +94,52 @@ function singleJSBuilder({
   comment = '// ',
   outName = base => `${base}.js`,
 }) {
+  if (typeof matchExt == 'string') {
+    matchExt = [matchExt];
+  }
+
+  if (typeof cmd === 'function') {
+    return function*({ name, path }) {
+      const ext = extname(name);
+      if (matchExt.includes(ext)) {
+        const outPath = join(dirname(path), outName(basename(name, ext), ext));
+        yield [outPath, {
+          // NOTE: build id embedding not supported here, since this is likely
+          // a much larger scoped command like rollup cjs => esm, whose input
+          // set is broader than just the input file, so our notion of build ID
+          // is insufficient; in the cmd case below where it's a stdin/stdout
+          // locked command, it's a reasonable/useful enough stretch to expect
+          // the config to limit those uses to simples functions of input
+          // alone, but not here.
+
+          // NOTE: we expect the command to do its own atomic output writing
+          // concerns, which is a normative assumption between programs; also
+          // if we tried to indirect through our own managed tmp file here, as
+          // below, then things like rollup sourcemap generation would not work
+          // correctly, as they'd be named after the tmp file without further
+          // integration
+
+          async build(_id, input, output) {
+            const proc = spawn('npx', cmd(input, output), {
+              stdio: ['ignore', 'ignore', 'inherit'],
+            });
+            await new Promise((resolve, reject) => {
+              proc.once('error', reject);
+              proc.once('close', code => {
+                if (code === 0) {
+                  resolve();
+                } else {
+                  reject(new Error(`${JSON.stringify(cmd)} exited ${code}`));
+                }
+              });
+            });
+          },
+          async lastBuilt() { return '' }
+        }];
+      }
+    };
+  }
+
   if (cmd) {
     if (buildFiles) {
       throw new Error('must specify either cmd or build');
@@ -84,7 +147,7 @@ function singleJSBuilder({
     buildFiles = async (inFile, outFile) => {
       const proc = spawn('npx', cmd, {
         stdio: [inFile.fd, outFile.fd, 'inherit'],
-      })
+      });
       await new Promise((resolve, reject) => {
         proc.once('error', reject);
         proc.once('close', code => {
@@ -99,10 +162,6 @@ function singleJSBuilder({
   }
   if (!buildFiles) {
     throw new Error('must specify either cmd or build');
-  }
-
-  if (typeof matchExt == 'string') {
-    matchExt = [matchExt];
   }
 
   /** @type {Builder} */
