@@ -2,7 +2,7 @@
 
 /**
  * @typedef {object} Config
- * @prop {string} [root]
+ * @prop {string|string[]} [root]
  * @prop {Matcher[]} match
  */
 
@@ -76,7 +76,11 @@ async function loadConfig({ log }, configPath) {
     throw new Error('invalid config: not an object');
   }
 
-  if ('root' in value && typeof value.root !== 'string') {
+  if ('root' in value &&
+    typeof value.root !== 'string' &&
+    !(Array.isArray(value.root) &&
+      value.root.every(/** @param {any} datum */ datum => typeof datum === 'string'))
+  ) {
     throw new Error('invalid config: bad root value');
   }
 
@@ -89,36 +93,49 @@ async function loadConfig({ log }, configPath) {
     throw new Error('invalid config: invalid matcher(s), must be an array of functions');
   }
 
+  const configDir = dirname(configPath);
   const config = /** @type {Config} */(value);
 
-  config.root = resolve(dirname(configPath), config.root || '.');
+  if (!config.root) {
+    config.root = resolve(configDir, '.');
+  } else if (typeof config.root === 'string') {
+    config.root = resolve(configDir, config.root);
+  } else if (Array.isArray(config.root)) {
+    config.root = config.root.map(dir => resolve(configDir, dir));
+  }
 
+  // TODO narrower type where root is required; maybe also lift to singleton array here
   return config;
 }
 
 /** @param {Config} config */
 async function* iterBuild(config) {
-  const { root = '.' } = config;
+  const { root: configRoot = '.' } = config;
+  const roots = Array.isArray(configRoot) ? configRoot : [configRoot];
+
   /** @type {Set<string>} */
   const seen = new Set();
-  for await (const { name, path } of iterFiles(root)) {
-    const ent = Object.freeze({ root, name, path });
-    for (const match of config.match) {
-      const matches = match(ent) || [];
-      for (const [newPath, buildable] of matches) {
-        if (seen.has(newPath)) {
-          throw new Error(`duplicate built path ${newPath}`);
+
+  for (const root of roots) {
+    for await (const { name, path } of iterFiles(root)) {
+      const ent = Object.freeze({ root, name, path });
+      for (const match of config.match) {
+        const matches = match(ent) || [];
+        for (const [newPath, buildable] of matches) {
+          if (seen.has(newPath)) {
+            throw new Error(`duplicate built path ${newPath}`);
+          }
+          seen.add(newPath);
+          yield {
+            input: ent,
+            output: Object.freeze({
+              root,
+              path: newPath,
+              name: basename(newPath),
+            }),
+            buildable
+          };
         }
-        seen.add(newPath);
-        yield {
-          input: ent,
-          output: Object.freeze({
-            root,
-            path: newPath,
-            name: basename(newPath),
-          }),
-          buildable
-        };
       }
     }
   }
