@@ -1,6 +1,6 @@
 // @ts-check
 
-import Hexant from '../src/hexant.js';
+import Hexant from './src/hexant.js';
 
 const hexant = new Hexant({
   $body: document.querySelector('#main'),

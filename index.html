@@ -3,8 +3,16 @@
 <head>
   <meta charset="utf-8">
   <title>Hexant</title>
+
+  <script type="importmap">{"imports": {
+    "gl-matrix": "./node_modules/gl-matrix/esm/index.js",
+    "hsluv": "./vendor/hsluv.js",
+    "nearley": "./vendor/nearley.js"
+  }}</script>
+
+  <script type="module" src="./index.js"></script>
+
   <link rel="stylesheet" type="text/css" href="style.css">
-  <script type="module" src="index.bundle.min.js"></script>
 </head>
 
 <body>

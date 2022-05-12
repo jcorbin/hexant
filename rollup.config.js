@@ -6,15 +6,15 @@ import { terser } from 'rollup-plugin-terser';
 
 /** @type {import('rollup').RollupOptions} */
 const config = {
-  input: 'public/index.js',
+  input: 'index.js',
   output: [
     {
-      file: 'public/index.bundle.js',
+      file: 'index.bundle.js',
       format: 'esm',
       sourcemap: true,
     },
     {
-      file: 'public/index.bundle.min.js',
+      file: 'index.bundle.min.js',
       format: 'esm',
       sourcemap: true,
       plugins: [terser()],
