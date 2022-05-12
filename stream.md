@@ -75,7 +75,7 @@ Working on validating `v1.0` functionality.
 
 ## META: see also / subsume the old `TODO.md` file
 
-# 2022-05-11
+# 2022-05-12
 
 ## WIP
 
@@ -84,6 +84,24 @@ Working on validating `v1.0` functionality.
   - inline stylesheet into html
   - inline script into html
   - interpolate version into html
+- code generation:
+  - TODO: tighter rollup integration for vendor modules transforms so that we
+    can have a build id to cache/check against
+
+- html inlining
+  - https://github.com/jasonbellamy/asset-inliner/blob/master/package.json
+    - https://www.npmjs.com/package/jsdom
+    - https://www.npmjs.com/package/assetment
+
+  - https://github.com/cdata/collapsify
+    - https://github.com/cdata/collapsify/blob/master/lib/collapsify.js
+    - https://www.npmjs.com/package/htmlparser2
+
+  - https://github.com/popeindustries/inline-source
+    - csso & svgo
+
+  - https://www.npmjs.com/package/html5parser
+  - https://www.npmjs.com/package/clean-css
 
 ### `v1.0` retrospective re-release
 
@@ -103,6 +121,18 @@ Working on validating `v1.0` functionality.
     at least present a 2-screen deal
 
 ## Done
+
+- switched back to sparse development
+  - flattened `public/` into toplevel
+  - added `generate.js` driven vendoring of common.js modules
+  - using emerging browser <https://wicg.github.io/import-maps> support
+  - this means that hexant development may only be possible in Chrome currently
+- spent the rest of the day "researching" html inliners
+  - spent too much time toying with a token-stack based monad...
+- started over and wrote a pragmatic `scripts/build.js` that does line based
+  editing configured by `build.config.js`
+
+# 2022-05-11
 
 - dropped `pool.js` module ahead of schedule, since its surrounding use of
   static blocks conflicts with terser v5.13.1 not yet supporting that syntax
