@@ -9,12 +9,12 @@ const config = {
   input: 'index.js',
   output: [
     {
-      file: 'index.bundle.js',
+      file: 'build/index.bundle.js',
       format: 'esm',
       sourcemap: true,
     },
     {
-      file: 'index.bundle.min.js',
+      file: 'build/index.bundle.min.js',
       format: 'esm',
       sourcemap: true,
       plugins: [terser()],
