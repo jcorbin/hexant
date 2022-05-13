@@ -45,8 +45,8 @@ const config = {
         '--plugin', '@rollup/plugin-commonjs',
         '--format', 'esm',
         '--sourcemap',
-        '--input', input.path,
-        '--output', output.path,
+        '--i', input.path,
+        '--o', output.path,
       ],
     }),
 
@@ -120,7 +120,8 @@ function singleJSBuilder({
           // integration
 
           async build(_id, input, output) {
-            const proc = spawn('npx', cmd(input, output), {
+            const [exec, ...args] = cmd(input, output)
+            const proc = spawn(exec, args, {
               stdio: ['ignore', 'ignore', 'inherit'],
             });
             await new Promise((resolve, reject) => {
@@ -129,7 +130,7 @@ function singleJSBuilder({
                 if (code === 0) {
                   resolve();
                 } else {
-                  reject(new Error(`${JSON.stringify(cmd)} exited ${code}`));
+                  reject(new Error(`${JSON.stringify([exec, ...args])} exited ${code}`));
                 }
               });
             });
@@ -145,7 +146,8 @@ function singleJSBuilder({
       throw new Error('must specify either cmd or build');
     }
     buildFiles = async (inFile, outFile) => {
-      const proc = spawn('npx', cmd, {
+      const [exec, ...args] = cmd;
+      const proc = spawn(exec, args, {
         stdio: [inFile.fd, outFile.fd, 'inherit'],
       });
       await new Promise((resolve, reject) => {
@@ -154,7 +156,7 @@ function singleJSBuilder({
           if (code === 0) {
             resolve();
           } else {
-            reject(new Error(`${JSON.stringify(cmd)} exited ${code}`));
+            reject(new Error(`${JSON.stringify([exec, ...args])} exited ${code}`));
           }
         });
       });
@@ -222,13 +224,19 @@ async function* scanLines(file, encoding = 'utf-8') {
   while (true) {
     const { bytesRead } = await file.read({ buffer, offset });
     if (!bytesRead) { break }
-    const chunk = buffer.subarray(offset, bytesRead);
+    const end = offset + bytesRead;
+    const chunk = buffer.subarray(0, end);
+    let i = 0;
     for (
-      let i = 0, j = chunk.indexOf('\n');
+      let j = chunk.indexOf('\n');
       j >= i;
       i = j + 1, j = chunk.indexOf('\n', i)
     ) {
       yield buffer.subarray(i, j).toString(encoding);
+    }
+    if (i > 0 && i < chunk.length) {
+      buffer.copyWithin(0, i);
+      offset = chunk.length - i;
     }
   }
   if (offset > 0) {
