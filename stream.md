@@ -75,15 +75,14 @@ Working on validating `v1.0` functionality.
 
 ## META: see also / subsume the old `TODO.md` file
 
-# 2022-05-12
+# 2022-05-13
 
 ## WIP
 
-- production build:
-  - minify GLSL
-  - inline stylesheet into html
-  - inline script into html
-  - interpolate version into html
+- maybe generate `importmap.json` from `package.json`
+
+- minified production build: regen minified, inline js, and inline css
+
 - code generation:
   - TODO: tighter rollup integration for vendor modules transforms so that we
     can have a build id to cache/check against
@@ -121,6 +120,17 @@ Working on validating `v1.0` functionality.
     at least present a 2-screen deal
 
 ## Done
+
+- added asset inlining to `index.html` build
+- added `importmap.json` auto generation from `package.json`
+- added `index.html` auto re-generation from `importmap.json`
+  - added generation chain dependency support
+- minor fixes in generate
+  - rollup command were broken
+  - scanLines was wrong at scale, if not yet
+  - improved command spawning to be closer to `clikit.system`
+
+# 2022-05-12
 
 - switched back to sparse development
   - flattened `public/` into toplevel
