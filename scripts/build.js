@@ -55,17 +55,23 @@ await main();
  * @prop {string[]} cmd
  */
 
+/** @callback DoFn
+ * @returns {Promise<void>}
+ */
+
 /** @typedef {object} Do
- * @prop {() => Promise<void>} do
+ * @prop {DoFn|DoFn[]} do
  */
 
 /** @typedef {Spec|Cmd|Do} Step */
 
 /** @param {Manifest} manifest */
 async function build(...manifest) {
+  // do one or more manifest steps that can be done concurrently
+  // CLI {cmd}s and custom {do} functions cause synchronization points
 
   /** @type {Promise<void>[]} */
-  const work = [];
+  const stage = [];
 
   let i = 0;
   for (; i < manifest.length; i++) {
@@ -75,37 +81,19 @@ async function build(...manifest) {
     }
 
     if (isSyncStep(step)) {
-      if (!work.length) {
-        work.push(doStep(step));
+      if (!stage.length) {
+        stage.push(doStep(step));
         i++;
       }
       break;
     }
 
-    work.push(doStep(step));
+    stage.push(doStep(step));
   }
   const rest = manifest.slice(i);
 
-  /** @type {Promise<void>} */
-  const p =
-    !work.length
-      ? Promise.resolve()
-      : work.length === 1
-        ? work[0]
-        : new Promise((resolve, reject) => {
-          Promise.allSettled(work).then(all => {
-            for (const res of all) {
-              if (res.status === 'rejected') {
-                reject(res.reason);
-              }
-            }
-            resolve();
-          });
-        });
-
-  return rest.length
-    ? p.then(() => build(...rest))
-    : p;
+  const stageDone = Promise.allSettled(stage).then(() => Promise.all(stage));
+  return stageDone.then(() => rest.length ? build(...rest) : Promise.resolve());
 }
 
 /** @param {Step} step */
@@ -119,6 +107,11 @@ function isSyncStep(step) {
  */
 async function doStep(step) {
   if ('do' in step) {
+    if (Array.isArray(step.do)) {
+      const work = step.do.map(f => f())
+      await Promise.all(work).then(() => Promise.allSettled(work));
+      return;
+    }
     return step.do();
   }
 
