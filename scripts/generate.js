@@ -112,9 +112,15 @@ async function loadConfig({ log }, configPath) {
   return config;
 }
 
+/** @typedef {object} BuildEntry
+ * @prop {FileEntry} input
+ * @prop {FileEntry} output
+ * @prop {Buildable} buildable
+ */
+
 /**
  * @param {Config} config
- * @returns {AsyncGenerator<{input: FileEntry, output: FileEntry, buildable: Buildable}>}
+ * @returns {AsyncGenerator<BuildEntry>}
  */
 async function* iterBuild(config) {
   const { root: configRoot = '.' } = config;
@@ -264,37 +270,70 @@ async function buildem({ log }, config, args) {
     force = true;
   }
 
-  /** @type {Promise<void>[]} */
-  const work = [];
+  /** @type {Set<string>} */
+  const ready = new Set();
 
-  // TODO make it concurrent over each file; easier to debug/develop when serial tho
-  for await (const {
-    input,
-    output,
-    buildable: { lastBuilt, build },
-  } of iterBuild(config)) {
-    if (!filter(input.path) && !filter(output.path)) {
-      continue;
-    }
-    work.push((async () => {
-      const [id, priorID] = await Promise.all([
-        hashFilePath(input.path),
-        lastBuilt(output).catch(() => ''),
-      ]);
-      if (force || priorID !== id) {
-        try {
-          await build(id, input, output);
-          log(0, 'built', output.path, 'from', input.path);
-        } catch (err) {
-          log(0, 'fail', output.path, err);
-        }
-      } else {
-        log(1, 'ok', output.path);
-      }
-    })());
+  /** @type {Map<string, BuildEntry>} */
+  const byOutput = new Map();
+  for await (const ent of iterBuild(config)) {
+    const { output: { path } } = ent;
+    byOutput.set(path, ent);
   }
 
-  await Promise.all(work);
+  function doRound() {
+    /** @type {Promise<void>[]} */
+    const work = [];
+
+    /** @type {Set<string>} */
+    const waiting = new Set();
+
+    for (const {
+      input,
+      output,
+      buildable: { lastBuilt, build },
+    } of byOutput.values()) {
+      if (ready.has(output.path)) {
+        continue;
+      }
+
+      if (byOutput.has(input.path) && !ready.has(input.path)) {
+        waiting.add(output.path);
+        continue;
+      }
+
+      if (!filter(input.path) && !filter(output.path)) {
+        continue;
+      }
+      work.push((async () => {
+        const [id, priorID] = await Promise.all([
+          hashFilePath(input.path),
+          lastBuilt(output).catch(() => ''),
+        ]);
+        if (force || priorID !== id) {
+          try {
+            await build(id, input, output);
+            log(0, 'built', output.path, 'from', input.path);
+          } catch (err) {
+            log(0, 'fail', output.path, err);
+          }
+        } else {
+          log(1, 'ok', output.path);
+        }
+        ready.add(output.path);
+      })());
+    }
+
+    if (waiting.size && !work.length) {
+      throw new Error(`unable to generate ${[...waiting].join(' ')}`);
+    }
+
+    const thisRound = Promise.all(work).finally(() => Promise.allSettled(work));
+    return waiting.size
+      ? thisRound.then(() => doRound())
+      : thisRound;
+  }
+
+  return doRound();
 }
 
 /** @param {CmdContext} ctx
