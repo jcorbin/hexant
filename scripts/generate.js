@@ -126,9 +126,6 @@ async function* iterBuild(config) {
   const { root: configRoot = '.' } = config;
   const roots = Array.isArray(configRoot) ? configRoot : [configRoot];
 
-  /** @type {Set<string>} */
-  const seen = new Set();
-
   if (config.build) {
     const root = process.cwd(); // TODO better dirname(configPath)
 
@@ -162,10 +159,6 @@ async function* iterBuild(config) {
       for (const match of config.match) {
         const matches = match(ent) || [];
         for (const [newPath, buildable] of matches) {
-          if (seen.has(newPath)) {
-            throw new Error(`duplicate built path ${newPath}`);
-          }
-          seen.add(newPath);
           yield {
             input: ent,
             output: Object.freeze({
@@ -277,6 +270,11 @@ async function buildem({ log }, config, args) {
   const byOutput = new Map();
   for await (const ent of iterBuild(config)) {
     const { output: { path } } = ent;
+    if (byOutput.has(path)) {
+      const newFrom = ent.input.path;
+      const oldFrom = byOutput.get(path).input.path;
+      throw new Error(`duplicate output ${path} from ${newFrom}, prior from ${oldFrom}`);
+    }
     byOutput.set(path, ent);
   }
 
