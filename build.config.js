@@ -55,7 +55,30 @@ const manifest = [
   },
 
   // TODO run rollup via api instead
-  { cmd: ['rollup', '-c'], },
+
+  {
+    cmd: ['rollup',
+      '--plugin', '@rollup/plugin-node-resolve',
+      '--plugin', '@rollup/plugin-commonjs',
+      '--format', 'esm',
+      '--sourcemap',
+      '-i', 'index.js',
+      '-o', 'build/index.bundle.js',
+    ],
+  },
+
+  {
+    cmd: ['rollup',
+      '--plugin', './scripts/rollup-alt.js',
+      '--plugin', '@rollup/plugin-node-resolve',
+      '--plugin', '@rollup/plugin-commonjs',
+      '--plugin', 'rollup-plugin-terser',
+      '--format', 'esm',
+      '--sourcemap',
+      '-i', 'index.js',
+      '-o', 'build/index.bundle.min.js',
+    ],
+  },
 
   'CHANGELOG.md',
   {
@@ -97,7 +120,6 @@ const manifest = [
         await y(/<script/i, /<\/script>/i,
           x(/<script([^<>]*?( src=("[^"]+"))[^<>]*?)\s*>/i,
             ([_, attrs, srcMatch, srcAttr], _i, start, end) => withLocalAsset(unquote(srcAttr), async contents => {
-              // TODO terser(contents) here to minify rather than alternate rollup bundle?
               lines.splice(start, 1 + end - start,
                 `<script ${attrs.replace(srcMatch, '').trim()}>`,
                 ...contents.split(/\n/),
