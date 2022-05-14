@@ -21,6 +21,7 @@ import {
 import compileGLSL from './src/glsl-compiler.js';
 
 import { ok } from './scripts/clikit.js';
+import ed from './scripts/ed.js';
 
 /** @param {any} pkg */
 function* resolveDeps(pkg) {
@@ -63,6 +64,7 @@ async function resolveDep(name) {
 const config = {
   root: ['vendor', 'src'],
   build: [
+
     {
       input: 'package.json',
       output: 'importmap.json',
@@ -78,14 +80,14 @@ const config = {
 
         for (const { name, target } of await Promise.all([...resolveDeps(pkg)])) {
           if (target) {
-            console.log(`importmap.json ${JSON.stringify(name)} => ${JSON.stringify(target)} `);
+            console.log(`importmap.json resolved ${JSON.stringify(name)} => ${JSON.stringify(target)} `);
             importmap.imports[name] = `./${target}`;
           } else {
             console.log(`WARN: unable to resolve dependency ${JSON.stringify(name)}; add a vendor / ${name}.cjs adaptor ? `);
           }
         }
 
-        const outRaw = JSON.stringify(importmap);
+        const outRaw = JSON.stringify(importmap, null, 2);
         await writeFile(outFilePath, outRaw, { encoding: 'utf-8' });
       },
 
@@ -98,6 +100,50 @@ const config = {
       },
 
     },
+
+    {
+      input: 'importmap.json',
+      output: 'index.html',
+
+      async build(id, { path: inFilePath }, { path: outFilePath }) {
+        let content = await readFile(outFilePath, { encoding: 'utf-8' });
+        content = await ed(content, async ({ y, x, lines }) => {
+
+          await y(/<script/i, /<\/script>/i, x(/(\s*)(<(script).*?type="importmap".*?>)/i,
+            async ([_, indent, tag, name], _i, start, end) => {
+              const importmap = await readFile(inFilePath, { encoding: 'utf-8' });
+              const newLines = importmap.split(/\n/);
+              newLines.unshift(`${tag.replace(/ src=".*?"/, '')}${newLines.shift() || ''}`);
+              newLines.push(`${newLines.pop() || ''}</${name}>`);
+              lines.splice(start, 1 + end - start,
+                ...newLines.map(line => `${indent}${line}`));
+            }));
+
+          // TODO would rather use g, but ed doesn't intercept splice to keep
+          // indices sane when removing lines
+          lines
+            .map((line, i) => /<!-- @generated id:.* -->/.test(line) ? i : -1)
+            .filter(i => i >= 0)
+            .forEach((i, n) => lines.splice(i - n, 1));
+          lines.push(`<!-- @generated id:${id} -->`);
+
+        });
+        await writeFile(outFilePath, content, { encoding: 'utf-8' });
+      },
+
+      async lastBuilt({ path }) {
+        const content = await readFile(path, { encoding: 'utf-8' });
+        for (const line of content.split(/\n/)) {
+          const match = /<!-- @generated id:([^\s]+) -->/.exec(line);
+          if (match) {
+            return match[1];
+          }
+        }
+        return '';
+      },
+
+    },
+
   ],
   match: [
 
