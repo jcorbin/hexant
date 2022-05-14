@@ -1,10 +1,104 @@
 // @ts-check
 
+import { spawn } from 'node:child_process';
+
+import {
+  open,
+  readFile,
+  rename,
+  stat,
+  unlink,
+  writeFile,
+} from 'node:fs/promises';
+
+import {
+  basename,
+  dirname,
+  extname,
+  join,
+} from 'node:path';
+
 import compileGLSL from './src/glsl-compiler.js';
+
+import { ok } from './scripts/clikit.js';
+
+/** @param {any} pkg */
+function* resolveDeps(pkg) {
+  if (typeof pkg !== 'object') { return }
+  const deps = pkg['dependencies'];
+  if (typeof deps !== 'object') { return }
+  for (const [name, version] of Object.entries(deps)) {
+    if (typeof version !== 'string') { continue }
+    yield resolveDep(name);
+  }
+}
+
+/** @param {string} name */
+async function resolveDep(name) {
+  const pkgDir = join('node_modules/', name);
+  const pkgRaw = await readFile(join(pkgDir, 'package.json'), { encoding: 'utf-8' });
+  const pkg = JSON.parse(pkgRaw);
+
+  if (pkg.type === 'module') {
+    const main = typeof pkg.main === 'string' ? pkg.main : 'index.js';
+    const target = join(pkgDir, main);
+    return { name, target };
+  }
+
+  if (typeof pkg.module === 'string') {
+    const target = join(pkgDir, pkg.module);
+    return { name, target };
+  }
+
+  const target = join('vendor', `${name}.js`);
+  if (
+    await ok(stat(target)) ||
+    await ok(stat(join('vendor', `${name}.cjs`)))
+  ) { return { name, target } }
+
+  return { name, target: '' };
+}
 
 /** @type {import('./scripts/generate.js').Config} */
 const config = {
   root: ['vendor', 'src'],
+  build: [
+    {
+      input: 'package.json',
+      output: 'importmap.json',
+
+      async build(id, { path: inFilePath }, { path: outFilePath }) {
+        const inRaw = await readFile(inFilePath, { encoding: 'utf-8' });
+        const pkg = JSON.parse(inRaw);
+        const importmap = {
+          id,
+          /** @type {{[name: string]: string}} */
+          imports: {},
+        };
+
+        for (const { name, target } of await Promise.all([...resolveDeps(pkg)])) {
+          if (target) {
+            console.log(`importmap.json ${JSON.stringify(name)} => ${JSON.stringify(target)} `);
+            importmap.imports[name] = `./${target}`;
+          } else {
+            console.log(`WARN: unable to resolve dependency ${JSON.stringify(name)}; add a vendor / ${name}.cjs adaptor ? `);
+          }
+        }
+
+        const outRaw = JSON.stringify(importmap);
+        await writeFile(outFilePath, outRaw, { encoding: 'utf-8' });
+      },
+
+      async lastBuilt({ path }) {
+        const raw = await readFile(path, { encoding: 'utf-8' });
+        const importmap = JSON.parse(raw);
+        if (typeof importmap !== 'object') { return '' }
+        const { id } = importmap;
+        return typeof id === 'string' ? id : '';
+      },
+
+    },
+  ],
   match: [
 
     singleJSBuilder({
@@ -56,21 +150,6 @@ const config = {
 export default config;
 
 /// library routines to split out
-
-import { spawn } from 'node:child_process';
-
-import {
-  open,
-  rename,
-  unlink,
-} from 'node:fs/promises';
-
-import {
-  basename,
-  dirname,
-  extname,
-  join,
-} from 'node:path';
 
 /** @typedef {import('./scripts/generate.js').FileEntry} FileEntry */
 /** @typedef {import('./scripts/generate.js').Builder} Builder */
