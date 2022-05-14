@@ -283,36 +283,19 @@ function singleJSBuilder({
     throw new Error('must specify either cmd or build');
   }
 
-  /** @type {Builder} */
-  async function build(id, input, output) {
-    // TODO random()ness for $security $reasons
-    const tmpName = join(
-      dirname(output.path),
-      `.${basename(output.path)}.tmp`
-    );
-
-    const inFile = await open(input.path, 'r');
-    const outFile = await open(tmpName, 'w');
-    try {
-      await outFile.write(`${comment}@generated from id:${id}\n\n`);
-      await buildFiles(inFile, outFile, input, output);
-      await rename(tmpName, output.path);
-    } catch (err) {
-      await unlink(tmpName);
-      throw err;
-    } finally {
-      await Promise.all([inFile.close(), outFile.close()]);
-    }
-  }
-
-
-  const lastBuilt = buildIDMatcher(/^\/\/ @generated from id:([^\s]+)/);
-
   return function*({ name, path }) {
     const ext = extname(name);
     if (matchExt.includes(ext)) {
       const outPath = join(dirname(path), outName(basename(name, ext), ext));
-      yield [outPath, { build, lastBuilt }];
+      yield [outPath, {
+        build(id, input, output) {
+          return buildAtomicFile(input, output, async (inFile, outFile) => {
+            await outFile.write(`${comment}@generated from id:${id}\n\n`);
+            await buildFiles(inFile, outFile, input, output);
+          });
+        },
+        lastBuilt: buildIDMatcher(/^\/\/ @generated from id:([^\s]+)/),
+      }];
     }
   };
 }
@@ -340,6 +323,49 @@ function buildIDMatcher(pat) {
       await file.close();
     }
   };
+}
+
+/**
+ * @param {FileEntry} input
+ * @param {FileEntry} output
+ * @param {(inFile: FileHandle, outFile: FileHandle) => Promise<void>} creator
+ */
+async function buildAtomicFile({ path: inPath }, { path: outPath }, creator) {
+  const inFile = await open(inPath, 'r');
+
+  // TODO random()ness for $security $reasons
+  const tmpName = join(
+    dirname(outPath),
+    `.${basename(outPath)}.tmp`
+  );
+  const outFile = await open(tmpName, 'w');
+
+  let done = false;
+
+  const finish = async () => {
+    if (!done) {
+      await rename(tmpName, outPath);
+      done = true;
+    }
+  };
+
+  const cleanup = async () => {
+    if (!done) {
+      await unlink(tmpName);
+      done = true;
+    }
+  };
+
+  try {
+    await creator(inFile, outFile);
+    await finish();
+  } finally {
+    await Promise.all([
+      inFile.close(),
+      outFile.close(),
+      cleanup(),
+    ]);
+  }
 }
 
 /**
