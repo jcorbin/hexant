@@ -158,7 +158,7 @@ const config = {
           name,
           type,
           minify,
-          outFilePath,
+          outDir: dirname(outFilePath),
         });
       },
     }),

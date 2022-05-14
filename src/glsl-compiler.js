@@ -25,17 +25,20 @@ import {
 /** @typedef {import('fs/promises').FileHandle} FileHandle */
 /** @typedef {import('stream').Readable} Readable */
 
+/** @typedef {object} Options
+ * @prop {string} outDir
+ * @prop {boolean} [minify]
+ * @prop {string} [name]
+ * @prop {string} [type]
+ */
+
 /**
  * @param {FileHandle} inFile
  * @param {FileHandle} outFile
- * @param {object} options
- * @param {string} options.outFilePath
- * @param {boolean} [options.minify]
- * @param {string} [options.name]
- * @param {string} [options.type]
+ * @param {Options} options
  */
 export default async function compile(inFile, outFile, {
-  outFilePath,
+  outDir,
   minify = false,
   name = 'unnamed',
   type = 'vert',
@@ -62,7 +65,7 @@ export default async function compile(inFile, outFile, {
 
   await outFile.write(
     '// @ts-check\n\n' +
-    `import GLSLShader from './${dirname(relative(dirname(outFilePath), libPath))}/glsl-shader.js';\n\n` +
+    `import GLSLShader from './${dirname(relative(outDir, libPath))}/glsl-shader.js';\n\n` +
     `export default new GLSLShader(${JSON.stringify(name)}, ${JSON.stringify(type)},${minify ? ' ' : '\n'}`
   );
 
