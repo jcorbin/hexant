@@ -3,6 +3,7 @@
 /**
  * @typedef {object} Config
  * @prop {string|string[]} [root]
+ * @prop {({input: string, output: string} & Buildable)[]} [build]
  * @prop {Matcher[]} match
  */
 
@@ -56,7 +57,7 @@ import {
  * @prop {LeveledLogger} log
  */
 
-import { parseArgs, iterFiles } from './clikit.js';
+import { ok, parseArgs, iterFiles } from './clikit.js';
 
 /** @param {CmdContext} ctx
  * @param {string} configPath
@@ -65,7 +66,7 @@ async function loadConfig({ log }, configPath) {
   if (!configPath) {
     for (let dir = process.cwd(); dir.length; dir = dirname(dir)) {
       let testPath = joinPaths(dir, 'generate.config.js');
-      if (await fs.stat(testPath).then(() => true).catch(() => false)) {
+      if (await ok(fs.stat(testPath))) {
         configPath = testPath;
         log(2, 'found', { configPath });
         break;
@@ -110,13 +111,43 @@ async function loadConfig({ log }, configPath) {
   return config;
 }
 
-/** @param {Config} config */
+/**
+ * @param {Config} config
+ * @returns {AsyncGenerator<{input: FileEntry, output: FileEntry, buildable: Buildable}>}
+ */
 async function* iterBuild(config) {
   const { root: configRoot = '.' } = config;
   const roots = Array.isArray(configRoot) ? configRoot : [configRoot];
 
   /** @type {Set<string>} */
   const seen = new Set();
+
+  if (config.build) {
+    const root = process.cwd(); // TODO better dirname(configPath)
+
+    for (const { input: inputPath, output: outputPath, ...buildable } of config.build) {
+      if (!ok(fs.stat(inputPath))) {
+        console.log(`WARN: build input ${inputPath} is missing`);
+        continue;
+      }
+
+      const input = {
+        root,
+        path: inputPath,
+        name: basename(inputPath),
+      };
+      const output = {
+        root,
+        path: outputPath,
+        name: basename(outputPath),
+      };
+      yield {
+        input,
+        output,
+        buildable,
+      };
+    }
+  }
 
   for (const root of roots) {
     for await (const { name, path } of iterFiles(root)) {
