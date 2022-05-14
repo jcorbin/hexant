@@ -18,8 +18,6 @@ import {
   join,
 } from 'node:path';
 
-import compileGLSL from './src/glsl-compiler.js';
-
 import { ok } from './scripts/clikit.js';
 import ed from './scripts/ed.js';
 
@@ -58,6 +56,22 @@ async function resolveDep(name) {
   ) { return { name, target } }
 
   return { name, target: '' };
+}
+
+/** @typedef {import('./scripts/generate.js').Builder} Builder */
+
+import compileGLSL from './src/glsl-compiler.js';
+
+/**
+ * @param {import( './src/glsl-compiler.js').Options} opts
+ * @returns {Builder}
+ */
+function glslBuilder(opts) {
+  return (id, input, output) =>
+    buildAtomicFile(input, output, async (inFile, outFile) => {
+      await outFile.write(`// @generated from id:${id}\n\n`);
+      await compileGLSL(inFile, outFile, opts);
+    });
 }
 
 /** @type {import('./scripts/generate.js').Config} */
@@ -159,26 +173,36 @@ const config = {
       ],
     }),
 
-    singleJSBuilder({
-      ext: '.glsl',
-      outName: base => `${basename(base, extname(base))}.js`,
-      async build(inFile, outFile, { name: inputName }, { path: outFilePath }) {
-        const minify = false; // TODO wen
-        const baseName = basename(inputName, '.glsl');
-        const typeExt = extname(baseName);
-        if (!typeExt) {
-          throw 'has no additional type extension; rename it something like .vert.glsl or .frag.glsl';
-        }
-        const name = basename(baseName, typeExt);
-        const type = typeExt.slice(1);
-        await compileGLSL(inFile, outFile, {
-          name,
-          type,
-          minify,
-          outDir: dirname(outFilePath),
-        });
-      },
-    }),
+    function*({ name: inputName, path: inFilePath }) {
+      const ext = extname(inputName);
+      if (ext !== '.glsl') {
+        return;
+      }
+
+      const baseName = basename(inputName, '.glsl');
+      const typeExt = extname(baseName);
+      if (!typeExt) {
+        throw 'has no additional type extension; rename it something like .vert.glsl or .frag.glsl';
+      }
+      const type = typeExt.slice(1);
+
+      const dir = dirname(inFilePath);
+      const name = basename(baseName, typeExt);
+      const opts = { outDir: dir, name, type };
+
+      const lastBuilt = buildIDMatcher(/^\/\/ @generated from id:([^\s]+)/);
+
+      yield [join(dir, `${name}.js`), {
+        build: glslBuilder({ ...opts, minify: false }),
+        lastBuilt
+      }];
+
+      yield [join(dir, `${name}.min.js`), {
+        build: glslBuilder({ ...opts, minify: true }),
+        lastBuilt
+      }];
+
+    },
 
   ],
 };
@@ -188,7 +212,6 @@ export default config;
 /// library routines to split out
 
 /** @typedef {import('./scripts/generate.js').FileEntry} FileEntry */
-/** @typedef {import('./scripts/generate.js').Builder} Builder */
 /** @typedef {import('./scripts/generate.js').BuildIdentifier} BuildIdentifier */
 /** @typedef {import('./scripts/generate.js').Matcher} Matcher */
 
@@ -282,41 +305,6 @@ function cmdBuilder({
       }];
     }
 
-  };
-}
-
-/** @param {object} params
- * @param {string|string[]} params.ext
- * @param {(inFile: FileHandle, outFile: FileHandle, input: FileEntry, output: FileEntry) => Promise<void>} params.build
- * @param {string} [params.comment]
- * @param {(base: string, ext: string) => string} [params.outName]
- * @returns {Matcher}
- */
-function singleJSBuilder({
-  ext: matchExt,
-  build: buildFiles,
-  comment = '// ',
-  outName = base => `${base}.js`,
-}) {
-  if (typeof matchExt == 'string') {
-    matchExt = [matchExt];
-  }
-  return function*({ name, path }) {
-    const ext = extname(name);
-    if (!matchExt.includes(ext)) {
-      return;
-    }
-    const base = basename(name, ext);
-    const outPath = join(dirname(path), outName(base, ext));
-    yield [outPath, {
-      build(id, input, output) {
-        return buildAtomicFile(input, output, async (inFile, outFile) => {
-          await outFile.write(`${comment}@generated from id:${id}\n\n`);
-          await buildFiles(inFile, outFile, input, output);
-        });
-      },
-      lastBuilt: buildIDMatcher(/^\/\/ @generated from id:([^\s]+)/),
-    }];
   };
 }
 
