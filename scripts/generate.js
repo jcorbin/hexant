@@ -31,6 +31,7 @@
  * @typedef {object} Buildable
  * @prop {Builder} build
  * @prop {BuildIdentifier} lastBuilt
+ * @prop {boolean} [noHash]
  */
 
 /** @typedef {object} FileEntry
@@ -309,12 +310,12 @@ async function checkem({ log }, config) {
   for await (const {
     input: { path: inPath },
     output,
-    buildable: { lastBuilt },
+    buildable: { noHash, lastBuilt },
   } of iterBuild(config)) {
     const { path: outPath } = output;
     work.push((async () => {
       const [id, priorID] = await Promise.all([
-        hashFilePath(inPath),
+        noHash ? Promise.resolve('') : hashFilePath(inPath),
         lastBuilt(output).catch(() => ''),
       ]);
       return {
@@ -328,6 +329,9 @@ async function checkem({ log }, config) {
 
   let allOk = true;
   for (const { outPath, inPath, id, priorID } of await Promise.all(work)) {
+    if (!id) {
+      continue;
+    }
     const ok = id == priorID;
     if (ok) {
       log(1, outPath, 'from', inPath, id);

@@ -183,14 +183,6 @@ function singleJSBuilder({
       if (matchExt.includes(ext)) {
         const outPath = join(dirname(path), outName(basename(name, ext), ext));
         yield [outPath, {
-          // NOTE: build id embedding not supported here, since this is likely
-          // a much larger scoped command like rollup cjs => esm, whose input
-          // set is broader than just the input file, so our notion of build ID
-          // is insufficient; in the cmd case below where it's a stdin/stdout
-          // locked command, it's a reasonable/useful enough stretch to expect
-          // the config to limit those uses to simples functions of input
-          // alone, but not here.
-
           // NOTE: we expect the command to do its own atomic output writing
           // concerns, which is a normative assumption between programs; also
           // if we tried to indirect through our own managed tmp file here, as
@@ -214,7 +206,17 @@ function singleJSBuilder({
               });
             });
           },
-          async lastBuilt() { return '' }
+
+          // NOTE: build id embedding not supported here, since this is likely
+          // a much larger scoped command like rollup cjs => esm, whose input
+          // set is broader than just the input file, so our notion of build ID
+          // is insufficient; in the cmd case below where it's a stdin/stdout
+          // locked command, it's a reasonable/useful enough stretch to expect
+          // the config to limit those uses to simples functions of input
+          // alone, but not here.
+          noHash: true,
+          async lastBuilt() { return '' },
+
         }];
       }
     };
