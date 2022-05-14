@@ -73,34 +73,30 @@ Working on validating `v1.0` functionality.
 - port turmite sim to Go... shard and scale over goroutines
 - maybe allow shard(s) to run locally in a background web worker
 
+## build
+
+Consider using a parser for html processing, rather then the `scripts/ed.js`
+line-oriented regime:
+
+- https://github.com/jasonbellamy/asset-inliner/blob/master/package.json
+  - https://www.npmjs.com/package/jsdom
+  - https://www.npmjs.com/package/assetment
+- https://github.com/cdata/collapsify
+  - https://github.com/cdata/collapsify/blob/master/lib/collapsify.js
+  - https://www.npmjs.com/package/htmlparser2
+- https://github.com/popeindustries/inline-source
+  - csso & svgo
+- https://www.npmjs.com/package/html5parser
+- https://www.npmjs.com/package/clean-css
+
+Consider integrating rollup in-process using its API, rather than calling thru
+system commands.
+
 ## META: see also / subsume the old `TODO.md` file
 
-# 2022-05-13
+# 2022-05-14
 
 ## WIP
-
-- maybe generate `importmap.json` from `package.json`
-
-- minified production build: regen minified, inline js, and inline css
-
-- code generation:
-  - TODO: tighter rollup integration for vendor modules transforms so that we
-    can have a build id to cache/check against
-
-- html inlining
-  - https://github.com/jasonbellamy/asset-inliner/blob/master/package.json
-    - https://www.npmjs.com/package/jsdom
-    - https://www.npmjs.com/package/assetment
-
-  - https://github.com/cdata/collapsify
-    - https://github.com/cdata/collapsify/blob/master/lib/collapsify.js
-    - https://www.npmjs.com/package/htmlparser2
-
-  - https://github.com/popeindustries/inline-source
-    - csso & svgo
-
-  - https://www.npmjs.com/package/html5parser
-  - https://www.npmjs.com/package/clean-css
 
 ### `v1.0` retrospective re-release
 
@@ -120,6 +116,13 @@ Working on validating `v1.0` functionality.
     at least present a 2-screen deal
 
 ## Done
+
+- finished off minified build
+  - now using full html+css+js minification
+  - code generator now drops .min.js alternate forms of .glsl shaders, which
+    then get used by the .min.js build bundle
+
+# 2022-05-13
 
 - added asset inlining to `index.html` build
 - added `importmap.json` auto generation from `package.json`
