@@ -1,6 +1,16 @@
 // @ts-check
 
-import { stat, mkdir, rm, readFile } from 'node:fs/promises';
+import { minify } from 'html-minifier-terser';
+
+import {
+  mkdir,
+  readFile,
+  rename,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -82,42 +92,47 @@ const manifest = [
 
   'CHANGELOG.md',
   {
-    path: 'index.html',
-    async transform(content) {
-      const version = (await system('git', 'describe', '--always')).trimEnd();
-
-      // interpolate
-      content = content
-        .replace(/\{DEV\}/g, version);
-
+    async do() {
       // TODO would be nice to use a proper parser for html manipulation some
       // day, but I'm having too much fun with ed() to take on a
       // dependency just yet...
 
-      return await ed(content, async ({ y, g, s, x, lines }) => {
+      const [
+        template,
+        version,
+      ] = await Promise.all([
+        readFile('index.html', { encoding: 'utf-8' }),
+        system('git', 'describe', '--always').then(s => s.trimEnd())
+      ])
+
+
+      // interpolate
+      let content = template
+        .replace(/\{DEV\}/g, version);
+
+      content = await ed(content, async ({ y, g, x, lines }) => {
         // delete importmap
         await y(/<script.*type="importmap"/i, /<\/script>/i, async (i, j) => {
           while (j < lines.length && !lines[j + 1].trim()) j++;
           lines.splice(i, 1 + j - i);
         });
 
-        // change main script source
-        await g(/<script.*\ssrc=".\/index.js"/i,
-          s(/\ssrc="[^"]+"/i, ` src="./index.bundle.js"`)); // TODO .min wen
-
         // NOTE: this won't properly match a multi-line <link ...> tag
         await g(/<link.*? rel="stylesheet".*?>/i, x(/ href=("[^"]+")/i,
           ([_, hrefAttr], i) => withLocalAsset(unquote(hrefAttr), async contents => {
             lines.splice(i, 1,
               '<style>',
-              ...contents.split(/\n/), // TODO wen min(contents)
+              ...contents.split(/\n/),
               '</style>',
             );
             console.log('inlined', unquote(hrefAttr));
           })));
+      });
 
-        // NOTE: this won't properly match a multi-line <script ...> tag
-        await y(/<script/i, /<\/script>/i,
+      // NOTE: this won't properly match a multi-line <script ...> tag
+      /** @param {string} html */
+      const inlineScripts = html => ed(html, ({ y, x, lines }) =>
+        y(/<script/i, /<\/script>/i,
           x(/<script([^<>]*?( src=("[^"]+"))[^<>]*?)\s*>/i,
             ([_, attrs, srcMatch, srcAttr], _i, start, end) => withLocalAsset(unquote(srcAttr), async contents => {
               lines.splice(start, 1 + end - start,
@@ -126,11 +141,48 @@ const manifest = [
                 '</script>',
               );
               console.log('inlined', unquote(srcAttr));
-            })));
+            }))));
 
-      });
+      /** @param {string} script */
+      const withEntry = script => content.replace('./index.js', script);
+
+      await Promise.all([
+        async () => {
+          const content = await inlineScripts(withEntry('index.bundle.js'));
+          await writeFile('build/index.dev.html', content, { encoding: 'utf-8' });
+          console.log('built index.dev.html from index.html + index.bundle.js ');
+        },
+
+        async () => {
+          const content = await minify(
+            await inlineScripts(withEntry('index.bundle.min.js')), {
+            collapseWhitespace: true,
+            collapseInlineTagWhitespace: true,
+            collapseBooleanAttributes: true,
+
+            minifyCSS: true,
+
+            removeComments: true,
+            removeScriptTypeAttributes: true,
+            removeStyleLinkTypeAttributes: true,
+
+            sortAttributes: true,
+            sortClassName: true,
+
+          });
+          await writeFile('build/index.min.html', content, { encoding: 'utf-8' });
+          console.log('built index.min.html from html-minifier-terser( index.html + index.bundle.min.js )');
+        },
+
+        async () => {
+          await symlink('index.min.html', 'build/index.html');
+          console.log('symlinked index.html => index.min.html');
+        },
+      ].map(fn => fn()));
+
     },
   },
+
 ];
 
 export default manifest;

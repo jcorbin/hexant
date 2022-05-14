@@ -25,6 +25,7 @@
     "glsl-min-stream": "^1.0.0",
     "glsl-parser": "^2.0.1",
     "glsl-tokenizer": "^2.1.5",
+    "html-minifier-terser": "^7.0.0-alpha.2",
     "http-server": "^14.1.0",
     "rollup": "^2.72.1",
     "rollup-plugin-terser": "^7.0.2",
