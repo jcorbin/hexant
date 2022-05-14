@@ -131,17 +131,7 @@ const config = {
         await writeFile(outFilePath, content, { encoding: 'utf-8' });
       },
 
-      async lastBuilt({ path }) {
-        const content = await readFile(path, { encoding: 'utf-8' });
-        for (const line of content.split(/\n/)) {
-          const match = /<!-- @generated id:([^\s]+) -->/.exec(line);
-          if (match) {
-            return match[1];
-          }
-        }
-        return '';
-      },
-
+      lastBuilt: buildIDMatcher(/<!-- @generated id:([^\s]+) -->/),
     },
 
   ],
@@ -316,27 +306,38 @@ function singleJSBuilder({
   }
 
 
-  /** @type {BuildIdentifier} */
-  async function lastBuilt(prior) {
-    const file = await open(prior.path, 'r');
-    try {
-      for await (const line of scanLines(file)) {
-        const match = /^\/\/ @generated from id:([^\s]+)/.exec(line);
-        if (match) {
-          return match[1];
-        }
-      }
-      return '';
-    } finally {
-      await file.close();
-    }
-  }
+  const lastBuilt = buildIDMatcher(/^\/\/ @generated from id:([^\s]+)/);
 
   return function*({ name, path }) {
     const ext = extname(name);
     if (matchExt.includes(ext)) {
       const outPath = join(dirname(path), outName(basename(name, ext), ext));
       yield [outPath, { build, lastBuilt }];
+    }
+  };
+}
+
+/**
+ * @param {RegExp|((line: string) => string)} pat
+ * @returns {BuildIdentifier}
+ */
+function buildIDMatcher(pat) {
+  const match = typeof pat === 'function'
+    ? pat
+    : /** @param {string} line */ line => {
+      const match = pat.exec(line);
+      return match && match[1] || '';
+    };
+  return async (prior) => {
+    const file = await open(prior.path, 'r');
+    try {
+      for await (const line of scanLines(file)) {
+        const id = match(line);
+        if (id) { return id }
+      }
+      return '';
+    } finally {
+      await file.close();
     }
   };
 }
