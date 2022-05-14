@@ -12,7 +12,8 @@
     "generate": "node scripts/generate.js build",
     "generate-check": "node scripts/generate.js check -v",
     "ci": "npm run generate-check && npm run lint",
-    "serve": "bash scripts/dev-server.sh",
+    "dev": "http-server -o",
+    "serve": "http-server -o build",
     "build": "node scripts/build.js",
     "preversion": "bash scripts/preversion.sh",
     "version": "bash scripts/version.sh",
@@ -32,9 +33,6 @@
     "tape": "4.2.0",
     "typescript": "^4.6.4"
   },
-  "devServices": [
-    "http-server -o"
-  ],
   "dependencies": {
     "gl-matrix": "^3.4.3",
     "hsluv": "^0.1.0",
