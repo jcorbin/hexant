@@ -103,7 +103,7 @@ const config = {
 
     singleJSBuilder({
       ext: '.ne',
-      cmd: ['nearleyc'],
+      cmd: ['npx', 'nearleyc'],
     }),
 
     singleJSBuilder({
@@ -134,7 +134,7 @@ const config = {
     singleJSBuilder({
       ext: '.cjs',
       cmd: (input, output) => [
-        'rollup',
+        'npx', 'rollup',
         '--plugin', '@rollup/plugin-node-resolve',
         '--plugin', '@rollup/plugin-commonjs',
         '--format', 'esm',
