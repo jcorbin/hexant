@@ -10,9 +10,12 @@
   "scripts": {
     "lint": "tsc",
     "test": "ava",
+    "cover": "c8 npm test",
+    "view-cover": "c8 report -r html && open-cli coverage/index.html",
+    "check-cover": "c8 check-coverage",
     "generate": "node scripts/generate.js build",
-    "generate-check": "node scripts/generate.js check -v",
-    "ci": "npm run generate-check && npm run lint && npm run test",
+    "generate-check": "node scripts/generate.js check",
+    "ci": "npm run generate-check && npm run lint && npm run cover",
     "dev": "http-server -o",
     "serve": "http-server -o build",
     "build": "node scripts/build.js",
@@ -24,15 +27,20 @@
     "@rollup/plugin-commonjs": "^22.0.0",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "ava": "^4.2.0",
+    "c8": "^7.11.3",
     "glsl-deparser": "^1.0.0",
     "glsl-min-stream": "^1.0.0",
     "glsl-parser": "^2.0.1",
     "glsl-tokenizer": "^2.1.5",
     "html-minifier-terser": "^7.0.0-alpha.2",
     "http-server": "^14.1.0",
+    "open-cli": "^7.0.1",
     "rollup": "^2.72.1",
     "rollup-plugin-terser": "^7.0.2",
     "typescript": "^4.6.4"
+  },
+  "c8": {
+    "lines": 50
   },
   "dependencies": {
     "gl-matrix": "^3.4.3",
