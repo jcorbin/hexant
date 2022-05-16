@@ -32,7 +32,6 @@ export class Prompt {
 
     this.$text.addEventListener('keydown', this);
     this.$text.addEventListener('keyup', this);
-    this.$text.addEventListener('blur', this);
   }
 
   active() {
@@ -147,10 +146,6 @@ export class Prompt {
   /** @param {Event} e */
   handleEvent(e) {
     switch (e.type) {
-
-      case 'blur':
-        this.cancel();
-        break;
 
       case 'keydown':
         if (e instanceof KeyboardEvent) {
