@@ -4,6 +4,15 @@ Working on validating `v1.0` functionality.
 
 # TODO
 
+#### `v1.0.x`
+
+- `RuleConstants` shifts are awkward ; see `turmite/test.js` for a starting point
+- add keymap help overlay
+- write tests for more parts of `turmite/` like `RLEBuilder`
+- expand turmite help to actually describe the turmite language
+  - maybe make `turmite.ruleHelp` interactive as later called for in `v1.3` to
+    at least present a 2-screen deal
+
 ## `v1.1` refactoring
 
 - refactor `glslshader.js` and `glprogram.js`
@@ -93,29 +102,63 @@ Consider integrating rollup in-process using its API, rather than calling thru
 system commands.
 
 ## META: see also / subsume the old `TODO.md` file
+## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-14
+# 2022-05-16
 
 ## WIP
 
-### `v1.0` retrospective re-release
+Play testing turmite rules towards am eminent `v1.0` retrospective re-release.
 
-- play test turmite rules
-- uplift tests and get them passing again
-  - port to ava, drop tape
-- `RuleConstants` shifts are awkward ; see `turmite/test.js` for a starting point
-- `parseAnt` `numStates` is wrong ; should not be static 1
-- grep for other code TODOs and cull/triage them into this stream document
+Trying to build a "dual personality" turmite:
+- state 0 is an LR ant
+- state 1 is an RL ant
+- then we define state change triggers, like on any Nth color
+- or we could count in state space:
+  - have the first 128 states all be LR ants
+  - and the upper 128 state are RL ants
+  - then we just use s => s+1 progression
 
-#### `v1.0.x`
+Chasing turmite test cases:
 
-- add keymap help overlay
-- write tests for more parts of `turmite/` like `RLEBuilder`
-- expand turmite help to actually describe the turmite language
-  - maybe make `turmite.ruleHelp` interactive as later called for in `v1.3` to
-    at least present a 2-screen deal
+```
+s, c => s+1, c+1, turns(L R)[c]
+s, c => s+1, c+1, turns(R L)[c]
+```
+OOPS how do we restrict s in either rule? or can we just branch on s in the rhs
+and use a unified rule like:
+```
+s, c => s+1, c+1, (s < 128 ? turns(R L) : turns(L R))[c]
+```
+
+```
+0, c => 0, c + 1, turns(L R)[c]
+1, c => 1, c + 1, turns(R L)[c]
+0, c % 32 => 1
+```
+
+OOPS that doesn't work, let's fix that
+
+- TODO make then clauses partial-able, that the above can work:
+  - a rule that doesn't care to express any result color or turn, merely a state update 
 
 ## Done
+
+- uplifted all tests and got them passing
+  - including `tests/hextiletree.js` which has been broken since commit
+    `7885fe5` removed `OddQHexTile.prototype.grow` 6 years ago
+- added coverage testing, got `ci` script passing
+- wrote a basic turmite test module
+  - test ant parse/builder
+  - test turmite parse/builder vs equivalent ant
+  - TODO: more turmite test coverage, e.g. a multi-state turmite
+  - caught and fixed many bugs
+- added easy access to turmite `string => ...lines` compilation, useful today
+  for testing/debugging, maybe usable tomorrow for ahead-of-time compilation
+  for something like a canned/fixed demo
+- improved prompt usability when dealing with large parse / compile errors
+
+# 2022-05-14
 
 - finished off minified build
   - now using full html+css+js minification
