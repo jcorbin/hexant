@@ -141,3 +141,24 @@ export class Turmite {
     });
   }
 }
+
+import { raw as parseRaw } from './lang/parse.js';
+import { compileCode, endLines as addLineEnds } from './lang/compile.js';
+
+/**
+ * @param {string} str
+ * @param {object} [options]
+ * @param {boolean} [options.endLines]
+ * @param {import('./lang/compile.js').CodeFormat} [options.format]
+ */
+export function compile(str, {
+  endLines = false,
+  format = 'value',
+} = {}) {
+  const parseRes = rezult.bind(parseRaw(str), ast => ast.type === 'spec'
+    ? rezult.just(ast)
+    : rezult.error(new Error(`unexpected type:${ast.type} node`)));
+  const spec = rezult.toValue(parseRes);
+  const lines = compileCode(spec, { format });
+  return endLines ? addLineEnds(lines) : lines;
+}

@@ -6,6 +6,7 @@ import * as rezult from '../rezult.js';
 
 import {
   parse as parseTurmite,
+  compile as compileTurmite,
   Turmite,
 } from './index.js';
 
@@ -59,6 +60,11 @@ testActions.set('dump', async function*({ stdin }) {
   yield builder.toString();
 
   yield* dump(await rezult.toPromise(Turmite.from(builder)));
+});
+
+testActions.set('compile', async function*({ stdin }) {
+  const str = await bufferStream(stdin);
+  yield* compileTurmite(str, { format: 'module' });
 });
 
 /** @param {Turmite} ent */

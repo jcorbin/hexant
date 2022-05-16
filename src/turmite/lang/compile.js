@@ -103,12 +103,14 @@ export default function compile(spec) {
   });
 }
 
+/** @typedef {"value"|"module"} CodeFormat */
+
 /**
  * @param {walk.SpecNode} spec
  * @param {object} [options]
- * @param {"value"|"module"} [options.format]
+ * @param {CodeFormat} [options.format]
  */
-function compileCode(spec, { format = 'value' } = {}) {
+export function compileCode(spec, { format = 'value' } = {}) {
   const symbols = new Set([
     // dependencies
     'World',
@@ -543,7 +545,7 @@ function* prefix(prefix, lines) {
 }
 
 /** @param {Iterable<string>} lines */
-function* endLines(lines, nl = '\n') {
+export function* endLines(lines, nl = '\n') {
   for (const line of lines) {
     yield line + nl;
   }

@@ -13,24 +13,7 @@ const grammar = nearley.Grammar.fromCompiled(grammarRules);
 /** @param {string} str */
 export default function(str) {
   return rezult.bind(
-    rezult.catchErr(() => {
-      if (typeof str !== 'string') {
-        return rezult.error(new Error('invalid argument, not a string'));
-      }
-      /** @typedef {import('./walk.js').Node} Node */
-      const parser = new nearley.Parser(grammar);
-      parser.feed(str);
-      /** @type {{ results: Node[] }} */
-      const { results } = parser;
-      switch (results.length) {
-        case 0:
-          return rezult.error(new Error('no parse result'));
-        case 1:
-          return rezult.just(results[0]);
-        default:
-          return rezult.error(new Error('ambiguous parse'));
-      }
-    }),
+    raw(str),
     node => {
       switch (node.type) {
         case 'spec':
@@ -41,4 +24,29 @@ export default function(str) {
             `; tried to parse only a fragment of a turmite spec?`));
       }
     });
+}
+
+/** @param {string} str */
+export function raw(str) {
+  if (typeof str !== 'string') {
+    return rezult.error(new Error('invalid argument, not a string'));
+  }
+
+  const parser = new nearley.Parser(grammar);
+
+  return rezult.catchErr(() => {
+    /** @typedef {import('./walk.js').Node} Node */
+    parser.feed(str);
+
+    /** @type {{ results: Node[] }} */
+    const { results } = parser;
+    switch (results.length) {
+      case 0:
+        return rezult.error(new Error('no parse result'));
+      case 1:
+        return rezult.just(results[0]);
+      default:
+        return rezult.error(new Error('ambiguous parse'));
+    }
+  });
 }
