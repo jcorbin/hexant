@@ -216,10 +216,35 @@ const nodeOriginOffset = [
   new OddQOffset(1, 1)
 ];
 
+/** TODO this exists as a dubious testing surface, refactor it away someday
+ *
+ * @param {HexTileTree} tree
+ * @param {OddQHexTile|HexTileTreeNode|null} tile
+ * @param {number} i
+ */
+export function growTile(tree, tile, i) {
+  if (!tile) { return null }
+
+  const originOffset = tile instanceof OddQHexTile ? tileOriginOffset[i] : nodeOriginOffset[i];
+  const zoom = zoomPerm[i];
+  if (originOffset == undefined || zoom == undefined) { return null }
+
+  const tileSize = tile instanceof OddQHexTile ? tile.width : tile.tileSize;
+  const growthOrigin = tile.oqo
+    .copyFrom(originOffset)
+    .scale(tileSize)
+    .add(tile.origin);
+  const growthSize = 2 * (tile instanceof OddQHexTile ? tile.width : tile.size);
+  const tileNode = HexTileTreeNode.alloc ? HexTileTreeNode.alloc() : new HexTileTreeNode();
+  tileNode.init(tree, growthOrigin, growthSize);
+  tileNode._setTile(zoom, tile);
+  return tileNode;
+}
+
 /** @type {HexTileTreeNode[]} */
 const pool = [];
 
-class HexTileTreeNode {
+export class HexTileTreeNode {
   static alloc() {
     if (pool.length > 0) {
       const node = pool.shift()
@@ -346,16 +371,8 @@ class HexTileTreeNode {
     this._setSize(this.size * 2);
     for (let i = 0; i < tiles.length; i++) {
       const tile = tiles[i];
-      const originOffset = tile instanceof OddQHexTile ? tileOriginOffset[i] : nodeOriginOffset[i];
-      const zoom = zoomPerm[i];
-      if (tile != undefined && originOffset != undefined && zoom != undefined) {
-        const growthOrigin = tile.oqo
-          .copyFrom(originOffset)
-          .scale(tile instanceof OddQHexTile ? tile.width : tile.tileSize)
-          .add(tile.origin);
-        const tileNode = HexTileTreeNode.alloc ? HexTileTreeNode.alloc() : new HexTileTreeNode();
-        tileNode.init(tree, growthOrigin, this.tileSize);
-        tileNode._setTile(zoom, tile);
+      const tileNode = growTile(tree, tile, i);
+      if (tileNode) {
         this._setTile(i, tileNode);
       }
     }
