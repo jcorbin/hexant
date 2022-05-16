@@ -96,8 +96,8 @@ export default class Hexant {
     });
 
     bindHash('rule', {
-      parse: str => Turmite.from(World, str),
-      defaultValue: rezult.toValue(Turmite.from(World, 'ant(L R)')),
+      parse: str => Turmite.from(str, World),
+      defaultValue: rezult.toValue(Turmite.from('ant(L R)', World)),
       listener: ent => this.setEnts(ent ? [ent] : []),
     });
 

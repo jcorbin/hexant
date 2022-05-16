@@ -20,24 +20,60 @@ export { default as parse } from './parse.js';
 /** @typedef {import('./lang/compile.js').RuleConstants} RuleConstants */
 import parse from './parse.js';
 
+/** @typedef {import('./parse.js').Builder} Builder */
+
 export class Turmite {
 
+  static TestSpec = {
+    MaxColor: 0xff,
+    MaxState: 0xff,
+    MaxTurn: 0xffff,
+
+    MaskResultColor: 0xff000000,
+    MaskResultState: 0x00ff0000,
+    MaskResultTurn: 0x0000ffff,
+
+    ColorShift: 8,
+    TurnShift: 16,
+
+    // TODO: these are non-standard currently, but should be standardized
+    //       starting here to not hardcode below in dump()
+
+    ColorByteWidth: 1,
+    StateByteWidth: 1,
+    TurnByteWidth: 2,
+
+    ResultByteWidth: 4,
+    ResultColorShift: 24,
+    ResultStateShift: 16,
+    ResultTurnShift: 0,
+
+    KeyByteWidth: 2,
+    KeyColorMask: 0x00ff,
+    KeyStateMask: 0xff00,
+    KeyColorShift: 0,
+    KeyStateShift: 1,
+  };
+
   /**
-   * @param {RuleConstants} ruleSpec
-   * @param {string} str
+   * @param {string|Builder} arg
+   * @param {RuleConstants} [spec]
    * @param {Turmite} [ent]
    * @returns {rezult.Result<Turmite>}
    */
-  static from(ruleSpec, str, ent = new Turmite()) {
-    const { value: build, err: parseErr } = parse(str);
-    if (parseErr) {
-      return rezult.error(parseErr);
+  static from(arg, spec = Turmite.TestSpec, ent = new Turmite()) {
+    if (typeof arg === 'string') {
+      const { value, err: parseErr } = parse(arg);
+      if (parseErr) {
+        return rezult.error(parseErr);
+      }
+      arg = value;
     }
 
     ent.reset();
-    this.rules = new Uint32Array(256 * 256);
+    ent.rules.fill(0);
 
-    const { value: built, err: buildErr } = build(ent.rules, ruleSpec);
+    const { value: built, err: buildErr } = arg(ent.rules, spec);
     if (buildErr) {
       return rezult.error(buildErr);
     }

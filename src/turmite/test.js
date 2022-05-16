@@ -39,52 +39,9 @@ async function* runTestAction({ args: [action, ...args], ...rest }) {
   }
 }
 
-const testRuleSpec = {
-  MaxColor: 0xff,
-  MaxState: 0xff,
-  MaxTurn: 0xffff,
-
-  MaskResultColor: 0xff000000,
-  MaskResultState: 0x00ff0000,
-  MaskResultTurn: 0x0000ffff,
-
-  ColorShift: 8,
-  TurnShift: 16,
-
-  // TODO: these are non-standard currently, but should be standardized
-  //       starting here to not hardcode below in dump()
-
-  ColorByteWidth: 1,
-  StateByteWidth: 1,
-  TurnByteWidth: 2,
-
-  ResultByteWidth: 4,
-  ResultColorShift: 24,
-  ResultStateShift: 16,
-  ResultTurnShift: 0,
-
-  KeyByteWidth: 2,
-  KeyColorMask: 0x00ff,
-  KeyStateMask: 0xff00,
-  KeyColorShift: 0,
-  KeyStateShift: 1,
-};
-
-/** @param {import('./parse.js').Builder} builder */
-function buildEnt(builder) {
-  const ent = new Turmite();
-  const res = builder(ent.rules, testRuleSpec);
-  if (res.err) return res;
-  const { numColors, numStates, specString } = res.value;
-  ent.numColors = numColors;
-  ent.numStates = numStates;
-  ent.specString = specString;
-  return rezult.just(ent);
-}
-
 testActions.set('diffRules', async function*({ args: [str1, str2] }) {
-  const { rules: rules1, specString: spec1 } = await rezult.toPromise(Turmite.from(testRuleSpec, str1));
-  const { rules: rules2, specString: spec2 } = await rezult.toPromise(Turmite.from(testRuleSpec, str2));
+  const { rules: rules1, specString: spec1 } = await rezult.toPromise(Turmite.from(str1));
+  const { rules: rules2, specString: spec2 } = await rezult.toPromise(Turmite.from(str2));
   yield spec1;
   yield '-- vs';
   yield spec2;
@@ -101,7 +58,7 @@ testActions.set('dump', async function*({ stdin }) {
   yield 'BUILDER:';
   yield builder.toString();
 
-  yield* dump(await rezult.toPromise(buildEnt(builder)));
+  yield* dump(await rezult.toPromise(Turmite.from(builder)));
 });
 
 /** @param {Turmite} ent */
@@ -133,7 +90,7 @@ function* dump(ent) {
     KeyStateMask,
     KeyColorShift,
     KeyStateShift,
-  } = testRuleSpec;
+  } = Turmite.TestSpec;
   const statePart = 'S'.repeat(StateByteWidth * 2);
   const colorPart = 'C'.repeat(ColorByteWidth * 2);
   const turnPart = 'T'.repeat(TurnByteWidth * 2);
@@ -165,7 +122,7 @@ testActions.set('roundTrip', async function*({ stdin }) {
   yield 'first build:';
   yield code1;
 
-  const ent = await rezult.toPromise(buildEnt(build1));
+  const ent = await rezult.toPromise(Turmite.from(build1));
 
   const str2 = ent.specString;
 
