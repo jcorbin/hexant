@@ -3,7 +3,10 @@
 import colorGen from './colorgen.js';
 import { mustQuery } from './domkit.js';
 import makeHash from './hashbind.js';
-import { Prompt } from './prompt.js';
+import {
+  prompt,
+  loop as promptIOLoop,
+} from './prompt.js';
 import * as rezult from './rezult.js';
 import { Sample } from './sample.js';
 import {
@@ -48,7 +51,7 @@ export default class Hexant {
     }
 
     this.$body = $body;
-    this.prompt = new Prompt({ $body: $prompt });
+    this.$prompt = $prompt;
 
     this.$fpsOverlay = $fpsOverlay;
     this.$step = $step;
@@ -141,8 +144,8 @@ export default class Hexant {
       ['keypress: ', () => this.playpause()],
       ['keypress:.', () => this.stepit()],
       ['keypress:S-*', () => this.reboot()],
-      ['keypress:/', () => this.promptFor('rule', [...turmiteRuleHelp()].join('\n'))],
-      ['keypress:c', () => this.promptFor('colors', 'New Colors:')],
+      ['keypress:/', () => prompt(this.$prompt, this.rulePrompt())],
+      ['keypress:c', () => prompt(this.$prompt, this.colorPrompt())],
       ['keypress:S-+', () => this.hash.set('stepRate', this.stepRate * 2)],
       ['keypress:-', () => this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)))],
       ['keypress:f', () => this.hash.set('showFPS', !this.showFPS)],
@@ -222,25 +225,56 @@ export default class Hexant {
     }
   }
 
-  /**
-   * @param {string} name
-   * @param {string} desc
-   */
-  async promptFor(name, desc) {
-    if (this.prompt.active()) return;
-    const orig = this.hash.getStr(name);
-    for await (const { canceled, value } of this.prompt.interact(desc, orig)) {
-      if (canceled) {
-        this.prompt.hide();
-        break;
-      }
-      const { res: { err } } = this.hash.set(name, value);
-      if (err) {
-        this.prompt.error(err.message);
-      } else {
-        this.prompt.hide();
-      }
-    }
+  rulePrompt() {
+    const { hash } = this;
+    const hashName = 'rule';
+    return promptIOLoop(
+      function*(inputs) {
+        for (const input of inputs) {
+          if ('value' in input) {
+            const { value } = input;
+            const { res: { err }, str: revalue } = hash.set(hashName, value);
+            if (!err) { return true }
+            yield { error: err.message };
+            yield { value: revalue || value };
+            yield { help: [...turmiteRuleHelp()].join('\n') };
+          }
+        }
+        return undefined;
+      },
+
+      function*() {
+        const value = hash.getStr(hashName);
+        yield { value };
+        yield { help: [...turmiteRuleHelp()].join('\n') };
+        return undefined;
+      });
+  }
+
+  colorPrompt() {
+    const { hash } = this;
+    const hashName = 'colors';
+    return promptIOLoop(
+      function*(inputs) {
+        for (const input of inputs) {
+          if ('value' in input) {
+            const { value } = input;
+            const { res: { err }, str: revalue } = hash.set(hashName, value);
+            if (!err) { return true }
+            yield { error: err.message };
+            yield { value: revalue || value };
+            yield { help: 'New Colors:' };
+          }
+        }
+        return undefined;
+      },
+
+      function*() {
+        const value = hash.getStr(hashName);
+        yield { value };
+        yield { help: 'New Colors:' };
+        return undefined;
+      });
   }
 
   /** @param {number} time */

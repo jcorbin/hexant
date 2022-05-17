@@ -2,149 +2,63 @@
 
 import { mustQuery } from './domkit.js';
 
-/** @typedef {Canceled|Response} Result */
-/** @typedef {{canceled: true, value?: undefined}} Canceled */
-/** @typedef {{value: string, canceled?: false}} Response */
+/** @template T
+ * @typedef {Generator<Output[], T, Input[]>} Interactor
+ */
 
-export class Prompt {
+/** @template T
+ * @typedef {(inputs: Input[]) => Generator<Output, T|undefined>} Looper
+ */
 
-  /**
-   * @param {object} params
-   * @param {HTMLElement} params.$body
-   * @param {HTMLElement} [params.$help]
-   * @param {HTMLTextAreaElement} [params.$text]
-   * @param {HTMLElement} [params.$error]
-   */
-  constructor({
-    $body,
+/** @typedef {(
+ * | {value: string}
+ * )} Input */
+
+/** @typedef {(
+ * | {value: string}
+ * | {help: string}
+ * | {error: string}
+ * )} Output */
+
+/** @template T
+ * @param {HTMLElement} $body
+ * @param {Interactor<T>} tor
+ * @returns {Promise<T|undefined>}
+ */
+export async function prompt($body, tor) {
+  const
     $help = mustQuery($body, '#help', HTMLElement),
     $text = mustQuery($body, '#text', HTMLTextAreaElement),
-    $error = mustQuery($body, '#error', HTMLElement),
-  }) {
-    this.$box = $body;
-    this.$help = $help;
-    this.$text = $text;
-    this.$error = $error;
+    $error = mustQuery($body, '#error', HTMLElement);
 
-    /** @type {((res: Result) => void)|null} */
-    this.callback = null;
-    this.lastEnter = 0;
+  /** @typedef {(
+   * | {value: string}
+   * | {canceled: true}
+   * )} Response */
 
-    this.$text.addEventListener('keydown', this);
-    this.$text.addEventListener('keyup', this);
+  /** @type {((res: Response) => void)} */
+  let callback = () => { };
+
+  const respond = () => callback({ value: $text.value.replace(/(?:\r?\n)+$/, '') });
+  const cancel = () => callback({ canceled: true });
+
+  function hide() {
+    $body.style.display = 'none';
+    $help.innerText = '';
+    $text.value = '';
+    $error.style.display = 'none';
+    $error.innerText = '';
   }
 
-  active() {
-    return !!this.callback;
+  function resizeTextRows() {
+    const lines = $text.value.split(/\n/);
+    $text.rows = lines.length + 1;
   }
 
-  /**
-   * @param {string} help
-   * @param {string} value
-   * @returns {Generator<Promise<Result>>}
-   */
-  *interact(help, value) {
-    const restore = this.stash();
-    try {
-      this.prompt(help, value);
-      while (this.$box.style.display != 'none') {
-        yield new Promise(resolve => this.callback = resolve);
-      }
-    } finally {
-      restore();
-    }
-  }
-
-  /**
-   * @param {string} help
-   * @param {string} value
-   */
-  prompt(help, value) {
-    // TODO refactor to return a promise, rather than take a callback
-    this.$help.innerText = help;
-    this.$text.value = value;
-    this.$box.style.display = '';
-    this.resizeTextRows();
-    this.$text.select();
-    this.$text.focus();
-  }
-
-  stash() {
-    const {
-      $box: { style: { display } },
-      $help: { innerText: help },
-      $text: { value },
-      $error: {
-        innerText: err,
-        style: { display: errDisplay },
-      },
-      callback,
-      lastEnter,
-    } = this;
-    return () => {
-      this.$box.style.display = display;
-      this.$help.innerText = help;
-      this.$text.value = value;
-      this.$error.innerText = err;
-      this.$error.style.display = errDisplay;
-      this.callback = callback;
-      this.lastEnter = lastEnter;
-    };
-  }
-
-  resizeTextRows() {
-    const lines = this.$text.value.split(/\n/);
-    this.$text.rows = lines.length + 1;
-  }
-
-  respond() {
-    let value = this.$text.value;
-    const callback = this.callback;
-    if (callback) {
-      value = value.replace(/(?:\r?\n)+$/, '');
-      callback({ value });
-    } else {
-      this.hide();
-    }
-  }
-
-  cancel() {
-    const callback = this.callback;
-    if (callback) {
-      callback({ canceled: true });
-    } else {
-      this.hide();
-    }
-  }
-
-  /**
-   * @param {string} err
-   * @param {string} [help]
-   * @param {string} [revalue]
-   */
-  error(err, help, revalue) {
-    this.$error.innerText = err;
-    this.$error.style.display = '';
-    if (help) {
-      this.$help.innerText = help;
-    }
-    if (revalue) {
-      this.$text.value = revalue;
-    }
-  }
-
-  hide() {
-    this.$box.style.display = 'none';
-    this.$help.innerText = '';
-    this.$text.value = '';
-    this.$error.style.display = 'none';
-    this.$error.innerText = '';
-    this.lastEnter = 0;
-    this.callback = null;
-  }
+  let lastEnter = 0;
 
   /** @param {Event} e */
-  handleEvent(e) {
+  function handleEvent(e) {
     switch (e.type) {
 
       case 'keydown':
@@ -158,12 +72,12 @@ export class Prompt {
               break;
 
             case 'Escape':
-              this.cancel();
+              cancel();
               e.preventDefault();
               return;
 
           }
-          this.resizeTextRows();
+          resizeTextRows();
         }
         break;
 
@@ -172,23 +86,149 @@ export class Prompt {
           switch (e.key) {
 
             case 'Enter':
-              if (Date.now() - this.lastEnter < 1000 || e.ctrlKey) {
+              if (Date.now() - lastEnter < 1000 || e.ctrlKey) {
                 e.preventDefault();
-                this.respond();
+                respond();
                 return;
               }
-              this.lastEnter = Date.now();
+              lastEnter = Date.now();
               break;
 
             default:
-              this.lastEnter = 0;
+              lastEnter = 0;
 
           }
-          this.resizeTextRows();
+          resizeTextRows();
         }
         break;
 
     }
   }
 
+  const _canceled = new Object();
+  try {
+
+    $body.style.display = '';
+
+    $text.addEventListener('keydown', handleEvent);
+    $text.addEventListener('keyup', handleEvent);
+
+    /** @type {Input[]} */
+    let inputs = [];
+    for (; ;) {
+
+      { // tick tor
+        const { done, value } = tor.next(inputs);
+        inputs = [];
+        if (done) { return value }
+        for (const output of value) {
+
+          if ('value' in output) {
+            const { value } = output;
+            $text.value = value;
+            resizeTextRows();
+            $text.select();
+            $text.focus();
+          }
+
+          else if ('error' in output) {
+            const { error } = output;
+            $error.innerText = error;
+            $error.style.display = error ? '' : 'none';
+          }
+
+          else if ('help' in output) {
+            const { help } = output;
+            $help.innerText = help;
+            $help.style.display = help ? '' : 'none';
+          }
+
+          else assertNever(output, 'unimplemented');
+        }
+      }
+
+      { // wait for user
+        const res = await /** @type {Promise<Response>} */ (
+          new Promise(resolve => callback = resolve));
+        callback = () => { };
+        if ('canceled' in res) { throw _canceled }
+        inputs.push(res);
+      }
+    }
+  } catch (e) {
+    if (e !== _canceled) throw e;
+    return undefined;
+  } finally {
+    hide();
+  }
+}
+
+/** @template T
+ * @param {Looper<T>[]} loopers
+ * @returns {Interactor<T>}
+ */
+export function loop(...loopers) {
+  const body = firstLooper(...loopers);
+  return function*() {
+    let { values: outputs, value } = collectIt(body([]));
+    while (value === undefined) {
+      const inputs = yield outputs;
+      ({ values: outputs, value } = collectIt(body(inputs)));
+    }
+    return value;
+  }();
+}
+
+/** @template T
+ * @param {Looper<T>[]} loopers
+ * @returns {Looper<T>}
+ */
+function firstLooper(...loopers) {
+  switch (loopers.length) {
+    case 0:
+      return function*() { return undefined };
+    case 1:
+      return loopers[0];
+  }
+  return function*(inputs) {
+    for (const looper of loopers) {
+      const gen = looper(inputs);
+      const { done, value: first } = gen.next();
+
+      // looper produces output, so the rest don't get a shot this round
+      if (!done) {
+        yield first;
+        return yield* gen;
+      }
+
+      // looper returned a final result, we'll take it!
+      if (first !== undefined) {
+        return first;
+      }
+    }
+
+    // we'll have to do this all again with a different batch of inputs
+    return undefined;
+  };
+}
+
+/** @template V, R
+ * @param {Iterator<V, R>} it
+ */
+function collectIt(it) {
+  /** @type {V[]} */
+  const values = [];
+  for (; ;) {
+    const { done, value } = it.next();
+    if (done) { return { values, value } }
+    values.push(value);
+  }
+}
+
+/**
+ * @param {never} impossible
+ * @param {string} mess
+ */
+function assertNever(impossible, mess) {
+  throw new Error(`${mess}: ${JSON.stringify(impossible)}`);
 }
