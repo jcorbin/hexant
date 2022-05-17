@@ -104,7 +104,7 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-16
+# 2022-05-17
 
 ## WIP
 
@@ -143,6 +143,15 @@ OOPS that doesn't work, let's fix that
   - a rule that doesn't care to express any result color or turn, merely a state update 
 
 ## Done
+
+- refactored `prompt` module over a new `Interactor<T>` type that is a
+  generator of outputs given inputs; this allows basic responsive help now, and
+  will allow more structural interaction later like action commands
+- improved prompt legibility
+  - don't let it take more than 50% of viewport height, make long errors scroll
+  - provider clearer ant parse errors that don't leak turmite grammar rules
+
+# 2022-05-16
 
 - uplifted all tests and got them passing
   - including `tests/hextiletree.js` which has been broken since commit
