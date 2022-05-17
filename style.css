@@ -84,6 +84,14 @@ html, body {
 
 .prompt .help {
     word-wrap: pre;
+    white-space: pre;
+    margin: 0.25em 0;
+    padding: 0.25em 0;
+}
+
+.prompt  {
+    max-height: 50%;
+    overflow: auto;
 }
 
 .prompt .error {
@@ -93,8 +101,8 @@ html, body {
     background-color: #433;
     border-top: 0.1em solid #433;
     border-bottom: 0.1em solid #433;
-    margin: 0.1em 0;
-    padding: 0.1em 0;
+    margin: 0.25em 0;
+    padding: 0.25em 0;
 }
 .prompt .error,
 .prompt .error * {
