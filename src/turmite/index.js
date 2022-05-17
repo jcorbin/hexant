@@ -5,14 +5,20 @@ import * as rezult from '../rezult.js';
 
 import * as constants from './constants.js';
 
-export function* ruleHelp() {
-  // TODO make this interactive by taking an input argument
-  yield 'ant(<number>?<turn> ...) , turns:'
-  yield '  - L=left, R=right'
-  yield '  - B=back, F=forward'
-  yield '  - P=port, S=starboard (these are rear-facing left/right)'
-  yield ''
-  yield 'See README for full turmite language details.'
+import { isAnt } from './parse.js';
+
+/** @param {string} value */
+export function* ruleHelp(value) {
+  if (isAnt(value)) {
+    yield 'ant(<number>?<turn> ...) , turns:';
+    yield '  - L=left, R=right';
+    yield '  - B=back, F=forward';
+    yield '  - P=port, S=starboard (these are rear-facing left/right)';
+  } else {
+    yield 'Here Be Dragons'; // TODO provide online turmite help
+    yield '';
+    yield 'See README for full turmite language details.';
+  }
 }
 
 export { default as parse } from './parse.js';

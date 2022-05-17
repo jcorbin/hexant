@@ -237,7 +237,7 @@ export default class Hexant {
             if (!err) { return true }
             yield { error: err.message };
             yield { value: revalue || value };
-            yield { help: [...turmiteRuleHelp()].join('\n') };
+            yield { help: [...turmiteRuleHelp(value)].join('\n') };
           }
         }
         return undefined;
@@ -246,7 +246,7 @@ export default class Hexant {
       function*() {
         const value = hash.getStr(hashName);
         yield { value };
-        yield { help: [...turmiteRuleHelp()].join('\n') };
+        yield { help: [...turmiteRuleHelp(value)].join('\n') };
         return undefined;
       });
   }
