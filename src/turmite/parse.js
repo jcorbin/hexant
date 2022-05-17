@@ -41,6 +41,13 @@ export default function(str) {
   return rezult.error(new Error('invalid spec string'));
 }
 
+/** @param {string} str */
+export function isAnt(str) {
+  // TODO better AST-based static analysis for interaction once we unify the
+  // parser ant+turmite parsers
+  return (/^\s*ant(\(.*|\s*$)/.test(str));
+}
+
 /**
  * @param {string} str
  * @returns {rezult.Result<Builder|null>}
@@ -49,6 +56,9 @@ function parseAnt(str) {
   // match any ant(TURNS)
   const antMatch = /^\s*ant\(\s*(.+?)\s*\)\s*$/.exec(str);
   if (!antMatch) {
+    if (isAnt(str)) {
+      return rezult.error(new Error('incomplete / invalid ant(...) string'));
+    }
     // NOTE: not an error, allowing next parser (lang.parse) a chance
     return rezult.just(null);
   }
