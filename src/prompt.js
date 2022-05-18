@@ -1,6 +1,6 @@
 // @ts-check
 
-import { mustQuery } from './domkit.js';
+import { mayQuery } from './domkit.js';
 
 /** @template T
  * @typedef {Generator<Output[], T, Input[]>} Interactor
@@ -26,11 +26,6 @@ import { mustQuery } from './domkit.js';
  * @returns {Promise<T|undefined>}
  */
 export async function prompt($body, tor) {
-  const
-    $help = mustQuery($body, '#help', HTMLElement),
-    $text = mustQuery($body, '#text', HTMLTextAreaElement),
-    $error = mustQuery($body, '#error', HTMLElement);
-
   /** @typedef {(
    * | {value: string}
    * | {canceled: true}
@@ -39,20 +34,65 @@ export async function prompt($body, tor) {
   /** @type {((res: Response) => void)} */
   let callback = () => { };
 
-  const respond = () => callback({ value: $text.value.replace(/(?:\r?\n)+$/, '') });
-  const cancel = () => callback({ canceled: true });
+  function makeText() {
+    let $text = mayQuery($body, '#text', HTMLTextAreaElement);
+    if (!$text) {
+      $text = $body.appendChild(
+        $body.ownerDocument.createElement('textarea'));
+      $text.id = 'text';
+    }
+    return $text;
+  }
 
-  function hide() {
-    $body.style.display = 'none';
-    $help.innerText = '';
-    $text.value = '';
-    $error.style.display = 'none';
-    $error.innerText = '';
+  function makeHelp() {
+    let $help = mayQuery($body, '#help', HTMLElement);
+    if (!$help) {
+      $help = $body.insertBefore(
+        $body.ownerDocument.createElement('div'),
+        makeText());
+      $help.id = 'help';
+      $help.classList.add('help');
+    }
+    return $help;
+  }
+
+  function makeError() {
+    let $error = mayQuery($body, '#error', HTMLElement);
+    if (!$error) {
+      $error = $body.appendChild(
+        $body.ownerDocument.createElement('div'));
+      $error.id = 'error';
+      $error.classList.add('error');
+    }
+    return $error;
+  }
+
+  function resetOutputElements() {
+    const $text = mayQuery($body, '#text', HTMLTextAreaElement);
+    if ($text) {
+      $text.value = '';
+      $text.rows = 1;
+    }
+
+    const $help = mayQuery($body, '#help', HTMLElement);
+    if ($help) {
+      $help.style.display = 'none';
+      $help.innerText = '';
+    }
+
+    const $error = mayQuery($body, '#error', HTMLElement);
+    if ($error) {
+      $error.style.display = 'none';
+      $error.innerText = '';
+    }
   }
 
   function resizeTextRows() {
-    const lines = $text.value.split(/\n/);
-    $text.rows = lines.length + 1;
+    let $text = mayQuery($body, '#text', HTMLTextAreaElement);
+    if ($text) {
+      const lines = $text.value.split(/\n/);
+      $text.rows = lines.length + 1;
+    }
   }
 
   let lastEnter = 0;
@@ -72,8 +112,8 @@ export async function prompt($body, tor) {
               break;
 
             case 'Escape':
-              cancel();
               e.preventDefault();
+              callback({ canceled: true });
               return;
 
           }
@@ -88,7 +128,8 @@ export async function prompt($body, tor) {
             case 'Enter':
               if (Date.now() - lastEnter < 1000 || e.ctrlKey) {
                 e.preventDefault();
-                respond();
+                const $text = mayQuery($body, '#text', HTMLTextAreaElement);
+                callback({ value: $text ? $text.value.replace(/(?:\r?\n)+$/, '') : '' });
                 return;
               }
               lastEnter = Date.now();
@@ -107,11 +148,13 @@ export async function prompt($body, tor) {
 
   const _canceled = new Object();
   try {
-
     $body.style.display = '';
 
-    $text.addEventListener('keydown', handleEvent);
-    $text.addEventListener('keyup', handleEvent);
+    {
+      const $text = makeText();
+      $text.addEventListener('keydown', handleEvent);
+      $text.addEventListener('keyup', handleEvent);
+    }
 
     /** @type {Input[]} */
     let inputs = [];
@@ -121,10 +164,13 @@ export async function prompt($body, tor) {
         const { done, value } = tor.next(inputs);
         inputs = [];
         if (done) { return value }
-        for (const output of value) {
 
+        resetOutputElements();
+
+        for (const output of value) {
           if ('value' in output) {
             const { value } = output;
+            const $text = makeText();
             $text.value = value;
             resizeTextRows();
             $text.select();
@@ -133,14 +179,20 @@ export async function prompt($body, tor) {
 
           else if ('error' in output) {
             const { error } = output;
-            $error.innerText = error;
-            $error.style.display = error ? '' : 'none';
+            if (error) {
+              const $error = makeError();
+              $error.innerText = error;
+              $error.style.display = '';
+            }
           }
 
           else if ('help' in output) {
             const { help } = output;
-            $help.innerText = help;
-            $help.style.display = help ? '' : 'none';
+            if (help) {
+              const $help = makeHelp();
+              $help.innerText = help;
+              $help.style.display = '';
+            }
           }
 
           else assertNever(output, 'unimplemented');
@@ -159,7 +211,21 @@ export async function prompt($body, tor) {
     if (e !== _canceled) throw e;
     return undefined;
   } finally {
-    hide();
+    const $error = mayQuery($body, '#error', HTMLElement);
+    if ($error) { $body.removeChild($error) }
+
+    const $help = mayQuery($body, '#help', HTMLElement);
+    if ($help) { $body.removeChild($help) }
+
+    const $text = mayQuery($body, '#text', HTMLTextAreaElement);
+    if ($text) {
+      $text.value = '';
+      $text.rows = 1;
+      $text.removeEventListener('keyup', handleEvent);
+      $text.removeEventListener('keydown', handleEvent);
+    }
+
+    $body.style.display = 'none';
   }
 }
 
