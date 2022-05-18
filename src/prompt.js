@@ -162,12 +162,12 @@ export async function prompt($body, tor) {
 
       { // tick tor
         const { done, value } = tor.next(inputs);
-        inputs = [];
         if (done) { return value }
+        const outputs = value;
 
         resetOutputElements();
 
-        for (const output of value) {
+        for (const output of outputs) {
           if ('value' in output) {
             const { value } = output;
             const $text = makeText();
@@ -200,6 +200,7 @@ export async function prompt($body, tor) {
       }
 
       { // wait for user
+        inputs = [];
         const res = await /** @type {Promise<Response>} */ (
           new Promise(resolve => callback = resolve));
         callback = () => { };
