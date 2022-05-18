@@ -37,7 +37,7 @@ export default class Hexant {
    */
   constructor({
     $body,
-    $prompt = mustQuery($body, '.prompt', HTMLElement),
+    $prompt = mustQuery($body, '#prompt', HTMLElement),
     $view = mustQuery($body, '#view', HTMLCanvasElement),
     $fpsOverlay = mustQuery($body, '#fpsOverlay', HTMLElement),
     $step = mustQuery($body, '#step', HTMLElement),
