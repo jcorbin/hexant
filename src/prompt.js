@@ -254,7 +254,14 @@ export async function prompt($body, tor) {
             const { help } = output;
             if (help) {
               const $help = makeHelp();
-              $help.innerText = help;
+              const { innerText: prior } = $help;
+              let parts = [help];
+              if (prior) parts = [prior, ...parts];
+              let text = '';
+              for (const part of parts) {
+                text += terminate(part);
+              }
+              $help.innerText = text;
               $help.style.display = '';
             }
           }
@@ -310,6 +317,11 @@ export async function prompt($body, tor) {
     $body.removeEventListener('click', handleEvent);
     $body.style.display = 'none';
   }
+}
+
+/** @param {string} str */
+function terminate(str, end = '\n') {
+  return str.endsWith(end) ? str : `${str}${end}`;
 }
 
 /** @template T
