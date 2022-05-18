@@ -228,27 +228,25 @@ export default class Hexant {
   rulePrompt() {
     const { hash } = this;
     const hashName = 'rule';
-    return promptIOLoop(
-      function*(inputs) {
-        for (const input of inputs) {
-          if ('value' in input) {
-            const { value } = input;
-            const { res: { err }, str: revalue } = hash.set(hashName, value);
-            if (!err) { return true }
-            yield { error: err.message };
-            yield { value: revalue || value };
-            yield { help: [...turmiteRuleHelp(value)].join('\n') };
-          }
-        }
-        return undefined;
-      },
+    return promptIOLoop(function*(inputs) {
+      let value = hash.getStr(hashName);
 
-      function*() {
-        const value = hash.getStr(hashName);
-        yield { value };
-        yield { help: [...turmiteRuleHelp(value)].join('\n') };
-        return undefined;
-      });
+      for (const input of inputs) {
+        if ('value' in input) {
+          ({ value } = input);
+          const { res: { err }, str: revalue } = hash.set(hashName, value);
+          if (!err) { return true }
+          if (revalue) value = revalue;
+          yield { error: err.message };
+        }
+      }
+
+      yield { title: 'Rule' };
+      yield { value };
+      yield { help: [...turmiteRuleHelp(value)].join('\n') };
+
+      return undefined;
+    });
   }
 
   colorPrompt() {
@@ -263,7 +261,7 @@ export default class Hexant {
             if (!err) { return true }
             yield { error: err.message };
             yield { value: revalue || value };
-            yield { help: 'New Colors:' };
+            yield { title: 'Colors' };
           }
         }
         return undefined;
@@ -272,7 +270,7 @@ export default class Hexant {
       function*() {
         const value = hash.getStr(hashName);
         yield { value };
-        yield { help: 'New Colors:' };
+        yield { title: 'Colors' };
         return undefined;
       });
   }
