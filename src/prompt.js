@@ -12,6 +12,7 @@ import { mayQuery } from './domkit.js';
 
 /** @typedef {(
  * | {value: string}
+ * | {command: string}
  * )} Input */
 
 /** @typedef {(
@@ -19,7 +20,10 @@ import { mayQuery } from './domkit.js';
  * | {value: string}
  * | {help: string}
  * | {error: string}
+ * | {command: string, label?: string}
  * )} Output */
+
+/** @typedef {(...args: string[]) => Iterable<Output>} Command */
 
 /** @template T
  * @param {HTMLElement} $body
@@ -29,6 +33,7 @@ import { mayQuery } from './domkit.js';
 export async function prompt($body, tor) {
   /** @typedef {(
    * | {value: string}
+   * | {command: string}
    * | {canceled: true}
    * )} Response */
 
@@ -78,6 +83,24 @@ export async function prompt($body, tor) {
     return $error;
   }
 
+  /**
+   * @param {object} options
+   * @param {string} options.id
+   * @param {string} options.label
+   * @param {string} [options.title]
+   */
+  function makeButton({ id, label, title }) {
+    let $btn = mayQuery($body, `button[id="${id}"]`, HTMLButtonElement);
+    if (!$btn) {
+      $btn = $body.appendChild(
+        $body.ownerDocument.createElement('button'));
+      $btn.id = id;
+    }
+    $btn.innerText = label;
+    $btn.title = title || '';
+    return $btn;
+  }
+
   function resetOutputElements() {
     const $header = mayQuery($body, 'h1', HTMLHeadingElement);
     if ($header) {
@@ -117,6 +140,19 @@ export async function prompt($body, tor) {
   /** @param {Event} e */
   function handleEvent(e) {
     switch (e.type) {
+
+      case 'click':
+        {
+          const { target } = e;
+          if (target && target instanceof HTMLButtonElement) {
+            const { command } = target.dataset;
+            if (command) {
+              e.preventDefault();
+              callback({ command });
+            }
+          }
+        }
+        break;
 
       case 'keydown':
         if (e instanceof KeyboardEvent) {
@@ -166,6 +202,7 @@ export async function prompt($body, tor) {
   const _canceled = new Object();
   try {
     $body.style.display = '';
+    $body.addEventListener('click', handleEvent);
 
     {
       const $text = makeText();
@@ -183,6 +220,9 @@ export async function prompt($body, tor) {
         const outputs = value;
 
         resetOutputElements();
+
+        /** @type {WeakSet<HTMLButtonElement>} */
+        const activeButtons = new WeakSet();
 
         for (const output of outputs) {
           if ('title' in output) {
@@ -219,7 +259,21 @@ export async function prompt($body, tor) {
             }
           }
 
+          else if ('command' in output) {
+            const { command, label = command } = output;
+            const id = `${$body.id}$${command}`;
+            const $btn = makeButton({ id, label });
+            $btn.dataset['command'] = command;
+            activeButtons.add($btn);
+          }
+
           else assertNever(output, 'unimplemented');
+        }
+
+        for (const $btn of $body.querySelectorAll('button')) {
+          if (!activeButtons.has($btn)) {
+            $body.removeChild($btn);
+          }
         }
       }
 
@@ -229,7 +283,7 @@ export async function prompt($body, tor) {
           new Promise(resolve => callback = resolve));
         callback = () => { };
         if ('canceled' in res) { throw _canceled }
-        inputs.push(res);
+        else inputs.push(res);
       }
     }
   } catch (e) {
@@ -253,6 +307,7 @@ export async function prompt($body, tor) {
     const $header = mayQuery($body, 'h1', HTMLHeadingElement);
     if ($header) { $body.removeChild($header) }
 
+    $body.removeEventListener('click', handleEvent);
     $body.style.display = 'none';
   }
 }
