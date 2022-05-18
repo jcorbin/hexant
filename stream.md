@@ -104,11 +104,13 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-17
+# 2022-05-18
 
 ## WIP
 
-Play testing turmite rules towards am eminent `v1.0` retrospective re-release.
+Prompt help system and command help.
+
+### Play testing turmite rules
 
 Trying to build a "dual personality" turmite:
 - state 0 is an LR ant
@@ -144,12 +146,21 @@ OOPS that doesn't work, let's fix that
 
 ## Done
 
+- further work on prompt ux
+  - made prompt semantics be a clean start each round, no carry over state
+  - added explicit `{title}` header support
+  - added `{command}` buttons
+  - concatenate all `{help}` outputs
+
+# 2022-05-17
+
 - refactored `prompt` module over a new `Interactor<T>` type that is a
   generator of outputs given inputs; this allows basic responsive help now, and
   will allow more structural interaction later like action commands
 - improved prompt legibility
   - don't let it take more than 50% of viewport height, make long errors scroll
   - provider clearer ant parse errors that don't leak turmite grammar rules
+- added conversion button for ant => turmites
 
 # 2022-05-16
 
