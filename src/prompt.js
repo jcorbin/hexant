@@ -15,6 +15,7 @@ import { mayQuery } from './domkit.js';
  * )} Input */
 
 /** @typedef {(
+ * | {title: string}
  * | {value: string}
  * | {help: string}
  * | {error: string}
@@ -33,6 +34,16 @@ export async function prompt($body, tor) {
 
   /** @type {((res: Response) => void)} */
   let callback = () => { };
+
+  function makeHeader() {
+    let $header = mayQuery($body, 'h1', HTMLHeadingElement);
+    if (!$header) {
+      $header = $body.insertBefore(
+        $body.ownerDocument.createElement('h1'),
+        $body.firstElementChild);
+    }
+    return $header;
+  }
 
   function makeText() {
     let $text = mayQuery($body, '#text', HTMLTextAreaElement);
@@ -68,6 +79,12 @@ export async function prompt($body, tor) {
   }
 
   function resetOutputElements() {
+    const $header = mayQuery($body, 'h1', HTMLHeadingElement);
+    if ($header) {
+      $header.style.display = 'none';
+      $header.innerText = '';
+    }
+
     const $text = mayQuery($body, '#text', HTMLTextAreaElement);
     if ($text) {
       $text.value = '';
@@ -168,7 +185,14 @@ export async function prompt($body, tor) {
         resetOutputElements();
 
         for (const output of outputs) {
-          if ('value' in output) {
+          if ('title' in output) {
+            const { title } = output;
+            const $header = makeHeader();
+            $header.innerText = title;
+            $header.style.display = '';
+          }
+
+          else if ('value' in output) {
             const { value } = output;
             const $text = makeText();
             $text.value = value;
@@ -225,6 +249,9 @@ export async function prompt($body, tor) {
       $text.removeEventListener('keyup', handleEvent);
       $text.removeEventListener('keydown', handleEvent);
     }
+
+    const $header = mayQuery($body, 'h1', HTMLHeadingElement);
+    if ($header) { $body.removeChild($header) }
 
     $body.style.display = 'none';
   }
