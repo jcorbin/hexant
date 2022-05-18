@@ -12,6 +12,10 @@ html, body {
     line-height: 1.2;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
 #revision {
     color: #666;
     font-size: 0.8em;
@@ -67,31 +71,42 @@ html, body {
     width: 50%;
     left: 25%;
     bottom: 0;
+    max-height: 50%;
+    overflow: auto;
 
     background-color: #333;
     color: #eee;
     border: none;
 }
 
+.prompt * {
+    margin: 0.2em 0;
+}
+
 .prompt textarea {
-    padding: 0;
-    margin: 0;
+    padding: 0.2em 0.2em;
     width: 100%;
-    border: none;
+}
+
+button, input, textarea {
+    border: 1px solid #445;
     background-color: #334;
     color: #eee;
+}
+
+button:hover, input:hover, textarea:hover {
+    border-color: #668;
+}
+
+button:focus, input:focus, textarea:focus,
+button:active, input:active, textarea:active {
+    outline: none !important;
+    border-color: #686;
 }
 
 .prompt .help {
     word-wrap: pre;
     white-space: pre;
-    margin: 0.25em 0;
-    padding: 0.25em 0;
-}
-
-.prompt  {
-    max-height: 50%;
-    overflow: auto;
 }
 
 .prompt .error {
@@ -101,8 +116,6 @@ html, body {
     background-color: #433;
     border-top: 0.1em solid #433;
     border-bottom: 0.1em solid #433;
-    margin: 0.25em 0;
-    padding: 0.25em 0;
 }
 .prompt .error,
 .prompt .error * {
