@@ -11,6 +11,7 @@ import * as rezult from './rezult.js';
 import { Sample } from './sample.js';
 import {
   Turmite,
+  ruleActions as turmiteRuleActions,
   ruleHelp as turmiteRuleHelp,
 } from './turmite/index.js';
 import { ViewGL } from './view_gl.js';
@@ -239,6 +240,32 @@ export default class Hexant {
           if (revalue) value = revalue;
           yield { error: err.message };
         }
+      }
+
+      for (const { name, then } of turmiteRuleActions(value)) {
+        for (const input of inputs) {
+          if ('command' in input) {
+            const { command } = input;
+            if (command === name) {
+              let ok = false;
+              try {
+                value = then(value);
+                ok = true;
+              } catch (e) {
+                yield { error: `${e}` }
+              }
+              if (ok) {
+                const { res: { err }, str: revalue } = hash.set(hashName, value);
+                if (revalue) value = revalue;
+                if (err) yield { error: err.message };
+              }
+            }
+          }
+        }
+      }
+
+      for (const { name, label } of turmiteRuleActions(value)) {
+        yield { command: name, label: label || name };
       }
 
       yield { title: 'Rule' };

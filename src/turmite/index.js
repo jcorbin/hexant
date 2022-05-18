@@ -5,11 +5,11 @@ import * as rezult from '../rezult.js';
 
 import * as constants from './constants.js';
 
-import { isAnt } from './parse.js';
+import { isAnt, convertAnt } from './parse.js';
 
-/** @param {string} value */
-export function* ruleHelp(value) {
-  if (isAnt(value)) {
+/** @param {string} spec */
+export function* ruleHelp(spec) {
+  if (isAnt(spec)) {
     yield 'ant(<number>?<turn> ...) , turns:';
     yield '  - L=left, R=right';
     yield '  - B=back, F=forward';
@@ -18,6 +18,20 @@ export function* ruleHelp(value) {
     yield 'Here Be Dragons'; // TODO provide online turmite help
     yield '';
     yield 'See README for full turmite language details.';
+  }
+}
+
+/**
+ * @param {string} spec
+ * @returns {Generator<{name: string, label?: string, then: (spec: string) => string}>}
+ */
+export function* ruleActions(spec) {
+  if (isAnt(spec)) {
+    yield {
+      name: 'liftToTurmite',
+      label: 'Convert To Turmite',
+      then: spec => convertAnt(spec),
+    };
   }
 }
 
