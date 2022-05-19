@@ -107,5 +107,7 @@ export default async function ed(content, fn) {
 
   await fn(ed);
 
-  return lines.join('\n');
+  return lines
+    .map(line => `${line}${line.endsWith('\n') ? '' : '\n'}`)
+    .join('');
 }
