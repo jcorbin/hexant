@@ -17,7 +17,7 @@ when -> expr "," expr  {% ([state, _1, color]) => ({type: 'when', state, color})
 
 then -> thenState "," thenColor "," thenTurn  {% ([state, _1, color, _3, turn]) => ({type: 'then', state, color, turn}) %}
 
-thenMode -> null  {% () => '|' %}
+thenMode -> null  {% () => '=' %}
           | "="   {% () => '=' %}
           | "|"   {% () => '|' %}
 

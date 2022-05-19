@@ -82,13 +82,13 @@ export function* toSpecString(root) {
       case 'thenVal':
         switch (node.mode) {
           case '|':
-            descend();
-            break;
-
-          case '=':
             stack.push(node.mode);
             descend();
             join('');
+            break;
+
+          case '=':
+            descend();
             break;
 
           default:

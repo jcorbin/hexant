@@ -1,4 +1,4 @@
-// @generated from id:b3c6720c30a87896180f85b3c5e1814144b83836c6eccaa9f138757e3e11ed78
+// @generated from id:2fc9e8dd95d5cf2bab601e9a3768e06153e958752201d521e004a9a31332f0f3
 
 // Generated automatically by nearley, version 2.20.1
 // http://github.com/Hardmath123/nearley
@@ -18,7 +18,7 @@ let ParserRules = [
     {"name": "rule", "symbols": ["when", "rule$string$1", "then"], "postprocess": ([when, _1, then]) => ({type: 'rule', when, then})},
     {"name": "when", "symbols": ["expr", {"literal":","}, "expr"], "postprocess": ([state, _1, color]) => ({type: 'when', state, color})},
     {"name": "then", "symbols": ["thenState", {"literal":","}, "thenColor", {"literal":","}, "thenTurn"], "postprocess": ([state, _1, color, _3, turn]) => ({type: 'then', state, color, turn})},
-    {"name": "thenMode", "symbols": [], "postprocess": () => '|'},
+    {"name": "thenMode", "symbols": [], "postprocess": () => '='},
     {"name": "thenMode", "symbols": [{"literal":"="}], "postprocess": () => '='},
     {"name": "thenMode", "symbols": [{"literal":"|"}], "postprocess": () => '|'},
     {"name": "thenState", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": ([_0, mode, value]) => ({type: 'thenVal', mode, value})},
