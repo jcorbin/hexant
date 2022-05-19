@@ -9,17 +9,27 @@ import { isAnt, convertAnt } from './parse.js';
 
 /** @param {string} spec */
 export function* ruleHelp(spec) {
-  if (isAnt(spec)) {
+  if (isAnt(spec)) yield* help.ant();
+  else yield* help.turmite();
+}
+
+/** @type {{[topic: string]: () => Iterable<string>}} */
+const help = {
+
+  *ant() {
     yield 'ant(<number>?<turn> ...) , turns:';
     yield '  - L=left, R=right';
     yield '  - B=back, F=forward';
     yield '  - P=port, S=starboard (these are rear-facing left/right)';
-  } else {
+  },
+
+  *turmite() {
     yield 'Here Be Dragons'; // TODO provide online turmite help
     yield '';
     yield 'See README for full turmite language details.';
-  }
-}
+  },
+
+};
 
 /**
  * @param {string} spec
