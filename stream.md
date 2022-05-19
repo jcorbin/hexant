@@ -104,11 +104,12 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-18
+# 2022-05-19
 
 ## WIP
 
-Prompt help system and command help.
+- color halver test leading up to a collatz turmite test
+- prompt help system and command help
 
 ### Play testing turmite rules
 
@@ -145,6 +146,18 @@ OOPS that doesn't work, let's fix that
   - a rule that doesn't care to express any result color or turn, merely a state update 
 
 ## Done
+
+- broke up turmite help routines ahead of making them more elaborate /
+  interactive
+- fixed `scripts/ed.js`, wasn't including a final newline before, which led to
+  eventual churn once re-added by $editor
+- switched rule then mode to `=` by default, which is less surprising than `|=`
+- refactored test harness ahead of adding more involved turmite examples
+- improved turmite rule compilation while trying to add a new "color halver"
+  test, many small bug fixes, and the generated code is now much more readable
+  / natural, including more spec-string fragment comments
+
+# 2022-05-18
 
 - further work on prompt ux
   - made prompt semantics be a clean start each round, no carry over state
