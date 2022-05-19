@@ -128,7 +128,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
     '_colorKey',
 
     // inner _rules update tmp
-    `_prior`,
+    '_priorMask',
   ]);
 
   return compileContent(spec);
@@ -205,24 +205,28 @@ export function compileCode(spec, { format = 'value' } = {}) {
     }, compileRuleBuilder());
   }
 
-  /** @param {walk.Node} node */
-  function* compileSpecComment(node) {
-    yield* comment(toSpecString(node));
+  /**
+   * @param {walk.Node} node
+   * @param {amendments} [params]
+   */
+  function* compileSpecComment(node, params) {
+    let spec = toSpecString(node);
+    if (params) spec = amend(params, spec);
+    yield* comment(spec);
   }
 
   function* compileRuleBuilder() {
+    yield 'const _states = new Set();';
+    yield '';
+
     for (const assign of spec.assigns) {
-      yield* compileSpecComment(assign);
+      yield* compileSpecComment(assign, { head: 'assign: ' });
       yield* compileAssign(assign);
       yield '';
     }
 
-    yield 'const _states = new Set();';
-    yield '';
-
     for (const rule of spec.rules) {
-      yield* compileSpecComment(rule);
-      // TODO maybe contain each rule in its own scope? iife?
+      yield* compileSpecComment(rule, { head: 'rule: ' });
       yield* wrap({
         head: `{`,
         cont: '  ',
@@ -247,106 +251,168 @@ export function compileCode(spec, { format = 'value' } = {}) {
     { state: whenState, color: whenColor },
     { state: thenState, color: thenColor, turn: thenTurn },
   ) {
-    yield* compileWhenMatch(whenState, '_state', 'World.MaxState', function*() {
-      yield `_states.add(_state);`;
-      yield `const _stateKey = _state << World.ColorShift;`;
+
+    /** @typedef {object} ThenDecl
+     * @prop {string} name
+     * @prop {string} mask
+     * @prop {string} max
+     * @prop {string} [shift]
+     */
+
+    const thens = /** @type {({then: walk.ThenValNode} & ThenDecl)[]} */ ([
+      {
+        name: 'state',
+        then: thenState,
+        mask: 'World.MaskResultState',
+        max: 'World.MaxState',
+        shift: 'World.ColorShift',
+      },
+      {
+        name: 'color',
+        then: thenColor,
+        mask: 'World.MaskResultColor',
+        max: 'World.MaxColor',
+        shift: 'World.TurnShift',
+      },
+      {
+        name: 'turn',
+        then: thenTurn,
+        mask: 'World.MaskResultTurn',
+        max: 'World.MaxTurn',
+      },
+    ]).map(({ then, ...decl }) => {
+      const { value } = then;
+      const expr = compileValue(value, opPrec.length);
+      return { then, expr, ...decl };
+    });
+
+    /** @typedef {object} WhenDecl
+     * @prop {string} name
+     * @prop {string} cap
+     * @prop {string} sym
+     * @prop {string} max
+     * @prop {string} [shift]
+     * @prop {(cap: string) => string} [init]
+     */
+
+    const whens = /** @type {({when: walk.AnyExpr} & WhenDecl)[]} */ ([
+      {
+        when: whenState,
+        name: 'state',
+        cap: '_state',
+        sym: '_stateKey',
+        shift: 'World.ColorShift',
+        max: 'World.MaxState',
+        init: cap => `_states.add(${cap});`,
+      },
+      {
+        when: whenColor,
+        name: 'color',
+        cap: '_color',
+        sym: '_colorKey',
+        max: 'World.MaxColor',
+      },
+    ]);
+
+    if (thens.every(({ expr }) => expr === '0')) return;
+    const mask = thens
+      .map(({ then: { mode }, mask }) => mode === '=' ? mask : '')
+      .reduce((a, b) => `${a}${a ? ' | ' : ''}${b}`);
+    if (mask) {
+      yield `const _priorMask = ~(${mask});`;
       yield '';
+    }
 
-      yield* compileWhenMatch(whenColor, '_color', 'World.MaxColor', function*() {
-        yield `const _colorKey = _stateKey|_color;`;
-        yield '';
+    yield* compileWhenMatch(0);
 
+    /**
+     * @param {number} i -- whens[i]
+     * @returns {Generator<string>}
+     */
+    function* compileWhenMatch(i, priorKey = '') {
+      if (i < whens.length) {
+        const
+          { name, when, cap, sym, shift, max, init } = whens[i],
+          body = function*() {
+            let keyExpr = cap;
+            if (shift) {
+              if (priorKey) keyExpr = `(${priorKey} | ${keyExpr})`;
+              keyExpr = `${keyExpr} << ${shift}`;
+            } else if (priorKey) keyExpr = `${priorKey} | ${keyExpr}`;
+            yield `const ${sym} = ${keyExpr};`;
+            if (init) yield init(cap);
+            yield '';
+            yield* compileWhenMatch(i + 1, sym);
+          };
+
+        yield* compileSpecComment(when, { head: `when ${name} matches: ` });
+
+        switch (when.type) {
+          case 'symbol':
+          case 'expr':
+            const syms = [...freeSymbols(when, symbols)];
+            if (syms.length > 1) {
+              throw new Error('matching more than one variable is unsupported');
+            }
+
+            const free = syms[0];
+            if (!free) {
+              throw new Error('no match variable');
+            }
+
+            const matchExpr = solve(free, cap, when);
+
+            yield* wrap({
+              head: `for (let ${cap} = 0; ${cap} <= ${max}; ${cap}++) {`,
+              foot: '}',
+              cont: '  ',
+            }, chain(
+              matchExpr === cap
+                ? `const ${free} = ${matchExpr};`
+                : [
+                  `const ${free} = (${max} + ${matchExpr}) % ${max};`,
+                  // TODO: gratuitous guard, only needed if division is involved
+                  `if (Math.floor(${free}) !== ${free}) continue;`,
+                ],
+              body(),
+            ));
+            break;
+
+          case 'number':
+            yield `const ${cap} = ${when.value};`;
+            yield* body();
+            break;
+
+          default:
+            throw new Error(`unsupported match type ${when.type}`);
+        }
+      }
+
+      else {
         let anyResult = false;
-        for (const { value, max, shift } of ([
-          { value: thenState.value, max: 'World.MaxState', shift: 'World.ColorShift' },
-          { value: thenColor.value, max: 'World.MaxColor', shift: 'World.TurnShift' },
-          { value: thenTurn.value, max: 'World.MaxTurn', shift: '' },
-        ])) {
-          let valStr = compileValue(value, opPrec.length);
-          if (valStr !== '0') {
+        for (const { name, then: { value, mode }, expr, max, shift } of thens) {
+          yield* compileSpecComment(value, { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` });
+          if (expr !== '0') {
+            // TODO &max is only valid if max is some 2^N-1, otherwise should use Math.min(max, ...)
+            const valRes = `${expr} & ${max}`;
+            const resVal = anyResult ? `_result | ${valRes}` : valRes;
+            const newVal = shift ? `(${resVal}) << ${shift}` : resVal;
             if (!anyResult) {
               anyResult = true;
-              yield `let _result = ${valStr} & ${max};`;
+              yield `let _result = ${newVal};`;
             } else {
-              yield `_result |= ${valStr} & ${max};`;
+              yield `_result = ${newVal};`;
             }
-          }
-          if (anyResult && shift) {
+          } else if (anyResult && shift) {
             yield `_result <<= ${shift};`;
-            yield ``;
-          }
+          } else continue;
         }
-
-        const maskParts = [];
-        if (thenState.mode === '=') {
-          maskParts.push('World.MaskResultState');
-        }
-        if (thenColor.mode === '=') {
-          maskParts.push('World.MaskResultColor');
-        }
-        maskParts.push('World.MaskResultTurn');
-
-        yield `const _prior = _rules[_colorKey];`;
         if (anyResult) {
-          yield `_rules[_colorKey] = _prior & ~(${maskParts.join(' | ')}) | _result;`;
-        } else {
-          yield `_rules[_colorKey] = _prior & ~(${maskParts.join(' | ')});`;
+          yield `_rules[${priorKey}] = _rules[${priorKey}]${mask ? ' & _priorMask' : ''} | _result;`;
         }
-
-      });
-    }
-    )
-  }
-
-  /**
-   * @param {walk.Node} node
-   * @param {string} sym
-   * @param {string} max
-   * @param {() => Iterable<string>} body
-   */
-  function* compileWhenMatch(node, sym, max, body) {
-    switch (node.type) {
-      case 'symbol':
-      case 'expr':
-        const syms = [...freeSymbols(node, symbols)];
-        if (syms.length > 1) {
-          throw new Error('matching more than one variable is unsupported');
-        }
-
-        const cap = syms[0];
-        if (!cap) {
-          throw new Error('no match variable');
-        }
-
-        const matchExpr = solve(cap, sym, node);
-
-        yield `for (let ${sym} = 0; ${sym} <= ${max}; ${sym}++) {`;
-        yield* indent(matchExpr === sym
-          ? chain(
-            `let ${cap} = ${matchExpr};`,
-            body(),
-          )
-          : chain(
-            `let ${cap} = ${max} + ${matchExpr} % ${max};`,
-            // TODO: gratuitous guard, only needed if division is involved
-            `if (Math.floor(${cap}) === ${cap}) {`,
-            indent(body()),
-            '}',
-          )
-        );
-        yield '}';
-        break;
-
-      case 'number':
-        yield `let ${sym} = ${node.value};`;
-        yield* body();
-        break;
-
-      default:
-        throw new Error(`unsupported match type ${node.type}`);
+      }
     }
   }
-
 }
 
 /**
@@ -524,11 +590,6 @@ function* multiLineQuoted(lines) {
 }
 
 /** @param {Iterable<string>} lines */
-function* indent(lines, indent = '  ') {
-  yield* prefix(indent, lines);
-}
-
-/** @param {Iterable<string>} lines */
 function* comment(lines, mark = '// ') {
   yield* prefix(mark, lines);
 }
@@ -551,12 +612,15 @@ export function* endLines(lines, nl = '\n') {
   }
 }
 
+/** @typedef {object} amendments
+ * @prop {string} [head] - prefix for the first line
+ * @prop {string} [foot] - suffix for the last line
+ * @prop {string} [cont] - prefix for all lines after the first
+ * @prop {string} [zero] - filler value when lines is empty
+ */
+
 /**
- * @param {object} params
- * @param {string} [params.head] - prefix for the first line
- * @param {string} [params.foot] - suffix for the last line
- * @param {string} [params.cont] - prefix for all lines after the first
- * @param {string} [params.zero] - filler value when lines is empty
+ * @param {amendments} params
  * @param {Iterable<string>} lines
  */
 function* wrap({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
@@ -577,11 +641,7 @@ function* wrap({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
 }
 
 /**
- * @param {object} params
- * @param {string} [params.head] - prefix for the first line
- * @param {string} [params.foot] - suffix for the last line
- * @param {string} [params.cont] - prefix for all lines after the first
- * @param {string} [params.zero] - filler value when lines is empty
+ * @param {amendments} params
  * @param {Iterable<string>} lines
  */
 function* amend({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
