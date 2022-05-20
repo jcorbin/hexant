@@ -34,11 +34,18 @@
  * @returns {Promise<string>}
  */
 export default async function ed(content, fn) {
-  const lines = content.split(/\n/);
+  const ed = makeEditor();
+  ed.lines = content.split(/\n/);
+  await fn(ed);
+  return ed.lines
+    .map(line => `${line}${line.endsWith('\n') ? '' : '\n'}`)
+    .join('');
+}
 
+function makeEditor() {
   /** @type {LineEditor} */
   const ed = {
-    lines,
+    lines: [],
 
     eachLine(cmd) {
       return async (start, end) => {
@@ -53,8 +60,8 @@ export default async function ed(content, fn) {
         const pat = where;
         where = line => pat.test(line);
       }
-      for (; i < lines.length; i++) {
-        if (where(lines[i])) {
+      for (; i < ed.lines.length; i++) {
+        if (where(ed.lines[i])) {
           return i;
         }
       }
@@ -63,7 +70,7 @@ export default async function ed(content, fn) {
 
     s(search, replace) {
       return ed.eachLine(async i => {
-        lines[i] = lines[i].replace(search, replace);
+        ed.lines[i] = ed.lines[i].replace(search, replace);
       });
     },
 
@@ -95,7 +102,7 @@ export default async function ed(content, fn) {
     x(pat, then) {
       return async (start, end) => {
         for (let i = start; i <= end; i++) {
-          const match = pat.exec(lines[i]);
+          const match = pat.exec(ed.lines[i]);
           if (match) {
             await then(match, i, start, end);
             break;
@@ -105,9 +112,5 @@ export default async function ed(content, fn) {
     },
   };
 
-  await fn(ed);
-
-  return lines
-    .map(line => `${line}${line.endsWith('\n') ? '' : '\n'}`)
-    .join('');
+  return ed;
 }
