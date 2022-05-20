@@ -57,6 +57,11 @@ for (const { name, input, equiv } of [
 
 /** @typedef {[keyState: number, keyColor: number, state: number, color: number, turn: number]} RuleTuple */
 
+/** @typedef {object} ExpectOpts
+ * @prop {boolean} verbose
+ * @prop {boolean|import('../src/turmite/lang/compile.js').CodeFormat} logCode
+ */
+
 /** @typedef {object} ExpectProps
  * @prop {number} numColors
  * @prop {number} numStates
@@ -83,7 +88,7 @@ function equivProps(ent) {
 /**
  * @param {import('ava').ExecutionContext<unknown>} t
  * @param {TestInput} input
- * @param {Partial<ExpectProps>} expected
+ * @param {Partial<ExpectProps & ExpectOpts>} expected
  */
 function canTurmite(t, input, expected) {
   const spec = Array.isArray(input) ? input.join('\n') : input;
@@ -99,24 +104,63 @@ function canTurmite(t, input, expected) {
 /**
  * @param {import('ava').ExecutionContext<unknown>} t
  * @param {Turmite} ent
- * @param {Partial<{input: TestInput} & ExpectProps>} expected
+ * @param {Partial<{input: TestInput} & ExpectProps & ExpectOpts>} expected
  */
-function isTurmite(t, ent, { input, numColors, numStates, rules }) {
+function isTurmite(t, ent, { input, numColors, numStates, rules, verbose, logCode }) {
+
   if (input !== undefined) t.is(
     ent.toString().trim(),
     (Array.isArray(input) ? input.join('\n') : input).trim(),
     'input vs specString (canonical)');
+  if (verbose || logCode) {
+    const spec = ent.toString().trimEnd();
+    const lines = spec.split(/\n/);
+    if (lines.length < 2) {
+      t.log('spec', spec);
+    } else {
+      t.log('spec: ```turmite');
+      for (const line of lines) {
+        t.log(line);
+      }
+      t.log('```');
+    }
+  }
+
+  if (logCode) {
+    const format = typeof logCode === 'string' ? logCode : 'module';
+    t.log(`recompiled: ${'```'}javascript ${format}`);
+    for (const line of compile(ent.toString(), { format })) {
+      t.log(line);
+    }
+    t.log('```');
+  }
+
   if (numColors !== undefined) t.is(ent.numColors, numColors, 'numColors');
+  if (verbose) t.log('numColors', ent.numColors);
+
   if (numStates !== undefined) t.is(ent.numStates, numStates, 'numStates');
+  if (verbose) t.log('numStates', ent.numStates);
+
   for (const [keyState, keyColor, state, color, turn] of rules) {
     const key = keyState << 8 | keyColor;
-    t.deepEqual(
-      hexrule(decodeRule(ent.rules[key])),
-      hexrule({ state, color, turn }),
-      `rules[${hexkey(key)}]`);
+    const actualRule = hexrule(decodeRule(ent.rules[key]));
+    const expectRule = hexrule({ state, color, turn });
+    const desc = `rules[${hexkey(key)}]`;
+    t.deepEqual(actualRule, expectRule, desc);
+    if (verbose) {
+      t.log(`${desc} ${presentRule(actualRule)}`);
+    }
+  }
+
+  /** @param {{state: number, color: number, turn: string}} r */
+  function presentRule({ state, color, turn }) {
+    return [
+      `state:${state.toString().padEnd(3)}`,
+      `color:${color.toString().padEnd(3)}`,
+      `turn:${turn}`
+    ].join(' ');
   }
 }
-
 
 /** @param {number} key */
 function hexkey(key) {
