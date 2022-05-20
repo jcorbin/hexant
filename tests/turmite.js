@@ -53,6 +53,74 @@ for (const { name, input, equiv } of [
   canTurmite(t, input, equivProps(value));
 });
 
+// test more complicated turmites
+for (const { name, input, expected } of [
+
+  {
+    name: 'color halver',
+    input: '0, 2 * c => 0, c, turns(L R)[2 * c]',
+    expected: {
+      numColors: 2,
+      numStates: 1,
+      rules: imap(genn(256), /** @returns {RuleTuple} */ color =>
+        color % 2 == 0
+          ? [0, color, 0, Math.floor(color / 2), Turn.RelLeft]
+          : [0, color, 0, 0, 0]
+        // [0, 0, 0, 0, Turn.RelLeft],
+        // [0, 1, 0, 0, 0],
+        // [0, 2, 0, 1, Turn.RelLeft],
+        // [0, 3, 0, 0, 0],
+        // [0, 4, 0, 2, Turn.RelLeft],
+        // [0, 5, 0, 0, 0],
+        // ...
+      ),
+    },
+  },
+
+  {
+    name: 'just 3n+1',
+    input: '0, c => 0, 3 * c + 1, turns(L R)[c]',
+    expected: {
+      numColors: 2,
+      numStates: 1,
+      rules: imap(genn(256), /** @returns {RuleTuple} */ color =>
+        [0, color, 0, (3 * color + 1) % 0x100, color % 2 == 0 ? Turn.RelLeft : Turn.RelRight],
+        // [0, 0, 0, 1, Turn.RelLeft],
+        // [0, 1, 0, 4, Turn.RelRight],
+        // [0, 2, 0, 7, Turn.RelLeft],
+        // [0, 3, 0, 10, Turn.RelRight],
+        // ...
+      ),
+    },
+  },
+
+  {
+    name: 'collatz colors',
+    input: [
+      'Turns = turns(L R)',
+      '0, c => 0, 3 * c + 1, Turns[c]',
+      '0, 2 * c => 0, c, Turns[2 * c]',
+    ],
+    expected: {
+      numColors: 2,
+      numStates: 1,
+      rules: imap(genn(256), /** @returns {RuleTuple} */ color =>
+        color % 2 == 0
+          ? [0, color, 0, Math.floor(color / 2), Turn.RelLeft]
+          : [0, color, 0, (3 * color + 1) % 0x100, Turn.RelRight],
+        // [0, 0, 0, 0, Turn.RelLeft],
+        // [0, 1, 0, 4, Turn.RelRight],
+        // [0, 2, 0, 1, Turn.RelLeft],
+        // [0, 3, 0, 10, Turn.RelRight],
+        // [0, 4, 0, 2, Turn.RelLeft],
+        // [0, 5, 0, 16, Turn.RelRight],
+        // ...
+      ),
+    },
+  },
+
+]) test(name, t => canTurmite(t, input, expected));
+
 /** @typedef {string|string[]} TestInput */
 
 /** @typedef {[keyState: number, keyColor: number, state: number, color: number, turn: number]} RuleTuple */
