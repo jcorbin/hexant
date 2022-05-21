@@ -104,12 +104,11 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-20
+# 2022-05-21
 
 ## WIP
 
 - prompt help system and command help
-- @numColors directive
 
 ### Play testing turmite rules
 
@@ -146,6 +145,10 @@ OOPS that doesn't work, let's fix that
   - a rule that doesn't care to express any result color or turn, merely a state update 
 
 ## Done
+
+- finished out `@numColors` directive
+
+# 2022-05-20
 
 - finished out color halver test case and its collatz progeny
   - added verbose value and code logging options to `isTurmite()` test utility
