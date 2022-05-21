@@ -32,12 +32,15 @@ export default function(str) {
   // TODO unified recursive descent parser
   const lines = str
     .split(/\n/)
-    .map(/** @returns {{line: string} | {comment: string}} */ line => {
+    .map(/** @returns {{line: string} | {comment: string} | {prop: string, value: string}} */ line => {
       /** @type {RegExpExecArray|null} */
       let match;
 
       if (match = /^\s*--(.*)$/.exec(line))
         return { comment: match[1].trim() };
+
+      if (match = /^\s*@(\w+)\s+(.+?)\s*$/.exec(line))
+        return { prop: match[1], value: match[2] };
 
       return { line };
     });
@@ -45,15 +48,63 @@ export default function(str) {
     .map(ln => 'line' in ln ? `${ln.line}\n` : '')
     .join('');
 
-  for (const parser of [
-    parseAnt,
-    parseTurmite,
-  ]) {
-    const res = parser(str);
-    if (res.err) { return res }
-    if (res.value) { return rezult.just(res.value) }
-  }
-  return rezult.error(new Error('invalid spec string'));
+  /** @param {string} propName */
+  const hasProp = propName => lines
+    .map(ln => 'prop' in ln && ln.prop === propName)
+    .reduce((prior, has) => has || prior, false);
+
+  /** @param {string} propName */
+  const getProp = propName => lines
+    .map(ln => 'prop' in ln && ln.prop === propName ? ln.value : '')
+    .reduce((prior, value) => value || prior, '');
+
+  /**
+   * @param {string} propName
+   * @param {rezult.Result<Builder>} res
+   * @param {(builder: Builder, str: string) => rezult.Result<Builder>} fn
+   * @returns {rezult.Result<Builder>}
+   */
+  const withProp = (propName, res, fn) => hasProp(propName)
+    ? rezult.bind(res, builder => fn(builder, getProp(propName)))
+    : res;
+
+  /**
+   * @param {string} propName
+   * @param {rezult.Result<Builder>} res
+   * @param {(builder: Builder, num: number) => rezult.Result<Builder>} fn
+   * @returns {rezult.Result<Builder>}
+   */
+  const withNumericProp = (propName, res, fn) =>
+    withProp(propName, res, (builder, str) => {
+      const num = parseInt(str);
+      return isNaN(num)
+        ? rezult.error(new Error(`invalid @${propName} value ${JSON.stringify(str)}`))
+        : fn(builder, num);
+    });
+
+  let res = (/** @returns {rezult.Result<Builder>} */() => {
+    for (const parser of [
+      parseAnt,
+      parseTurmite,
+    ]) {
+      const res = parser(str);
+      if (res.err) { return res }
+      if (res.value) { return rezult.just(res.value) }
+    }
+    return rezult.error(new Error('invalid spec string'));
+  })();
+
+  res = withNumericProp('numColors', res,
+    (builder, num) => rezult.just(
+      (rules, spec) => rezult.bind(
+        builder(rules, spec),
+        ({ numColors, specString, ...built }) => {
+          numColors = Math.min(256, Math.max(numColors, num));
+          specString = `@numColors ${numColors}\n${specString}`;
+          return rezult.just({ numColors, specString, ...built });
+        })));
+
+  return res;
 }
 
 /** @param {string} str */
