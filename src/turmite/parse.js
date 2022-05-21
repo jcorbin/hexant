@@ -30,6 +30,21 @@ import parseLang from './lang/parse.js';
  */
 export default function(str) {
   // TODO unified recursive descent parser
+  const lines = str
+    .split(/\n/)
+    .map(/** @returns {{line: string} | {comment: string}} */ line => {
+      /** @type {RegExpExecArray|null} */
+      let match;
+
+      if (match = /^\s*--(.*)$/.exec(line))
+        return { comment: match[1].trim() };
+
+      return { line };
+    });
+  str = lines
+    .map(ln => 'line' in ln ? `${ln.line}\n` : '')
+    .join('');
+
   for (const parser of [
     parseAnt,
     parseTurmite,
