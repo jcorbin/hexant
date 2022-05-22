@@ -104,11 +104,14 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-21
+# 2022-05-22
 
 ## WIP
 
-- prompt help system and command help
+- subsume `ant( ... )` into the turmite grammar
+  - then subsume comments and @directives
+  - then support `@state <number> ant( ... )`
+  - maybe `@state <number> c => c-expr, <turn>`
 
 ### Play testing turmite rules
 
@@ -142,9 +145,30 @@ s, c => s+1, c+1, (s < 128 ? turns(R L) : turns(L R))[c]
 OOPS that doesn't work, let's fix that
 
 - TODO make then clauses partial-able, that the above can work:
-  - a rule that doesn't care to express any result color or turn, merely a state update 
+  - a rule that doesn't care to express any result color or turn, merely a state update
 
 ## Done
+
+- added explicitly null then rules
+- let prompt `{help}` be an iterable string body, naturalizing functions like
+  `turmiteRuleHelp`
+- ditched all WIP work towards a general interactive `/command` and help system
+  in prompt, will experiment towards that again someday, currently planned for
+  the `v1.3` language phase
+- `turmite/lang`
+  - now compiles directly to a `Builder` function
+  - erased the `_result` temporary, inlining then-comments withing one
+    multi-line bitwise or-shift construct
+- improved turmite test tool
+  - added command to run a compiled module
+  - fixed rules dump, and elide runs of 0-result rules
+- fixed mixed up `World` mask constants... wasn't detected before because of
+  the update loop hardcodes...
+- fixed `Turmite.TestSpec` mask and shift constants
+- fixed symbolic solver to actually work for non-trivial matches like `16 * c - 1`
+- added a bi-modal ant text example
+
+# 2022-05-21
 
 - finished out `@numColors` directive
 
