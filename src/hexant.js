@@ -270,7 +270,7 @@ export default class Hexant {
 
       yield { title: 'Rule' };
       yield { value };
-      yield { help: [...turmiteRuleHelp(value)].join('\n') };
+      yield { help: turmiteRuleHelp(value) };
 
       return undefined;
     });

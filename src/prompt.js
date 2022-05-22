@@ -18,7 +18,7 @@ import { mayQuery } from './domkit.js';
 /** @typedef {(
  * | {title: string}
  * | {value: string}
- * | {help: string}
+ * | {help: string|Iterable<string>}
  * | {error: string}
  * | {command: string, label?: string}
  * )} Output */
@@ -254,14 +254,7 @@ export async function prompt($body, tor) {
             const { help } = output;
             if (help) {
               const $help = makeHelp();
-              const { innerText: prior } = $help;
-              let parts = [help];
-              if (prior) parts = [prior, ...parts];
-              let text = '';
-              for (const part of parts) {
-                text += terminate(part);
-              }
-              $help.innerText = text;
+              $help.innerText += typeof help == 'string' ? terminate(help) : coalesce(help);
               $help.style.display = '';
             }
           }
@@ -317,6 +310,15 @@ export async function prompt($body, tor) {
     $body.removeEventListener('click', handleEvent);
     $body.style.display = 'none';
   }
+}
+
+/** @param {Iterable<string>} strs */
+function coalesce(strs, sep = '\n') {
+  let out = '';
+  for (const str of strs) {
+    out += terminate(str, sep);
+  }
+  return out;
 }
 
 /** @param {string} str */
