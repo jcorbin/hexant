@@ -19,25 +19,20 @@ import {
 
 /** @callback TestAction
  * @param {TestCtx} ctx
- * @returns {AsyncIterableIterator<string>}
+ * @returns {AsyncIterableIterator<string|{log: any[]}>}
  */
 
 /** @type {Map<string, TestAction>} */
 const testActions = new Map();
 
 /** @type {TestAction} */
-async function* runTestAction({ args: [action, ...args], ...rest }) {
+function runTestAction({ args: [action, ...args], ...rest }) {
   const testAction = testActions.get(action);
-  if (!testAction) {
-    throw new Error(
-      `invalid test action: ${action}; ` +
-      `possible actions: ${[...testActions.keys()].sort().join(' ')} `
-    );
-  }
-  for await (const line of testAction({ args, ...rest })) {
-    const withNL = `${line}${line.endsWith('\n') ? '' : '\n'} `;
-    yield withNL;
-  }
+  if (!testAction) throw message(
+    `Invalid test action: ${action}`,
+    `Possible actions: ${[...testActions.keys()].sort().join(' ')}`,
+  );
+  return testAction({ args, ...rest });
 }
 
 testActions.set('diffRules', async function*({ args: [str1, str2] }) {
@@ -50,6 +45,20 @@ testActions.set('diffRules', async function*({ args: [str1, str2] }) {
     Buffer.from(rules1.buffer).toString('hex').split(/\n/),
     Buffer.from(rules2.buffer).toString('hex').split(/\n/),
   ]);
+});
+
+testActions.set('run', async function*({ args }) {
+  if (!args.length) throw message('must provide a copmiled module path to run');
+  const [path] = args;
+  const module = await import(path);
+
+  const { default: build } = module;
+  if (typeof build !== 'function') {
+    yield { log: ['Loaded', path, module] };
+    throw message('module lacks a default export build()');
+  }
+
+  yield* dump(await rezult.toPromise(Turmite.from(build)));
 });
 
 testActions.set('dump', async function*({ stdin }) {
@@ -100,7 +109,7 @@ function* dump(ent) {
   const statePart = 'S'.repeat(StateByteWidth * 2);
   const colorPart = 'C'.repeat(ColorByteWidth * 2);
   const turnPart = 'T'.repeat(TurnByteWidth * 2);
-  yield `[ ${statePart} ${colorPart} ] => ${turnPart} ${colorPart} ${statePart} -- S:state C:color T:turn`;
+  yield `[ ${statePart} ${colorPart} ] => ${turnPart} ${statePart} ${colorPart} -- S:state C:color T:turn`;
   for (let i = 0; i < ent.rules.length; i++) {
     const result = ent.rules[i];
     const kc = i & KeyColorMask >> KeyColorShift;
@@ -108,7 +117,7 @@ function* dump(ent) {
     const rt = (result & MaskResultTurn) >> ResultTurnShift;
     const rc = (result & MaskResultColor) >> ResultColorShift;
     const rs = (result & MaskResultState) >> ResultStateShift;
-    yield `[ ${hexit(kc, ColorByteWidth)} ${hexit(ks, StateByteWidth)} ] => ${hexit(rt, TurnByteWidth)} ${hexit(rc, ColorByteWidth)} ${hexit(rs, StateByteWidth)}`;
+    yield `[ ${hexit(ks, StateByteWidth)} ${hexit(kc, ColorByteWidth)} ] => ${hexit(rt, TurnByteWidth)} ${hexit(rc, ColorByteWidth)} ${hexit(rs, StateByteWidth)}`;
   }
 
   /**
@@ -201,13 +210,48 @@ function bufferStream(stream, encoding = 'utf-8') {
     .on('end', () => resolve(Buffer.concat(chunks).toString(encoding))));
 }
 
+/** @param {string[]} parts */
+function message(...parts) {
+  return { message: parts };
+}
+
+/** @param {string} str */
+function terminate(str, end = '\n') {
+  return str.endsWith(end) ? str : `${str}${end}`;
+}
+
+/**
+ * @param {never} impossible
+ * @param {string} mess
+ */
+function assertNever(impossible, mess) {
+  throw new Error(`${mess}: ${JSON.stringify(impossible)}`);
+}
+
 /// main
 
 import { promisify } from 'util';
 
 const writeOut = promisify(process.stdout.write.bind(process.stdout));
 
-for await (const line of runTestAction({
-  stdin: process.stdin,
-  args: process.argv.slice(2),
-})) await writeOut(line);
+try {
+  for await (const out of runTestAction({
+    stdin: process.stdin,
+    args: process.argv.slice(2),
+  })) {
+    if (typeof out == 'string') {
+      await writeOut(terminate(out));
+    } else if ('log' in out) {
+      console.log(...out.log);
+    } else assertNever(out, 'invalid out data');
+  }
+} catch (/** @type {any} */ o) {
+  if (typeof o == 'object' && 'message' in o) {
+    const { message: mess } = o;
+    if (Array.isArray(mess)) {
+      for (const part of mess) {
+        console.log(part);
+      }
+    } else console.log(mess);
+  } else throw o;
+}
