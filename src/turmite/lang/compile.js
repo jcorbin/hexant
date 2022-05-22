@@ -48,15 +48,9 @@ const opPrec = ['+', '-', '*', '/', '%'];
  * NOTE: state values live in the lowest bits and are therefore unshifted
  */
 
-/** @typedef {object} Spec
- * @prop {string} specString - a canonicalized version of the string that was parsed
- * @prop {number} numColors - how many colors are needed by this turmite spec
- * @prop {(World: RuleConstants, _rules: Rules) => {states: Set<number>}} build
- */
-
 /**
  * @param {walk.SpecNode} spec
- * @returns {rezult.Result<Spec>}
+ * @returns {rezult.Result<function>}
  */
 export default function compile(spec) {
   const lines = compileCode(spec);
@@ -77,29 +71,12 @@ export default function compile(spec) {
     // TODO replace this runtime type validation with a test-time typecheck of
     // some example code
 
-    if (typeof value != 'object') {
+    if (typeof value != 'function') {
       return rezult.error(new Error(
-        `invalid spec result, expected an object, got ${typeof value}`))
+        `invalid builder function, got a ${typeof value} instead of a function`))
     }
 
-    for (const [field, type] of [
-      ['specString', 'string'],
-      ['numColors', 'number'],
-      ['build', 'function'],
-    ]) {
-      if (!(field in value)) {
-        return rezult.error(new Error(
-          `invalid spec result, missing ${field} field`))
-      }
-
-      const vt = typeof value[field];
-      if (vt != type) {
-        return rezult.error(new Error(
-          `invalid spec result, invalid ${field} field, expected ${type}, got ${vt}`))
-      }
-    }
-
-    return rezult.just(/** @type {Spec} */(value));
+    return rezult.just(/** @type {function} */(value));
   });
 }
 
@@ -114,6 +91,10 @@ export function compileCode(spec, { format = 'value' } = {}) {
   const symbols = new Set([
     // dependencies
     'World',
+
+    // definitions
+    'specString',
+    'numColors',
 
     // build(...) => {...}
     '_rules',
@@ -152,36 +133,34 @@ export function compileCode(spec, { format = 'value' } = {}) {
   /** @param {walk.SpecNode} spec */
   function* compileObject(spec) {
     yield* wrap({
-      head: `{`,
+      head: '(_rules, World) => {',
       cont: '  ',
-      foot: `}`,
-    }, compileModule(spec, {
-      propHead: name => `${name}: `,
-      propFoot: `,`,
-      methodHead: sig => `${sig} {`,
-      methodFoot: '},',
-    }));
+      zero: 'throw new Error("unimplemented")',
+      foot: '}',
+    }, chain(
+      compileDefinitions(spec),
+      compileRuleBuilder(spec),
+    ));
   }
 
-  /**
-   * @param {walk.SpecNode} spec
-   * @param {object} [options]
-   * @param {(name: string) => string} [options.propHead]
-   * @param {string} [options.propFoot]
-   * @param {(sig: string) => string} [options.methodHead]
-   * @param {string} [options.methodFoot]
-   */
-  function* compileModule(spec, {
-    propHead = name => `export const ${name} = `,
-    propFoot = ';',
-    methodHead = sig => `export function ${sig} {`,
-    methodFoot = '}',
-  } = {}) {
+  /** @param {walk.SpecNode} spec */
+  function* compileModule(spec) {
+    yield* compileDefinitions(spec);
+    yield* wrap({
+      head: 'export default function build(_rules, World) {',
+      cont: '  ',
+      zero: 'throw new Error("unimplemented")',
+      foot: '}',
+    }, compileRuleBuilder(spec));
+  }
+
+  /** @param {walk.SpecNode} spec */
+  function* compileDefinitions(spec) {
     yield* amend({
-      head: propHead('specString'),
+      head: 'const specString = ',
       cont: '  ',
       zero: `''`,
-      foot: propFoot,
+      foot: ';',
     }, multiLineQuoted(toSpecString(spec)));
     yield '';
 
@@ -194,15 +173,8 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
     const { maxTurns } = rezult.toValue(analyze(spec, symbols));
 
-    yield `${propHead('numColors')}${maxTurns}${propFoot}`;
+    yield `const numColors = ${maxTurns};`;
     yield '';
-
-    yield* wrap({
-      head: methodHead('build(World, _rules)'),
-      cont: '  ',
-      zero: 'throw new Error("unimplemented")',
-      foot: methodFoot,
-    }, compileRuleBuilder());
   }
 
   /**
@@ -215,7 +187,8 @@ export function compileCode(spec, { format = 'value' } = {}) {
     yield* comment(spec);
   }
 
-  function* compileRuleBuilder() {
+  /** @param {walk.SpecNode} spec */
+  function* compileRuleBuilder(spec) {
     yield 'const _states = new Set();';
     yield '';
 
@@ -235,7 +208,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
       yield '';
     }
 
-    yield 'return {states: _states};';
+    yield 'return {value: {specString, numColors, numStates: _states.size}};';
   }
 
   /** @param {walk.AssignNode} assign */

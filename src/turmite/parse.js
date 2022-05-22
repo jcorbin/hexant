@@ -6,7 +6,6 @@ import { from as rleFrom } from './rle-builder.js';
 import * as constants from './constants.js';
 
 import parseLang from './lang/parse.js';
-/** @typedef {import('./lang/compile.js').Spec} Spec */
 /** @typedef {import('./lang/compile.js').Rules} Rules */
 /** @typedef {import('./lang/compile.js').RuleConstants} RuleConstants */
 
@@ -21,8 +20,6 @@ import parseLang from './lang/parse.js';
  * @prop {number} numStates
  * @prop {string} specString
  */
-
-// TODO replace lang.Spec entirely with Builder once we merge
 
 /**
  * @param {string} str
@@ -214,21 +211,8 @@ function parseAnt(str) {
  * @returns {rezult.Result<Builder>}
  */
 function parseTurmite(str) {
-  const { value: spec, err } = parseLang(str);
-  if (err) {
-    return rezult.error(err);
-  }
-  return rezult.just((rules, ruleSpec) => {
-    const { numColors, specString, build } = spec;
-    // TODO push this back up the chain, and make lang.compile return a Builder
-    const { MaxColor } = ruleSpec;
-    if (numColors > MaxColor) {
-      return rezult.error(new Error('too many colors needed for turmite ruleset'));
-    }
-
-    // TODO more checks like above once we unify into lang.compile
-    const { states: { size: numStates } } = build(ruleSpec, rules);
-    return rezult.just({ numColors, numStates, specString });
+  return rezult.bind(parseLang(str), fn => {
+    return rezult.just(/** @type {Builder} */(fn));
   });
 }
 
