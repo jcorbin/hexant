@@ -436,6 +436,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
  * @param {string} sym
  * @param {walk.Expr<walk.NumberNode | walk.TurnsNode>} expr - TODO what even does it mean to solve a turns expression; tighten?
  * @param {number} [outerPrec]
+ * @returns {string}
  */
 function solve(cap, sym, expr, outerPrec = 0) {
   const invOp = {
@@ -445,71 +446,101 @@ function solve(cap, sym, expr, outerPrec = 0) {
     '/': '*'
   };
 
-  switch (expr.type) {
+  /** @type {string[]} */
+  const stack = [sym, ...genStack(expr)];
 
-    case 'expr':
-      const leftHasSym = usedSymbols(expr.arg1).has(cap);
-      const rightHasSym = usedSymbols(expr.arg2).has(cap);
-      if (!leftHasSym && !rightHasSym) {
-        return compileValue(expr, outerPrec);
-      }
+  /** @returns {string} */
+  const consume = (outerPrec = 0) => {
+    const arg = stack.pop();
+    if (!arg) return 'undefined';
 
-      if (leftHasSym && rightHasSym) {
-        // TODO: solve each side to intermediate values
-        throw new Error('matching complex expressions not supported');
-      }
+    const prec = opPrec.indexOf(arg);
+    if (prec >= 0) {
+      const b = consume(prec);
+      const a = consume(prec);
+      return prec < outerPrec
+        ? `(${a} ${arg} ${b})`
+        : `${a} ${arg} ${b}`;
+    }
 
-      const prec = opPrec.indexOf(expr.op);
-      let sol1 = solve(cap, sym, expr.arg1, prec);
-      let sol2 = solve(cap, sym, expr.arg2, prec);
-      let str = '';
+    return arg;
+  };
 
-      switch (expr.op) {
+  const res = consume(outerPrec);
+  if (stack.length) throw new Error('leftover solution stack');
+  return res;
 
-        case '+':
-        case '*':
-          // color = c [*+] 6 = 6 [*+] c
-          // c = color [/-] 6
-          if (rightHasSym) {
-            [sol1, sol2] = [sol2, sol1];
-          }
-          str += `${sol1} ${invOp[expr.op]} ${sol2}`;
-          break;
+  /**
+   * @param {walk.Expr<walk.NumberNode | walk.TurnsNode>} expr
+   * @returns {Generator<string>}
+   */
+  function* genStack(expr) {
+    switch (expr.type) {
 
-        case '-':
-        case '/':
-          if (leftHasSym) {
-            // color = c [-/] 6
-            // c = color [+*] 6
-            str += `${sol1} ${invOp[expr.op]} ${sol2}`;
-          } else if (rightHasSym) {
-            // color = 6 [-/] c
-            // c = 6 [-/] color
-            str += `${sol2} ${expr.op} ${sol1}`;
-          }
-          str += `${sol1} ${invOp[expr.op]} ${sol2}`;
-          break;
+      case 'expr':
+        const { op, arg1, arg2 } = expr;
 
-        case '%':
-          throw new Error(`unimplemented modulo operator solving`);
+        const leftHasSym = usedSymbols(arg1).has(cap);
+        const rightHasSym = usedSymbols(arg2).has(cap);
+        if (leftHasSym && rightHasSym) {
+          // TODO: solve each side to intermediate values
+          throw new Error('matching complex expressions not supported');
+        }
 
-        default:
-          assertNever(expr.op, 'invalid expression operator');
-      }
+        switch (op) {
 
-      if (prec < outerPrec) {
-        str = `(${str});`
-      }
-      return str;
+          case '+':
+          case '*':
+            // color = c [*+] 6 = 6 [*+] c
+            // c = color [/-] 6
+            if (leftHasSym) {
+              yield* genStack(arg2);
+              yield invOp[op];
+              yield* genStack(arg1);
+              return;
+            }
+            if (rightHasSym) {
+              yield* genStack(arg1);
+              yield invOp[op];
+              yield* genStack(arg2);
+              return;
+            }
+            break;
 
-    case 'symbol':
-      if (expr.name === cap) {
-        return sym;
-      }
-      return expr.name;
+          case '-':
+          case '/':
+            if (leftHasSym) {
+              // color = c [-/] 6
+              // c = color [+*] 6
+              yield* genStack(arg2);
+              yield invOp[op];
+              yield* genStack(arg1);
+              return;
+            }
+            if (rightHasSym) {
+              // color = 6 [-/] c
+              // c = 6 [-/] color
+              yield* genStack(arg1);
+              yield op;
+              yield* genStack(arg2);
+              return;
+            }
+            break;
 
-    default:
-      return compileValue(expr);
+          case '%':
+            throw new Error(`unimplemented modulo operator solving`);
+
+          default:
+            assertNever(op, 'invalid expression operator');
+        }
+        break;
+
+      case 'symbol':
+        if (expr.name !== cap) yield expr.name;
+        return;
+    }
+
+    yield compileValue(expr);
   }
 }
 
