@@ -74,15 +74,15 @@ export class Turmite {
     TurnByteWidth: 2,
 
     ResultByteWidth: 4,
-    ResultColorShift: 24,
-    ResultStateShift: 16,
+    ResultStateShift: 24,
+    ResultColorShift: 16,
     ResultTurnShift: 0,
 
     KeyByteWidth: 2,
-    KeyColorMask: 0x00ff,
     KeyStateMask: 0xff00,
+    KeyColorMask: 0x00ff,
     KeyColorShift: 0,
-    KeyStateShift: 1,
+    KeyStateShift: 8,
   };
 
   /**
