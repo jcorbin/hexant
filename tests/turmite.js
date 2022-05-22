@@ -145,6 +145,36 @@ for (const { name, input, expected } of [
     },
   },
 
+  {
+    name: 'bi-modal ant',
+    input: [
+      '@numColors 16',
+      '0, c => 0, c + 1, turns(L R)[c]',
+      '1, c => 1, c + 1, turns(R L)[c]',
+      '0, 16 * c - 1 => 1, _, _',
+      '1, 16 * c - 1 => 0, _, _',
+    ],
+    expected: {
+      numColors: 16,
+      numStates: 2,
+      rules: [
+
+        ...imap(genn(256), /** @returns {RuleTuple} */ color => [0, color,
+          (color + 1) % 0x10 == 0 ? 1 : 0,
+          (color + 1) % 0x100,
+          [Turn.RelLeft, Turn.RelRight][color % 2]
+        ]),
+
+        ...imap(genn(256), /** @returns {RuleTuple} */ color => [1, color,
+          (color + 1) % 0x10 == 0 ? 0 : 1,
+          (color + 1) % 0x100,
+          [Turn.RelRight, Turn.RelLeft][color % 2]
+        ]),
+
+      ],
+    },
+  },
+
 ]) test(name, t => canTurmite(t, input, expected));
 
 /** @typedef {string|string[]} TestInput */
