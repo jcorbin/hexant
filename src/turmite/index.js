@@ -59,8 +59,8 @@ export class Turmite {
     MaxState: 0xff,
     MaxTurn: 0xffff,
 
-    MaskResultColor: 0xff000000,
-    MaskResultState: 0x00ff0000,
+    MaskResultState: 0xff000000,
+    MaskResultColor: 0x00ff0000,
     MaskResultTurn: 0x0000ffff,
 
     ColorShift: 8,
@@ -146,15 +146,15 @@ export class Turmite {
     const { rules, index } = this;
     world.updateEnt(index, (dir, state, datum) => {
 
-      // TODO use constants rather than these hardcodes
-      const color = datum & 0x00ff;
-      const flags = datum & 0xff00;
-      const ruleIndex = state << 8 | color;
+      // TODO get XXX constants from a spec: RuleConstants arg
+      const color = datum & 0x00ff; // XXX World.MaskColor
+      const flags = datum & 0xff00; // XXX World.MaskFlags
+      const ruleIndex = state << 8 | color; // XXX World.ColorShift
       const rule = rules[ruleIndex];
-      const turn = rule & 0x0000ffff;
-      const write = (rule & 0x00ff0000) >> 16;
-      state = (rule & 0xff000000) >> 24;
-      datum = flags | write | 0x0100;
+      const turn = rule & 0x0000ffff; // XXX World.MaskResultTurn
+      const write = (rule & 0x00ff0000) >> 16; // XXX &World.MaskResultColor >>World.TurnShift
+      state = (rule & 0xff000000) >> 24; // XXX World.MaskResultState >>(World.TurnShift+World.ColorShift)
+      datum = flags | write | 0x0100; // XXX World.FlagVisited
 
       const newDirs = [...constants.turnDirs(turn, dir)];
       switch (newDirs.length) {

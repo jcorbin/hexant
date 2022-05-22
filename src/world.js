@@ -39,8 +39,8 @@ export class World {
   static MaxState = 0xff
   static MaxTurn = 0xffff
 
-  static MaskResultColor = 0xff000000
-  static MaskResultState = 0x00ff0000
+  static MaskResultState = 0xff000000
+  static MaskResultColor = 0x00ff0000
   static MaskResultTurn = 0x0000ffff
 
   static ColorShift = 8
