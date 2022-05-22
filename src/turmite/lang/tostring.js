@@ -91,8 +91,12 @@ export function* toSpecString(root) {
             descend();
             break;
 
+          case '_':
+            stack.push(node.mode);
+            break;
+
           default:
-            assertNever(node.mode, 'invalid thenVal mode');
+            assertNever(node, 'invalid thenVal mode');
         }
         break;
 

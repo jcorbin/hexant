@@ -281,10 +281,19 @@ export function compileCode(spec, { format = 'value' } = {}) {
         max: 'World.MaxTurn',
       },
     ]).map(({ then, ...decl }) => {
-      const { value } = then;
-      const expr = compileValue(value, opPrec.length);
+      /** @type {string|null} */
+      let expr = null;
+
+      const { mode } = then;
+      if (mode !== '_') {
+        const { value } = then;
+        expr = compileValue(value, opPrec.length);
+        if (expr === '0' && mode === '|') expr = null;
+      }
+
       return { then, expr, ...decl };
     });
+    if (thens.every(({ expr }) => expr === null)) return;
 
     /** @typedef {object} WhenDecl
      * @prop {string} name
@@ -314,10 +323,9 @@ export function compileCode(spec, { format = 'value' } = {}) {
       },
     ]);
 
-    if (thens.every(({ expr }) => expr === '0')) return;
     const mask = thens
       .map(({ then: { mode }, mask }) => mode === '=' ? mask : '')
-      .reduce((a, b) => `${a}${a ? ' | ' : ''}${b}`);
+      .reduce((mask, part) => `${mask}${mask ? ' | ' : ''}${part}`);
     if (mask) {
       yield `const _priorMask = ~(${mask});`;
       yield '';
@@ -390,9 +398,13 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
       else {
         let anyResult = false;
-        for (const { name, then: { value, mode }, expr, max, shift } of thens) {
-          yield* compileSpecComment(value, { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` });
-          if (expr !== '0') {
+        for (const { name, then, expr, max, shift } of thens) {
+          if (then.mode !== '_') {
+            const { value, mode } = then;
+            yield* compileSpecComment(value, { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` });
+          }
+
+          if (expr !== null) {
             // TODO &max is only valid if max is some 2^N-1, otherwise should use Math.min(max, ...)
             const valRes = `${expr} & ${max}`;
             const resVal = anyResult ? `_result | ${valRes}` : valRes;
@@ -405,7 +417,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
             }
           } else if (anyResult && shift) {
             yield `_result <<= ${shift};`;
-          } else continue;
+          }
         }
         if (anyResult) {
           yield `_rules[${priorKey}] = _rules[${priorKey}]${mask ? ' & _priorMask' : ''} | _result;`;

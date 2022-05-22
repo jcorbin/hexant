@@ -21,11 +21,16 @@ thenMode -> null  {% () => '=' %}
           | "="   {% () => '=' %}
           | "|"   {% () => '|' %}
 
-thenState -> _ thenMode sum _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
+thenNoop -> _ "_" _ {% () => ({type: 'thenVal', mode: '_'}) %}
 
-thenColor -> _ thenMode sum _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
+thenState -> thenNoop          {% d => d[0] %}
+           | _ thenMode sum _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
 
-thenTurn -> _ thenMode sum _       {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
+thenColor -> thenNoop          {% d => d[0] %}
+           | _ thenMode sum _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
+
+thenTurn -> thenNoop               {% d => d[0] %}
+          | _ thenMode sum _       {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
           | _ thenMode turnExpr _  {% ([_0, mode, value]) => ({type: 'thenVal', mode, value}) %}
 
 turnExpr -> turn                   {% ([name]) => ({type: 'turn', names: [name]}) %}

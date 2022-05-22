@@ -62,18 +62,16 @@
 
 /** @typedef {object} ThenNode
  * @prop {"then"} type
- * @prop {ThenValNode} state
- * @prop {ThenValNode} color
+ * @prop {ThenValNode} state TODO .value should not be be able to have turns
+ * @prop {ThenValNode} color TODO .value should not be be able to have turns
  * @prop {ThenValNode} turn
  */
 
-/** @typedef {object} ThenValNode
- * @prop {"thenVal"} type
- * @prop {ThenMode} mode
- * @prop {AnyExpr} value TODO should not be be able to have turns
+/** @typedef {(
+ * | {type: "thenVal", mode: ("|" | "="), value: AnyExpr}
+ * | {type: "thenVal", mode: "_"}
+ * )} ThenValNode
  */
-
-/** @typedef {"=" | "|"} ThenMode */
 
 /** @typedef {object} MemberNode
  * @prop {"member"} type
@@ -186,7 +184,7 @@ export function dfs(root, visit) {
         break;
 
       case 'thenVal':
-        each(node.value);
+        if (node.mode !== '_') each(node.value);
         break;
 
       case 'member':

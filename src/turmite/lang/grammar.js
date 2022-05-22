@@ -1,4 +1,4 @@
-// @generated from id:2fc9e8dd95d5cf2bab601e9a3768e06153e958752201d521e004a9a31332f0f3
+// @generated from id:505176dcff9f624a18df2f83aebbc609cc2feea6303e0f47f9402851abfa54dd
 
 // Generated automatically by nearley, version 2.20.1
 // http://github.com/Hardmath123/nearley
@@ -21,8 +21,12 @@ let ParserRules = [
     {"name": "thenMode", "symbols": [], "postprocess": () => '='},
     {"name": "thenMode", "symbols": [{"literal":"="}], "postprocess": () => '='},
     {"name": "thenMode", "symbols": [{"literal":"|"}], "postprocess": () => '|'},
+    {"name": "thenNoop", "symbols": ["_", {"literal":"_"}, "_"], "postprocess": () => ({type: 'thenVal', mode: '_'})},
+    {"name": "thenState", "symbols": ["thenNoop"], "postprocess": d => d[0]},
     {"name": "thenState", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": ([_0, mode, value]) => ({type: 'thenVal', mode, value})},
+    {"name": "thenColor", "symbols": ["thenNoop"], "postprocess": d => d[0]},
     {"name": "thenColor", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": ([_0, mode, value]) => ({type: 'thenVal', mode, value})},
+    {"name": "thenTurn", "symbols": ["thenNoop"], "postprocess": d => d[0]},
     {"name": "thenTurn", "symbols": ["_", "thenMode", "sum", "_"], "postprocess": ([_0, mode, value]) => ({type: 'thenVal', mode, value})},
     {"name": "thenTurn", "symbols": ["_", "thenMode", "turnExpr", "_"], "postprocess": ([_0, mode, value]) => ({type: 'thenVal', mode, value})},
     {"name": "turnExpr", "symbols": ["turn"], "postprocess": ([name]) => ({type: 'turn', names: [name]})},
