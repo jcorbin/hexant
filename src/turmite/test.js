@@ -78,11 +78,13 @@ testActions.set('compile', async function*({ stdin }) {
 
 /** @param {Turmite} ent */
 function* dump(ent) {
-  yield `numStates: ${ent.numStates}`;
-  yield `numColors: ${ent.numColors}`;
+  const { numStates, numColors, specString, rules } = ent;
+
+  yield `numStates: ${numStates}`;
+  yield `numColors: ${numColors}`;
 
   let first = true;
-  for (const line of ent.specString.split(/\n/)) {
+  for (const line of specString.split(/\n/)) {
     yield first
       ? `spec: ${line}`
       : `      ${line}`;
@@ -106,19 +108,39 @@ function* dump(ent) {
     KeyColorShift,
     KeyStateShift,
   } = Turmite.TestSpec;
+
   const statePart = 'S'.repeat(StateByteWidth * 2);
   const colorPart = 'C'.repeat(ColorByteWidth * 2);
   const turnPart = 'T'.repeat(TurnByteWidth * 2);
-  yield `[ ${statePart} ${colorPart} ] => ${turnPart} ${statePart} ${colorPart} -- S:state C:color T:turn`;
-  for (let i = 0; i < ent.rules.length; i++) {
-    const result = ent.rules[i];
-    const kc = i & KeyColorMask >> KeyColorShift;
-    const ks = i & KeyStateMask >> KeyStateShift;
-    const rt = (result & MaskResultTurn) >> ResultTurnShift;
-    const rc = (result & MaskResultColor) >> ResultColorShift;
+  yield `[ ${statePart} ${colorPart} ] => ${statePart} ${colorPart} ${turnPart} -- S:state C:color T:turn`;
+
+  /** @param {number} k */
+  const fmt = k => {
+    const result = rules[k];
+    const ks = (k & KeyStateMask) >> KeyStateShift;
+    const kc = (k & KeyColorMask) >> KeyColorShift;
     const rs = (result & MaskResultState) >> ResultStateShift;
-    yield `[ ${hexit(ks, StateByteWidth)} ${hexit(kc, ColorByteWidth)} ] => ${hexit(rt, TurnByteWidth)} ${hexit(rc, ColorByteWidth)} ${hexit(rs, StateByteWidth)}`;
+    const rc = (result & MaskResultColor) >> ResultColorShift;
+    const rt = (result & MaskResultTurn) >> ResultTurnShift;
+    return `[ ${hexit(ks, StateByteWidth)} ${hexit(kc, ColorByteWidth)} ] => ${hexit(rs, StateByteWidth)} ${hexit(rc, ColorByteWidth)} ${hexit(rt, TurnByteWidth)}`;
+  };
+
+  let eliding = 0;
+  for (let k = 0; k < rules.length; k++) {
+    if (rules[k] === 0) {
+      switch (eliding++) {
+        case 0:
+          break;
+        case 2:
+          yield '...';
+          continue;
+        default:
+          continue;
+      }
+    } else if (eliding) eliding = 0;
+    yield fmt(k);
   }
+  if (eliding > 1) yield fmt(rules.length - 1);
 
   /**
    * @param {number} n
