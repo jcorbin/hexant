@@ -14,7 +14,7 @@ for (const { name, input, expected } of [
     expected: {
       numColors: 2,
       numStates: 1,
-      rules: imap(genn(256), /** @returns {RuleTuple} */ color => [
+      rules: [...imap(genn(256), /** @returns {RuleTuple} */ color => [
         // [0, Turn.RelLeft, 1]
         // [1, Turn.RelRight, 2]
         // ...
@@ -23,7 +23,7 @@ for (const { name, input, expected } of [
         0, color,
         0, (color + 1) % 256,
         color % 2 ? Turn.RelRight : Turn.RelLeft,
-      ]),
+      ])],
     },
   },
 
@@ -62,7 +62,7 @@ for (const { name, input, expected } of [
     expected: {
       numColors: 2,
       numStates: 1,
-      rules: imap(genn(256), /** @returns {RuleTuple} */ color =>
+      rules: [...imap(genn(256), /** @returns {RuleTuple} */ color =>
         color % 2 == 0
           ? [0, color, 0, Math.floor(color / 2), Turn.RelLeft]
           : [0, color, 0, 0, 0]
@@ -73,7 +73,7 @@ for (const { name, input, expected } of [
         // [0, 4, 0, 2, Turn.RelLeft],
         // [0, 5, 0, 0, 0],
         // ...
-      ),
+      )],
     },
   },
 
@@ -83,14 +83,14 @@ for (const { name, input, expected } of [
     expected: {
       numColors: 2,
       numStates: 1,
-      rules: imap(genn(256), /** @returns {RuleTuple} */ color =>
+      rules: [...imap(genn(256), /** @returns {RuleTuple} */ color =>
         [0, color, 0, (3 * color + 1) % 0x100, color % 2 == 0 ? Turn.RelLeft : Turn.RelRight],
         // [0, 0, 0, 1, Turn.RelLeft],
         // [0, 1, 0, 4, Turn.RelRight],
         // [0, 2, 0, 7, Turn.RelLeft],
         // [0, 3, 0, 10, Turn.RelRight],
         // ...
-      ),
+      )],
     },
   },
 
@@ -104,7 +104,7 @@ for (const { name, input, expected } of [
     expected: {
       numColors: 2,
       numStates: 1,
-      rules: imap(genn(256), /** @returns {RuleTuple} */ color =>
+      rules: [...imap(genn(256), /** @returns {RuleTuple} */ color =>
         color % 2 == 0
           ? [0, color, 0, Math.floor(color / 2), Turn.RelLeft]
           : [0, color, 0, (3 * color + 1) % 0x100, Turn.RelRight],
@@ -115,7 +115,7 @@ for (const { name, input, expected } of [
         // [0, 4, 0, 2, Turn.RelLeft],
         // [0, 5, 0, 16, Turn.RelRight],
         // ...
-      ),
+      )],
     },
   },
 
@@ -130,7 +130,7 @@ for (const { name, input, expected } of [
     expected: {
       numColors: 256,
       numStates: 1,
-      rules: imap(genn(256), /** @returns {RuleTuple} */ color =>
+      rules: [...imap(genn(256), /** @returns {RuleTuple} */ color =>
         color % 2 == 0
           ? [0, color, 0, Math.floor(color / 2), Turn.RelLeft]
           : [0, color, 0, (3 * color + 1) % 0x100, Turn.RelRight],
@@ -141,7 +141,7 @@ for (const { name, input, expected } of [
         // [0, 4, 0, 2, Turn.RelLeft],
         // [0, 5, 0, 16, Turn.RelRight],
         // ...
-      ),
+      )],
     },
   },
 
@@ -159,7 +159,7 @@ for (const { name, input, expected } of [
 /** @typedef {object} ExpectProps
  * @prop {number} numColors
  * @prop {number} numStates
- * @prop {Iterable<RuleTuple>} rules
+ * @prop {RuleTuple[]} rules
  */
 
 /**
@@ -171,11 +171,11 @@ function equivProps(ent) {
   return {
     numColors,
     numStates,
-    rules: imap(rules, /** @returns {RuleTuple} */(rule, key) => {
+    rules: [...imap(rules, /** @returns {RuleTuple} */(rule, key) => {
       const { keyState, keyColor } = decodeKey(key);
       const { state, color, turn } = decodeRule(rule);
       return [keyState, keyColor, state, color, turn];
-    }),
+    })],
   };
 }
 
