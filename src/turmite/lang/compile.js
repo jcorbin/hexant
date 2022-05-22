@@ -296,12 +296,22 @@ export function compileCode(spec, { format = 'value' } = {}) {
       },
     ]);
 
-    const mask = thens
+    const maskParts = thens
       .map(({ then: { mode }, mask }) => mode === '=' ? mask : '')
-      .reduce((mask, part) => `${mask}${mask ? ' | ' : ''}${part}`);
-    if (mask) {
-      yield `const _priorMask = ~(${mask});`;
-      yield '';
+      .filter(part => part);
+    switch (maskParts.length) {
+      case 0:
+        break;
+
+      case 1:
+        yield `const _priorMask = ~${maskParts[0]};`;
+        yield '';
+        break;
+
+      default:
+        yield `const _priorMask = ~(${maskParts
+          .reduce((mask, part) => `${mask}${mask ? ' | ' : ''}${part}`)});`;
+        yield '';
     }
 
     yield* compileWhenMatch(0);
@@ -370,30 +380,51 @@ export function compileCode(spec, { format = 'value' } = {}) {
       }
 
       else {
-        let anyResult = false;
+        /** @type {string[]} */
+        const parts = [];
+
+        const reduceParts = () => {
+          while (parts.length > 1) {
+            const b = parts.pop();
+            const a = parts.pop();
+            parts.push(`${a}\n| ${b}`);
+          }
+          return parts.pop() || '';
+        };
+
         for (const { name, then, expr, max, shift } of thens) {
-          if (then.mode !== '_') {
-            const { value, mode } = then;
-            yield* compileSpecComment(value, { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` });
+          const { mode } = then;
+          const comment = mode === '_'
+            ? []
+            : [...compileSpecComment(
+              then.value,
+              { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` })
+            ];
+
+          if (expr !== null && expr !== '0') {
+            // TODO &max is only valid if max is some 2^N-1, otherwise should use Math.min(max, ...)
+            parts.push(`${expr} & ${max}`);
           }
 
-          if (expr !== null) {
-            // TODO &max is only valid if max is some 2^N-1, otherwise should use Math.min(max, ...)
-            const valRes = `${expr} & ${max}`;
-            const resVal = anyResult ? `_result | ${valRes}` : valRes;
-            const newVal = shift ? `(${resVal}) << ${shift}` : resVal;
-            if (!anyResult) {
-              anyResult = true;
-              yield `let _result = ${newVal};`;
-            } else {
-              yield `_result = ${newVal};`;
-            }
-          } else if (anyResult && shift) {
-            yield `_result <<= ${shift};`;
+          if (parts.length) {
+            parts.push(`${parts.pop()}${comment.length ? ' ' + comment.join('\n') : ''}`);
+          } else if (comment.length) yield* comment;
+
+          if (parts.length && shift) {
+            parts.push(`( ${reduceParts()}\n) << ${shift}`);
           }
         }
-        if (anyResult) {
-          yield `_rules[${priorKey}] = _rules[${priorKey}]${mask ? ' & _priorMask' : ''} | _result;`;
+
+        if (maskParts.length) {
+          parts.unshift(`_rules[${priorKey}] & _priorMask`);
+        }
+
+        if (parts.length) {
+          yield* amend({
+            head: `_rules[${priorKey}] = `,
+            cont: '  ',
+          }, reduceParts().split(/\n/));
+          yield '  ;';
         }
       }
     }
