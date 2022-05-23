@@ -3,11 +3,9 @@
 import * as rezult from '../../rezult.js';
 import * as constants from '../constants.js';
 
-import { analyze } from './analyze.js';
+import * as analyze from './analyze.js';
 import { toSpecString } from './tostring.js';
 import * as walk from './walk.js';
-
-/** @typedef {import('./analyze.js').analysis} analysis */
 
 // TODO: de-dupe
 const opPrec = ['+', '-', '*', '/', '%'];
@@ -88,6 +86,7 @@ export default function compile(spec) {
  * @param {CodeFormat} [options.format]
  */
 export function compileCode(spec, { format = 'value' } = {}) {
+  // TODO proper scope-stack management
   const symbols = new Set([
     // dependencies
     'World',
@@ -111,6 +110,12 @@ export function compileCode(spec, { format = 'value' } = {}) {
     // inner _rules update tmp
     '_priorMask',
   ]);
+
+  analyze.transform(spec, analyze.matchType('assign', ({ id: { name } }) => {
+    if (symbols.has(name))
+      throw new Error(`redefinition of symbol ${name}`);
+    symbols.add(name);
+  }));
 
   return compileContent(spec);
 
@@ -156,16 +161,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
     }, multiLineQuoted(toSpecString(spec)));
     yield '';
 
-    // NOTE: analysis delayed until after spec string above, since one of its
-    // products is to mutate the AST for things like hoisting of intermediate
-    // values
-
-    // TODO it'd be great to refactor the analysis module to separate turn
-    // counting from AST transforming passes like intermediate value hoisting
-
-    const { maxTurns } = rezult.toValue(analyze(spec, symbols));
-
-    yield `const numColors = ${maxTurns};`;
+    yield `const numColors = ${countMaxTurns(spec)};`;
     yield '';
   }
 
@@ -192,7 +188,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
     for (const rule of spec.rules) {
       yield* compileSpecComment(rule, { head: 'rule: ' });
-      yield* block(compileRule(rule.when, rule.then));
+      yield* compileRule(rule);
       yield '';
     }
 
@@ -204,11 +200,53 @@ export function compileCode(spec, { format = 'value' } = {}) {
     yield `let ${name} = ${compileValue(value)};`; // TODO can this be constified?
   }
 
+  /** @param {walk.RuleNode} rule */
+  function* compileRule(rule) {
+    /** @type {walk.AssignNode[]} */
+    const assigns = [];
+    const scope = new Set(...symbols);
+
+    const { when, then } = analyze.transformed(rule,
+
+      // TODO what was this doing? hacking the language tree to make then turns indexed by color implicitly?
+      // case 'then':
+      //   if (node.turn.type === 'turns') {
+      //     var colorSyms = walk.collect(node.color, ({ type }) =>
+      //       type === 'symbol' || type === 'identifier');
+      //     if (colorSyms.length === 1) {
+      //       node.turn = member(node.turn, colorSyms[0]);
+      //     }
+      //     // TODO: else error
+      //   }
+      //   break;
+
+      analyze.matchType('member', ({ value, item }) => {
+        switch (value.type) {
+          case 'symbol':
+          case 'identifier':
+            return null;
+          default:
+            const { type } = value;
+            const name = gensym(`${type[0].toUpperCase()}${type.slice(1)}`, scope);
+            assigns.push(analyze.assign(name, value));
+            const id = analyze.id(name);
+            return analyze.member(id, item);
+        }
+      }),
+
+    );
+
+    yield* block(
+      ...assigns.map(assign => compileAssign(assign)),
+      compileRuleBody(when, then),
+    );
+  }
+
   /**
    * @param {walk.WhenNode} when
    * @param {walk.ThenNode} then
    */
-  function* compileRule(
+  function* compileRuleBody(
     { state: whenState, color: whenColor },
     { state: thenState, color: thenColor, turn: thenTurn },
   ) {
@@ -411,6 +449,29 @@ export function compileCode(spec, { format = 'value' } = {}) {
           yield '  ;';
         }
       }
+    }
+  }
+}
+
+/** @param {walk.SpecNode} spec */
+function countMaxTurns(spec) {
+  let maxTurns = 0;
+  analyze.transform(spec, analyze.matchType('turns', ({ value }) => {
+    maxTurns = Math.max(maxTurns, value.length);
+  }));
+  return maxTurns;
+}
+
+/**
+ * @param {string} name
+ * @param {Set<string>} symbols
+ */
+function gensym(name, symbols) {
+  for (let i = 1; /* TODO non-infinite? */; i++) {
+    const uname = name + i;
+    if (!symbols.has(uname)) {
+      symbols.add(uname);
+      return uname;
     }
   }
 }

@@ -1,6 +1,5 @@
 // @ts-check
 
-import * as rezult from '../../rezult.js';
 import * as walk from './walk.js';
 
 /// basic grammar constructors
@@ -174,88 +173,207 @@ export function isAnyValue(node) {
 
 /// analysis of grammar node (trees)
 
-/** @typedef {object} analysis
- * @prop {number} maxTurns
+/**
+ * @template {walk.NodeType} T
+ * @param {T} type
+ * @param {TypedNodeTransform<T>} fn
+ * @returns {NodeTransform}
+ */
+export function matchType(type, fn) {
+  return node => walk.isNodeType(type, node)
+    ? fn(node)
+    : null;
+}
+
+/** @template {walk.NodeType} T
+ * @callback TypedNodeTransform
+ * @param {walk.TypedNode<T>} node
+ * @returns {walk.TypedNode<T>|null|void}
+ */
+
+/** @callback NodeTransform
+ * @param {walk.Node} node
+ * @returns {walk.Node|null|void}
  */
 
 /**
- * @param {walk.SpecNode} spec
- * @param {Set<string>} symbols
- * @returns {rezult.Result<analysis>}
+ * @template {walk.Node} NT
+ * @param {NT} node
+ * @param {NodeTransform[]} xforms
+ * @returns {NT}
  */
-export function analyze(spec, symbols) {
-  let maxTurns = 0;
-
-  for (const { id: { name } } of spec.assigns) {
-    if (symbols.has(name)) {
-      return rezult.error(new Error(`redefinition of special symbol ${name}`));
-    }
-    symbols.add(name);
-  }
+export function transformed(node, ...xforms) {
+  const oldType = node.type;
 
   /**
-   * @param {walk.AnyExpr} value
-   * @returns {walk.IdentifierNode}
+   * @param {walk.Node} n
+   * @returns {n is NT}
    */
-  function hoist(value) {
-    const name = gensym(value.type, symbols);
-    symbols.add(name);
-    spec.assigns.push(assign(name, value));
-    each(value); // since dfs will no longer visit the value
-    return id(name);
+  function isSameType(n) {
+    return n.type === oldType;
   }
 
-  walk.dfsPre(spec, each);
+  const newNode = transform(node, ...xforms);
+  if (!newNode) return node;
+  if (!isSameType(newNode)) throw new Error('invalid replacement node');
 
-  /** @param {walk.Node} node */
-  function each(node) {
-    switch (node.type) {
-      case 'assign':
-        symbols.add(node.id.name);
-        break;
-
-      case 'member':
-        switch (node.value.type) {
-          case 'symbol':
-          case 'identifier':
-            break;
-          default:
-            node.value = hoist(node.value);
-        }
-        break;
-
-      case 'turns':
-        maxTurns = Math.max(maxTurns, node.value.length);
-        break;
-
-      // TODO what was this doing? hacking the language tree to make then turns indexed by color implicitly?
-      // case 'then':
-      //   if (node.turn.type === 'turns') {
-      //     var colorSyms = walk.collect(node.color, ({ type }) =>
-      //       type === 'symbol' || type === 'identifier');
-      //     if (colorSyms.length === 1) {
-      //       node.turn = member(node.turn, colorSyms[0]);
-      //     }
-      //     // TODO: else error
-      //   }
-      //   break;
-
-    }
-  }
-
-  return rezult.just({ maxTurns });
+  return newNode;
 }
 
 /**
- * @param {string} kind
- * @param {Set<string>} symbols
+ * @param {walk.Node} node
+ * @param {NodeTransform[]} xforms
+ * @returns {walk.Node|null}
  */
-function gensym(kind, symbols) {
-  const sym = kind[0].toUpperCase() + kind.slice(1);
-  for (let i = 1; /* TODO non-infinite? */; i++) {
-    const name = sym + i;
-    if (!symbols.has(name)) {
-      return name;
+export function transform(node, ...xforms) {
+  if (!xforms.length) return node;
+
+  /** @type {NodeTransform} */
+  const xform = xforms.length > 1
+    ? node => {
+      for (const xform of xforms) {
+        node = xform(node) || node;
+      }
+      return node;
+    }
+    : xforms[0];
+  return each(node);
+
+  /** @param {walk.Node} node @returns {walk.Node|null} */
+  function each(node) {
+    node = xform(node) || node;
+    switch (node.type) {
+
+      case 'spec': {
+        let any = false;
+        const assigns = node.assigns.map(assign => {
+          const rep = each(assign);
+          if (!rep) return assign;
+          if (rep.type !== 'assign') throw new Error('invalid replacement assign node');
+          any = true;
+          return rep;
+        });
+        const rules = node.rules.map(rule => {
+          const rep = each(rule);
+          if (!rep) return rule;
+          if (rep.type !== 'rule')
+            throw new Error('invalid replacement rule node');
+          any = true;
+          return rep;
+        });
+        if (any) return spec(assigns, rules);
+        return null;
+      }
+
+      case 'assign': {
+        let id = each(node.id);
+        let value = each(node.value);
+        if (id || value) {
+          if (!id) id = node.id;
+          else if (id.type !== 'identifier') throw new Error('invalid replacement identifier node');
+          if (!value) value = node.value;
+          else if (!isAnyExpr(value)) throw new Error('invalid replacement value node');
+          return assign(id, value);
+        }
+        return null;
+      }
+
+      case 'rule': {
+        let when = each(node.when);
+        let then = each(node.then);
+        if (when || then) {
+          if (!when) when = node.when;
+          else if (when.type !== 'when') throw new Error('invalid replacement when node');
+          if (!then) then = node.then;
+          else if (then.type !== 'then') throw new Error('invalid replacement then node');
+          return rule(when, then);
+        }
+        return null;
+      }
+
+      case 'when': {
+        let state = each(node.state);
+        let color = each(node.color);
+        if (state || color) {
+          if (!state) state = node.state;
+          else if (!isAnyExpr(state)) throw new Error('invalid replacement when.state node');
+          if (!color) color = node.color;
+          else if (!isAnyExpr(color)) throw new Error('invalid replacement when.color node');
+          return when(state, color);
+        }
+        return null;
+      }
+
+      case 'then': {
+        let state = each(node.state);
+        let color = each(node.color);
+        let turn = each(node.turn);
+        if (state || color || turn) {
+          if (!state) state = node.state;
+          else if (state.type !== 'thenVal') throw new Error('invalid replacement then.state node');
+          if (!color) color = node.color;
+          else if (color.type !== 'thenVal') throw new Error('invalid replacement then.color node');
+          if (!turn) turn = node.turn;
+          else if (turn.type !== 'thenVal') throw new Error('invalid replacement then.turn node');
+          return then(state, color, turn);
+        }
+        return null;
+      }
+
+      case 'thenVal': {
+        const { mode } = node;
+        if (mode == '_') return null;
+        let value = each(node.value);
+        if (!value) return null;
+        if (!isAnyExpr(value)) throw new Error('invalid replacement then value node');
+        return { type: 'thenVal', mode, value };
+      }
+
+      case 'member': {
+        let item = each(node.item);
+        let value = each(node.value);
+        if (item || value) {
+          if (!item) item = node.item;
+          else if (!isAnyExpr(item)) throw new Error('invalid replacement item node');
+          if (!value) value = node.value;
+          else if (!isAnyValue(value)) throw new Error('invalid replacement value node');
+          return member(value, item);
+        }
+        return null;
+      }
+
+      case 'expr': {
+        const { op } = node;
+        let arg1 = each(node.arg1);
+        let arg2 = each(node.arg2);
+        if (arg1 || arg2) {
+          if (!arg1) arg1 = node.arg1;
+          else if (!isAnyExpr(arg1)) throw new Error('invalid replacement arg1 node');
+          if (!arg2) arg2 = node.arg2;
+          else if (!isAnyExpr(arg2)) throw new Error('invalid replacement arg2 node');
+          return expr(op, arg1, arg2);
+        }
+        return null;
+      }
+
+      case 'identifier':
+      case 'number':
+      case 'symbol':
+      case 'turn':
+      case 'turns':
+        return null;
+
+      default:
+        assertNever(node, 'invalid transform node');
+        return null;
     }
   }
+}
+
+/**
+ * @param {never} impossible
+ * @param {string} mess
+ */
+function assertNever(impossible, mess) {
+  throw new Error(`${mess}: ${JSON.stringify(impossible)}`);
 }
