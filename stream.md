@@ -104,14 +104,16 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-22
+# 2022-05-23
 
 ## WIP
 
-- subsume `ant( ... )` into the turmite grammar
-  - then subsume comments and @directives
+- bring back auto `turns(...)` color indexing
+- push turmite code action is/convert logic out into `lang/analyze` module
+- subsume comments and @directives into turmite
   - then support `@state <number> ant( ... )`
   - maybe `@state <number> c => c-expr, <turn>`
+- flatten `turmite/lang/...` into `turmite/...` now that there is only one parser
 
 ### Play testing turmite rules
 
@@ -148,6 +150,27 @@ OOPS that doesn't work, let's fix that
   - a rule that doesn't care to express any result color or turn, merely a state update
 
 ## Done
+
+- refactored language analysis module
+  - added suite of grammar node maker functions
+  - refactored analysis around generic node tree transformation that does not
+    mutate the input tree
+  - evicted all application code into the compile module
+    - turn counting and symbol collision check now happen where they did
+      before, but have no potential to mutate the parsed input tree
+    - tmp hoisting has been pushed down into a refactored `compileRule` unit
+      that makes rule scope manipulation more coherent
+    - commented out block about bare `turns()` auto-color-indexing also left
+      for future resurrection
+- refactored language compile module
+  - reified `block()` handling
+  - made `wrap()` and `amend()` more ergonomic
+  - rule compilation more coherent, easier to re-use for `ant(...)`
+- implemented `ant(...)` alternate rule form
+  - compiles thru all the same rule paths as normal `{when, then}` form by way
+    of a new `analyze.antRule()` transform
+
+# 2022-05-22
 
 - added explicitly null then rules
 - let prompt `{help}` be an iterable string body, naturalizing functions like
