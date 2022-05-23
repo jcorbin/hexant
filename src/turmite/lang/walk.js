@@ -6,6 +6,7 @@
 /** @typedef {(
  * | SpecNode
  * | AssignNode
+ * | AntNode
  * | RuleNode
  * | WhenNode
  * | ThenNode
@@ -36,7 +37,7 @@
 /** @typedef {object} SpecNode
  * @prop {"spec"} type
  * @prop {AssignNode[]} assigns
- * @prop {RuleNode[]} rules
+ * @prop {(AntNode|RuleNode)[]} rules
  */
 
 /** @typedef {Value<NumberNode|TurnsNode>} AnyValue */
@@ -105,11 +106,6 @@
  * @prop {string} name
  */
 
-/** @typedef {object} TurnNode
- * @prop {"turn"} type
- * @prop {Turn[]} names
- */
-
 /** @typedef {(
  * | 'RelLeft'
  * | 'RelRight'
@@ -125,9 +121,19 @@
  * | 'AbsSouthWest'
  * )} Turn */
 
+/** @typedef {object} TurnNode
+ * @prop {"turn"} type
+ * @prop {Turn[]} names
+ */
+
+/** @typedef {object} AntNode
+ * @prop {"ant"} type
+ * @prop {CountTurn[]} turns
+ */
+
 /** @typedef {object} TurnsNode
  * @prop {"turns"} type
- * @prop {CountTurn[]} value
+ * @prop {CountTurn[]} turns
  */
 
 /** @typedef {object} CountTurn
@@ -167,6 +173,9 @@ export function dfs(root, visit) {
         each(node.value);
         break;
 
+      case 'ant':
+        break;
+
       case 'rule':
         each(node.when);
         each(node.then);
@@ -204,7 +213,6 @@ export function dfs(root, visit) {
         break;
 
       case 'turns':
-        // TODO y no node.value.forEach(({value: turnNode}) => each(turnNode))
         break;
 
       default:

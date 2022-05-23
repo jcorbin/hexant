@@ -26,7 +26,7 @@ export function sym(name) {
 
 /**
  * @param {walk.AssignNode[]} assigns
- * @param {(walk.RuleNode)[]} rules
+ * @param {(walk.RuleNode | walk.AntNode)[]} rules
  * @returns {walk.SpecNode}
  */
 export function spec(assigns, rules) {
@@ -54,10 +54,18 @@ export function rule(when, then) {
 
 /**
  * @param {walk.CountTurn[]} turns
+ * @returns {walk.AntNode}
+ */
+export function ant(...turns) {
+  return { type: 'ant', turns };
+}
+
+/**
+ * @param {walk.CountTurn[]} turns
  * @returns {walk.TurnsNode}
  */
 export function turns(...turns) {
-  return { type: 'turns', value: turns };
+  return { type: 'turns', turns };
 }
 
 /**
@@ -174,6 +182,26 @@ export function isAnyValue(node) {
 /// analysis of grammar node (trees)
 
 /**
+ * @param {walk.CountTurn[]} antTurns
+ * @param {object} options
+ * @param {number} [options.state]
+ * @param {walk.AnyExpr} [options.whenState]
+ * @param {walk.ThenValNode} [options.thenState]
+ */
+export function antRule(antTurns, {
+  state = 0,
+  whenState = { type: 'number', value: state },
+  thenState = { type: 'thenVal', mode: '=', value: { type: 'number', value: state } },
+} = {}) {
+  const c = sym('c');
+  return rule(when(whenState, c), then(
+    thenState,
+    expr('+', c, { type: 'number', value: 1 }),
+    member(turns(...antTurns), c),
+  ));
+}
+
+/**
  * @template {walk.NodeType} T
  * @param {T} type
  * @param {TypedNodeTransform<T>} fn
@@ -256,7 +284,7 @@ export function transform(node, ...xforms) {
         const rules = node.rules.map(rule => {
           const rep = each(rule);
           if (!rep) return rule;
-          if (rep.type !== 'rule')
+          if (!(rep.type === 'rule' || rep.type === 'ant'))
             throw new Error('invalid replacement rule node');
           any = true;
           return rep;
@@ -356,6 +384,7 @@ export function transform(node, ...xforms) {
         return null;
       }
 
+      case 'ant':
       case 'identifier':
       case 'number':
       case 'symbol':

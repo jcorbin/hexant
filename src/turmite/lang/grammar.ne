@@ -11,7 +11,8 @@ assign -> identifier _ "=" _ lit  {% ([id, _1, _2, _3, value]) => ({type: 'assig
 rules -> rule
        | rule newline rules  {% ([head, _1, tail]) => [head].concat(tail) %}
 
-rule -> when "=>" then  {% ([when, _1, then]) => ({type: 'rule', when, then}) %}
+rule -> ant             {% ([ant]) => ant %}
+      | when "=>" then  {% ([when, _1, then]) => ({type: 'rule', when, then}) %}
 
 when -> expr "," expr  {% ([state, _1, color]) => ({type: 'when', state, color}) %}
 
@@ -57,7 +58,9 @@ fac -> "(" expr ")"  {% d => d[1] %}
      | symbol        {% d => d[0] %}
      | identifier    {% d => d[0] %}
 
-turns -> "turns(" _ countTurn ( __ countTurn ):* _ ")"  {% ([_0, _1, first, rest=[]]) => ({type: 'turns', value: [first, ...rest.map(rr => rr[1])]}) %}
+ant -> _ "ant(" countTurns ")" _  {% ([_0, _1, turns]) => ({type: 'ant', turns}) %}
+
+turns -> "turns(" countTurns ")"  {% ([_, turns]) => ({type: 'turns', turns}) %}
 
 turn -> "L"  {% () => 'RelLeft'        %}
       | "R"  {% () => 'RelRight'       %}
@@ -86,6 +89,8 @@ turn -> "L"  {% () => 'RelLeft'        %}
 
 countTurn ->        turn  {% ([turn]) => ({count: {type: 'number', value: 1}, turn}) %}
            | decint turn  {% ([count, turn]) => ({count, turn}) %}
+
+countTurns -> _ countTurn ( __ countTurn ):* _  {% ([_, first, rest=[]]) => ([first, ...rest.map(([_, next]) => next)]) %}
 
 member -> ( member | symbol | identifier | lit ) "[" expr "]"  {% ([[value], _1, item]) => ({type: 'member', value, item}) %}
 

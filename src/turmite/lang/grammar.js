@@ -1,4 +1,4 @@
-// @generated from id:505176dcff9f624a18df2f83aebbc609cc2feea6303e0f47f9402851abfa54dd
+// @generated from id:c5dadd4f325369d40b0dfd3c657ad6fe5cb2581772fb8846b0b513104623acaf
 
 // Generated automatically by nearley, version 2.20.1
 // http://github.com/Hardmath123/nearley
@@ -14,6 +14,7 @@ let ParserRules = [
     {"name": "assign", "symbols": ["identifier", "_", {"literal":"="}, "_", "lit"], "postprocess": ([id, _1, _2, _3, value]) => ({type: 'assign', id, value})},
     {"name": "rules", "symbols": ["rule"]},
     {"name": "rules", "symbols": ["rule", "newline", "rules"], "postprocess": ([head, _1, tail]) => [head].concat(tail)},
+    {"name": "rule", "symbols": ["ant"], "postprocess": ([ant]) => ant},
     {"name": "rule$string$1", "symbols": [{"literal":"="}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "rule", "symbols": ["when", "rule$string$1", "then"], "postprocess": ([when, _1, then]) => ({type: 'rule', when, then})},
     {"name": "when", "symbols": ["expr", {"literal":","}, "expr"], "postprocess": ([state, _1, color]) => ({type: 'when', state, color})},
@@ -46,11 +47,10 @@ let ParserRules = [
     {"name": "fac", "symbols": ["member"], "postprocess": d => d[0]},
     {"name": "fac", "symbols": ["symbol"], "postprocess": d => d[0]},
     {"name": "fac", "symbols": ["identifier"], "postprocess": d => d[0]},
+    {"name": "ant$string$1", "symbols": [{"literal":"a"}, {"literal":"n"}, {"literal":"t"}, {"literal":"("}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "ant", "symbols": ["_", "ant$string$1", "countTurns", {"literal":")"}, "_"], "postprocess": ([_0, _1, turns]) => ({type: 'ant', turns})},
     {"name": "turns$string$1", "symbols": [{"literal":"t"}, {"literal":"u"}, {"literal":"r"}, {"literal":"n"}, {"literal":"s"}, {"literal":"("}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "turns$ebnf$1", "symbols": []},
-    {"name": "turns$ebnf$1$subexpression$1", "symbols": ["__", "countTurn"]},
-    {"name": "turns$ebnf$1", "symbols": ["turns$ebnf$1", "turns$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "turns", "symbols": ["turns$string$1", "_", "countTurn", "turns$ebnf$1", "_", {"literal":")"}], "postprocess": ([_0, _1, first, rest=[]]) => ({type: 'turns', value: [first, ...rest.map(rr => rr[1])]})},
+    {"name": "turns", "symbols": ["turns$string$1", "countTurns", {"literal":")"}], "postprocess": ([_, turns]) => ({type: 'turns', turns})},
     {"name": "turn", "symbols": [{"literal":"L"}], "postprocess": () => 'RelLeft'},
     {"name": "turn", "symbols": [{"literal":"R"}], "postprocess": () => 'RelRight'},
     {"name": "turn", "symbols": [{"literal":"F"}], "postprocess": () => 'RelForward'},
@@ -89,6 +89,10 @@ let ParserRules = [
     {"name": "turn", "symbols": ["turn$string$12"], "postprocess": () => 'AbsSouthWest'},
     {"name": "countTurn", "symbols": ["turn"], "postprocess": ([turn]) => ({count: {type: 'number', value: 1}, turn})},
     {"name": "countTurn", "symbols": ["decint", "turn"], "postprocess": ([count, turn]) => ({count, turn})},
+    {"name": "countTurns$ebnf$1", "symbols": []},
+    {"name": "countTurns$ebnf$1$subexpression$1", "symbols": ["__", "countTurn"]},
+    {"name": "countTurns$ebnf$1", "symbols": ["countTurns$ebnf$1", "countTurns$ebnf$1$subexpression$1"], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "countTurns", "symbols": ["_", "countTurn", "countTurns$ebnf$1", "_"], "postprocess": ([_, first, rest=[]]) => ([first, ...rest.map(([_, next]) => next)])},
     {"name": "member$subexpression$1", "symbols": ["member"]},
     {"name": "member$subexpression$1", "symbols": ["symbol"]},
     {"name": "member$subexpression$1", "symbols": ["identifier"]},

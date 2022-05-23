@@ -121,13 +121,13 @@ export function* toSpecString(root) {
         descend();
         break;
 
+      case 'ant':
       case 'turns':
-        stack.push(`turns(${rleFrom(node.value
+        stack.push(`${node.type}(${rleFrom(node.turns
           .map(({ count: { value: count }, turn }) => [count, TurnSyms[turn]])
         )
           .map(([count, sym]) => count > 1 ? `${count}${sym}` : sym)
           .join(' ')})`);
-        descend();
         break;
 
       case 'turn':

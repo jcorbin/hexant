@@ -187,9 +187,22 @@ export function compileCode(spec, { format = 'value' } = {}) {
     }
 
     for (const rule of spec.rules) {
-      yield* compileSpecComment(rule, { head: 'rule: ' });
-      yield* compileRule(rule);
-      yield '';
+      switch (rule.type) {
+        case 'ant':
+          yield* compileSpecComment(rule, { head: 'rule: ' });
+          yield* compileRule(analyze.antRule(rule.turns));
+          yield '';
+          break;
+
+        case 'rule':
+          yield* compileSpecComment(rule, { head: 'rule: ' });
+          yield* compileRule(rule);
+          yield '';
+          break;
+
+        default:
+          assertNever(rule, 'invalid rule node');
+      }
     }
 
     yield 'return {value: {specString, numColors, numStates: _states.size}};';
@@ -456,9 +469,10 @@ export function compileCode(spec, { format = 'value' } = {}) {
 /** @param {walk.SpecNode} spec */
 function countMaxTurns(spec) {
   let maxTurns = 0;
-  analyze.transform(spec, analyze.matchType('turns', ({ value }) => {
-    maxTurns = Math.max(maxTurns, value.length);
-  }));
+  analyze.transform(spec,
+    analyze.matchType('ant', ({ turns }) => { maxTurns = Math.max(maxTurns, turns.length) }),
+    analyze.matchType('turns', ({ turns }) => { maxTurns = Math.max(maxTurns, turns.length) }),
+  );
   return maxTurns;
 }
 
@@ -604,7 +618,7 @@ function compileValue(node, outerPrec = 0) {
 
     case 'turns':
       const parts = [];
-      for (const { count, turn } of node.value) {
+      for (const { count, turn } of node.turns) {
         const turnStr = `0x${constants.Turn[turn]
           .toString(16).padStart(2, '0')}`;
         for (let i = 0; i < count.value; i++) {
