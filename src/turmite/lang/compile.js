@@ -132,26 +132,18 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
   /** @param {walk.SpecNode} spec */
   function* compileObject(spec) {
-    yield* wrap({
-      head: '(_rules, World) => {',
-      cont: '  ',
-      zero: 'throw new Error("unimplemented")',
-      foot: '}',
-    },
+    yield* amend('(_rules, World) => ', block(
       compileDefinitions(spec),
       compileRuleBuilder(spec),
-    );
+    ));
   }
 
   /** @param {walk.SpecNode} spec */
   function* compileModule(spec) {
     yield* compileDefinitions(spec);
-    yield* wrap({
-      head: 'export default function build(_rules, World) {',
-      cont: '  ',
-      zero: 'throw new Error("unimplemented")',
-      foot: '}',
-    }, compileRuleBuilder(spec));
+    yield* amend('export default function build(_rules, World) ', block(
+      compileRuleBuilder(spec),
+    ));
   }
 
   /** @param {walk.SpecNode} spec */
@@ -200,11 +192,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
     for (const rule of spec.rules) {
       yield* compileSpecComment(rule, { head: 'rule: ' });
-      yield* wrap({
-        head: `{`,
-        cont: '  ',
-        foot: `}`,
-      }, compileRule(rule.when, rule.then));
+      yield* block(compileRule(rule.when, rule.then));
       yield '';
     }
 
@@ -353,11 +341,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
             const matchExpr = solve(free, cap, when);
 
-            yield* wrap({
-              head: `for (let ${cap} = 0; ${cap} <= ${max}; ${cap}++) {`,
-              foot: '}',
-              cont: '  ',
-            },
+            yield* amend(`for (let ${cap} = 0; ${cap} <= ${max}; ${cap}++) `, block(
               matchExpr === cap
                 ? `const ${free} = ${matchExpr};`
                 : [
@@ -366,7 +350,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
                   `if (Math.floor(${free}) !== ${free}) continue;`,
                 ],
               body(),
-            );
+            ));
             break;
 
           case 'number':
@@ -666,6 +650,11 @@ export function* endLines(lines, nl = '\n') {
  * @prop {string} [zero] - filler value when lines is empty
  */
 
+/** @param {(Iterable<string>|string)[]} parts */
+function* block(...parts) {
+  yield* wrap({ head: '{', cont: '  ', foot: '}' }, ...parts)
+}
+
 /**
  * @param {amendments} params
  * @param {(Iterable<string>|string)[]} parts
@@ -688,10 +677,14 @@ function* wrap({ head = '', foot = '', cont = '', zero = 'undefined' }, ...parts
 }
 
 /**
- * @param {amendments} params
+ * @param {string|amendments} params
  * @param {(Iterable<string>|string)[]} parts
  */
-function* amend({ head = '', foot = '', cont = '', zero = 'undefined' }, ...parts) {
+function* amend(params, ...parts) {
+  if (typeof params == 'string') {
+    params = { head: params };
+  }
+  const { head = '', foot = '', cont = '', zero = 'undefined' } = params;
   let last = '', any = false;
   for (const line of chain(...parts)) {
     if (!any) {
