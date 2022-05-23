@@ -137,10 +137,10 @@ export function compileCode(spec, { format = 'value' } = {}) {
       cont: '  ',
       zero: 'throw new Error("unimplemented")',
       foot: '}',
-    }, chain(
+    },
       compileDefinitions(spec),
       compileRuleBuilder(spec),
-    ));
+    );
   }
 
   /** @param {walk.SpecNode} spec */
@@ -357,7 +357,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
               head: `for (let ${cap} = 0; ${cap} <= ${max}; ${cap}++) {`,
               foot: '}',
               cont: '  ',
-            }, chain(
+            },
               matchExpr === cap
                 ? `const ${free} = ${matchExpr};`
                 : [
@@ -366,7 +366,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
                   `if (Math.floor(${free}) !== ${free}) continue;`,
                 ],
               body(),
-            ));
+            );
             break;
 
           case 'number':
@@ -668,14 +668,14 @@ export function* endLines(lines, nl = '\n') {
 
 /**
  * @param {amendments} params
- * @param {Iterable<string>} lines
+ * @param {(Iterable<string>|string)[]} parts
  */
-function* wrap({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
+function* wrap({ head = '', foot = '', cont = '', zero = 'undefined' }, ...parts) {
   if (head) {
     yield head;
   }
   let any = false;
-  for (const line of lines) {
+  for (const line of chain(...parts)) {
     yield cont ? `${cont}${line}` : line;
     any = true;
   }
@@ -689,11 +689,11 @@ function* wrap({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
 
 /**
  * @param {amendments} params
- * @param {Iterable<string>} lines
+ * @param {(Iterable<string>|string)[]} parts
  */
-function* amend({ head = '', foot = '', cont = '', zero = 'undefined' }, lines) {
+function* amend({ head = '', foot = '', cont = '', zero = 'undefined' }, ...parts) {
   let last = '', any = false;
-  for (const line of lines) {
+  for (const line of chain(...parts)) {
     if (!any) {
       any = true;
       last = `${head}${line}`;
