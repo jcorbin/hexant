@@ -2,6 +2,7 @@
 
 import test from 'ava';
 
+import { toValue as resultToValue } from '../src/rezult.js';
 import { Turn } from '../src/turmite/constants.js';
 import { Turmite, compile } from '../src/turmite/index.js';
 
@@ -47,11 +48,10 @@ for (const { name, input, equiv } of [
     equiv: 'ant(R L)',
   },
 
-]) test(`equivalant: ${name} `, t => {
-  const { err, value } = Turmite.from(equiv);
-  if (!t.falsy(err)) return;
+]) test(`equivalant: ${name} `, t => t.notThrows(() => {
+  const value = resultToValue(Turmite.from(equiv));
   canTurmite(t, input, equivProps(value));
-});
+}));
 
 // test more complicated turmites
 for (const { name, input, expected } of [
@@ -216,8 +216,10 @@ function equivProps(ent) {
  */
 function canTurmite(t, input, expected) {
   const spec = Array.isArray(input) ? input.join('\n') : input;
-  const { err, value } = Turmite.from(spec);
-  if (t.falsy(err)) isTurmite(t, value, { input, ...expected });
+  t.notThrows(() => {
+    const value = resultToValue(Turmite.from(spec));
+    isTurmite(t, value, { input, ...expected });
+  });
   if (!t.passed) {
     for (const line of compile(spec, { format: 'module' })) {
       t.log(line);
