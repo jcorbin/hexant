@@ -5,7 +5,19 @@ import * as constants from '../constants.js';
 
 import * as analyze from './analyze.js';
 import { toSpecString } from './tostring.js';
-import * as walk from './walk.js';
+
+/** @typedef {import('./walk.js').Node} Node */
+/** @typedef {import('./walk.js').SpecNode} SpecNode */
+/** @typedef {import('./walk.js').AssignNode} AssignNode */
+/** @typedef {import('./walk.js').RuleNode} RuleNode */
+/** @typedef {import('./walk.js').WhenNode} WhenNode */
+/** @typedef {import('./walk.js').ThenNode} ThenNode */
+/** @typedef {import('./walk.js').ThenValNode} ThenValNode */
+/** @typedef {import('./walk.js').NumberNode} NumberNode */
+/** @typedef {import('./walk.js').TurnsNode} TurnsNode */
+/** @typedef {import('./walk.js').TurnNode} TurnNode */
+/** @typedef {import('./walk.js').AnyExpr} AnyExpr */
+/** @template T @typedef {import('./walk.js').Expr<T>} Expr */
 
 // TODO: de-dupe
 const opPrec = ['+', '-', '*', '/', '%'];
@@ -47,7 +59,7 @@ const opPrec = ['+', '-', '*', '/', '%'];
  */
 
 /**
- * @param {walk.SpecNode} spec
+ * @param {SpecNode} spec
  * @returns {rezult.Result<function>}
  */
 export default function compile(spec) {
@@ -81,7 +93,7 @@ export default function compile(spec) {
 /** @typedef {"value"|"module"} CodeFormat */
 
 /**
- * @param {walk.SpecNode} spec
+ * @param {SpecNode} spec
  * @param {object} [options]
  * @param {CodeFormat} [options.format]
  */
@@ -119,7 +131,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
   return compileContent(spec);
 
-  /** @param {walk.SpecNode} spec */
+  /** @param {SpecNode} spec */
   function* compileContent(spec) {
     switch (format) {
       case 'value':
@@ -141,7 +153,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
     }
   }
 
-  /** @param {walk.SpecNode} spec */
+  /** @param {SpecNode} spec */
   function* compileDefinitions(spec) {
     yield* amend({
       head: 'const specString = ',
@@ -156,7 +168,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
   }
 
   /**
-   * @param {walk.Node} node
+   * @param {Node} node
    * @param {amendments} [params]
    */
   function* compileSpecComment(node, params) {
@@ -165,7 +177,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
     yield* comment(spec);
   }
 
-  /** @param {walk.SpecNode} spec */
+  /** @param {SpecNode} spec */
   function* compileRuleBuilder(spec) {
     yield 'const _states = new Set();';
     yield '';
@@ -198,14 +210,14 @@ export function compileCode(spec, { format = 'value' } = {}) {
     yield 'return {value: {specString, numColors, numStates: _states.size}};';
   }
 
-  /** @param {walk.AssignNode} assign */
+  /** @param {AssignNode} assign */
   function* compileAssign({ id: { name }, value }) {
     yield `let ${name} = ${compileValue(value)};`; // TODO can this be constified?
   }
 
-  /** @param {walk.RuleNode} rule */
+  /** @param {RuleNode} rule */
   function* compileRule(rule) {
-    /** @type {walk.AssignNode[]} */
+    /** @type {AssignNode[]} */
     const assigns = [];
     const scope = new Set(...symbols);
 
@@ -246,8 +258,8 @@ export function compileCode(spec, { format = 'value' } = {}) {
   }
 
   /**
-   * @param {walk.WhenNode} when
-   * @param {walk.ThenNode} then
+   * @param {WhenNode} when
+   * @param {ThenNode} then
    */
   function* compileRuleBody(
     { state: whenState, color: whenColor },
@@ -261,7 +273,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
      * @prop {string} [shift]
      */
 
-    const thens = /** @type {({then: walk.ThenValNode} & ThenDecl)[]} */ ([
+    const thens = /** @type {({then: ThenValNode} & ThenDecl)[]} */ ([
       {
         name: 'state',
         then: thenState,
@@ -306,7 +318,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
      * @prop {(cap: string) => string} [init]
      */
 
-    const whens = /** @type {({when: walk.AnyExpr} & WhenDecl)[]} */ ([
+    const whens = /** @type {({when: AnyExpr} & WhenDecl)[]} */ ([
       {
         when: whenState,
         name: 'state',
@@ -456,7 +468,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
   }
 }
 
-/** @param {walk.SpecNode} spec */
+/** @param {SpecNode} spec */
 function countMaxTurns(spec) {
   let maxTurns = 0;
   analyze.transform(spec,
@@ -483,7 +495,7 @@ function gensym(name, symbols) {
 /**
  * @param {string} cap
  * @param {string} sym
- * @param {walk.Expr<walk.NumberNode | walk.TurnsNode>} expr - TODO what even does it mean to solve a turns expression; tighten?
+ * @param {AnyExpr} expr - TODO what even does it mean to solve a turns expression; tighten?
  * @param {number} [outerPrec]
  * @returns {string}
  */
@@ -520,7 +532,7 @@ function solve(cap, sym, expr, outerPrec = 0) {
   return res;
 
   /**
-   * @param {walk.Expr<walk.NumberNode | walk.TurnsNode>} expr
+   * @param {AnyExpr} expr
    * @returns {Generator<string>}
    */
   function* genStack(expr) {
@@ -594,7 +606,7 @@ function solve(cap, sym, expr, outerPrec = 0) {
 }
 
 /**
- * @param {walk.Expr<walk.NumberNode | walk.TurnsNode>|walk.TurnNode} node
+ * @param {AnyExpr|TurnNode} node
  * @param {number} [outerPrec]
  * @returns {string}
  */
@@ -649,7 +661,7 @@ function compileValue(node, outerPrec = 0) {
 }
 
 /**
- * @param {walk.AnyExpr} expr
+ * @param {AnyExpr} expr
  * @param {{has: (name: string) => boolean}} symbols
  */
 function* freeSymbols(expr, symbols) {
@@ -658,7 +670,7 @@ function* freeSymbols(expr, symbols) {
   }
 }
 
-/** @param {walk.AnyExpr} expr */
+/** @param {AnyExpr} expr */
 function usedSymbols(expr) {
   /** @type {Set<string>} */
   const used = new Set();
