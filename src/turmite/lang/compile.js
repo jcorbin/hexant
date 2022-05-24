@@ -123,32 +123,22 @@ export function compileCode(spec, { format = 'value' } = {}) {
   function* compileContent(spec) {
     switch (format) {
       case 'value':
-        yield* compileObject(spec);
+        yield* amend('(_rules, World) => ', block(
+          compileDefinitions(spec),
+          compileRuleBuilder(spec),
+        ));
         break;
 
       case 'module':
-        yield* compileModule(spec);
+        yield* compileDefinitions(spec);
+        yield* amend('export default function build(_rules, World) ', block(
+          compileRuleBuilder(spec),
+        ));
         break;
 
       default:
         assertNever(format, 'invalid format');
     }
-  }
-
-  /** @param {walk.SpecNode} spec */
-  function* compileObject(spec) {
-    yield* amend('(_rules, World) => ', block(
-      compileDefinitions(spec),
-      compileRuleBuilder(spec),
-    ));
-  }
-
-  /** @param {walk.SpecNode} spec */
-  function* compileModule(spec) {
-    yield* compileDefinitions(spec);
-    yield* amend('export default function build(_rules, World) ', block(
-      compileRuleBuilder(spec),
-    ));
   }
 
   /** @param {walk.SpecNode} spec */
