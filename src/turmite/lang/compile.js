@@ -98,36 +98,7 @@ export default function compile(spec) {
  * @param {CodeFormat} [options.format]
  */
 export function compileCode(spec, { format = 'value' } = {}) {
-  // TODO proper scope-stack management
-  const symbols = new Set([
-    // dependencies
-    'World',
-
-    // definitions
-    'specString',
-    'numColors',
-
-    // build(...) => {...}
-    '_rules',
-    '_states',
-
-    // matching when state
-    '_state',
-    '_stateKey',
-
-    // matching when color
-    '_color',
-    '_colorKey',
-
-    // inner _rules update tmp
-    '_priorMask',
-  ]);
-
-  analyze.transform(spec, analyze.matchType('assign', ({ id: { name } }) => {
-    if (symbols.has(name))
-      throw new Error(`redefinition of symbol ${name}`);
-    symbols.add(name);
-  }));
+  const scope = makeScope();
 
   return compileContent(spec);
 
@@ -135,17 +106,17 @@ export function compileCode(spec, { format = 'value' } = {}) {
   function* compileContent(spec) {
     switch (format) {
       case 'value':
-        yield* amend('(_rules, World) => ', block(
-          compileDefinitions(spec),
-          compileRuleBuilder(spec),
-        ));
+        yield* compileArrowFn(scope, ['_rules', 'World'], function*() {
+          yield* compileDefinitions(spec);
+          yield* compileRuleBuilder(spec);
+        });
         break;
 
       case 'module':
         yield* compileDefinitions(spec);
-        yield* amend('export default function build(_rules, World) ', block(
-          compileRuleBuilder(spec),
-        ));
+        yield* compileFunction(scope, 'export default build', ['_rules', 'World'], function*() {
+          yield* compileRuleBuilder(spec);
+        });
         break;
 
       default:
@@ -155,6 +126,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
   /** @param {SpecNode} spec */
   function* compileDefinitions(spec) {
+    scope.define('specString');
     yield* amend({
       head: 'const specString = ',
       cont: '  ',
@@ -163,6 +135,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
     }, multiLineQuoted(toSpecString(spec)));
     yield '';
 
+    scope.define('numColors');
     yield `const numColors = ${countMaxTurns(spec)};`;
     yield '';
   }
@@ -179,6 +152,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
   /** @param {SpecNode} spec */
   function* compileRuleBuilder(spec) {
+    scope.define('_states');
     yield 'const _states = new Set();';
     yield '';
 
@@ -212,49 +186,51 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
   /** @param {AssignNode} assign */
   function* compileAssign({ id: { name }, value }) {
-    yield `let ${name} = ${compileValue(value)};`; // TODO can this be constified?
+    scope.define(name);
+    yield `let ${name} = ${compileValue(scope, value)};`; // TODO can this be constified?
   }
 
   /** @param {RuleNode} rule */
   function* compileRule(rule) {
-    /** @type {AssignNode[]} */
-    const assigns = [];
-    const scope = new Set(...symbols);
+    yield* scope.block(function*() {
+      /** @type {AssignNode[]} */
+      const assigns = [];
 
-    const { when, then } = analyze.transformed(rule,
+      const { when, then } = analyze.transformed(rule,
 
-      // TODO what was this doing? hacking the language tree to make then turns indexed by color implicitly?
-      // case 'then':
-      //   if (node.turn.type === 'turns') {
-      //     var colorSyms = walk.collect(node.color, ({ type }) =>
-      //       type === 'symbol' || type === 'identifier');
-      //     if (colorSyms.length === 1) {
-      //       node.turn = member(node.turn, colorSyms[0]);
-      //     }
-      //     // TODO: else error
-      //   }
-      //   break;
+        // TODO what was this doing? hacking the language tree to make then turns indexed by color implicitly?
+        // case 'then':
+        //   if (node.turn.type === 'turns') {
+        //     var colorSyms = walk.collect(node.color, ({ type }) =>
+        //       type === 'symbol' || type === 'identifier');
+        //     if (colorSyms.length === 1) {
+        //       node.turn = member(node.turn, colorSyms[0]);
+        //     }
+        //     // TODO: else error
+        //   }
+        //   break;
 
-      analyze.matchType('member', ({ value, item }) => {
-        switch (value.type) {
-          case 'symbol':
-          case 'identifier':
-            return null;
-          default:
-            const { type } = value;
-            const name = gensym(`${type[0].toUpperCase()}${type.slice(1)}`, scope);
-            assigns.push(analyze.assign(name, value));
-            const id = analyze.id(name);
-            return analyze.member(id, item);
-        }
-      }),
+        analyze.matchType('member', ({ value, item }) => {
+          switch (value.type) {
+            case 'symbol':
+            case 'identifier':
+              return null;
+            default:
+              const { type } = value;
+              const name = scope.gen(`${type[0].toUpperCase()}${type.slice(1)}`);
+              assigns.push(analyze.assign(name, value));
+              const id = analyze.id(name);
+              return analyze.member(id, item);
+          }
+        }),
 
-    );
+      );
 
-    yield* block(
-      ...assigns.map(assign => compileAssign(assign)),
-      compileRuleBody(when, then),
-    );
+      for (const assign of assigns)
+        yield* compileAssign(assign);
+
+      yield* compileRuleBody(when, then);
+    });
   }
 
   /**
@@ -301,7 +277,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
       const { mode } = then;
       if (mode !== '_') {
         const { value } = then;
-        expr = compileValue(value, opPrec.length);
+        expr = compileValue(scope, value, opPrec.length);
         if (expr === '0' && mode === '|') expr = null;
       }
 
@@ -337,22 +313,26 @@ export function compileCode(spec, { format = 'value' } = {}) {
       },
     ]);
 
-    const maskParts = thens
-      .map(({ then: { mode }, mask }) => mode === '=' ? mask : '')
-      .filter(part => part);
-    switch (maskParts.length) {
-      case 0:
-        break;
+    {
+      const maskParts = thens
+        .map(({ then: { mode }, mask }) => mode === '=' ? mask : '')
+        .filter(part => part);
+      switch (maskParts.length) {
+        case 0:
+          break;
 
-      case 1:
-        yield `const _priorMask = ~${maskParts[0]};`;
-        yield '';
-        break;
+        case 1:
+          scope.define('_priorMask');
+          yield `const _priorMask = ~${maskParts[0]};`;
+          yield '';
+          break;
 
-      default:
-        yield `const _priorMask = ~(${maskParts
-          .reduce((mask, part) => `${mask}${mask ? ' | ' : ''}${part}`)});`;
-        yield '';
+        default:
+          scope.define('_priorMask');
+          yield `const _priorMask = ~(${maskParts
+            .reduce((mask, part) => `${mask}${mask ? ' | ' : ''}${part}`)});`;
+          yield '';
+      }
     }
 
     yield* compileWhenMatch(0);
@@ -371,6 +351,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
               if (priorKey) keyExpr = `(${priorKey} | ${keyExpr})`;
               keyExpr = `${keyExpr} << ${shift}`;
             } else if (priorKey) keyExpr = `${priorKey} | ${keyExpr}`;
+            scope.define(sym);
             yield `const ${sym} = ${keyExpr};`;
             if (init) yield init(cap);
             yield '';
@@ -382,31 +363,34 @@ export function compileCode(spec, { format = 'value' } = {}) {
         switch (when.type) {
           case 'symbol':
           case 'expr':
-            const syms = [...freeSymbols(when, symbols)];
-            if (syms.length > 1) {
-              throw new Error('matching more than one variable is unsupported');
-            }
+            yield* amend(`for (let ${cap} = 0; ${cap} <= ${max}; ${cap}++) `, scope.block(function*() {
+              scope.define(cap);
 
-            const free = syms[0];
-            if (!free) {
-              throw new Error('no match variable');
-            }
+              const syms = [...freeSymbols(when, scope)];
+              if (syms.length > 1) {
+                throw new Error('matching more than one variable is unsupported');
+              }
+              const free = syms[0];
+              if (!free) {
+                throw new Error('no match variable');
+              }
+              scope.define(free);
 
-            const matchExpr = solve(free, cap, when);
+              const matchExpr = solve(scope, free, cap, when);
+              if (matchExpr === cap) {
+                yield `const ${free} = ${matchExpr};`;
+              } else {
+                yield `const ${free} = (${max} + ${matchExpr}) % ${max};`;
+                // TODO: gratuitous guard, only needed if division is involved
+                yield `if (Math.floor(${free}) !== ${free}) continue;`;
+              }
 
-            yield* amend(`for (let ${cap} = 0; ${cap} <= ${max}; ${cap}++) `, block(
-              matchExpr === cap
-                ? `const ${free} = ${matchExpr};`
-                : [
-                  `const ${free} = (${max} + ${matchExpr}) % ${max};`,
-                  // TODO: gratuitous guard, only needed if division is involved
-                  `if (Math.floor(${free}) !== ${free}) continue;`,
-                ],
-              body(),
-            ));
+              yield* body();
+            }));
             break;
 
           case 'number':
+            scope.define(cap);
             yield `const ${cap} = ${when.value};`;
             yield* body();
             break;
@@ -452,7 +436,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
           }
         }
 
-        if (maskParts.length) {
+        if (scope.has('_priorMask')) {
           parts.unshift(`_rules[${priorKey}] & _priorMask`);
         }
 
@@ -468,6 +452,52 @@ export function compileCode(spec, { format = 'value' } = {}) {
   }
 }
 
+/**
+ * @param {Scope} scope
+ * @param {string} name
+ * @param {string[]} args
+ * @param {() => Iterable<string>} body
+ */
+function compileFunction(scope, name, args, body) {
+  const argNames = args.map(arg => {
+    const match = /^(\w+)\s*=.*$/.exec(arg);
+    return match ? match[1] : arg;
+  });
+
+  let func = 'function';
+
+  const lastSpace = name.lastIndexOf(' ')
+  if (lastSpace >= 0) {
+    // keywords like export default async (static final frozen :S)
+    func = `${name.slice(lastSpace)} ${func}`;
+    name = name.slice(lastSpace + 1);
+  }
+
+  if (name.startsWith('*')) func = `${func}*`, name = name.slice(1);
+  if (name) scope.define(name), func = `${func} ${name}`;
+
+  return amend(`${func}(${args.join(', ')}) `, scope.block(function*() {
+    scope.define(...argNames);
+    yield* body();
+  }));
+}
+
+/**
+ * @param {Scope} scope
+ * @param {string[]} args
+ * @param {() => Iterable<string>} body
+ */
+function compileArrowFn(scope, args, body) {
+  const argNames = args.map(arg => {
+    const match = /^(\w+)\s*=.*$/.exec(arg);
+    return match ? match[1] : arg;
+  });
+  return amend(`(${args.join(', ')}) => `, scope.block(function*() {
+    scope.define(...argNames);
+    yield* body();
+  }));
+}
+
 /** @param {SpecNode} spec */
 function countMaxTurns(spec) {
   let maxTurns = 0;
@@ -478,28 +508,78 @@ function countMaxTurns(spec) {
   return maxTurns;
 }
 
-/**
- * @param {string} name
- * @param {Set<string>} symbols
- */
-function gensym(name, symbols) {
-  for (let i = 1; /* TODO non-infinite? */; i++) {
-    const uname = name + i;
-    if (!symbols.has(uname)) {
-      symbols.add(uname);
-      return uname;
-    }
+/** @typedef {ReturnType<makeScope>} Scope */
+
+function makeScope() {
+  /** @type {Set<string>[]} */
+  const stack = [];
+
+  /** @type {Set<string>} */
+  let scope = new Set();
+
+  function push() {
+    stack.push(scope);
+    scope = new Set([...scope]);
   }
+
+  function pop() {
+    scope = stack.pop() || new Set();
+  }
+
+  return {
+    /// stack
+    push, pop,
+
+    /// current scope
+    [Symbol.iterator]() {
+      return scope[Symbol.iterator]();
+    },
+
+    /** @param {string} name */
+    has(name) {
+      return scope.has(name);
+    },
+
+    /** @param {string[]} names */
+    define(...names) {
+      for (const name of names) {
+        if (scope.has(name))
+          throw new Error(`redefinition of symbol ${name}`);
+        scope.add(name);
+      }
+    },
+
+    /// convenience utilities
+
+    /** @param {string} name */
+    gen(name) {
+      for (let i = 1; /* TODO non-infinite? */; i++) {
+        const uname = name + i;
+        if (!scope.has(uname)) {
+          return uname;
+        }
+      }
+    },
+
+    /** @param {(() => Iterable<string>)} body */
+    *block(body) {
+      push();
+      yield* block(body());
+      pop();
+    },
+
+  };
 }
 
 /**
+ * @param {Scope} scope
  * @param {string} cap
  * @param {string} sym
  * @param {AnyExpr} expr - TODO what even does it mean to solve a turns expression; tighten?
  * @param {number} [outerPrec]
  * @returns {string}
  */
-function solve(cap, sym, expr, outerPrec = 0) {
+function solve(scope, cap, sym, expr, outerPrec = 0) {
   const invOp = {
     '+': '-',
     '*': '/',
@@ -601,16 +681,17 @@ function solve(cap, sym, expr, outerPrec = 0) {
         return;
     }
 
-    yield compileValue(expr);
+    yield compileValue(scope, expr);
   }
 }
 
 /**
+ * @param {Scope} scope
  * @param {AnyExpr|TurnNode} node
  * @param {number} [outerPrec]
  * @returns {string}
  */
-function compileValue(node, outerPrec = 0) {
+function compileValue(scope, node, outerPrec = 0) {
   switch (node.type) {
 
     case 'turn':
@@ -631,19 +712,24 @@ function compileValue(node, outerPrec = 0) {
 
     case 'expr':
       const prec = opPrec.indexOf(node.op);
-      const val1 = compileValue(node.arg1, prec);
-      const val2 = compileValue(node.arg2, prec);
+      const val1 = compileValue(scope, node.arg1, prec);
+      const val2 = compileValue(scope, node.arg2, prec);
       const exprStr = `${val1} ${node.op} ${val2}`;
       return prec < outerPrec ? `(${exprStr})` : exprStr;
 
     case 'member':
-      // TODO error if !symbols.has(sym)
-      const baseVal = compileValue(node.value, 0);
-      const itemVal = compileValue(node.item, opPrec.length);
+      const baseVal = compileValue(scope, node.value, 0);
+      const itemVal = compileValue(scope, node.item, opPrec.length);
       return `${baseVal}[${`${itemVal} % ${baseVal}.length`}]`;
 
     case 'symbol':
     case 'identifier':
+      // TODO we can't do this currently because compileRuleBody() pre-compiles
+      // then expressions before when expressions have bound their symbols
+      //
+      // if (!scope.has(node.name)) {
+      //   throw new Error(`undefined ${node.type} ${JSON.stringify(node.name)}`);
+      // }
       return node.name;
 
     case 'number':
