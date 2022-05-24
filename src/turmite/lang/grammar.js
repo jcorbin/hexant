@@ -1,19 +1,16 @@
-// @generated from id:c5dadd4f325369d40b0dfd3c657ad6fe5cb2581772fb8846b0b513104623acaf
+// @generated from id:509885350e3867316b0d39ed7308cb54f271f1b429b8894e8dab94d2d643fd8e
 
 // Generated automatically by nearley, version 2.20.1
 // http://github.com/Hardmath123/nearley
 function id(x) { return x[0]; }
 let Lexer = undefined;
 let ParserRules = [
-    {"name": "spec$ebnf$1", "symbols": ["assigns"], "postprocess": id},
-    {"name": "spec$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "spec", "symbols": ["spec$ebnf$1", "rules"], "postprocess": 
-        ([assigns, rules]) => ({type: 'spec', assigns: assigns || [], rules}) },
-    {"name": "assigns", "symbols": ["assign"]},
-    {"name": "assigns", "symbols": ["assign", "newline", "assigns"], "postprocess": ([head, _1, tail]) => [head].concat(tail)},
+    {"name": "spec", "symbols": ["entries"], "postprocess": ([entries]) => ({type: 'spec', entries: entries || []})},
+    {"name": "entries", "symbols": ["entry"]},
+    {"name": "entries", "symbols": ["entry", "newline", "entries"], "postprocess": ([head, _, tail]) => [head].concat(tail)},
+    {"name": "entry", "symbols": ["assign"], "postprocess": d => d[0]},
+    {"name": "entry", "symbols": ["rule"], "postprocess": d => d[0]},
     {"name": "assign", "symbols": ["identifier", "_", {"literal":"="}, "_", "lit"], "postprocess": ([id, _1, _2, _3, value]) => ({type: 'assign', id, value})},
-    {"name": "rules", "symbols": ["rule"]},
-    {"name": "rules", "symbols": ["rule", "newline", "rules"], "postprocess": ([head, _1, tail]) => [head].concat(tail)},
     {"name": "rule", "symbols": ["ant"], "postprocess": ([ant]) => ant},
     {"name": "rule$string$1", "symbols": [{"literal":"="}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "rule", "symbols": ["when", "rule$string$1", "then"], "postprocess": ([when, _1, then]) => ({type: 'rule', when, then})},

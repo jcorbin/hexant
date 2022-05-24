@@ -156,28 +156,28 @@ export function compileCode(spec, { format = 'value' } = {}) {
     yield 'const _states = new Set();';
     yield '';
 
-    for (const assign of spec.assigns) {
-      yield* compileSpecComment(assign, { head: 'assign: ' });
-      yield* compileAssign(assign);
-      yield '';
-    }
+    for (const entry of spec.entries) {
+      switch (entry.type) {
+        case 'assign':
+          yield* compileSpecComment(entry, { head: 'assign: ' });
+          yield* compileAssign(entry);
+          yield '';
+          break;
 
-    for (const rule of spec.rules) {
-      switch (rule.type) {
         case 'ant':
-          yield* compileSpecComment(rule, { head: 'rule: ' });
-          yield* compileRule(analyze.antRule(rule.turns));
+          yield* compileSpecComment(entry, { head: 'rule: ' });
+          yield* compileRule(analyze.antRule(entry.turns));
           yield '';
           break;
 
         case 'rule':
-          yield* compileSpecComment(rule, { head: 'rule: ' });
-          yield* compileRule(rule);
+          yield* compileSpecComment(entry, { head: 'rule: ' });
+          yield* compileRule(entry);
           yield '';
           break;
 
         default:
-          assertNever(rule, 'invalid rule node');
+          assertNever(entry, 'invalid rule node');
       }
     }
 

@@ -34,12 +34,11 @@ export function sym(name) {
 }
 
 /**
- * @param {walk.AssignNode[]} assigns
- * @param {(walk.RuleNode | walk.AntNode)[]} rules
+ * @param {(walk.AssignNode | walk.RuleNode | walk.AntNode)[]} entries
  * @returns {walk.SpecNode}
  */
-export function spec(assigns, rules) {
-  return { type: 'spec', assigns, rules };
+export function spec(...entries) {
+  return { type: 'spec', entries };
 }
 
 /**
@@ -288,22 +287,15 @@ export function transform(node, ...xforms) {
 
       case 'spec': {
         let any = false;
-        const assigns = node.assigns.map(assign => {
-          const rep = each(assign);
-          if (!rep) return assign;
-          if (rep.type !== 'assign') throw new Error('invalid replacement assign node');
+        const entries = node.entries.map(entry => {
+          const rep = each(entry);
+          if (!rep) return entry;
+          if (!(rep.type === 'assign' || rep.type === 'rule' || rep.type === 'ant'))
+            throw new Error('invalid replacement spec entry');
           any = true;
           return rep;
         });
-        const rules = node.rules.map(rule => {
-          const rep = each(rule);
-          if (!rep) return rule;
-          if (!(rep.type === 'rule' || rep.type === 'ant'))
-            throw new Error('invalid replacement rule node');
-          any = true;
-          return rep;
-        });
-        if (any) return spec(assigns, rules);
+        if (any) return spec(...entries);
         return null;
       }
 

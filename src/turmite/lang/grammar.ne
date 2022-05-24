@@ -1,15 +1,14 @@
 @preprocessor module
 
-spec -> assigns:? rules {%
-  ([assigns, rules]) => ({type: 'spec', assigns: assigns || [], rules}) %}
+spec -> entries {% ([entries]) => ({type: 'spec', entries: entries || []}) %}
 
-assigns -> assign
-         | assign newline assigns {% ([head, _1, tail]) => [head].concat(tail) %}
+entries -> entry
+         | entry newline entries {% ([head, _, tail]) => [head].concat(tail) %}
+
+entry -> assign  {% d => d[0] %}
+       | rule    {% d => d[0] %}
 
 assign -> identifier _ "=" _ lit  {% ([id, _1, _2, _3, value]) => ({type: 'assign', id, value}) %}
-
-rules -> rule
-       | rule newline rules  {% ([head, _1, tail]) => [head].concat(tail) %}
 
 rule -> ant             {% ([ant]) => ant %}
       | when "=>" then  {% ([when, _1, then]) => ({type: 'rule', when, then}) %}

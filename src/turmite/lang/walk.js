@@ -36,8 +36,7 @@
 
 /** @typedef {object} SpecNode
  * @prop {"spec"} type
- * @prop {AssignNode[]} assigns
- * @prop {(AntNode|RuleNode)[]} rules
+ * @prop {(AssignNode|AntNode|RuleNode)[]} entries
  */
 
 /** @typedef {Value<NumberNode|TurnsNode>} AnyValue */
@@ -161,11 +160,8 @@ export function dfs(root, visit) {
     switch (node.type) {
 
       case 'spec':
-        for (const subNode of node.assigns) {
-          each(subNode);
-        }
-        for (const subNode of node.rules) {
-          each(subNode);
+        for (const entry of node.entries) {
+          each(entry);
         }
         break;
 
