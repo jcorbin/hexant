@@ -198,17 +198,22 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
       const { when, then } = analyze.transformed(rule,
 
-        // TODO what was this doing? hacking the language tree to make then turns indexed by color implicitly?
-        // case 'then':
-        //   if (node.turn.type === 'turns') {
-        //     var colorSyms = walk.collect(node.color, ({ type }) =>
-        //       type === 'symbol' || type === 'identifier');
-        //     if (colorSyms.length === 1) {
-        //       node.turn = member(node.turn, colorSyms[0]);
-        //     }
-        //     // TODO: else error
-        //   }
-        //   break;
+        // TODO possible, but uncertain if should bring back implicit indexing
+        // analyze.matchType('then', ({ state, color, turn }) => {
+        //   const { mode } = turn;
+        //   if (mode === '_') return;
+        //
+        //   const { value } = turn;
+        //   if (value.type !== 'turns') return;
+        //
+        //   /** @type {AnyExpr|null} */
+        //   let colorExpr = null;
+        //   analyze.transform(rule, analyze.matchType('when', ({ color }) => { colorExpr = color }));
+        //   if (!colorExpr) throw new Error('unablet to find when-color expression to auto-index then-turns');
+        //
+        //   turn = analyze.thenVal(analyze.member(value, colorExpr), mode);
+        //   return analyze.then(state, color, turn);
+        // }),
 
         analyze.matchType('member', ({ value, item }) => {
           switch (value.type) {
