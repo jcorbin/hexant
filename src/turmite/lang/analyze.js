@@ -9,6 +9,15 @@ import * as walk from './walk.js';
 // TODO generic id/sym/value/expr lifts, and then used consistently throughout
 
 /**
+ * @param {number} value
+ * @param {number} [base] - defaults to base-10 if unspecified
+ * @returns {walk.NumberNode}
+ */
+export function number(value, base) {
+  return { type: 'number', value, base };
+}
+
+/**
  * @param {string} name
  * @returns {walk.IdentifierNode}
  */
@@ -191,13 +200,13 @@ export function isAnyValue(node) {
  */
 export function antRule(antTurns, {
   state = 0,
-  whenState = { type: 'number', value: state },
-  thenState = { type: 'thenVal', mode: '=', value: { type: 'number', value: state } },
+  whenState = number(state),
+  thenState = thenSet(number(state)),
 } = {}) {
   const c = sym('c');
   return rule(when(whenState, c), then(
     thenState,
-    expr('+', c, { type: 'number', value: 1 }),
+    expr('+', c, number(1)),
     member(turns(...antTurns), c),
   ));
 }
