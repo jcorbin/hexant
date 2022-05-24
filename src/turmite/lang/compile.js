@@ -415,21 +415,17 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
         for (const { name, then, expr, max, shift } of thens) {
           const { mode } = then;
-          const comment = mode === '_'
-            ? []
-            : [...compileSpecComment(
-              then.value,
-              { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` })
-            ];
 
-          if (expr !== null && expr !== '0') {
-            // TODO &max is only valid if max is some 2^N-1, otherwise should use Math.min(max, ...)
-            parts.push(`${expr} & ${max}`);
+          if (mode !== '_') {
+            const { value } = then;
+            const comment = compileSpecComment(
+              value,
+              { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` });
+            if (expr !== null && expr !== '0') {
+              // TODO &max is only valid if max is some 2^N-1, otherwise should use Math.min(max, ...)
+              parts.push(`${expr} & ${max} ${[...comment].join('\n')}`);
+            } else yield* comment;
           }
-
-          if (parts.length) {
-            parts.push(`${parts.pop()}${comment.length ? ' ' + comment.join('\n') : ''}`);
-          } else if (comment.length) yield* comment;
 
           if (parts.length && shift) {
             parts.push(`( ${reduceParts()}\n) << ${shift}`);
