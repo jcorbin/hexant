@@ -104,16 +104,23 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-23
+# 2022-05-24
 
 ## WIP
 
-- bring back auto `turns(...)` color indexing
 - push turmite code action is/convert logic out into `lang/analyze` module
 - subsume comments and @directives into turmite
-  - then support `@state <number> ant( ... )`
-  - maybe `@state <number> c => c-expr, <turn>`
 - flatten `turmite/lang/...` into `turmite/...` now that there is only one parser
+- language feature to specified a fixed state rule
+  - e.g. to "lift" an ant
+  - e.g. to precede a simplified rule of the form `when-c => then-c, then-turn`
+  - idea: `state = 42: ant(...)` ; `state = 42: c => c + 1, turns(R L)`
+    - coidea:
+      ```
+      color = 2*c: s => s + 1, L
+      color = 2*c+1: s => s + 1, R
+      color = 16*c+1: _ => F
+      ```
 
 ### Play testing turmite rules
 
@@ -150,6 +157,17 @@ OOPS that doesn't work, let's fix that
   - a rule that doesn't care to express any result color or turn, merely a state update
 
 ## Done
+
+- reified compile scope management
+  - now there's a nestable `makeScope() => Scope` set-ish of symbols
+  - used for block construction
+- added strict "all symbols must be defined" check to value compilation
+- flattened spec node, allowing assigns to interleave rules, and setting up for
+  directives / comments next
+  - such interleaving enabled by scope rework, since assigns can happen
+    anywhere more robustly now
+
+# 2022-05-23
 
 - refactored language analysis module
   - added suite of grammar node maker functions
