@@ -279,7 +279,11 @@ export function transform(node, ...xforms) {
 
   /** @param {walk.Node} node @returns {walk.Node|null} */
   function each(node) {
-    node = xform(node) || node;
+    let newNode = xform(node);
+    if (newNode && newNode !== node) {
+      newNode = each(newNode) || newNode;
+    }
+    node = newNode || node;
     switch (node.type) {
 
       case 'spec': {
