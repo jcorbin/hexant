@@ -115,10 +115,11 @@ export function then(state, color, turn) {
 
 /**
  * @param {walk.AnyExpr|walk.ThenValNode} value
+ * @param {"="|"|"} [mode]
  * @returns {walk.ThenValNode}
  */
-export function thenVal(value) {
-  return value.type === 'thenVal' ? value : thenSet(value);
+export function thenVal(value, mode = '=') {
+  return value.type === 'thenVal' ? value : { type: 'thenVal', mode, value };
 }
 
 /**
@@ -354,7 +355,7 @@ export function transform(node, ...xforms) {
         let value = each(node.value);
         if (!value) return null;
         if (!isAnyExpr(value)) throw new Error('invalid replacement then value node');
-        return { type: 'thenVal', mode, value };
+        return thenVal(value, mode);
       }
 
       case 'member': {
