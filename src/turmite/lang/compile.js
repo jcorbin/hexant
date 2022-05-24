@@ -271,19 +271,19 @@ export function compileCode(spec, { format = 'value' } = {}) {
         max: 'World.MaxTurn',
       },
     ]).map(({ then, ...decl }) => {
-      /** @type {string|null} */
-      let expr = null;
+      let isEmpty = true;
 
       const { mode } = then;
       if (mode !== '_') {
         const { value } = then;
-        expr = compileValue(scope, value, opPrec.length);
-        if (expr === '0' && mode === '|') expr = null;
+        isEmpty = mode === '|' && compileValue(
+          // ignore symbol defined check, all we care about here: "is the expression statically 0?"
+          { has() { return true } }, value, opPrec.length) === '0';
       }
 
-      return { then, expr, ...decl };
+      return { then, isEmpty, ...decl };
     });
-    if (thens.every(({ expr }) => expr === null)) return;
+    if (thens.every(({ isEmpty }) => isEmpty)) return;
 
     /** @typedef {object} WhenDecl
      * @prop {string} name
@@ -413,7 +413,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
           return parts.pop() || '';
         };
 
-        for (const { name, then, expr, max, shift } of thens) {
+        for (const { name, then, max, shift } of thens) {
           const { mode } = then;
 
           if (mode !== '_') {
@@ -421,7 +421,8 @@ export function compileCode(spec, { format = 'value' } = {}) {
             const comment = compileSpecComment(
               value,
               { head: `then ${name} ${mode}${mode == '=' ? '' : '='} ` });
-            if (expr !== null && expr !== '0') {
+            const expr = compileValue(scope, value, opPrec.length);
+            if (expr !== '0') {
               // TODO &max is only valid if max is some 2^N-1, otherwise should use Math.min(max, ...)
               parts.push(`${expr} & ${max} ${[...comment].join('\n')}`);
             } else yield* comment;
@@ -682,7 +683,7 @@ function solve(scope, cap, sym, expr, outerPrec = 0) {
 }
 
 /**
- * @param {Scope} scope
+ * @param {{has: (name: string) => boolean}} scope
  * @param {AnyExpr|TurnNode} node
  * @param {number} [outerPrec]
  * @returns {string}
@@ -720,12 +721,9 @@ function compileValue(scope, node, outerPrec = 0) {
 
     case 'symbol':
     case 'identifier':
-      // TODO we can't do this currently because compileRuleBody() pre-compiles
-      // then expressions before when expressions have bound their symbols
-      //
-      // if (!scope.has(node.name)) {
-      //   throw new Error(`undefined ${node.type} ${JSON.stringify(node.name)}`);
-      // }
+      if (!scope.has(node.name)) {
+        throw new Error(`undefined ${node.type} ${JSON.stringify(node.name)}`);
+      }
       return node.name;
 
     case 'number':
