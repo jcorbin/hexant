@@ -649,25 +649,23 @@ function compileValue(node, outerPrec = 0) {
 }
 
 /**
- * @param {walk.Node} node
- * @param {Set<string>} symbols
+ * @param {walk.AnyExpr} expr
+ * @param {{has: (name: string) => boolean}} symbols
  */
-function freeSymbols(node, symbols) {
-  return new Set(
-    walk.collect(node, 'symbol')
-      .map(({ name }) => name)
-      .filter(name => !symbols.has(name))
-  );
+function* freeSymbols(expr, symbols) {
+  for (const name of usedSymbols(expr)) {
+    if (!symbols.has(name)) yield name;
+  }
 }
 
-/**
- * @param {walk.Node} node
- */
-function usedSymbols(node) {
-  return new Set(
-    walk.collect(node, 'symbol')
-      .map(({ name }) => name)
-  );
+/** @param {walk.AnyExpr} expr */
+function usedSymbols(expr) {
+  /** @type {Set<string>} */
+  const used = new Set();
+  analyze.transform(expr, analyze.matchType('symbol', ({ name }) => {
+    used.add(name);
+  }));
+  return used;
 }
 
 /** @param {Iterable<string>} lines */
