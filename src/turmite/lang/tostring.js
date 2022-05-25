@@ -1,7 +1,9 @@
 // @ts-check
 
 import { from as rleFrom } from '../rle-builder.js';
-import * as walk from './walk.js';
+
+/** @typedef {import('./walk.js').Node} Node */
+
 
 // TODO reconcile with ../constants.js
 const TurnSyms = {
@@ -22,154 +24,137 @@ const TurnSyms = {
 // TODO: de-dupe
 const opPrec = ['+', '-', '*', '/', '%'];
 
-/** @param {walk.Node} root */
-export function* toSpecString(root) {
-  /** @type {string[]} */
-  const lines = [];
+/**
+ * @param {Node[]} nodes
+ * @returns {Generator<string>}
+ */
+export function* toSpecString(...nodes) {
+  yield* toString(0, ...nodes);
+}
 
-  const precs = [0];
-  /** @type {string[]} */
-  const stack = [];
-
-  function pop() {
-    const term = stack.pop();
-    if (term === undefined) {
-      throw new Error('toSpecString blew its stack');
-    }
-    lines.push(term);
-  }
-
-  /** @param {number|undefined} n */
-  function orNaN(n) {
-    return n === undefined ? NaN : n;
-  }
-
-  // TODO this is mostly duplicated structure with walk.dfs ; just wholly
-  // subsume its DFS logic ; in fact it'll be clearer once each case owns it's
-  // own "descend TO WHAT", rather than hiding them behind some guise of
-  // generality
-  walk.dfs(root, (node, descend) => {
+/**
+ * @param {number} outerPrec
+ * @param {Node[]} nodes
+ * @returns {Generator<string>}
+ */
+function* toString(outerPrec, ...nodes) {
+  for (const node of nodes) {
     switch (node.type) {
 
-      case 'spec':
-        descend();
+      case 'spec': {
+        const { entries } = node;
+        for (const entry of entries) {
+          yield* toString(outerPrec, entry);
+        }
         break;
+      }
 
-      case 'assign':
-        stack.push(node.id.name);
-        descend();
-        join(' = ');
-        pop();
+      case 'assign': {
+        const { id: { name }, value } = node;
+        const it = toString(outerPrec, value)
+        yield `${name} = ${next(it, '')}`;
+        yield* it;
         break;
+      }
 
-      case 'rule':
-        descend();
-        join(' => ');
-        pop();
+      case 'rule': {
+        const { when, then } = node;
+        const it = toString(outerPrec, when, then)
+        yield `${next(it, '')} => ${next(it, '')}`;
+        yield* it;
         break;
+      }
 
-      case 'when':
-        descend();
-        join(', ');
+      case 'when': {
+        const { state, color } = node;
+        const it = toString(outerPrec, state, color);
+        yield `${next(it, '')}, ${next(it, '')}`;
+        yield* it;
         break;
+      }
 
       case 'then':
-        descend();
-        join(', ');
-        join(', ');
+        const { state, color, turn } = node;
+        const it = toString(outerPrec, state, color, turn);
+        yield `${next(it, '')}, ${next(it, '')}, ${next(it, '')}`;
+        yield* it;
         break;
 
-      case 'thenVal':
-        switch (node.mode) {
-          case '|':
-            stack.push(node.mode);
-            descend();
-            join('');
-            break;
-
-          case '=':
-            descend();
-            break;
-
-          case '_':
-            stack.push(node.mode);
-            break;
-
-          default:
-            assertNever(node, 'invalid thenVal mode');
+      case 'thenVal': {
+        const { mode } = node;
+        if (mode === '_') {
+          yield '_';
+          break;
         }
-        break;
 
-      case 'member':
-        descend();
-        wrap('[', ']');
-        join('');
+        const { value } = node;
+        const it = toString(outerPrec, value);
+        yield `${mode === '=' ? '' : mode}${next(it, '')}`;
+        yield* it;
         break;
+      }
 
-      case 'expr':
-        precs.push(opPrec.indexOf(node.op));
-        descend();
-        join(` ${node.op} `);
-        if (orNaN(precs.pop()) < orNaN(precs[precs.length - 1])) {
-          wrap('(', ')');
-        }
+      case 'member': {
+        const { value, item } = node;
+        const it = toString(outerPrec, value, item);
+        yield `${next(it, '')}[${next(it, '')}]`;
+        yield* it;
         break;
+      }
+
+      case 'expr': {
+        const { op, arg1, arg2 } = node;
+        const prec = opPrec.indexOf(op)
+        const it = toString(outerPrec, arg1, arg2);
+        const expr = `${next(it, '')} ${op} ${next(it, '')}`;
+        yield prec < outerPrec ? `(${expr})` : expr;
+        yield* it;
+        break;
+      }
 
       case 'identifier':
-      case 'symbol':
-        stack.push(node.name);
-        descend();
+      case 'symbol': {
+        const { name } = node;
+        yield name;
         break;
+      }
 
       case 'ant':
-      case 'turns':
-        stack.push(`${node.type}(${rleFrom(node.turns
+      case 'turns': {
+        const { type, turns } = node;
+        yield `${type}(${rleFrom(turns
           .map(({ count: { value: count }, turn }) => [count, TurnSyms[turn]])
         )
           .map(([count, sym]) => count > 1 ? `${count}${sym}` : sym)
-          .join(' ')})`);
+          .join(' ')})`;
         break;
+      }
 
-      case 'turn':
-        stack.push(node.names.map(name => TurnSyms[name]).join('|'));
+      case 'turn': {
+        const { names } = node;
+        yield names.map(name => TurnSyms[name]).join('|');
         break;
+      }
 
-      case 'number':
-        stack.push(node.value.toString());
-        descend();
+      case 'number': {
+        const { value, base } = node;
+        yield value.toString(base);
         break;
+      }
 
       default:
         assertNever(node, 'invalid grammar node');
     }
-  });
-
-  // if the caller called us with some arbitrary grammar node, let them have/keep all the pieces ;-)
-  while (stack.length) {
-    const line = stack.pop();
-    if (line !== undefined) {
-      lines.push(line);
-    }
   }
+}
 
-  // TODO refactor to yield throughout above after we flatten walk.dfs
-  yield* lines;
-
-  /** @param {string} sep */
-  function join(sep) {
-    const b = stack.pop();
-    const a = stack.pop();
-    stack.push(`${a}${sep}${b}`);
-  }
-
-  /**
-   * @param {string} pre
-   * @param {string} post
-   */
-  function wrap(pre, post) {
-    const i = stack.length - 1;
-    stack[i] = `${pre}${stack[i]}${post}`;
-  }
+/** @template T
+ * @param {Iterator<T>} it
+ * @param {T} or
+ */
+function next(it, or) {
+  const { done, value } = it.next();
+  return done ? or : value;
 }
 
 /**
