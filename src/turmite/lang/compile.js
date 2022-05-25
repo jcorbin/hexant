@@ -136,7 +136,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
     yield '';
 
     scope.define('numColors');
-    yield `const numColors = ${countMaxTurns(spec)};`;
+    yield `const numColors = ${countNumColors(spec)};`;
     yield '';
   }
 
@@ -504,13 +504,19 @@ function compileArrowFn(scope, args, body) {
 }
 
 /** @param {SpecNode} spec */
-function countMaxTurns(spec) {
-  let maxTurns = 0;
-  analyze.transform(spec,
-    analyze.matchType('ant', ({ turns }) => { maxTurns = Math.max(maxTurns, turns.length) }),
-    analyze.matchType('turns', ({ turns }) => { maxTurns = Math.max(maxTurns, turns.length) }),
-  );
-  return maxTurns;
+function countNumColors(spec) {
+  let numColors = 0;
+  analyze.transform(spec, node => {
+    switch (node.type) {
+      case 'ant':
+      case 'turns': {
+        const { turns } = node;
+        numColors = Math.max(numColors, turns.length);
+        break;
+      }
+    }
+  });
+  return numColors;
 }
 
 /** @typedef {ReturnType<makeScope>} Scope */
