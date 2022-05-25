@@ -152,6 +152,9 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
   /** @param {SpecNode} spec */
   function* compileRuleBuilder(spec) {
+    yield 'if (numColors > World.MaxColor+1) return {err: `required numColors:${numColors} exceeds world max:(${World.MaxColor})`};';
+    yield '';
+
     scope.define('_states');
     yield 'const _states = new Set();';
     yield '';
