@@ -238,30 +238,3 @@ export function dfs(root, visit) {
 export function isNodeType(type, node) {
   return node.type === type;
 }
-
-/**
- * @template {NodeType} T
- * @param {Node} node
- * @param {T} type
- */
-export function collect(node, type) {
-  /** @type {TypedNode<T>[]} */
-  const nodes = [];
-  dfsPre(node, child => {
-    if (isNodeType(type, child)) {
-      nodes.push(child);
-    }
-  });
-  return nodes;
-}
-
-/**
- * @param {Node} root
- * @param {(node: Node) => void} visit
- */
-export function dfsPre(root, visit) {
-  dfs(root, (node, descend) => {
-    visit(node);
-    descend();
-  });
-}
