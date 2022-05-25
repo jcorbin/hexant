@@ -104,12 +104,11 @@ system commands.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-24
+# 2022-05-25
 
 ## WIP
 
 - push turmite code action is/convert logic out into `lang/analyze` module
-- subsume comments and @directives into turmite
 - flatten `turmite/lang/...` into `turmite/...` now that there is only one parser
 - language feature to specified a fixed state rule
   - e.g. to "lift" an ant
@@ -157,6 +156,19 @@ OOPS that doesn't work, let's fix that
   - a rule that doesn't care to express any result color or turn, merely a state update
 
 ## Done
+
+- subsumed comments and @directives into turmite language module
+  - tried and failed to add comments/@directives to nearley grammar
+  - ...then spent some time trying to write a new parser module form scratch,
+    abandoned for now due to frustration with variadic tuple types
+  - ...then circled back to the nearley grammar, and was able to add comments
+    and @directives on a second try
+- eliminated legacy `walk.dfs` routines:
+  - `dfsPre` and `collect` have already been replace by `analyze.transform()`
+  - flattened remainder into `toSpecString` and simplified into a recursive
+    generator, no more string building stack ops
+
+# 2022-05-24
 
 - reified compile scope management
   - now there's a nestable `makeScope() => Scope` set-ish of symbols
