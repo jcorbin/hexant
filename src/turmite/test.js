@@ -4,6 +4,8 @@
 
 import * as rezult from '../rezult.js';
 
+import { raw as rawParse } from './lang/parse.js';
+
 import {
   parse as parseTurmite,
   compile as compileTurmite,
@@ -59,6 +61,12 @@ testActions.set('run', async function*({ args }) {
   }
 
   yield* dump(rezult.toValue(Turmite.from(build)));
+});
+
+testActions.set('parse', async function*({ stdin }) {
+  const str = await bufferStream(stdin);
+  const node = rezult.toValue(rawParse(str));
+  yield JSON.stringify(node, null, 2);
 });
 
 testActions.set('dump', async function*({ stdin }) {
