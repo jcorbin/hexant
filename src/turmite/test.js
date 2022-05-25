@@ -36,8 +36,8 @@ function runTestAction({ args: [action, ...args], ...rest }) {
 }
 
 testActions.set('diffRules', async function*({ args: [str1, str2] }) {
-  const { rules: rules1, specString: spec1 } = await rezult.toPromise(Turmite.from(str1));
-  const { rules: rules2, specString: spec2 } = await rezult.toPromise(Turmite.from(str2));
+  const { rules: rules1, specString: spec1 } = rezult.toValue(Turmite.from(str1));
+  const { rules: rules2, specString: spec2 } = rezult.toValue(Turmite.from(str2));
   yield spec1;
   yield '-- vs';
   yield spec2;
@@ -58,17 +58,17 @@ testActions.set('run', async function*({ args }) {
     throw message('module lacks a default export build()');
   }
 
-  yield* dump(await rezult.toPromise(Turmite.from(build)));
+  yield* dump(rezult.toValue(Turmite.from(build)));
 });
 
 testActions.set('dump', async function*({ stdin }) {
   const str = await bufferStream(stdin);
 
-  const builder = await rezult.toPromise(parseTurmite(str));
+  const builder = rezult.toValue(parseTurmite(str));
   yield 'BUILDER:';
   yield builder.toString();
 
-  yield* dump(await rezult.toPromise(Turmite.from(builder)));
+  yield* dump(rezult.toValue(Turmite.from(builder)));
 });
 
 testActions.set('compile', async function*({ stdin }) {
@@ -154,17 +154,17 @@ function* dump(ent) {
 testActions.set('roundTrip', async function*({ stdin }) {
   const str1 = await bufferStream(stdin);
 
-  const build1 = await rezult.toPromise(parseTurmite(str1));
+  const build1 = rezult.toValue(parseTurmite(str1));
   const code1 = build1.toString();
   yield 'first build:';
   yield code1;
 
-  const ent = await rezult.toPromise(Turmite.from(build1));
+  const ent = rezult.toValue(Turmite.from(build1));
 
   const str2 = ent.specString;
 
   yield `re - parsing ${str2}; `
-  const build2 = await rezult.toPromise(parseTurmite(str2));
+  const build2 = rezult.toValue(parseTurmite(str2));
   const code2 = build2.toString();
 
   if (code1 !== code2) {
