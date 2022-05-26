@@ -5,6 +5,16 @@ import * as rezult from '../rezult.js';
 
 import * as constants from './constants.js';
 
+import parseRaw from './parse.js';
+
+import {
+  default as compileBuilder,
+  compileCode, endLines as addLineEnds
+} from './compile.js';
+
+/** @typedef {import('./compile.js').RuleConstants} RuleConstants */
+/** @typedef {import('./compile.js').Builder} Builder */
+
 import { isAnt, convertAnt } from './parse.js';
 
 /** @param {string} spec */
@@ -31,6 +41,11 @@ const help = {
 
 };
 
+/** @param {string} str */
+export function parse(str) {
+  return rezult.bind(parseRaw(str), spec => compileBuilder(spec));
+}
+
 /**
  * @param {string} spec
  * @returns {Generator<{name: string, label?: string, then: (spec: string) => string}>}
@@ -44,13 +59,6 @@ export function* ruleActions(spec) {
     };
   }
 }
-
-export { default as parse } from './parse.js';
-
-/** @typedef {import('./compile.js').RuleConstants} RuleConstants */
-import parse from './parse.js';
-
-/** @typedef {import('./compile.js').Builder} Builder */
 
 export class Turmite {
 
@@ -171,9 +179,6 @@ export class Turmite {
     });
   }
 }
-
-import { parseRaw } from './parse.js';
-import { compileCode, endLines as addLineEnds } from './compile.js';
 
 /**
  * @param {string} str

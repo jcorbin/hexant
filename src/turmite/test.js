@@ -4,7 +4,7 @@
 
 import * as rezult from '../rezult.js';
 
-import { parseRaw } from './parse.js';
+import parseRaw from './parse.js';
 
 import {
   parse as parseTurmite,

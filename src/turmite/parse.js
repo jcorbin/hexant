@@ -27,17 +27,6 @@ function asTypedNode(type, node) {
   return node;
 }
 
-import compile from './compile.js';
-/** @typedef {import('./compile.js').Builder} Builder */
-
-/**
- * @param {string} str
- * @returns {rezult.Result<Builder>}
- */
-export default function parse(str) {
-  return rezult.bind(parseRaw(str), spec => compile(spec));
-}
-
 /** @param {string} str */
 export function isAnt(str) {
   // TODO better AST-based static analysis for interaction once we unify the
@@ -55,7 +44,7 @@ export function convertAnt(str) {
 }
 
 /** @param {string} str */
-export function parseRaw(str) {
+export default function parse(str) {
   if (typeof str !== 'string') {
     return rezult.error(new Error('invalid argument, not a string'));
   }
