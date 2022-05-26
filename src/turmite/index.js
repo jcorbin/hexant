@@ -72,8 +72,9 @@ const help = {
     yield 'The state> and <color> are simple numeric (uint8) expressions that match against the world tile color (uint8) and internal turmite state (uint8).';
     yield 'For example, a <color> term of 2*c only matches even colors';
     yield '';
-    yield 'Similarly <then> has the form:';
+    yield 'Similarly <then> has one of two forms:';
     yield '    <state>, <color>, <turn>';
+    yield '    ant(...)';
     yield '';
     yield '- <turn> may be one of L, R, F, B, P, or S as to an ant(...) rule';
     yield '  - additonal absolute directions are supported: NW, NO, NE, SE, SO, and SW';
@@ -81,6 +82,7 @@ const help = {
     yield '- right hand side expressions may reference symbols matched on the left';
     yield '  - e.g. the basic ant(...) construction translates to 0, c => 0, c + 1 turns(...)[c]';
     yield '- finally, variable assignments may precede rules, to define things like a turn sequence for use in multiple places';
+    yield '- as a convenience ant(...) is the same as writing <state>, c+1, turns(...)[c]';
     yield '';
     yield '## Examples';
     yield '';
