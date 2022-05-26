@@ -146,6 +146,12 @@ export function transform(node, ...xforms) {
       newNode = each(newNode) || newNode;
     }
     node = newNode || node;
+    const res = descend(node);
+    return res === undefined ? node : res;
+  }
+
+  /** @param {Node} node @returns {Node|null|void} */
+  function descend(node) {
     switch (node.type) {
 
       case 'spec': {
