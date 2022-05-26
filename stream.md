@@ -6,12 +6,11 @@ Working on validating `v1.0` functionality.
 
 #### `v1.0.x`
 
+- flatten `turmite/lang/...` into `turmite/...`
 - `RuleConstants` shifts are awkward ; see `turmite/test.js` for a starting point
 - add keymap help overlay
 - write tests for more parts of `turmite/` like `RLEBuilder`
 - expand turmite help to actually describe the turmite language
-  - maybe make `turmite.ruleHelp` interactive as later called for in `v1.3` to
-    at least present a 2-screen deal
 
 ## `v1.1` refactoring
 
@@ -48,12 +47,25 @@ Working on validating `v1.0` functionality.
 
 ## `v1.3` language
 
-- flatten `turmite/lang/...` into `turmite/...`
 - use `constants.Turn` to type extracted turn results out of a `Rules` table,
   rather than using raw `number` types
 - switch away from nearley to a custom recursive descent parser
-- naturalize the legacy `ant(...)` parser into the new parser
 - make `turmite.ruleHelp` interactive
+- feature to specify a fixed state rule
+  - e.g. to "lift" an ant
+  - e.g. to precede a simplified rule of the form `when-c => then-c, then-turn`
+  - idea: `state = 42: ant(...)` ; `state = 42: c => c + 1, turns(R L)`
+    - coidea:
+      ```
+      color = 2*c: s => s + 1, L
+      color = 2*c+1: s => s + 1, R
+      color = 16*c+1: _ => F
+      ```
+- ternary expressions?
+  - what would that even mean in an LHS when match?
+    - .... probably can work actually, but will need a revamp of the solver/matcher
+  - most useful tho for the RHS... but what can it achieve that isn't possible
+    with multiple rules?
 
 ## `v1.4` async
 
@@ -76,86 +88,30 @@ Working on validating `v1.0` functionality.
 - should be feasible to write other low level layers eventually, e.g. one that
   would process an event stream and draw into a GL context ( or generate an
   intermediate buffer of GL commands... )
+- NOTE: the `src/prompt.js` module is experimenting towards this
 
 ## server
 
 - port turmite sim to Go... shard and scale over goroutines
 - maybe allow shard(s) to run locally in a background web worker
 
-## build
-
-Consider using a parser for html processing, rather then the `scripts/ed.js`
-line-oriented regime:
-
-- https://github.com/jasonbellamy/asset-inliner/blob/master/package.json
-  - https://www.npmjs.com/package/jsdom
-  - https://www.npmjs.com/package/assetment
-- https://github.com/cdata/collapsify
-  - https://github.com/cdata/collapsify/blob/master/lib/collapsify.js
-  - https://www.npmjs.com/package/htmlparser2
-- https://github.com/popeindustries/inline-source
-  - csso & svgo
-- https://www.npmjs.com/package/html5parser
-- https://www.npmjs.com/package/clean-css
-
-Consider integrating rollup in-process using its API, rather than calling thru
-system commands.
-
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-25
+# 2022-05-26
 
 ## WIP
 
-- push turmite code action is/convert logic out into `lang/analyze` module
-- flatten `turmite/lang/...` into `turmite/...` now that there is only one parser
-- language feature to specified a fixed state rule
-  - e.g. to "lift" an ant
-  - e.g. to precede a simplified rule of the form `when-c => then-c, then-turn`
-  - idea: `state = 42: ant(...)` ; `state = 42: c => c + 1, turns(R L)`
-    - coidea:
-      ```
-      color = 2*c: s => s + 1, L
-      color = 2*c+1: s => s + 1, R
-      color = 16*c+1: _ => F
-      ```
-
-### Play testing turmite rules
-
-Trying to build a "dual personality" turmite:
-- state 0 is an LR ant
-- state 1 is an RL ant
-- then we define state change triggers, like on any Nth color
-- or we could count in state space:
-  - have the first 128 states all be LR ants
-  - and the upper 128 state are RL ants
-  - then we just use s => s+1 progression
-
-Chasing turmite test cases:
-
-```
-s, c => s+1, c+1, turns(L R)[c]
-s, c => s+1, c+1, turns(R L)[c]
-```
-OOPS how do we restrict s in either rule? or can we just branch on s in the rhs
-and use a unified rule like:
-```
-s, c => s+1, c+1, (s < 128 ? turns(R L) : turns(L R))[c]
-```
-
-```
-0, c => 0, c + 1, turns(L R)[c]
-1, c => 1, c + 1, turns(R L)[c]
-0, c % 32 => 1
-```
-
-OOPS that doesn't work, let's fix that
-
-- TODO make then clauses partial-able, that the above can work:
-  - a rule that doesn't care to express any result color or turn, merely a state update
+- make `ant(...)` usable as a rule RHS to fix its whenState / thenState terms
 
 ## Done
+
+- flattened `turmite/lang/...` into `turmite/...` now that there is only the
+  nearley driven parser
+- refactored `analyze.transform` to support deleting nodes
+- moved turmite code actions into the analyze package
+
+# 2022-05-25
 
 - subsumed comments and @directives into turmite language module
   - tried and failed to add comments/@directives to nearley grammar
@@ -203,6 +159,8 @@ OOPS that doesn't work, let's fix that
 # 2022-05-22
 
 - added explicitly null then rules
+  - this allows rules like `0, c % 32 => 1, _, _` that only change the state
+    field, pass on the color and turn fields
 - let prompt `{help}` be an iterable string body, naturalizing functions like
   `turmiteRuleHelp`
 - ditched all WIP work towards a general interactive `/command` and help system
