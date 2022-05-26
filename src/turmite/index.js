@@ -6,6 +6,7 @@ import * as rezult from '../rezult.js';
 import * as constants from './constants.js';
 
 import parseRaw from './parse.js';
+import toSpecString from './tostring.js';
 
 import {
   default as compileBuilder,
@@ -15,11 +16,28 @@ import {
 /** @typedef {import('./compile.js').RuleConstants} RuleConstants */
 /** @typedef {import('./compile.js').Builder} Builder */
 
-import { isAnt, convertAnt } from './parse.js';
+import { actions, isJustAnt } from './analyze.js';
+
+/**
+ * @param {string} str
+ * @returns {Generator<{name: string, label?: string, then: (spec: string) => string}>}
+ */
+export function* ruleActions(str) {
+  const { value: spec } = parseRaw(str);
+  if (!spec) return;
+  for (const { then, ...action } of actions(spec)) yield {
+    ...action, then(str) {
+      const { value: spec } = parseRaw(str);
+      if (!spec) return str;
+      const newSpec = then(spec);
+      return [...toSpecString(newSpec)].join('\n');
+    }
+  };
+}
 
 /** @param {string} spec */
 export function* ruleHelp(spec) {
-  if (isAnt(spec)) yield* help.ant();
+  if (isJustAnt(spec)) yield* help.ant();
   else yield* help.turmite();
 }
 
@@ -44,20 +62,6 @@ const help = {
 /** @param {string} str */
 export function parse(str) {
   return rezult.bind(parseRaw(str), spec => compileBuilder(spec));
-}
-
-/**
- * @param {string} spec
- * @returns {Generator<{name: string, label?: string, then: (spec: string) => string}>}
- */
-export function* ruleActions(spec) {
-  if (isAnt(spec)) {
-    yield {
-      name: 'liftToTurmite',
-      label: 'Convert To Turmite',
-      then: spec => convertAnt(spec),
-    };
-  }
 }
 
 export class Turmite {

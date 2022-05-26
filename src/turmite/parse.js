@@ -28,22 +28,6 @@ function asTypedNode(type, node) {
 }
 
 /** @param {string} str */
-export function isAnt(str) {
-  // TODO better AST-based static analysis for interaction once we unify the
-  // parser ant+turmite parsers
-  return /^\s*ant(\(.*|\s*$)/.test(str);
-}
-
-/** @param {string} str */
-export function convertAnt(str) {
-  // TODO replace this with use of analyze.antRule on a parsed node tree
-  const match = /^\s*ant\(\s*(.+?)\s*\)\s*$/.exec(str);
-  if (!match) throw new Error('invalid ant(...) string');
-  const turns = match[1].trim();
-  return `0, c => 0, c + 1, turns(${turns})[c]`;
-}
-
-/** @param {string} str */
 export default function parse(str) {
   if (typeof str !== 'string') {
     return rezult.error(new Error('invalid argument, not a string'));

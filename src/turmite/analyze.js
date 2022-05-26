@@ -25,9 +25,31 @@ import {
 /** @typedef {import('./grammar.js').CountTurn} CountTurn */
 
 /** @typedef {import('./grammar.js').Node} Node */
+/** @typedef {import('./grammar.js').SpecNode} SpecNode */
 /** @typedef {import('./grammar.js').NodeType} NodeType */
 
 /** @template T @typedef {import('./grammar.js').TypedNode<T>} TypedNode */
+
+/**
+ * @param {SpecNode} spec
+ * @returns {Generator<{name: string, label?: string, then: (spec: SpecNode) => SpecNode}>}
+ */
+export function* actions(spec) {
+  if (
+    spec.entries.some(({ type }) => type == 'ant') &&
+    spec.entries.every(({ type }) => type != 'rule')
+  ) yield {
+    name: 'liftToTurmite',
+    label: 'Convert To Turmite',
+    then: spec => transformed(spec,
+      matchType('ant', ({ turns }) => antRule(turns))) || spec,
+  };
+}
+
+/** @param {string} str */
+export function isJustAnt(str) {
+  return /^\s*ant(\(.*|\s*$)/.test(str);
+}
 
 /**
  * @param {CountTurn[]} antTurns
