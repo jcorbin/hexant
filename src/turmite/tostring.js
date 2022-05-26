@@ -28,7 +28,7 @@ const opPrec = ['+', '-', '*', '/', '%'];
  * @param {Node[]} nodes
  * @returns {Generator<string>}
  */
-export function* toSpecString(...nodes) {
+export default function* toSpecString(...nodes) {
   yield* toString(0, ...nodes);
 }
 

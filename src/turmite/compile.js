@@ -4,7 +4,7 @@ import * as rezult from '../rezult.js';
 import * as constants from './constants.js';
 
 import * as analyze from './analyze.js';
-import { toSpecString } from './tostring.js';
+import toSpecString from './tostring.js';
 
 import {
   assign,
