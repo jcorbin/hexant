@@ -306,76 +306,67 @@ export function transform(node, ...xforms) {
         let any = false;
         const entries = node.entries.map(entry => {
           const rep = each(entry);
-          if (!rep) return entry;
-          if (!walk.isEntryNode(rep))
+          if (rep && !walk.isEntryNode(rep))
             throw new Error('invalid replacement spec entry');
+          if (!rep) return entry;
           any = true;
           return rep;
         });
-        if (any) return spec(...entries);
-        return null;
+        return any ? spec(...entries) : null;
       }
 
       case 'assign': {
         let id = each(node.id);
         let value = each(node.value);
-        if (id || value) {
-          if (!id) id = node.id;
-          else if (id.type !== 'identifier') throw new Error('invalid replacement identifier node');
-          if (!value) value = node.value;
-          else if (!isAnyExpr(value)) throw new Error('invalid replacement value node');
-          return assign(id, value);
-        }
-        return null;
+        if (!id && !value) return null; // no change
+        if (!id) id = node.id;
+        else if (id.type !== 'identifier') throw new Error('invalid replacement identifier node');
+        if (!value) value = node.value;
+        else if (!isAnyExpr(value)) throw new Error('invalid replacement value node');
+        return assign(id, value);
       }
 
       case 'rule': {
         let when = each(node.when);
         let then = each(node.then);
-        if (when || then) {
-          if (!when) when = node.when;
-          else if (when.type !== 'when') throw new Error('invalid replacement when node');
-          if (!then) then = node.then;
-          else if (then.type !== 'then') throw new Error('invalid replacement then node');
-          return rule(when, then);
-        }
-        return null;
+        if (!when && !then) return null; // no change
+        if (!when) when = node.when;
+        else if (when.type !== 'when') throw new Error('invalid replacement when node');
+        if (!then) then = node.then;
+        else if (then.type !== 'then') throw new Error('invalid replacement then node');
+        return rule(when, then);
       }
 
       case 'when': {
         let state = each(node.state);
         let color = each(node.color);
-        if (state || color) {
-          if (!state) state = node.state;
-          else if (!isAnyExpr(state)) throw new Error('invalid replacement when.state node');
-          if (!color) color = node.color;
-          else if (!isAnyExpr(color)) throw new Error('invalid replacement when.color node');
-          return when(state, color);
-        }
-        return null;
+        if (!state && !color) return null; // no change
+        if (!state) state = node.state;
+        else if (!isAnyExpr(state)) throw new Error('invalid replacement when.state node');
+        if (!color) color = node.color;
+        else if (!isAnyExpr(color)) throw new Error('invalid replacement when.color node');
+        return when(state, color);
       }
 
       case 'then': {
         let state = each(node.state);
         let color = each(node.color);
         let turn = each(node.turn);
-        if (state || color || turn) {
-          if (!state) state = node.state;
-          else if (state.type !== 'thenVal') throw new Error('invalid replacement then.state node');
-          if (!color) color = node.color;
-          else if (color.type !== 'thenVal') throw new Error('invalid replacement then.color node');
-          if (!turn) turn = node.turn;
-          else if (turn.type !== 'thenVal') throw new Error('invalid replacement then.turn node');
-          return then(state, color, turn);
-        }
-        return null;
+        if (!state && !color && !turn) return null; // no change
+        if (!state) state = node.state;
+        else if (state.type !== 'thenVal') throw new Error('invalid replacement then.state node');
+        if (!color) color = node.color;
+        else if (color.type !== 'thenVal') throw new Error('invalid replacement then.color node');
+        if (!turn) turn = node.turn;
+        else if (turn.type !== 'thenVal') throw new Error('invalid replacement then.turn node');
+        return then(state, color, turn);
       }
 
       case 'thenVal': {
         const { mode } = node;
-        if (mode == '_') return null;
+        if (mode == '_') return null; // no change
         let value = each(node.value);
-        if (!value) return null;
+        if (!value) return null; // no change
         if (!isAnyExpr(value)) throw new Error('invalid replacement then value node');
         return thenVal(value, mode);
       }
@@ -383,28 +374,24 @@ export function transform(node, ...xforms) {
       case 'member': {
         let item = each(node.item);
         let value = each(node.value);
-        if (item || value) {
-          if (!item) item = node.item;
-          else if (!isAnyExpr(item)) throw new Error('invalid replacement item node');
-          if (!value) value = node.value;
-          else if (!isAnyValue(value)) throw new Error('invalid replacement value node');
-          return member(value, item);
-        }
-        return null;
+        if (!item && !value) return null; // no change
+        if (!item) item = node.item;
+        else if (!isAnyExpr(item)) throw new Error('invalid replacement item node');
+        if (!value) value = node.value;
+        else if (!isAnyValue(value)) throw new Error('invalid replacement value node');
+        return member(value, item);
       }
 
       case 'expr': {
         const { op } = node;
         let arg1 = each(node.arg1);
         let arg2 = each(node.arg2);
-        if (arg1 || arg2) {
-          if (!arg1) arg1 = node.arg1;
-          else if (!isAnyExpr(arg1)) throw new Error('invalid replacement arg1 node');
-          if (!arg2) arg2 = node.arg2;
-          else if (!isAnyExpr(arg2)) throw new Error('invalid replacement arg2 node');
-          return expr(op, arg1, arg2);
-        }
-        return null;
+        if (!arg1 && !arg2) return null; // no change
+        if (!arg1) arg1 = node.arg1;
+        else if (!isAnyExpr(arg1)) throw new Error('invalid replacement arg1 node');
+        if (!arg2) arg2 = node.arg2;
+        else if (!isAnyExpr(arg2)) throw new Error('invalid replacement arg2 node');
+        return expr(op, arg1, arg2);
       }
 
       case 'ant':
