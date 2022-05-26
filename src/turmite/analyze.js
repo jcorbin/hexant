@@ -64,7 +64,7 @@ export function matchType(type, fn) {
 /** @template {NodeType} T
  * @callback TypedNodeTransform
  * @param {TypedNode<T>} node
- * @returns {TypedNode<T>|null|void}
+ * @returns {Node|null|void}
  */
 
 /** @callback NodeTransform
