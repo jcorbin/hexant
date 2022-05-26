@@ -3,16 +3,33 @@
 // @ts-ignore
 import nearley from 'nearley';
 
+import * as rezult from '../rezult.js';
+
 import grammarRules from './grammar_rules.js';
 const grammar = nearley.Grammar.fromCompiled(grammarRules);
+
+import { isNodeType } from './grammar.js';
+
+/** @typedef {import('./grammar.js').Node} Node */
+/** @typedef {import('./grammar.js').NodeType} NodeType */
+/** @template T @typedef {import('./grammar.js').TypedNode<T>} TypedNode */
+
+/**
+ * @template {NodeType} T
+ * @param {T} type
+ * @param {Node} node
+ * @returns {TypedNode<T>}
+ */
+function asTypedNode(type, node) {
+  if (!isNodeType(type, node)) throw new Error(
+    `expected a ${JSON.stringify(type)} grammar node, ` +
+    `got a ${JSON.stringify(type)} node`);
+  return node;
+}
 
 import compile from './compile.js';
 /** @typedef {import('./compile.js').Rules} Rules */
 /** @typedef {import('./compile.js').RuleConstants} RuleConstants */
-
-/** @typedef {import('./grammar.js').Node} Node */
-
-import * as rezult from '../rezult.js';
 
 /** @callback Builder
  * @param {Rules} rules
@@ -31,12 +48,7 @@ import * as rezult from '../rezult.js';
  * @returns {rezult.Result<Builder>}
  */
 export default function parse(str) {
-  const parseRes = rezult.bind(parseRaw(str), node => node.type === 'spec'
-    ? rezult.just(node)
-    : rezult.error(new Error(
-      `expected a "spec" grammar node, got a ${JSON.stringify(node.type)} node instead` +
-      `; tried to parse only a fragment of a turmite spec?`)));
-  const compileRes = rezult.bind(parseRes, spec => compile(spec));
+  const compileRes = rezult.bind(parseRaw(str), spec => compile(spec));
   // TODO make compile => Result<Builder> directly
   return rezult.bind(compileRes, fn => rezult.just(/** @type {Builder} */(fn)));
 }
@@ -72,7 +84,7 @@ export function parseRaw(str) {
       case 0:
         return rezult.error(new Error('no parse result'));
       case 1:
-        return rezult.just(results[0]);
+        return rezult.just(asTypedNode('spec', results[0]));
       default:
         return rezult.error(new Error('ambiguous parse'));
     }

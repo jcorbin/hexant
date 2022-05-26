@@ -185,10 +185,7 @@ export function compile(str, {
   endLines = false,
   format = 'value',
 } = {}) {
-  const parseRes = rezult.bind(parseRaw(str), ast => ast.type === 'spec'
-    ? rezult.just(ast)
-    : rezult.error(new Error(`unexpected type:${ast.type} node`)));
-  const spec = rezult.toValue(parseRes);
+  const spec = rezult.toValue(parseRaw(str));
   const lines = compileCode(spec, { format });
   return endLines ? addLineEnds(lines) : lines;
 }
