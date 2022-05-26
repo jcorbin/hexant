@@ -207,7 +207,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
       /** @type {AssignNode[]} */
       const assigns = [];
 
-      const { when, then } = analyze.transformed(rule,
+      const xrule = analyze.transformed(rule,
 
         // TODO possible, but uncertain if should bring back implicit indexing
         // analyze.matchType('then', ({ state, color, turn }) => {
@@ -230,7 +230,7 @@ export function compileCode(spec, { format = 'value' } = {}) {
           switch (value.type) {
             case 'symbol':
             case 'identifier':
-              return null;
+              return;
             default:
               const { type } = value;
               const name = scope.gen(`${type[0].toUpperCase()}${type.slice(1)}`);
@@ -241,10 +241,17 @@ export function compileCode(spec, { format = 'value' } = {}) {
         }),
 
       );
+      if (!xrule) {
+        yield* comment([
+          'eliminated by transform',
+          ...JSON.stringify(rule, null, 2).split(/\n/)
+        ]);
+        return;
+      }
 
+      const { when, then } = xrule;
       for (const assign of assigns)
         yield* compileAssign(assign);
-
       yield* compileRuleBody(when, then);
     });
   }

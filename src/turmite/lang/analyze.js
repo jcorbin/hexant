@@ -236,7 +236,7 @@ export function antRule(antTurns, {
 export function matchType(type, fn) {
   return node => walk.isNodeType(type, node)
     ? fn(node)
-    : null;
+    : undefined;
 }
 
 /** @template {walk.NodeType} T
@@ -254,7 +254,7 @@ export function matchType(type, fn) {
  * @template {walk.Node} NT
  * @param {NT} node
  * @param {NodeTransform[]} xforms
- * @returns {NT}
+ * @returns {NT|null}
  */
 export function transformed(node, ...xforms) {
   const oldType = node.type;
@@ -268,6 +268,7 @@ export function transformed(node, ...xforms) {
   }
 
   const newNode = transform(node, ...xforms);
+  if (newNode === null) return null;
   if (!newNode) return node;
   if (!isSameType(newNode)) throw new Error('invalid replacement node');
 
@@ -277,7 +278,7 @@ export function transformed(node, ...xforms) {
 /**
  * @param {walk.Node} node
  * @param {NodeTransform[]} xforms
- * @returns {walk.Node|null}
+ * @returns {walk.Node|null|void}
  */
 export function transform(node, ...xforms) {
   if (!xforms.length) return node;
@@ -293,9 +294,10 @@ export function transform(node, ...xforms) {
     : xforms[0];
   return each(node);
 
-  /** @param {walk.Node} node @returns {walk.Node|null} */
+  /** @param {walk.Node} node @returns {walk.Node|null|void} */
   function each(node) {
     let newNode = xform(node);
+    if (newNode === null) return null; // explicit delete
     if (newNode && newNode !== node) {
       newNode = each(newNode) || newNode;
     }
@@ -308,17 +310,20 @@ export function transform(node, ...xforms) {
           const rep = each(entry);
           if (rep && !walk.isEntryNode(rep))
             throw new Error('invalid replacement spec entry');
-          if (!rep) return entry;
-          any = true;
+          if (rep === undefined) return entry;
+          any = any || rep !== entry;
           return rep;
-        });
-        return any ? spec(...entries) : null;
+        }).filter(notNull);
+        return !any ? undefined // no change
+          : !entries.length ? null // delete if empty
+            : spec(...entries);
       }
 
       case 'assign': {
         let id = each(node.id);
         let value = each(node.value);
-        if (!id && !value) return null; // no change
+        if (id === null || value === null) return null; // delete spreads
+        if (!id && !value) return undefined; // no change
         if (!id) id = node.id;
         else if (id.type !== 'identifier') throw new Error('invalid replacement identifier node');
         if (!value) value = node.value;
@@ -329,7 +334,8 @@ export function transform(node, ...xforms) {
       case 'rule': {
         let when = each(node.when);
         let then = each(node.then);
-        if (!when && !then) return null; // no change
+        if (when === null || then === null) return null; // delete spreads
+        if (!when && !then) return undefined; // no change
         if (!when) when = node.when;
         else if (when.type !== 'when') throw new Error('invalid replacement when node');
         if (!then) then = node.then;
@@ -340,7 +346,8 @@ export function transform(node, ...xforms) {
       case 'when': {
         let state = each(node.state);
         let color = each(node.color);
-        if (!state && !color) return null; // no change
+        if (state === null || color === null) return null; // delete spreads
+        if (!state && !color) return undefined; // no change
         if (!state) state = node.state;
         else if (!isAnyExpr(state)) throw new Error('invalid replacement when.state node');
         if (!color) color = node.color;
@@ -352,21 +359,27 @@ export function transform(node, ...xforms) {
         let state = each(node.state);
         let color = each(node.color);
         let turn = each(node.turn);
-        if (!state && !color && !turn) return null; // no change
+        if (state === null) state = thenPass(); // deleted clause now passes
+        if (color === null) color = thenPass(); // deleted clause now passes
+        if (turn === null) turn = thenPass(); // deleted clause now passes
+        if (!state && !color && !turn) return undefined; // no change
         if (!state) state = node.state;
         else if (state.type !== 'thenVal') throw new Error('invalid replacement then.state node');
         if (!color) color = node.color;
         else if (color.type !== 'thenVal') throw new Error('invalid replacement then.color node');
         if (!turn) turn = node.turn;
         else if (turn.type !== 'thenVal') throw new Error('invalid replacement then.turn node');
+        // delete spreads only if all clauses now pass (at least one was just deleted above)
+        if (state.mode === '_' && color.mode === '_' && turn.mode === '_') return null;
         return then(state, color, turn);
       }
 
       case 'thenVal': {
         const { mode } = node;
-        if (mode == '_') return null; // no change
+        if (mode == '_') return undefined; // no change
         let value = each(node.value);
-        if (!value) return null; // no change
+        if (value === null) return null; // delete spreads
+        if (!value) return undefined; // no change
         if (!isAnyExpr(value)) throw new Error('invalid replacement then value node');
         return thenVal(value, mode);
       }
@@ -374,7 +387,8 @@ export function transform(node, ...xforms) {
       case 'member': {
         let item = each(node.item);
         let value = each(node.value);
-        if (!item && !value) return null; // no change
+        if (item === null || value === null) return null; // delete spreads
+        if (!item && !value) return undefined; // no change
         if (!item) item = node.item;
         else if (!isAnyExpr(item)) throw new Error('invalid replacement item node');
         if (!value) value = node.value;
@@ -386,7 +400,8 @@ export function transform(node, ...xforms) {
         const { op } = node;
         let arg1 = each(node.arg1);
         let arg2 = each(node.arg2);
-        if (!arg1 && !arg2) return null; // no change
+        if (arg1 === null || arg2 === null) return null; // delete spreads
+        if (!arg1 && !arg2) return undefined; // no change
         if (!arg1) arg1 = node.arg1;
         else if (!isAnyExpr(arg1)) throw new Error('invalid replacement arg1 node');
         if (!arg2) arg2 = node.arg2;
@@ -402,13 +417,21 @@ export function transform(node, ...xforms) {
       case 'symbol':
       case 'turn':
       case 'turns':
-        return null;
+        return undefined;
 
       default:
         assertNever(node, 'invalid transform node');
-        return null;
+        return undefined;
     }
   }
+}
+
+/** @template T
+ * @param {T|null} val
+ * @returns {val is Exclude<T, null>}
+ */
+function notNull(val) {
+  return val !== null;
 }
 
 /**
