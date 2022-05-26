@@ -439,6 +439,7 @@ export default class Hexant {
   colorPrompt() {
     const { hash } = this;
     const hashName = 'colors';
+    // TODO provide meaningful help
     return promptIOLoop(
       function*(inputs) {
         for (const input of inputs) {
