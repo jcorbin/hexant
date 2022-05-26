@@ -62,9 +62,33 @@ const help = {
   },
 
   *turmite() {
-    yield 'Here Be Dragons'; // TODO provide online turmite help
+    yield '# Turmite Rule Format';
     yield '';
-    yield 'See README for full turmite language details.';
+    yield 'The basic turmite rule form is:';
+    yield '    <when> => <then>';
+    yield '';
+    yield 'Where <when> has the form:';
+    yield '    <state>, <color>';
+    yield 'The state> and <color> are simple numeric (uint8) expressions that match against the world tile color (uint8) and internal turmite state (uint8).';
+    yield 'For example, a <color> term of 2*c only matches even colors';
+    yield '';
+    yield 'Similarly <then> has the form:';
+    yield '    <state>, <color>, <turn>';
+    yield '';
+    yield '- <turn> may be one of L, R, F, B, P, or S as to an ant(...) rule';
+    yield '  - additonal absolute directions are supported: NW, NO, NE, SE, SO, and SW';
+    yield '- <turn> may also be an indexed turns(...)[INDEX] expression';
+    yield '- right hand side expressions may reference symbols matched on the left';
+    yield '  - e.g. the basic ant(...) construction translates to 0, c => 0, c + 1 turns(...)[c]';
+    yield '- finally, variable assignments may precede rules, to define things like a turn sequence for use in multiple places';
+    yield '';
+    yield '## Examples';
+    yield '';
+    yield 'To make a bi-modal ant that switches between LR / RL rules on every 16-th color:';
+    yield '    0, c => 0, c + 1, turns(L R)[c]'
+    yield '    1, c => 1, c + 1, turns(R L)[c]'
+    yield '    0, 16 * c - 1 => 1, _, _'
+    yield '    1, 16 * c - 1 => 0, _, _'
   },
 
 };
