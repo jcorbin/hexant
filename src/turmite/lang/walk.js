@@ -4,6 +4,8 @@
 // parser, replacing grammar.{ne,js} entirely
 
 /** @typedef {(
+ * | CommentNode
+ * | DirectiveNode
  * | SpecNode
  * | AssignNode
  * | AntNode
@@ -19,6 +21,17 @@
  * | TurnNode
  * | TurnsNode
  * )} Node */
+
+/** @typedef {object} CommentNode
+ * @prop {"comment"} type
+ * @prop {string} comment
+ */
+
+/** @typedef {object} DirectiveNode
+ * @prop {"directive"} type
+ * @prop {string} name
+ * @prop {string} value
+ */
 
 /** @template Literal
  * @typedef {(
@@ -36,8 +49,16 @@
 
 /** @typedef {object} SpecNode
  * @prop {"spec"} type
- * @prop {(AssignNode|AntNode|RuleNode)[]} entries
+ * @prop {EntryNode[]} entries
  */
+
+/** @typedef {(
+ * | AssignNode
+ * | CommentNode
+ * | DirectiveNode
+ * | AntNode
+ * | RuleNode
+ * )} EntryNode */
 
 /** @typedef {Value<NumberNode|TurnsNode>} AnyValue */
 /** @typedef {Expr<NumberNode|TurnsNode>} AnyExpr */
@@ -155,4 +176,21 @@
  */
 export function isNodeType(type, node) {
   return node.type === type;
+}
+
+/**
+ * @param {Node} node
+ * @returns {node is EntryNode}
+ */
+export function isEntryNode(node) {
+  switch (node.type) {
+    case 'ant':
+    case 'assign':
+    case 'comment':
+    case 'directive':
+    case 'rule':
+      return true;
+    default:
+      return false;
+  }
 }

@@ -161,22 +161,30 @@ export function compileCode(spec, { format = 'value' } = {}) {
 
     for (const entry of spec.entries) {
       switch (entry.type) {
+        case 'comment':
+          yield* comment([entry.comment.trimStart()]);
+          break;
+
+        case 'directive':
+          yield* comment([`@${entry.name} ${entry.value.trimStart()}`]);
+          break;
+
         case 'assign':
+          yield '';
           yield* compileSpecComment(entry, { head: 'assign: ' });
           yield* compileAssign(entry);
-          yield '';
           break;
 
         case 'ant':
+          yield '';
           yield* compileSpecComment(entry, { head: 'rule: ' });
           yield* compileRule(analyze.antRule(entry.turns));
-          yield '';
           break;
 
         case 'rule':
+          yield '';
           yield* compileSpecComment(entry, { head: 'rule: ' });
           yield* compileRule(entry);
-          yield '';
           break;
 
         default:
@@ -508,6 +516,14 @@ function countNumColors(spec) {
   let numColors = 0;
   analyze.transform(spec, node => {
     switch (node.type) {
+      case 'directive': {
+        const { name, value } = node;
+        if (name !== 'numColors') return;
+        const n = parseInt(value);
+        if (!isNaN(n)) numColors = Math.max(numColors, n);
+        break;
+      }
+
       case 'ant':
       case 'turns': {
         const { turns } = node;

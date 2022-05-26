@@ -1,12 +1,20 @@
 @preprocessor module
 
+token[X] -> $X:+  {% ([parts]) => parts.join('') %}
+
 spec -> entries {% ([entries]) => ({type: 'spec', entries: entries || []}) %}
 
 entries -> entry
          | entry newline entries {% ([head, _, tail]) => [head].concat(tail) %}
 
-entry -> assign  {% d => d[0] %}
-       | rule    {% d => d[0] %}
+comment -> _ "--" token[[^\n]]  {% ([_0, _1, comment]) => ({type: 'comment', comment}) %}
+
+entry -> assign     {% d => d[0] %}
+       | rule       {% d => d[0] %}
+       | directive  {% d => d[0] %}
+       | comment    {% d => d[0] %}
+
+directive -> _ "@" token[[\w]] __ token[[^\n]]  {% ([_0, _1, name, _2, value]) => ({type: 'directive', name, value}) %}
 
 assign -> identifier _ "=" _ lit  {% ([id, _1, _2, _3, value]) => ({type: 'assign', id, value}) %}
 
@@ -103,8 +111,8 @@ lit -> int    {% d => d[0] %}
 int -> "0x" hexint  {% d => d[1] %}
      |      decint  {% d => d[0] %}
 
-hexint -> [0-9a-fA-F]:+  {% ([head]) => ({type: 'number', value: parseInt(head.join(''), 16), base: 16}) %}
-decint -> [0-9]:+        {% ([head]) => ({type: 'number', value: parseInt(head.join(''), 10)}) %}
+hexint -> token[[0-9a-fA-F]]  {% ([num]) => ({type: 'number', value: parseInt(num, 16), base: 16}) %}
+decint -> token[[0-9]]        {% ([num]) => ({type: 'number', value: parseInt(num, 10)}) %}
 
 _ -> [\s]:*  {% () => null %}
 __ -> [\s]:+  {% () => null %}

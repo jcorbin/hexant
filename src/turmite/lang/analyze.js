@@ -9,6 +9,23 @@ import * as walk from './walk.js';
 // TODO generic id/sym/value/expr lifts, and then used consistently throughout
 
 /**
+ * @param {string} name
+ * @param {string} value
+ * @returns {walk.DirectiveNode}
+ */
+export function directive(name, value) {
+  return { type: 'directive', name, value };
+}
+
+/**
+ * @param {string} comment
+ * @returns {walk.CommentNode}
+ */
+export function comment(comment) {
+  return { type: 'comment', comment };
+}
+
+/**
  * @param {number} value
  * @param {number} [base] - defaults to base-10 if unspecified
  * @returns {walk.NumberNode}
@@ -34,7 +51,7 @@ export function sym(name) {
 }
 
 /**
- * @param {(walk.AssignNode | walk.RuleNode | walk.AntNode)[]} entries
+ * @param {walk.EntryNode[]} entries
  * @returns {walk.SpecNode}
  */
 export function spec(...entries) {
@@ -290,7 +307,7 @@ export function transform(node, ...xforms) {
         const entries = node.entries.map(entry => {
           const rep = each(entry);
           if (!rep) return entry;
-          if (!(rep.type === 'assign' || rep.type === 'rule' || rep.type === 'ant'))
+          if (!walk.isEntryNode(rep))
             throw new Error('invalid replacement spec entry');
           any = true;
           return rep;
@@ -391,6 +408,8 @@ export function transform(node, ...xforms) {
       }
 
       case 'ant':
+      case 'comment':
+      case 'directive':
       case 'identifier':
       case 'number':
       case 'symbol':

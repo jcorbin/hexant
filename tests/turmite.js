@@ -122,6 +122,7 @@ for (const { name, input, expected } of [
   {
     name: 'collatz colors (moar colors)',
     input: [
+      '-- use full color space',
       '@numColors 256',
       'Turns = turns(L R)',
       '0, c => 0, 3 * c + 1, Turns[c]',

@@ -49,6 +49,18 @@ function* toString(outerPrec, ...nodes) {
         break;
       }
 
+      case 'comment': {
+        const { comment } = node;
+        yield `--${comment}`;
+        break;
+      }
+
+      case 'directive': {
+        const { name, value } = node;
+        yield `@${name} ${value}`
+        break;
+      }
+
       case 'assign': {
         const { id: { name }, value } = node;
         const it = toString(outerPrec, value)
