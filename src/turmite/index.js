@@ -45,10 +45,20 @@ export function* ruleHelp(spec) {
 const help = {
 
   *ant() {
-    yield 'ant(<number>?<turn> ...) , turns:';
+    yield '# Basic Ant Rule Format'
+    yield '';
+    yield '    ant(<number>?<turn>...)';
+    yield '';
+    yield 'Each <turn> may be one of:';
     yield '  - L=left, R=right';
     yield '  - B=back, F=forward';
     yield '  - P=port, S=starboard (these are rear-facing left/right)';
+    yield '';
+    yield '## Examples';
+    yield '';
+    yield '    ant( R L )';
+    yield '    ant( 2L 13R 2L )';
+    yield '    ant( 2L 13R 2L 42F )';
   },
 
   *turmite() {
