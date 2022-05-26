@@ -28,29 +28,14 @@ function asTypedNode(type, node) {
 }
 
 import compile from './compile.js';
-/** @typedef {import('./compile.js').Rules} Rules */
-/** @typedef {import('./compile.js').RuleConstants} RuleConstants */
-
-/** @callback Builder
- * @param {Rules} rules
- * @param {RuleConstants} ruleSpec
- * @returns {rezult.Result<Built>}
- */
-
-/** @typedef {object} Built
- * @prop {number} numColors
- * @prop {number} numStates
- * @prop {string} specString
- */
+/** @typedef {import('./compile.js').Builder} Builder */
 
 /**
  * @param {string} str
  * @returns {rezult.Result<Builder>}
  */
 export default function parse(str) {
-  const compileRes = rezult.bind(parseRaw(str), spec => compile(spec));
-  // TODO make compile => Result<Builder> directly
-  return rezult.bind(compileRes, fn => rezult.just(/** @type {Builder} */(fn)));
+  return rezult.bind(parseRaw(str), spec => compile(spec));
 }
 
 /** @param {string} str */

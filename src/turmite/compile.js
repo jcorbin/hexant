@@ -64,11 +64,23 @@ const opPrec = ['+', '-', '*', '/', '%'];
  * NOTE: state values live in the lowest bits and are therefore unshifted
  */
 
+/** @callback Builder
+ * @param {Rules} rules
+ * @param {RuleConstants} ruleSpec
+ * @returns {rezult.Result<Built>}
+ */
+
+/** @typedef {object} Built
+ * @prop {number} numColors
+ * @prop {number} numStates
+ * @prop {string} specString
+ */
+
 /**
  * @param {SpecNode} spec
- * @returns {rezult.Result<function>}
+ * @returns {rezult.Result<Builder>}
  */
-export default function compile(spec) {
+export default function compileBuilder(spec) {
   const lines = compileCode(spec);
   const codeRes = rezult.catchErr(() => rezult.just([...endLines(lines)].join('')));
 
@@ -92,7 +104,7 @@ export default function compile(spec) {
         `invalid builder function, got a ${typeof value} instead of a function`))
     }
 
-    return rezult.just(/** @type {function} */(value));
+    return rezult.just(/** @type {Builder} */(value));
   });
 }
 

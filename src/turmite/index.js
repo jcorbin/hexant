@@ -50,7 +50,7 @@ export { default as parse } from './parse.js';
 /** @typedef {import('./compile.js').RuleConstants} RuleConstants */
 import parse from './parse.js';
 
-/** @typedef {import('./parse.js').Builder} Builder */
+/** @typedef {import('./compile.js').Builder} Builder */
 
 export class Turmite {
 
