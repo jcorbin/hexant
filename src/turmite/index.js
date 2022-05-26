@@ -47,7 +47,7 @@ export function* ruleActions(spec) {
 
 export { default as parse } from './parse.js';
 
-/** @typedef {import('./lang/compile.js').RuleConstants} RuleConstants */
+/** @typedef {import('./compile.js').RuleConstants} RuleConstants */
 import parse from './parse.js';
 
 /** @typedef {import('./parse.js').Builder} Builder */
@@ -172,14 +172,14 @@ export class Turmite {
   }
 }
 
-import { raw as parseRaw } from './lang/parse.js';
-import { compileCode, endLines as addLineEnds } from './lang/compile.js';
+import { parseRaw } from './parse.js';
+import { compileCode, endLines as addLineEnds } from './compile.js';
 
 /**
  * @param {string} str
  * @param {object} [options]
  * @param {boolean} [options.endLines]
- * @param {import('./lang/compile.js').CodeFormat} [options.format]
+ * @param {import('./compile.js').CodeFormat} [options.format]
  */
 export function compile(str, {
   endLines = false,

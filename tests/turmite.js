@@ -184,7 +184,7 @@ for (const { name, input, expected } of [
 
 /** @typedef {object} ExpectOpts
  * @prop {boolean} verbose
- * @prop {boolean|import('../src/turmite/lang/compile.js').CodeFormat} logCode
+ * @prop {boolean|import('../src/turmite/compile.js').CodeFormat} logCode
  */
 
 /** @typedef {object} ExpectProps

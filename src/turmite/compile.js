@@ -1,23 +1,29 @@
 // @ts-check
 
-import * as rezult from '../../rezult.js';
-import * as constants from '../constants.js';
+import * as rezult from '../rezult.js';
+import * as constants from './constants.js';
 
 import * as analyze from './analyze.js';
 import { toSpecString } from './tostring.js';
 
-/** @typedef {import('./walk.js').Node} Node */
-/** @typedef {import('./walk.js').SpecNode} SpecNode */
-/** @typedef {import('./walk.js').AssignNode} AssignNode */
-/** @typedef {import('./walk.js').RuleNode} RuleNode */
-/** @typedef {import('./walk.js').WhenNode} WhenNode */
-/** @typedef {import('./walk.js').ThenNode} ThenNode */
-/** @typedef {import('./walk.js').ThenValNode} ThenValNode */
-/** @typedef {import('./walk.js').NumberNode} NumberNode */
-/** @typedef {import('./walk.js').TurnsNode} TurnsNode */
-/** @typedef {import('./walk.js').TurnNode} TurnNode */
-/** @typedef {import('./walk.js').AnyExpr} AnyExpr */
-/** @template T @typedef {import('./walk.js').Expr<T>} Expr */
+import {
+  assign,
+  id,
+  member,
+} from './grammar.js';
+
+/** @typedef {import('./grammar.js').Node} Node */
+/** @typedef {import('./grammar.js').SpecNode} SpecNode */
+/** @typedef {import('./grammar.js').AssignNode} AssignNode */
+/** @typedef {import('./grammar.js').RuleNode} RuleNode */
+/** @typedef {import('./grammar.js').WhenNode} WhenNode */
+/** @typedef {import('./grammar.js').ThenNode} ThenNode */
+/** @typedef {import('./grammar.js').ThenValNode} ThenValNode */
+/** @typedef {import('./grammar.js').NumberNode} NumberNode */
+/** @typedef {import('./grammar.js').TurnsNode} TurnsNode */
+/** @typedef {import('./grammar.js').TurnNode} TurnNode */
+/** @typedef {import('./grammar.js').AnyExpr} AnyExpr */
+/** @template T @typedef {import('./grammar.js').Expr<T>} Expr */
 
 // TODO: de-dupe
 const opPrec = ['+', '-', '*', '/', '%'];
@@ -234,9 +240,8 @@ export function compileCode(spec, { format = 'value' } = {}) {
             default:
               const { type } = value;
               const name = scope.gen(`${type[0].toUpperCase()}${type.slice(1)}`);
-              assigns.push(analyze.assign(name, value));
-              const id = analyze.id(name);
-              return analyze.member(id, item);
+              assigns.push(assign(name, value));
+              return member(id(name), item);
           }
         }),
 

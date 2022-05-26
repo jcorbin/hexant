@@ -1,11 +1,11 @@
 // @ts-check
 
-import { from as rleFrom } from '../rle-builder.js';
+import { from as rleFrom } from './rle-builder.js';
 
-/** @typedef {import('./walk.js').Node} Node */
+/** @typedef {import('./grammar.js').Node} Node */
 
 
-// TODO reconcile with ../constants.js
+// TODO reconcile with ./constants.js
 const TurnSyms = {
   RelLeft: 'L',
   RelRight: 'R',

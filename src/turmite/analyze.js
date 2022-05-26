@@ -1,218 +1,40 @@
 // @ts-check
 
-import * as walk from './walk.js';
+import {
+  assign,
+  expr,
+  isAnyExpr,
+  isAnyValue,
+  isEntryNode,
+  isNodeType,
+  member,
+  number,
+  rule,
+  spec,
+  sym,
+  then,
+  thenPass,
+  thenSet,
+  thenVal,
+  turns,
+  when,
+} from './grammar.js';
 
-/// basic grammar constructors
+/** @typedef {import('./grammar.js').AnyExpr} AnyExpr */
+/** @typedef {import('./grammar.js').ThenValNode} ThenValNode */
+/** @typedef {import('./grammar.js').CountTurn} CountTurn */
 
-// TOOD move to ./grammar.js once that's manually written, along with type declarations from ./walk.js
+/** @typedef {import('./grammar.js').Node} Node */
+/** @typedef {import('./grammar.js').NodeType} NodeType */
 
-// TODO generic id/sym/value/expr lifts, and then used consistently throughout
-
-/**
- * @param {string} name
- * @param {string} value
- * @returns {walk.DirectiveNode}
- */
-export function directive(name, value) {
-  return { type: 'directive', name, value };
-}
-
-/**
- * @param {string} comment
- * @returns {walk.CommentNode}
- */
-export function comment(comment) {
-  return { type: 'comment', comment };
-}
-
-/**
- * @param {number} value
- * @param {number} [base] - defaults to base-10 if unspecified
- * @returns {walk.NumberNode}
- */
-export function number(value, base) {
-  return { type: 'number', value, base };
-}
+/** @template T @typedef {import('./grammar.js').TypedNode<T>} TypedNode */
 
 /**
- * @param {string} name
- * @returns {walk.IdentifierNode}
- */
-export function id(name) {
-  return { type: 'identifier', name };
-}
-
-/**
- * @param {string} name
- * @returns {walk.SymbolNode}
- */
-export function sym(name) {
-  return { type: 'symbol', name };
-}
-
-/**
- * @param {walk.EntryNode[]} entries
- * @returns {walk.SpecNode}
- */
-export function spec(...entries) {
-  return { type: 'spec', entries };
-}
-
-/**
- * @param {string|walk.IdentifierNode} id
- * @param {walk.AnyExpr} value
- * @returns {walk.AssignNode}
- */
-export function assign(id, value) {
-  if (typeof id === 'string') id = { type: 'identifier', name: id };
-  return { type: 'assign', id, value };
-}
-
-/**
- * @param {walk.WhenNode} when
- * @param {walk.ThenNode} then
- * @returns {walk.RuleNode}
- */
-export function rule(when, then) {
-  return { type: 'rule', when, then };
-}
-
-/**
- * @param {walk.CountTurn[]} turns
- * @returns {walk.AntNode}
- */
-export function ant(...turns) {
-  return { type: 'ant', turns };
-}
-
-/**
- * @param {walk.CountTurn[]} turns
- * @returns {walk.TurnsNode}
- */
-export function turns(...turns) {
-  return { type: 'turns', turns };
-}
-
-/**
- * @param {walk.AnyValue} value
- * @param {walk.AnyExpr} item
- * @returns {walk.MemberNode}
- */
-export function member(value, item) {
-  return { type: 'member', value, item };
-}
-
-/**
- * @template {walk.Node} S
- * @template {walk.Node} T
- * @param {walk.ExprOp} op
- * @param {S} arg1
- * @param {T} arg2
- * @returns {walk.ExprNode<S|T>}
- */
-export function expr(op, arg1, arg2) {
-  return { type: 'expr', op, arg1, arg2 };
-}
-
-/**
- * @param {walk.AnyExpr} state
- * @param {walk.AnyExpr} color
- * @returns {walk.WhenNode}
- */
-export function when(state, color) {
-  return ({ type: 'when', state, color });
-}
-
-/**
- * @param {walk.AnyExpr|walk.ThenValNode} state
- * @param {walk.AnyExpr|walk.ThenValNode} color
- * @param {walk.AnyExpr|walk.ThenValNode} turn
- * @returns {walk.ThenNode}
- */
-export function then(state, color, turn) {
-  return {
-    type: 'then',
-    state: thenVal(state),
-    color: thenVal(color),
-    turn: thenVal(turn),
-  };
-}
-
-/**
- * @param {walk.AnyExpr|walk.ThenValNode} value
- * @param {"="|"|"} [mode]
- * @returns {walk.ThenValNode}
- */
-export function thenVal(value, mode = '=') {
-  return value.type === 'thenVal' ? value : { type: 'thenVal', mode, value };
-}
-
-/**
- * @param {walk.AnyExpr} value
- * @returns {walk.ThenValNode}
- */
-export function thenSet(value) {
-  return { type: 'thenVal', mode: '=', value };
-}
-
-/**
- * @param {walk.AnyExpr} value
- * @returns {walk.ThenValNode}
- */
-export function thenUpdate(value) {
-  return { type: 'thenVal', mode: '|', value };
-}
-
-/** @returns {walk.ThenValNode} */
-export function thenPass() {
-  return { type: 'thenVal', mode: '_' };
-}
-
-/**
- * @param {walk.Node} node
- * @returns {node is walk.AnyExpr}
- */
-export function isAnyExpr(node) {
-  switch (node.type) {
-    // Expr<Literal>
-    case 'expr':
-      return true;
-
-    // is Value<Literal>
-    default:
-      return isAnyValue(node);
-  }
-}
-
-/**
- * @param {walk.Node} node
- * @returns {node is walk.AnyValue}
- */
-export function isAnyValue(node) {
-  switch (node.type) {
-    // Value<Literal>
-    case 'member':
-    case 'symbol':
-    case 'identifier':
-
-    // Literal = NumberNode | TurnsNode
-    case 'number':
-    case 'turns':
-      return true;
-
-    default:
-      return false;
-  }
-}
-
-/// analysis of grammar node (trees)
-
-/**
- * @param {walk.CountTurn[]} antTurns
+ * @param {CountTurn[]} antTurns
  * @param {object} options
  * @param {number} [options.state]
- * @param {walk.AnyExpr} [options.whenState]
- * @param {walk.ThenValNode} [options.thenState]
+ * @param {AnyExpr} [options.whenState]
+ * @param {ThenValNode} [options.thenState]
  */
 export function antRule(antTurns, {
   state = 0,
@@ -228,30 +50,30 @@ export function antRule(antTurns, {
 }
 
 /**
- * @template {walk.NodeType} T
+ * @template {NodeType} T
  * @param {T} type
  * @param {TypedNodeTransform<T>} fn
  * @returns {NodeTransform}
  */
 export function matchType(type, fn) {
-  return node => walk.isNodeType(type, node)
+  return node => isNodeType(type, node)
     ? fn(node)
     : undefined;
 }
 
-/** @template {walk.NodeType} T
+/** @template {NodeType} T
  * @callback TypedNodeTransform
- * @param {walk.TypedNode<T>} node
- * @returns {walk.TypedNode<T>|null|void}
+ * @param {TypedNode<T>} node
+ * @returns {TypedNode<T>|null|void}
  */
 
 /** @callback NodeTransform
- * @param {walk.Node} node
- * @returns {walk.Node|null|void}
+ * @param {Node} node
+ * @returns {Node|null|void}
  */
 
 /**
- * @template {walk.Node} NT
+ * @template {Node} NT
  * @param {NT} node
  * @param {NodeTransform[]} xforms
  * @returns {NT|null}
@@ -260,7 +82,7 @@ export function transformed(node, ...xforms) {
   const oldType = node.type;
 
   /**
-   * @param {walk.Node} n
+   * @param {Node} n
    * @returns {n is NT}
    */
   function isSameType(n) {
@@ -276,9 +98,9 @@ export function transformed(node, ...xforms) {
 }
 
 /**
- * @param {walk.Node} node
+ * @param {Node} node
  * @param {NodeTransform[]} xforms
- * @returns {walk.Node|null|void}
+ * @returns {Node|null|void}
  */
 export function transform(node, ...xforms) {
   if (!xforms.length) return node;
@@ -294,7 +116,7 @@ export function transform(node, ...xforms) {
     : xforms[0];
   return each(node);
 
-  /** @param {walk.Node} node @returns {walk.Node|null|void} */
+  /** @param {Node} node @returns {Node|null|void} */
   function each(node) {
     let newNode = xform(node);
     if (newNode === null) return null; // explicit delete
@@ -308,7 +130,7 @@ export function transform(node, ...xforms) {
         let any = false;
         const entries = node.entries.map(entry => {
           const rep = each(entry);
-          if (rep && !walk.isEntryNode(rep))
+          if (rep && !isEntryNode(rep))
             throw new Error('invalid replacement spec entry');
           if (rep === undefined) return entry;
           any = any || rep !== entry;
