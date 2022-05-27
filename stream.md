@@ -98,13 +98,20 @@ Working on validating `v1.0` functionality.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-26
+# 2022-05-27
 
 ## WIP
 
 - make `ant(...)` usable as a rule RHS to fix its whenState / thenState terms
 
 ## Done
+
+- further generalized prompt so that it doesn't require a text box
+- generalized keymaps into actions
+  - improving representation of shifted keys and space keys
+  - now supporting the escape key to cancel
+
+# 2022-05-26
 
 - flattened `turmite/lang/...` into `turmite/...` now that there is only the
   nearley driven parser
