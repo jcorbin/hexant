@@ -25,6 +25,20 @@ import { mayQuery } from './domkit.js';
 
 /** @typedef {(...args: string[]) => Iterable<Output>} Command */
 
+/**
+ * @template T
+ * @param {() => HTMLElement} makeEl
+ * @param {Interactor<T>} tor
+ */
+export async function runPrompt(makeEl, tor) {
+  const $el = makeEl();
+  try {
+    return await prompt($el, tor);
+  } finally {
+    $el.parentNode?.removeChild($el);
+  }
+}
+
 /** @template T
  * @param {HTMLElement} $body
  * @param {Interactor<T>} tor
@@ -36,6 +50,8 @@ export async function prompt($body, tor) {
    * | {command: string}
    * | {canceled: true}
    * )} Response */
+
+  const handleEvents = ['click', 'keydown', 'keyup'];
 
   /** @type {((res: Response) => void)} */
   let callback = () => { };
@@ -63,9 +79,8 @@ export async function prompt($body, tor) {
   function makeHelp() {
     let $help = mayQuery($body, '#help', HTMLElement);
     if (!$help) {
-      $help = $body.insertBefore(
-        $body.ownerDocument.createElement('div'),
-        makeText());
+      $help = $body.appendChild(
+        $body.ownerDocument.createElement('div'));
       $help.id = 'help';
       $help.classList.add('help');
     }
@@ -159,8 +174,11 @@ export async function prompt($body, tor) {
           switch (e.key) {
 
             case 'Enter':
-              if (e.ctrlKey) {
-                e.preventDefault();
+              const $text = mayQuery($body, '#text', HTMLTextAreaElement);
+              if ($text && e.target === $text) {
+                if (e.ctrlKey) {
+                  e.preventDefault();
+                }
               }
               break;
 
@@ -179,13 +197,15 @@ export async function prompt($body, tor) {
           switch (e.key) {
 
             case 'Enter':
-              if (Date.now() - lastEnter < 1000 || e.ctrlKey) {
-                e.preventDefault();
-                const $text = mayQuery($body, '#text', HTMLTextAreaElement);
-                callback({ value: $text ? $text.value.replace(/(?:\r?\n)+$/, '') : '' });
-                return;
+              const $text = mayQuery($body, '#text', HTMLTextAreaElement);
+              if ($text && e.target === $text) {
+                if (Date.now() - lastEnter < 1000 || e.ctrlKey) {
+                  e.preventDefault();
+                  callback({ value: $text ? $text.value.replace(/(?:\r?\n)+$/, '') : '' });
+                  return;
+                }
+                lastEnter = Date.now();
               }
-              lastEnter = Date.now();
               break;
 
             default:
@@ -202,13 +222,8 @@ export async function prompt($body, tor) {
   const _canceled = new Object();
   try {
     $body.style.display = '';
-    $body.addEventListener('click', handleEvent);
-
-    {
-      const $text = makeText();
-      $text.addEventListener('keydown', handleEvent);
-      $text.addEventListener('keyup', handleEvent);
-    }
+    for (const event of handleEvents)
+      $body.addEventListener(event, handleEvent);
 
     /** @type {Input[]} */
     let inputs = [];
@@ -290,25 +305,10 @@ export async function prompt($body, tor) {
     if (e !== _canceled) throw e;
     return undefined;
   } finally {
-    const $error = mayQuery($body, '#error', HTMLElement);
-    if ($error) { $body.removeChild($error) }
-
-    const $help = mayQuery($body, '#help', HTMLElement);
-    if ($help) { $body.removeChild($help) }
-
-    const $text = mayQuery($body, '#text', HTMLTextAreaElement);
-    if ($text) {
-      $text.value = '';
-      $text.rows = 1;
-      $text.removeEventListener('keyup', handleEvent);
-      $text.removeEventListener('keydown', handleEvent);
-    }
-
-    const $header = mayQuery($body, 'h1', HTMLHeadingElement);
-    if ($header) { $body.removeChild($header) }
-
-    $body.removeEventListener('click', handleEvent);
+    for (const event of handleEvents)
+      $body.removeEventListener(event, handleEvent);
     $body.style.display = 'none';
+    while ($body.lastChild) $body.removeChild($body.lastChild);
   }
 }
 

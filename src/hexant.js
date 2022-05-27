@@ -1,10 +1,10 @@
 // @ts-check
 
 import colorGen from './colorgen.js';
-import { mustQuery } from './domkit.js';
+import { mayQuery, mustQuery } from './domkit.js';
 import makeHash from './hashbind.js';
 import {
-  prompt,
+  runPrompt,
   loop as promptIOLoop,
 } from './prompt.js';
 import * as rezult from './rezult.js';
@@ -28,7 +28,6 @@ export default class Hexant {
   /**
    * @param {object} options
    * @param {HTMLElement} options.$body
-   * @param {HTMLElement} [options.$prompt]
    * @param {HTMLCanvasElement} [options.$view]
    * @param {HTMLElement} [options.$fpsOverlay]
    * @param {HTMLElement} [options.$step]
@@ -38,7 +37,6 @@ export default class Hexant {
    */
   constructor({
     $body,
-    $prompt = mustQuery($body, '#prompt', HTMLElement),
     $view = mustQuery($body, '#view', HTMLCanvasElement),
     $fpsOverlay = mustQuery($body, '#fpsOverlay', HTMLElement),
     $step = mustQuery($body, '#step', HTMLElement),
@@ -52,7 +50,15 @@ export default class Hexant {
     }
 
     this.$body = $body;
-    this.$prompt = $prompt;
+
+    function makePrompt() {
+      let $prompt = mayQuery($body, '#prompt', HTMLElement);
+      if ($prompt) $body.removeChild($prompt);
+      $prompt = $body.appendChild($body.ownerDocument.createElement('div'));
+      $prompt.id = 'prompt';
+      $prompt.classList.add('prompt');
+      return $prompt;
+    }
 
     this.$fpsOverlay = $fpsOverlay;
     this.$step = $step;
@@ -136,35 +142,165 @@ export default class Hexant {
 
     this.hash = hash;
 
-    // TODO shifted keys are a bit awkward right now
-    /** @type {Map<string, (type: string, key: string) => void>} */
-    this.keymap = new Map([
-      // ['', (t, k) => console.log(`${t}:${k}`)], // to log unhandled events
-      ['click:0', () => this.playpause()],
-      ['click:S-0', () => this.stepit()],
-      ['keypress: ', () => this.playpause()],
-      ['keypress:.', () => this.stepit()],
-      ['keypress:S-*', () => this.reboot()],
-      ['keypress:/', () => prompt(this.$prompt, this.rulePrompt())],
-      ['keypress:c', () => prompt(this.$prompt, this.colorPrompt())],
-      ['keypress:S-+', () => this.hash.set('stepRate', this.stepRate * 2)],
-      ['keypress:-', () => this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2)))],
-      ['keypress:f', () => this.hash.set('showFPS', !this.showFPS)],
-      ['keypress:u', () => this.hash.set('drawUnvisited', !this.view.drawUnvisited)],
-      ['keypress:t', () => this.hash.set('drawTrace', !this.view.drawTrace)],
-      ['keypress:b', () => this.hash.encoding = this.hash.encoding == 'b64:' ? '' : 'b64:'],
-      ['keypress:enter', () => {
-        const { ownerDocument: document } = $body;
-        if (!document.fullscreenElement) {
-          $body.requestFullscreen();
-        } else if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }],
-    ]);
+    /**
+     * @typedef {object} ActionProps
+     * @prop {string[]} keys
+     * @prop {string} name
+     * @prop {string} desc
+     */
 
-    this.window.addEventListener('keypress', this);
-    this.window.addEventListener('click', this);
+    /** @template T @typedef {import('./prompt.js').Interactor<T>} Interactor */
+    /** @template T @typedef {import('./prompt.js').Looper<T>} Looper */
+
+    /**
+     * @typedef {ActionProps & (
+     * | {then: () => void}
+     * | {prompt: Interactor<unknown>}
+     * | {loop: Looper<void>}
+     * )} Action
+     */
+
+    /** @type {Action[]} */
+    const actions = [
+
+      {
+        name: 'help',
+        desc: 'show this help screen',
+        keys: ['?', 'h', 'button2'],
+        loop: function*() {
+          yield { title: 'Actions' };
+          yield {
+            help: function*() {
+              // yield `| Name | Key | Description |`;
+              // yield `|------|-----|-------------|`;
+              for (const { name, keys: [key], desc } of actions) {
+                // yield `| ${name} | \`${key}\` | ${desc} |`;
+                yield `${name} ( key: \`${key}\` )`;
+                // TODO display other keys
+                yield `: ${desc}`;
+                yield ``;
+              }
+            }()
+          }
+        },
+      },
+
+      {
+        name: 'play',
+        desc: 'play / pause the simulation',
+        keys: ['Space', 'button0'],
+        then: () => { this.playpause() },
+      },
+
+      {
+        name: 'step',
+        desc: 'single step when paused, pause if playing',
+        keys: ['.', 'button1'],
+        then: () => this.stepit(),
+      },
+
+      {
+        name: 'reset',
+        keys: ['*'],
+        desc: 'reset the simulation to initial state',
+        then: () => this.reboot(),
+      },
+
+      {
+        name: 'rule',
+        keys: ['/'],
+        desc: 'edit the simulated ant ruleset',
+        prompt: this.rulePrompt(),
+      },
+
+      {
+        name: 'colorscheme',
+        keys: ['c'],
+        desc: 'edit the color scheme used for tiles and ants',
+        prompt: this.colorPrompt(),
+      },
+
+      {
+        name: 'speed up',
+        desc: 'double simulation speed',
+        keys: ['+'],
+        then: () => this.hash.set('stepRate', this.stepRate * 2),
+      },
+
+      {
+        name: 'slow down',
+        desc: 'halve simulation speed',
+        keys: ['-'],
+        then: () => this.hash.set('stepRate', Math.max(1, Math.floor(this.stepRate / 2))),
+      },
+
+      {
+        name: 'FPS',
+        desc: 'show/hide runtime statistic overlay',
+        keys: ['f'],
+        then: () => this.hash.set('showFPS', !this.showFPS),
+      },
+
+      {
+        name: 'unvisited cells',
+        desc: 'toggle whether all visible cells are drawn instead of just visted cells ones',
+        keys: ['u'],
+        then: () => this.hash.set('drawUnvisited', !this.view.drawUnvisited),
+        // TODO trigger an immediate redraw
+      },
+
+      // TODO this used to work
+      // {
+      //   name: 'trace cells',
+      //   desc: 'toggle whether to draw traces of recently visited cells',
+      //   keys: ['t'],
+      //   then: () => this.hash.set('drawTrace', !this.view.drawTrace),
+      // },
+
+      // TODO doesn't work correctly, just replace with an action that directly
+      // generates and offer for copy such url, rather than change encoding
+      // scheme
+      //
+      // {
+      //   name: 'toggle base64 #fragment',
+      //   desc: 'change url encoding scheme to output a more easily shareable base64 form',
+      //   keys: ['b'],
+      //   then: () => this.hash.encoding = this.hash.encoding == 'b64:' ? '' : 'b64:',
+      // },
+
+      {
+        name: 'fullscreen',
+        desc: 'enter/exit fullscreen mode',
+        keys: ['Enter'],
+        then() {
+          const { ownerDocument: document } = $body;
+          if (!document.fullscreenElement) {
+            $body.requestFullscreen();
+          } else if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        },
+      },
+
+    ];
+
+    // TODO shifted keys are a bit awkward right now
+    /** @type {Map<string, (key: string) => void>} */
+    this.keymap = new Map(actions.flatMap(action => {
+      const then = 'then' in action ? action.then : (prompt =>
+        () => runPrompt(makePrompt, prompt)
+      )('prompt' in action ? action.prompt : promptIOLoop(action.loop));
+      return action.keys.map(key => [key, () => then()])
+    }));
+    this.keymap.set('Escape', () => {
+      let $prompt = mayQuery($body, '#prompt', HTMLElement);
+      if ($prompt) $body.removeChild($prompt);
+    });
+    // this.keymap.set('', k => console.log('?', k)) // to log unhandled events
+
+    this.window.addEventListener('keydown', this);
+    this.window.addEventListener('keyup', this);
+    this.window.addEventListener('mouseup', this);
 
     let autoplay = false;
     let autorefresh = 0;
@@ -202,27 +338,51 @@ export default class Hexant {
 
   /** @param {Event} e */
   handleEvent(e) {
-    const { target } = e;
-    if (target !== this.window.document.documentElement &&
-      target !== this.window.document.body &&
-      target !== this.view.$canvas
-    ) return;
+
+    /** @param {string} key */
+    const dispatch = key => {
+      let fn =
+        this.keymap.get(`${key}`)
+        || this.keymap.get(`${key.toLowerCase()}`)
+        || this.keymap.get('');
+      if (fn) {
+        e.preventDefault();
+        fn(key);
+      }
+    };
 
     const { type } = e;
-    const key = function() {
-      if (e instanceof KeyboardEvent) {
-        return modified(e, e.key.toLowerCase());
-      }
-      if (e instanceof MouseEvent) {
-        return modified(e, `${e.button}`);
-      }
-      return '';
-    }();
+    let $prompt = mayQuery(this.$body, '#prompt', HTMLElement);
 
-    const fn = this.keymap.get(`${type}:${key}`) || this.keymap.get('');
-    if (fn) {
-      e.preventDefault();
-      fn(type, key);
+    const { target } = e;
+    if (!(
+      target === $prompt ||
+      target === this.view.$canvas ||
+      target === this.window.document.documentElement ||
+      target === this.window.document.body
+    )) return;
+
+    switch (type) {
+      case 'mouseup':
+        if (e instanceof MouseEvent) {
+          dispatch(keycode(e, { button: e.button }));
+        }
+        break;
+
+      case 'keydown':
+        if (e instanceof KeyboardEvent) {
+          switch (e.key) {
+            case 'Escape':
+              e.preventDefault();
+              break;
+          }
+        }
+        break;
+
+      case 'keyup':
+        if (e instanceof KeyboardEvent) {
+          dispatch(keycode(e, { key: e.key }));
+        }
     }
   }
 
@@ -521,14 +681,28 @@ function nextFrame(window = global.window) {
 
 /**
  * @param {ModifierKeyEvent} e
- * @param {string} s
+ * @param {{key:string}|{button:number}} kb
  */
-function modified({ metaKey, altKey, ctrlKey, shiftKey }, s) {
-  if (metaKey) { s = `M-${s}` }
-  if (altKey) { s = `A-${s}` }
-  if (ctrlKey) { s = `C-${s}` }
-  if (shiftKey) { s = `S-${s}` }
-  return s;
+function keycode({ metaKey, altKey, ctrlKey }, kb) {
+  return [...function*() {
+    let key = '';
+
+    if (metaKey) yield `M`;
+    if (altKey) yield `A`;
+    if (ctrlKey) yield `C`;
+    // if (shiftKey)  yield `S`; // NOTE ignoring shift for now
+    if ('key' in kb) {
+      ({ key } = kb);
+      switch (key) {
+        case ' ':
+          yield 'Space';
+          break;
+
+        default:
+          yield key;
+      }
+    } else yield `button${kb.button}`;
+  }()].join('-');
 }
 
 /**
