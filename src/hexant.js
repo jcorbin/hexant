@@ -576,8 +576,9 @@ export default class Hexant {
     this.lastStepTime = null;
 
     while (!this.paused) {
-      const time = await nextFrame(this.window);
-      /* eslint-disable no-try-catch */
+      const time = await new Promise(
+        resolve => this.window.requestAnimationFrame(resolve));
+
       try {
         this.stepWorld(time);
         this.updateFPS(time);
@@ -660,16 +661,6 @@ function toSI(n) {
     n /= 1e3;
   }
   return n.toPrecision(3) + siSuffix[si];
-}
-
-/**
- * @param {Window} [window]
- * @returns {Promise<number>}
- */
-function nextFrame(window = global.window) {
-  return new Promise(
-    resolve => window.requestAnimationFrame(resolve)
-  );
 }
 
 /** @typedef {object} ModifierKeyEvent
