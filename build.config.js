@@ -4,8 +4,8 @@ import { minify } from 'html-minifier-terser';
 
 import {
   mkdir,
+  readdir,
   readFile,
-  rename,
   rm,
   stat,
   symlink,
@@ -56,11 +56,17 @@ const manifest = [
   {
     async do() {
       if (await ok(stat('build'))) {
-        console.log('rm -rf build');
-        await rm('build', { recursive: true, force: true })
+        for (const ent of await readdir('build')) {
+          if (!ent.startsWith('.')) {
+            const file = join('build', ent);
+            console.log(`rm -rf ${file}`);
+            await rm(file, { recursive: true, force: true })
+          }
+        }
+      } else {
+        console.log('mkdir build');
+        await mkdir('build');
       }
-      console.log('mkdir build');
-      await mkdir('build');
     },
   },
 
