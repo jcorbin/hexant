@@ -1,3 +1,9 @@
+# v0.11.0
+
+- Uplifted all code to a modern ES2022 frame
+- Added a help overlay, as part of a revamped prompt UI system
+- Many fixes to the experimental turmite language, now with tests
+
 # v0.10.2
 
 - Minor code quality improvements
