@@ -98,13 +98,17 @@ Working on validating `v1.0` functionality.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-05-27
+# 2022-06-26
 
 ## WIP
 
 - make `ant(...)` usable as a rule RHS to fix its whenState / thenState terms
 
 ## Done
+
+- shipped as v0.11.0
+
+# 2022-05-27
 
 - further generalized prompt so that it doesn't require a text box
 - generalized keymaps into actions
