@@ -300,7 +300,7 @@ export default class Hexant {
 
     this.window.addEventListener('keydown', this);
     this.window.addEventListener('keyup', this);
-    this.window.addEventListener('mouseup', this);
+    this.window.addEventListener('click', this);
 
     let autoplay = false;
     let autorefresh = 0;
@@ -363,7 +363,7 @@ export default class Hexant {
     )) return;
 
     switch (type) {
-      case 'mouseup':
+      case 'click':
         if (e instanceof MouseEvent) {
           dispatch(keycode(e, { button: e.button }));
         }
