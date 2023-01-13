@@ -37,6 +37,17 @@
     "typescript": "^4.6.4"
   },
   "c8": {
+    "all": true,
+    "src": "src",
+    "exclude": [
+      "*.min.js",
+      "src/hex.js",
+      "src/oddq_dxy.js",
+      "src/oddq_point.js",
+      "src/pass.js",
+      "src/turmite/test.js",
+      "tests/*.js"
+    ],
     "lines": 50
   },
   "dependencies": {
