@@ -18,6 +18,7 @@
     "skipLibCheck": true
   },
   "include": [
+    "index.js",
     "src/**/*"
   ]
 }

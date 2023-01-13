@@ -2,7 +2,7 @@
 
 /**
  * @template {abstract new(...args: any[]) => any} T
- * @param {HTMLElement} el
+ * @param {Document|HTMLElement} el
  * @param {string} selector
  * @param {T} type
  * @returns {InstanceType<T>}

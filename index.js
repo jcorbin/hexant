@@ -1,9 +1,10 @@
 // @ts-check
 
 import Hexant from './src/hexant.js';
+import { mustQuery } from './src/domkit.js';
 
 const hexant = new Hexant({
-  $body: document.querySelector('#main'),
+  $body: mustQuery(document, '#main', HTMLElement),
 });
 
 function updateSize() {
