@@ -1,12 +1,12 @@
 {
   "name": "hexant",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "hexant",
-      "version": "0.11.0",
+      "version": "0.11.1",
       "license": "MIT",
       "dependencies": {
         "gl-matrix": "^3.4.3",

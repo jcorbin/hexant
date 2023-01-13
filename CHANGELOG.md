@@ -1,3 +1,7 @@
+# v0.11.1
+
+- Trivial update over dependency drift
+
 # v0.11.0
 
 - Uplifted all code to a modern ES2022 frame

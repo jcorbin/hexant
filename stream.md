@@ -98,13 +98,22 @@ Working on validating `v1.0` functionality.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2022-06-27
+# 2023-01-13
 
-## WIP
+## TODO
 
 - make `ant(...)` usable as a rule RHS to fix its whenState / thenState terms
 
+## WIP
+
 ## Done
+
+- picked back up development
+  - ran `npm audit fix`
+  - ran `npm update`
+    - fixed new typescript complaint
+
+# 2022-06-27
 
 - simplified RAF usage based motivated by typescript global error
 - adapted build script to not fully nuke the build directory, allowing usage of
