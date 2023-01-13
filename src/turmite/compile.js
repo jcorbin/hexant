@@ -115,7 +115,8 @@ export default function compileBuilder(spec) {
  * @param {object} [options]
  * @param {CodeFormat} [options.format]
  */
-export function compileCode(spec, { format = 'value' } = {}) {
+export function compileCode(spec, options = {}) {
+  const { format = 'value' } = options;
   const scope = makeScope();
 
   return compileContent(spec);

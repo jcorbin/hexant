@@ -224,10 +224,8 @@ export class Turmite {
  * @param {boolean} [options.endLines]
  * @param {import('./compile.js').CodeFormat} [options.format]
  */
-export function compile(str, {
-  endLines = false,
-  format = 'value',
-} = {}) {
+export function compile(str, options = {}) {
+  const { endLines = false, format = 'value' } = options;
   const spec = rezult.toValue(parseRaw(str));
   const lines = compileCode(spec, { format });
   return endLines ? addLineEnds(lines) : lines;
