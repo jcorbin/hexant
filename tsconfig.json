@@ -19,6 +19,7 @@
   },
   "include": [
     "index.js",
-    "src/**/*"
+    "src/**/*",
+    "tests/**/*"
   ]
 }

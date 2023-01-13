@@ -15,75 +15,69 @@ import { growTile } from '../src/hextiletree.js';
   new OddQOffset(-1, 0),
   new OddQOffset(0, 0)
 ].forEach((origin, i) => {
-
-  const plan = [
-    ['initTile', origin, 1, 1],
-    ['check', [[0]]],
-    ['set', origin, 1],
-    ['check', [[1]]]
-  ];
-
-  for (let n = 1; n <= 3; n++) {
-    const N = Math.pow(2, n);
-
-    const expected = zeros(N);
-    const row = expected[(N + origin.r) % N];
-    row[(N + origin.q) % N] = 1;
-
-    plan.push(
-      ['grow', i],
-      ['check', expected]);
-  }
-
   test(`grow(${i})`, t => {
-    const ctx = { t, tile: null };
+    const scene = new TestScene(t, origin, 1, 1);
+
+    /** @type {Array<(scene: TestScene) => void>} */
+    const plan = [
+      scene => scene.check([[0]]),
+      scene => scene.set(origin, 1),
+      scene => scene.check([[1]])
+    ];
+
+    for (let n = 1; n <= 3; n++) {
+      const N = Math.pow(2, n);
+
+      const expected = zeros(N);
+      const row = expected[(N + origin.r) % N];
+      row[(N + origin.q) % N] = 1;
+
+      plan.push(
+        scene => scene.grow(i),
+        scene => scene.check(expected));
+    }
+
     for (const step of plan) {
-      // assert.comment(disp(step));
-      Actions[step[0]].apply(ctx, step.slice(1));
+      step(scene);
       // console.log(ctx.tile.dump());
     }
   });
 
 });
 
-/** @typedef {object} Context
- * @prop {import('ava').ExecutionContext} t
- * @prop {null|OddQHexTile|HexTileTreeNode} tile
- */
-
-const Actions = {
+class TestScene {
+  /** @type {OddQHexTile|HexTileTreeNode} */
+  tile = new OddQHexTile();
 
   /**
+   * @param {import('ava').ExecutionContext} t
    * @param {oddQPotent} origin
    * @param {number} width
    * @param {number} height
-   * @this {Context}
    */
-  initTile(origin, width, height) {
+  constructor(t, origin, width, height) {
+    this.t = t;
     this.tile = new OddQHexTile();
     this.tile.init(origin, width, height);
-  },
+  }
 
   /**
-   * @this {Context}
    * @param {oddQPotent} point
    * @param {number} value
    */
   set(point, value) {
     this.tile.set(point, value);
-  },
+  }
 
   /**
    * @param {number} i
-   * @this {Context}
    */
   grow(i) {
     this.tile = growTile(null, this.tile, i);
-  },
+  }
 
   /**
    * @param {number[][]} expected
-   * @this {Context}
    */
   check(expected) {
     const topLeft = this.tile.boundingBox().topLeft;
@@ -97,11 +91,11 @@ const Actions = {
     }, 0);
 
     this.t.deepEqual(out, expected, `expected ${disp(expected)}`);
-  },
+  }
 
-};
+}
 
-/** @param {any} arg */
+/** @param {any} arg @returns {string} */
 function disp(arg) {
   if (Array.isArray(arg)) {
     return `[${arg.map(disp).join(' ')}]`;

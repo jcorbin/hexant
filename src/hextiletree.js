@@ -218,16 +218,13 @@ const nodeOriginOffset = [
 
 /** TODO this exists as a dubious testing surface, refactor it away someday
  *
- * @param {HexTileTree} tree
- * @param {OddQHexTile|HexTileTreeNode|null} tile
+ * @param {HexTileTree|null} tree
+ * @param {OddQHexTile|HexTileTreeNode} tile
  * @param {number} i
  */
 export function growTile(tree, tile, i) {
-  if (!tile) { return null }
-
   const originOffset = tile instanceof OddQHexTile ? tileOriginOffset[i] : nodeOriginOffset[i];
   const zoom = zoomPerm[i];
-  if (originOffset == undefined || zoom == undefined) { return null }
 
   const tileSize = tile instanceof OddQHexTile ? tile.width : tile.tileSize;
   const growthOrigin = tile.oqo
@@ -284,7 +281,7 @@ export class HexTileTreeNode {
   }
 
   /**
-   * @param {HexTileTree} tree
+   * @param {HexTileTree|null} tree
    * @param {oddQPotent?} origin
    * @param {number} size
    * @param {tileCallback} [replaceme]
@@ -371,7 +368,7 @@ export class HexTileTreeNode {
     this._setSize(this.size * 2);
     for (let i = 0; i < tiles.length; i++) {
       const tile = tiles[i];
-      const tileNode = growTile(tree, tile, i);
+      const tileNode = tile ? growTile(tree, tile, i) : null;
       if (tileNode) {
         this._setTile(i, tileNode);
       }

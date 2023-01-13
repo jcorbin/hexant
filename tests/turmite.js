@@ -268,7 +268,7 @@ function isTurmite(t, ent, { input, numColors, numStates, rules, verbose, logCod
   if (numStates !== undefined) t.is(ent.numStates, numStates, 'numStates');
   if (verbose) t.log('numStates', ent.numStates);
 
-  for (const [keyState, keyColor, state, color, turn] of rules) {
+  if (rules) for (const [keyState, keyColor, state, color, turn] of rules) {
     const key = keyState << 8 | keyColor;
     const actualRule = hexrule(decodeRule(ent.rules[key]));
     const expectRule = hexrule({ state, color, turn });

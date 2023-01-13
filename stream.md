@@ -8,9 +8,8 @@ Working on validating `v1.0` functionality.
 
 - flatten `turmite/lang/...` into `turmite/...`
 - `RuleConstants` shifts are awkward ; see `turmite/test.js` for a starting point
-- add keymap help overlay
 - write tests for more parts of `turmite/` like `RLEBuilder`
-- expand turmite help to actually describe the turmite language
+- debug initial hex scale bug ; also mobile
 
 ## `v1.1` refactoring
 
@@ -108,6 +107,7 @@ Working on validating `v1.0` functionality.
 
 ## Done
 
+- expand type checking to tests and `index.jx`
 - picked back up development
   - ran `npm audit fix`
   - ran `npm update`
