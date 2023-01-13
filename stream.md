@@ -96,7 +96,7 @@ Working on validating `v1.0` functionality.
 ## META: see also / subsume the old `TODO.md` file
 ## META: grep for code TODOs and cull/triage them into this stream document
 
-# 2023-01-13
+# 2023-01-16
 
 ## TODO
 
@@ -104,7 +104,26 @@ Working on validating `v1.0` functionality.
 
 ## WIP
 
+- vercel build description isn't picking up the tag since v0.11.1
+
 ## Done
+
+# 2023-01-15
+
+- simplified world/view surface down to just `reset()` and `redraw()`
+  - world now tracks visited bounding box, which view syncs to at top of
+    redraw, eliminating a potentially expensive and redundant call from
+    `world.stepn(n)` inner loop
+  - simplified various aspects of bounding box logic around `OddQBox`
+    expansion, which now works correctly when starting from an empty box
+  - simplified view color scheme palette build, to happen once at top of
+    redraw, and simply sync to the number of colors / entities; no more entity
+    add/remove/update/delete interface
+- this ended up fixing part of the initial view scale problem, since the
+  viewport had previously been starting out empty, rather than containing the
+  first entity-occupied cell
+
+# 2023-01-13
 
 - expanded test coverage to include all sources
 - expand type checking to tests and `index.jx`
