@@ -23,6 +23,13 @@ import hexFragShader from './hex.js';
 /** @typedef {import('./colorgen.js').ColorGen} ColorGen */
 /** @typedef {import('./hextile.js').OddQHexTile} OddQHexTile */
 
+/** @typedef {object} ColorScheme
+ * @prop {ColorGen} cellEmpty
+ * @prop {ColorGen} cellVisited
+ * @prop {ColorGen} body
+ * @prop {ColorGen} head
+ */
+
 // TODO:
 // - in redraw lazily only draw dirty tiles, expand permitting
 // - switch to uint32 elements array if supported by extension
@@ -94,14 +101,8 @@ export class ViewGL {
     this.bodyPallete = new GLPalette(this.gl, { unit: 1 });
     this.headPallete = new GLPalette(this.gl, { unit: 2 });
 
-    /** @type {ColorGen|null} */
-    this.antCellColorGen = null;
-    /** @type {ColorGen|null} */
-    this.emptyCellColorGen = null;
-    /** @type {ColorGen|null} */
-    this.bodyColorGen = null;
-    /** @type {ColorGen|null} */
-    this.headColorGen = null;
+    /** @type {ColorScheme|null} */
+    this.colorScheme = null;
 
     this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
     this.hexShader.use();
@@ -179,7 +180,6 @@ export class ViewGL {
   /** @param {boolean} should */
   setDrawTrace(should) {
     this.drawTrace = should;
-    this.updateColors();
   }
 
   /**
@@ -198,7 +198,33 @@ export class ViewGL {
     if (this.bounds.expandToBox(this.world.visitedBounds))
       this.updateSize();
 
-    const { gl, hexShader } = this;
+    const {
+      gl,
+      colorScheme,
+      hexShader,
+    } = this;
+
+    if (colorScheme) {
+      const {
+        world: {
+          numColors: numCellColors,
+          ents: { length: numEntColors },
+        },
+        drawTrace,
+        cellPallete,
+        bodyPallete,
+        headPallete,
+      } = this;
+      if (cellPallete.length != numCellColors)
+        cellPallete.setColorsRGB(drawTrace
+          ? colorScheme.cellEmpty(numCellColors)
+          : colorScheme.cellVisited(numCellColors));
+      if (bodyPallete.length != numEntColors)
+        bodyPallete.setColorsRGB(colorScheme.body(numEntColors));
+      if (headPallete.length != numEntColors)
+        headPallete.setColorsRGB(colorScheme.head(numEntColors));
+    }
+
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     hexShader.enable();
@@ -327,36 +353,15 @@ export class ViewGL {
     gl.drawArrays(gl.POINTS, 0, entBuffer.len);
   }
 
-  updateEnts() { this.updateColors(); }
-
   /** @param {ColorGenMaker} colorGenMaker */
   setColorGen(colorGenMaker) {
     const { makeColorGen } = colorGenMaker;
-    this.emptyCellColorGen = extendColorGen(makeColorGen(0), World.MaxColor);
-    this.antCellColorGen = extendColorGen(makeColorGen(1), World.MaxColor);
-    this.bodyColorGen = makeColorGen(2);
-    this.headColorGen = makeColorGen(3);
-    this.updateColors();
-  }
-
-  updateColors() {
-    const {
-      drawTrace,
-      world: { ents, numColors },
-      cellPallete, emptyCellColorGen, antCellColorGen,
-      bodyPallete, bodyColorGen,
-      headPallete, headColorGen,
-    } = this;
-    const cellGen = drawTrace ? emptyCellColorGen : antCellColorGen;
-    if (cellGen) {
-      cellPallete.setColorsRGB(cellGen(numColors));
-    }
-    if (bodyColorGen) {
-      bodyPallete.setColorsRGB(bodyColorGen(ents.length));
-    }
-    if (headColorGen) {
-      headPallete.setColorsRGB(headColorGen(ents.length));
-    }
+    this.colorScheme = {
+      cellEmpty: extendColorGen(makeColorGen(0), World.MaxColor),
+      cellVisited: extendColorGen(makeColorGen(1), World.MaxColor),
+      body: makeColorGen(2),
+      head: makeColorGen(3),
+    };
   }
 
   get drawUnvisited() {

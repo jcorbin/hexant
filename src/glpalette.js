@@ -33,6 +33,7 @@ export class GLPalette {
     this.format = format;
     this.data = data;
     this.tex = tex;
+    this.length = 0;
 
     gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -56,6 +57,7 @@ export class GLPalette {
   /** @param {Iterable<ColorTuple>} [rgbColors] */
   setColorsRGB(rgbColors = []) {
     const { gl, unit, tex, format, data } = this;
+    this.length = 0;
     data.fill(0);
 
     let i = 0;
@@ -63,6 +65,7 @@ export class GLPalette {
       data[i++] = Math.round(255 * r);
       data[i++] = Math.round(255 * g);
       data[i++] = Math.round(255 * b);
+      ++this.length;
       if (i >= data.length) break;
     }
 

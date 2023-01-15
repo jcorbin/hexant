@@ -26,7 +26,6 @@ const REDRAW_TIMING_WINDOW = 5000;
 /** @typedef {object} View
  * @prop {() => void} reset
  * @prop {() => void} redraw
- * @prop {() => void} updateEnts
  */
 
 // TODO view per-ent concerns may be better to push down into each view
@@ -220,7 +219,7 @@ export class World {
     // TODO push out into EntSystem internal concerns;
     //      does not need to be on the World : EntSystem surface
     const { index } = ent;
-    const { ents, views } = this;
+    const { ents } = this;
     if (ents[index] !== ent) {
       throw new Error('removeEnt mismatch');
     }
@@ -235,15 +234,11 @@ export class World {
       }
     }
     ents.length = i;
-
-    for (let view of views) {
-      view.updateEnts();
-    }
   }
 
   /** @param {Ent[]} newEnts */
   setEnts(newEnts) {
-    const { ents, tile, views } = this;
+    const { ents, tile } = this;
 
     ents.length = 0;
     for (const ent of newEnts) {
@@ -260,16 +255,11 @@ export class World {
     // TODO EntSystem.numColors()
     this.numColors = Math.max.apply(null, ents.map(({ numColors }) => numColors));
     this.numStates = Math.max.apply(null, ents.map(({ numStates }) => numStates));
-
-    for (const view of views) {
-      view.updateEnts();
-    }
   }
 
   /** @param {View} view */
   addView(view) {
     this.views.push(view);
-    view.updateEnts();
     return view;
   }
 
