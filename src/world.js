@@ -1,6 +1,10 @@
 // @ts-check
 
-import { CubePoint, OddQOffset } from './coord.js';
+import {
+  CubePoint,
+  OddQBox,
+  OddQOffset,
+} from './coord.js';
 import { HexTileTree } from './hextiletree.js';
 
 const REDRAW_TIMING_WINDOW = 5000;
@@ -53,6 +57,8 @@ export class World {
     this.stepCount = 0;
     this.tile = new HexTileTree();
 
+    this.visitedBounds = new OddQBox();
+
     /** @type {Ent[]} */
     this.ents = [];
 
@@ -83,9 +89,15 @@ export class World {
   reset() {
     const { ents, tile, views } = this;
 
+    this.visitedBounds.topLeft.q = 0;
+    this.visitedBounds.topLeft.r = 0;
+    this.visitedBounds.bottomRight.q = 0;
+    this.visitedBounds.bottomRight.r = 0;
+
     // TODO push out into EntSystem.reset()
     for (const ent of ents) {
       ent.reset();
+      this.visitedBounds.expandTo(ent.pos);
     }
 
     tile.reset();
@@ -147,6 +159,7 @@ export class World {
     // TODO becomes EntSystem.step()
     for (const ent of this.ents) {
       ent.step(this);
+      this.visitedBounds.expandTo(ent.pos);
     }
     // TODO why are view stepped? that sounds like a (re)drawing concern?
     for (const view of this.views) {

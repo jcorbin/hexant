@@ -117,12 +117,13 @@ export class ViewGL {
     const {
       tileBufferer,
       bounds,
-      world: { tile },
+      world,
     } = this;
     tileBufferer.reset();
     bounds.topLeft.q = 0, bounds.topLeft.r = 0;
     bounds.bottomRight.q = 0, bounds.bottomRight.r = 0;
-    tile.eachTile(tileBufferer.drawUnvisited
+    bounds.expandToBox(world.visitedBounds);
+    world.tile.eachTile(tileBufferer.drawUnvisited
       ? tile => bounds.expandToBox(tile.bounds())
       : tile => bounds.expandToBox(tile.boundsIf(World.FlagVisited)));
     this.updateSize();
@@ -196,6 +197,9 @@ export class ViewGL {
   }
 
   redraw() {
+    if (this.bounds.expandToBox(this.world.visitedBounds))
+      this.updateSize();
+
     const { gl, hexShader } = this;
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -366,14 +370,6 @@ export class ViewGL {
   }
 
   step() {
-    const { world } = this;
-    let expanded = false;
-    for (let i = 0; i < world.ents.length; i++) {
-      expanded = this.bounds.expandTo(world.getEntPos(i)) || expanded;
-    }
-    if (expanded) {
-      this.updateSize();
-    }
     this.needsRedraw = true;
   }
 }
