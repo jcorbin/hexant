@@ -354,12 +354,6 @@ export class ViewGL {
     gl.drawArrays(gl.POINTS, 0, entBuffer.len);
   }
 
-  // TODO these are terrible legacy api callbacks for World, burn it down...
-  // these methods used to do something different in prior iteration of the
-  // view, but are all now redundant 💀
-  addEnt() { this.updateColors(); }
-  updateEnt() { this.updateColors(); }
-  removeEnt() { this.updateColors(); }
   updateEnts() { this.updateColors(); }
 
   /** @param {ColorGenMaker} colorGenMaker */

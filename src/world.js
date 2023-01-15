@@ -24,9 +24,6 @@ const REDRAW_TIMING_WINDOW = 5000;
  * @prop {() => void} reset
  * @prop {boolean} needsRedraw -- TODO push this concern down into view?
  * @prop {() => void} redraw
- * @prop {(i: number) => void} addEnt
- * @prop {(i: number) => void} updateEnt
- * @prop {(i: number) => void} removeEnt
  * @prop {() => void} updateEnts
  */
 
@@ -236,14 +233,13 @@ export class World {
     ents.length = i;
 
     for (let view of views) {
-      view.removeEnt(i);
+      view.updateEnts();
     }
   }
 
   /** @param {Ent[]} newEnts */
   setEnts(newEnts) {
     const { ents, tile, views } = this;
-    const priorEntsLength = ents.length;
 
     ents.length = 0;
     for (const ent of newEnts) {
@@ -261,29 +257,15 @@ export class World {
     this.numColors = Math.max.apply(null, ents.map(({ numColors }) => numColors));
     this.numStates = Math.max.apply(null, ents.map(({ numStates }) => numStates));
 
-    // TODO why can't this just be for view of views view.udpateEnts()
-    let i = 0;
-    for (; i < priorEntsLength; ++i) {
-      for (const view of views) {
-        view.updateEnt(i);
-      }
-    }
-    for (; i < newEnts.length; ++i) {
-      for (const view of views) {
-        view.addEnt(i);
-      }
-    }
-    for (; i < priorEntsLength; ++i) {
-      for (const view of views) {
-        view.removeEnt(i);
-      }
+    for (const view of views) {
+      view.updateEnts();
     }
   }
 
   /** @param {View} view */
   addView(view) {
     this.views.push(view);
-    view.updateEnts(); // 🤦 and yet we had to do all that update/add/remove per-ent dance above?🍐wut
+    view.updateEnts();
     return view;
   }
 
