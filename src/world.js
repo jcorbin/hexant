@@ -24,9 +24,7 @@ const REDRAW_TIMING_WINDOW = 5000;
  */
 
 /** @typedef {object} View
- * @prop {() => void} step - TODO why are view stepped?
  * @prop {() => void} reset
- * @prop {boolean} needsRedraw -- TODO push this concern down into view?
  * @prop {() => void} redraw
  * @prop {() => void} updateEnts
  */
@@ -161,10 +159,6 @@ export class World {
       ent.step(this);
       this.visitedBounds.expandTo(ent.pos);
     }
-    // TODO why are view stepped? that sounds like a (re)drawing concern?
-    for (const view of this.views) {
-      view.step();
-    }
     this.stepCount++;
   }
 
@@ -173,10 +167,8 @@ export class World {
 
     const t0 = this.now();
     for (const view of this.views) {
-      if (view.needsRedraw) {
-        view.redraw();
-        didredraw = true;
-      }
+      view.redraw();
+      didredraw = true;
     }
     const t1 = this.now();
 

@@ -103,8 +103,6 @@ export class ViewGL {
     /** @type {ColorGen|null} */
     this.headColorGen = null;
 
-    this.needsRedraw = false;
-
     this.gl.clearColor(0.0, 0.0, 0.0, 0.0);
     this.hexShader.use();
 
@@ -209,7 +207,6 @@ export class ViewGL {
     hexShader.disable();
 
     gl.finish();
-    this.needsRedraw = false;
   }
 
   drawTiles() {
@@ -367,10 +364,6 @@ export class ViewGL {
   }
   set drawUnvisited(drawUnvisited) {
     this.tileBufferer.drawUnvisited = drawUnvisited;
-  }
-
-  step() {
-    this.needsRedraw = true;
   }
 }
 
