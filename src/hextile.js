@@ -155,52 +155,32 @@ export class OddQHexTile {
     }
   }
 
-  /**
-   * @param {OddQOffset} tl
-   * @param {OddQOffset} br
-   */
-  expandBoxTo(tl, br) {
+  bounds() {
     const {
       origin: { q: tlq, r: tlr },
       width, height,
     } = this;
     const brq = tlq + width;
     const brr = tlr + height;
-    if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
-      tl.q = tlq;
-      tl.r = tlr;
-      br.q = brq;
-      br.r = brr;
-    } else {
-      if (tlq < tl.q) tl.q = tlq;
-      if (tlr < tl.r) tl.r = tlr;
-      if (brq > br.q) br.q = brq;
-      if (brr > br.r) br.r = brr;
-    }
+    return new OddQBox(
+      new OddQOffset(tlq, tlr),
+      new OddQOffset(brq, brr),
+    );
   }
 
-  /**
-   * @param {OddQOffset} tl
-   * @param {OddQOffset} br
-   * @param {number} mask
-   */
-  expandBoxToIf(tl, br, mask) {
-    const { data, width, origin: { q: oq } } = this;
+  /** @param {number} mask */
+  boundsIf(mask) {
+    const bounds = new OddQBox();
+    const {
+      data,
+      width,
+      origin: { q: oq }
+    } = this;
     let { origin: { q, r } } = this, i = 0;
-    if (!data) {
-      return;
-    }
-
-    // if any part of the box isn't defined, initialize from the first masked
-    // point
-    if (isNaN(tl.q) || isNaN(tl.r) || isNaN(br.q) || isNaN(br.r)) {
+    if (data)
       while (i < data.length) {
         if (orNaN(data[i]) & mask) {
-          tl.q = q;
-          br.q = q;
-          tl.r = r;
-          br.r = r;
-          break;
+          bounds.expandTo(new OddQOffset(q, r));
         }
         i++;
         q++;
@@ -209,29 +189,7 @@ export class OddQHexTile {
           r++;
         }
       }
-    }
-
-    // now just expand to each masked point
-    while (i < data.length) {
-      if (orNaN(data[i]) & mask) {
-        if (q < tl.q) {
-          tl.q = q;
-        } else if (q >= br.q) {
-          br.q = q;
-        }
-        if (r < tl.r) {
-          tl.r = r;
-        } else if (r >= br.r) {
-          br.r = r;
-        }
-      }
-      i++;
-      q++;
-      if (q >= oq + width) {
-        q = oq;
-        r++;
-      }
-    }
+    return bounds;
   }
 
   *dump() {

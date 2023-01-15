@@ -2,7 +2,7 @@
 
 import { mat4 } from 'gl-matrix';
 
-import { OddQOffset } from './coord.js';
+import { OddQBox } from './coord.js';
 import { GLProgram } from './glprogram.js';
 import { GLPalette } from './glpalette.js';
 import * as rezult from './rezult.js';
@@ -18,8 +18,6 @@ import { World } from './world.js';
 import oddqPointShader from './oddq_point.js';
 // @ts-ignore
 import hexFragShader from './hex.js';
-
-/** @typedef {import('./coord.js').oddQToable} oddQToable */
 
 /** @typedef {import('./colorgen.js').ColorGenMaker} ColorGenMaker */
 /** @typedef {import('./colorgen.js').ColorGen} ColorGen */
@@ -48,8 +46,7 @@ export class ViewGL {
     this.world = world;
     this.$canvas = $canvas;
 
-    this.topLeftQ = new OddQOffset();
-    this.bottomRightQ = new OddQOffset();
+    this.bounds = new OddQBox();
 
     // max uint16 value for elements:
     // TODO: may be able to use uint32 extension
@@ -119,41 +116,16 @@ export class ViewGL {
   reset() {
     const {
       tileBufferer,
-      topLeftQ, bottomRightQ,
+      bounds,
       world: { tile },
     } = this;
     tileBufferer.reset();
-    topLeftQ.q = 0, topLeftQ.r = 0;
-    bottomRightQ.q = 0, bottomRightQ.r = 0;
+    bounds.topLeft.q = 0, bounds.topLeft.r = 0;
+    bounds.bottomRight.q = 0, bounds.bottomRight.r = 0;
     tile.eachTile(tileBufferer.drawUnvisited
-      ? tile => tile.expandBoxTo(topLeftQ, bottomRightQ)
-      : tile => tile.expandBoxToIf(topLeftQ, bottomRightQ, World.FlagVisited));
+      ? tile => bounds.expandToBox(tile.bounds())
+      : tile => bounds.expandToBox(tile.boundsIf(World.FlagVisited)));
     this.updateSize();
-  }
-
-  /** @param {oddQToable} pointArg */
-  expandTo(pointArg) {
-    const { topLeftQ, bottomRightQ } = this;
-    const { q, r } = pointArg.toOddQOffset();
-    let expanded = false;
-
-    if (q < topLeftQ.q) {
-      topLeftQ.q = q;
-      expanded = true;
-    } else if (q >= bottomRightQ.q) {
-      bottomRightQ.q = q;
-      expanded = true;
-    }
-
-    if (r < topLeftQ.r) {
-      topLeftQ.r = r;
-      expanded = true;
-    } else if (r >= bottomRightQ.r) {
-      bottomRightQ.r = r;
-      expanded = true;
-    }
-
-    return expanded;
   }
 
   updateSize() {
@@ -168,23 +140,23 @@ export class ViewGL {
         cellHalfWidth: rx,
         cellHalfHeight: ry,
       },
-      topLeftQ, bottomRightQ,
+      bounds,
     } = this;
 
     gl.viewport(0, 0, width, height);
     gl.uniform2f(uVP, width, height);
 
-    let { x: topX, y: topY } = topLeftQ.toScreen();
-    let { x: botX, y: botY } = bottomRightQ.toScreen();
+    let { x: topX, y: topY } = bounds.topLeft.toScreen();
+    let { x: botX, y: botY } = bounds.bottomRight.toScreen();
     topX -= rx, topY -= ry;
     botX += rx, botY += ry;
 
     // TODO: sometimes over tweaks, but only noticable at small scale
-    const oddEnough = (bottomRightQ.q - topLeftQ.q) > 0;
-    if (topLeftQ.q & 1) {
+    const oddEnough = (bounds.bottomRight.q - bounds.topLeft.q) > 0;
+    if (bounds.topLeft.q & 1) {
       topY -= ry;
     }
-    if (bottomRightQ.q & 1 || oddEnough) {
+    if (bounds.bottomRight.q & 1 || oddEnough) {
       botY += ry;
     }
 
@@ -397,7 +369,7 @@ export class ViewGL {
     const { world } = this;
     let expanded = false;
     for (let i = 0; i < world.ents.length; i++) {
-      expanded = this.expandTo(world.getEntPos(i)) || expanded;
+      expanded = this.bounds.expandTo(world.getEntPos(i)) || expanded;
     }
     if (expanded) {
       this.updateSize();
