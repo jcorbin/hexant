@@ -1,5 +1,7 @@
 // @ts-check
 
+// TODO merge with view_gl.js
+
 /** @typedef {import("./colorgen.js").ColorTuple} ColorTuple */
 
 export class GLPalette {
@@ -55,13 +57,14 @@ export class GLPalette {
   setColorsRGB(rgbColors = []) {
     const { gl, unit, tex, format, data } = this;
     data.fill(0);
-    setNumbers(data, function*() {
-      for (const [r, g, b] of rgbColors) {
-        yield Math.round(255 * r);
-        yield Math.round(255 * g);
-        yield Math.round(255 * b);
-      }
-    }());
+
+    let i = 0;
+    for (const [r, g, b] of rgbColors) {
+      data[i++] = Math.round(255 * r);
+      data[i++] = Math.round(255 * g);
+      data[i++] = Math.round(255 * b);
+      if (i >= data.length) break;
+    }
 
     gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -70,24 +73,4 @@ export class GLPalette {
       256, 1, 0,
       format, gl.UNSIGNED_BYTE, data);
   }
-
 }
-
-// TODO merge with view_gl.js
-
-/**
- * @param {{readonly length: number, [index: number]: number}|null} ar
- * @param {Iterable<number>} ns
- */
-function setNumbers(ar, ns) {
-  const length = ar?.length;
-  if (!length) {
-    return;
-  }
-  let i = 0;
-  for (const n of ns) {
-    ar[i] = n;
-    if (++i >= length) { return; }
-  }
-}
-
