@@ -407,10 +407,27 @@ export class OddQBox {
       point.r >= this.topLeft.r && point.r < this.bottomRight.r;
   }
 
+  get width() {
+    return Math.max(0, this.bottomRight.q - this.topLeft.q);
+  }
+
+  get height() {
+    return Math.max(0, this.bottomRight.r - this.topLeft.r);
+  }
+
   /** @param {OddQOffsetIsh} pointArg */
   expandTo(pointArg) {
-    let expanded = false;
     const point = pointArg.toOddQOffset();
+
+    if (this.width <= 0 || this.height <= 0) {
+      this.topLeft.q = point.q;
+      this.topLeft.r = point.r;
+      this.bottomRight.q = point.q + 1;
+      this.bottomRight.r = point.r + 1;
+      return true;
+    }
+
+    let expanded = false;
 
     if (point.q < this.topLeft.q) {
       this.topLeft.q = point.q;
