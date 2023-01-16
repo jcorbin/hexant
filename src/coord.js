@@ -447,4 +447,34 @@ export class OddQBox {
 
     return expanded;
   }
+
+  /** @param {OddQBox} other */
+  expandToBox(other) {
+    if (this.width <= 0 || this.height <= 0) {
+      this.topLeft.copyFrom(other.topLeft);
+      this.bottomRight.copyFrom(other.bottomRight);
+      return true;
+    }
+
+    let expanded = false;
+
+    if (other.topLeft.q < this.topLeft.q) {
+      this.topLeft.q = other.topLeft.q;
+      expanded = true;
+    } else if (other.bottomRight.q > this.bottomRight.q) {
+      this.bottomRight.q = other.bottomRight.q;
+      expanded = true;
+    }
+
+    if (other.topLeft.r < this.topLeft.r) {
+      this.topLeft.r = other.topLeft.r;
+      expanded = true;
+    } else if (other.bottomRight.r > this.bottomRight.r) {
+      this.bottomRight.r = other.bottomRight.r;
+      expanded = true;
+    }
+
+    return expanded;
+
+  }
 }
