@@ -140,7 +140,6 @@ export class World {
     for (let i = 0; i < n; i++) {
       this._step();
     }
-    this.stepCount += n;
     return this.redraw();
   }
 
