@@ -1,3 +1,8 @@
+# v0.11.2
+
+- fixed initial viewport bounds/scaling while factoring world/view apart from
+  each other
+
 # v0.11.1
 
 - Trivial update over dependency drift
