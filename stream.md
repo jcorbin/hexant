@@ -104,9 +104,10 @@ Working on validating `v1.0` functionality.
 
 ## WIP
 
-- vercel build description isn't picking up the tag since v0.11.1
-
 ## Done
+
+- cant find a way to restore git describe tagging in vercel, would be nice, but low prio
+- added npm version scripting to run final local ci, generate, and changelog check
 
 # 2023-01-15
 
